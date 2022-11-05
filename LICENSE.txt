@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2022 R4ND3LL
+Copyright (c) 2022 MARK RANDELL (R4ND3LL)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

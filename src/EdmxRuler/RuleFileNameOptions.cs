@@ -1,10 +1,10 @@
 ﻿using System.Runtime.Serialization;
 
 namespace EdmxRuler;
-
+/// <summary> Options to allow caller to customize the default rule file names for processes that read or write the rule files directly. </summary>
 [DataContract]
-public class RuleFileNameOptions {
-    /// <summary> table and column renaming file. </summary>
+public sealed class RuleFileNameOptions {
+    /// <summary> table and column renaming file. i.e. primitive properties only </summary>
     [DataMember]
     public string RenamingFilename { get; set; } = "primitive-renaming.json";
 

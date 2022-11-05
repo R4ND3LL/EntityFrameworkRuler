@@ -5,11 +5,17 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
+        <LangVersion>latestmajor</LangVersion>
         <PackAsTool>true</PackAsTool>
         <!-- <ToolCommandName> is an optional element that specifies the command that will invoke the tool after it's installed. If this element isn't provided, the command name for the tool is the project file name without the .csproj extension. -->
         <ToolCommandName>edmxruler</ToolCommandName>
         <PackageOutputPath>./nupkg</PackageOutputPath>
-        <LangVersion>latestmajor</LangVersion>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Title>EDMX Ruler</Title>
+        <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
+        <Copyright>Copyright (c) 2022 MARK RANDELL (R4ND3LL)</Copyright>
+        <PackageProjectUrl>https://github.com/R4ND3LL/EdmxRuler</PackageProjectUrl>
+        <PackageIcon>crown.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,6 +30,15 @@
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
             <_Parameter1>EdmxRuler.Tests</_Parameter1>
         </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\LICENSE.txt" Pack="true" PackagePath="LICENSE.txt" />
+        <None Include="..\Resources\crown.png">
+          <Pack>True</Pack>
+          <PackagePath></PackagePath>
+          <Link>crown.png</Link>
+        </None>
     </ItemGroup>
     
     <ItemGroup>
