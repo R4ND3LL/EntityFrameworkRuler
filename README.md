@@ -1,5 +1,5 @@
 # EDMX Ruler
-Add EDMX support to EF Core, enabling a smooth upgrade from EF6 to EF Core.
+Add EDMX support to EF Core, enabling a smooth upgrade from Entity Framework to EF Core.
 
 The approach is simple:
 1)	Analyze the EDMX for all customizations and generate a set of rule files such as property renaming and enum mapping.
