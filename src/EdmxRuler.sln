@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdmxRuler", "EdmxRuler\EdmxRuler.csproj", "{6CBE2220-E5D7-45C8-AD88-12E19E86DA23}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{7606EBB2-02F1-44C7-97EE-C80BFE02957D}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		Directory.Build.props = Directory.Build.props
+		Resources\Northwind.edmx = Resources\Northwind.edmx
+		..\.gitignore = ..\.gitignore
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{6ECD160C-8259-42EB-9A24-CA07AA56CB25}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdmxRuler.Tests", "Tests\EdmxRuler.Tests.csproj", "{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6CBE2220-E5D7-45C8-AD88-12E19E86DA23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CBE2220-E5D7-45C8-AD88-12E19E86DA23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CBE2220-E5D7-45C8-AD88-12E19E86DA23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CBE2220-E5D7-45C8-AD88-12E19E86DA23}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BF67A700-F2D5-477C-8624-76B67F78896A}
+	EndGlobalSection
+EndGlobal
