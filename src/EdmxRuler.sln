@@ -16,7 +16,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{6ECD160C-8259-42EB-9A24-CA07AA56CB25}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdmxRuler.Tests", "Tests\EdmxRuler.Tests.csproj", "{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdmxRuler.Tests", "Tests\EdmxRuler.Tests\EdmxRuler.Tests.csproj", "{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwindTestProject", "Tests\NorthwindTestProject\NorthwindTestProject.csproj", "{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,12 +34,17 @@ Global
 		{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
+		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BF67A700-F2D5-477C-8624-76B67F78896A}

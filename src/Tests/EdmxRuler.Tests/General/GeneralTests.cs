@@ -60,6 +60,8 @@ public sealed class GeneralTests {
         classPropertyNamingRules.Classes[0].Properties[0].AlternateName.ShouldBe("Products");
         classPropertyNamingRules.Classes[0].Properties[0].NewName.ShouldBe("Products");
         output.WriteLine($"Rule contents look good");
+
+        var csProj = ResolveNorthwindProject();
     }
 
     public static string ResolveNorthwindEdmxPath() {
@@ -70,6 +72,18 @@ public sealed class GeneralTests {
 
         dir.ShouldNotBeNull();
         var path = Path.Combine(dir.FullName, "Resources\\Northwind.edmx");
+        File.Exists(path).ShouldBeTrue();
+        return path;
+    }
+
+    public static string ResolveNorthwindProject() {
+        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+        while (dir != null && dir.Name != "Tests") {
+            dir = dir.Parent;
+        }
+
+        dir.ShouldNotBeNull();
+        var path = Path.Combine(dir.FullName, "NorthwindTestProject\\NorthwindTestProject.csproj");
         File.Exists(path).ShouldBeTrue();
         return path;
     }
