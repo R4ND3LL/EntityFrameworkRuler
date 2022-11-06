@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace EdmxRuler.RuleModels.TableColumnRenaming; 
+namespace EdmxRuler.RuleModels.PrimitiveNaming; 
 
 [DataContract]
 public sealed class ColumnNamer {

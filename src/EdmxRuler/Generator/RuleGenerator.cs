@@ -3,14 +3,14 @@ using EdmxRuler.Extensions;
 using EdmxRuler.Generator.EdmxModel;
 using EdmxRuler.RuleModels;
 using EdmxRuler.RuleModels.EnumMapping;
-using EdmxRuler.RuleModels.PropertyRenaming;
-using EdmxRuler.RuleModels.TableColumnRenaming;
-using Schema = EdmxRuler.RuleModels.TableColumnRenaming.Schema;
+using EdmxRuler.RuleModels.NavigationNaming;
+using EdmxRuler.RuleModels.PrimitiveNaming;
+using Schema = EdmxRuler.RuleModels.PrimitiveNaming.Schema;
 
 namespace EdmxRuler.Generator;
 
-public sealed class EdmxRuleGenerator {
-    public EdmxRuleGenerator(string edmxFilePath) {
+public sealed class RuleGenerator {
+    public RuleGenerator(string edmxFilePath) {
         EdmxFilePath = edmxFilePath;
         pluralizer = new Pluralizer();
     }
@@ -37,10 +37,10 @@ public sealed class EdmxRuleGenerator {
     public IReadOnlyCollection<IEdmxRuleModelRoot> Rules => rules;
 
     public EnumMappingRulesRoot EnumRules => rules.OfType<EnumMappingRulesRoot>().SingleOrDefault();
-    public TableAndColumnRulesRoot TableAndColumnRules => rules.OfType<TableAndColumnRulesRoot>().SingleOrDefault();
+    public PrimitiveNamingRules PrimitiveNamingRules => rules.OfType<PrimitiveNamingRules>().SingleOrDefault();
 
-    public ClassPropertyNamingRulesRoot ClassPropertyNamingRules =>
-        rules.OfType<ClassPropertyNamingRulesRoot>().SingleOrDefault();
+    public NavigationNamingRules NavigationNamingRules =>
+        rules.OfType<NavigationNamingRules>().SingleOrDefault();
 
     /// <summary> The correlated EDMX model that is read from the EDMX file during the TryGenerateRules() call </summary>
     public EdmxParsed EdmxParsed { get; private set; }
@@ -82,8 +82,8 @@ public sealed class EdmxRuleGenerator {
         }
 
         fileNameOptions ??= new RuleFileNameOptions();
-        await TryWriteRules(() => TableAndColumnRules, fileNameOptions.RenamingFilename);
-        await TryWriteRules(() => ClassPropertyNamingRules, fileNameOptions.PropertyFilename);
+        await TryWriteRules(() => PrimitiveNamingRules, fileNameOptions.RenamingFilename);
+        await TryWriteRules(() => NavigationNamingRules, fileNameOptions.PropertyFilename);
         await TryWriteRules(() => EnumRules, fileNameOptions.EnumMappingFilename);
         return Errors.Count == 0;
 
@@ -106,11 +106,11 @@ public sealed class EdmxRuleGenerator {
 
     #region Main rule gen methods
 
-    private TableAndColumnRulesRoot GetTableAndColumnRenameRules() {
+    private PrimitiveNamingRules GetTableAndColumnRenameRules() {
         var edmx = EdmxParsed;
-        if (edmx?.Entities.IsNullOrEmpty() != false) return new TableAndColumnRulesRoot();
+        if (edmx?.Entities.IsNullOrEmpty() != false) return new PrimitiveNamingRules();
 
-        var root = new TableAndColumnRulesRoot();
+        var root = new PrimitiveNamingRules();
 
         foreach (var grp in edmx.Entities.GroupBy(o => o.DbSchema)) {
             if (grp.Key.IsNullOrWhiteSpace()) continue;
@@ -149,18 +149,18 @@ public sealed class EdmxRuleGenerator {
         return root;
     }
 
-    private ClassPropertyNamingRulesRoot GetNavigationRenameRules() {
+    private NavigationNamingRules GetNavigationRenameRules() {
         var edmx = EdmxParsed;
-        var rule = new ClassPropertyNamingRulesRoot();
-        rule.Classes ??= new List<ClassRenamer>();
+        var rule = new NavigationNamingRules();
+        rule.Classes ??= new List<ClassReference>();
 
-        if (edmx?.Entities.IsNullOrEmpty() != false) return new ClassPropertyNamingRulesRoot();
+        if (edmx?.Entities.IsNullOrEmpty() != false) return new NavigationNamingRules();
 
         foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
             if (rule.Namespace == null) rule.Namespace = entity.Namespace;
 
             // if entity name is different than db, it has to go into output
-            var tbl = new ClassRenamer();
+            var tbl = new ClassReference();
             var renamed = false;
             tbl.Name = entity.StorageEntity?.Name ?? entity.Name;
 
@@ -195,9 +195,9 @@ public sealed class EdmxRuleGenerator {
                 }
 
                 var newName = navigation.PropertyName;
-                tbl.Properties ??= new List<PropertyRenamer>();
+                tbl.Properties ??= new List<NavigationRename>();
                 tbl.Properties.Add(
-                    new PropertyRenamer { Name = efCoreName, AlternateName = altName, NewName = newName });
+                    new NavigationRename { Name = efCoreName, AlternateName = altName, NewName = newName });
                 renamed = true;
             }
 

@@ -2,10 +2,10 @@ using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
-namespace EdmxRuler.RuleModels.TableColumnRenaming;
+namespace EdmxRuler.RuleModels.PrimitiveNaming;
 
 [DataContract]
-public sealed class TableAndColumnRulesRoot : IEdmxRuleModelRoot {
+public sealed class PrimitiveNamingRules : IEdmxRuleModelRoot {
     [DataMember]
     public List<Schema> Schemas { get; set; } = new();
 

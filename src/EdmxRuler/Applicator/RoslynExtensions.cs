@@ -30,6 +30,11 @@ internal static class RoslynExtensions {
         async Task<Document> Action(Document document, SyntaxNode root, PropertyDeclarationSyntax propSyntax,
             ISymbol propSymbol) {
             // rename all references to the property
+            if (propSymbol.Name == newPropertyName) {
+                // name already matches target.
+                return document;
+            }
+
             var newSolution = await Renamer.RenameSymbolAsync(
                 document.Project.Solution,
                 propSymbol,

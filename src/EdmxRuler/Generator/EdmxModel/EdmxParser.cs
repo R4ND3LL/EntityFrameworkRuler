@@ -237,7 +237,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
             var node = tnode as XmlElement;
             //node.Attributes[index].Value = valueToAdd;
             node.SetAttribute(attrName, valueToAdd); // Set to new value
-        } catch (Exception ex) {
+        } catch (Exception) {
             //add code to see the error
         } //"descendant::edm:Schema/edm:EntityType"
 

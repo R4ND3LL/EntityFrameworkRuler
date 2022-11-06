@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
-using EdmxRuler.RuleModels.PropertyRenaming;
-using EdmxRuler.RuleModels.TableColumnRenaming;
+using EdmxRuler.RuleModels.NavigationNaming;
+using EdmxRuler.RuleModels.PrimitiveNaming;
 
 namespace EdmxRuler.Extensions;
 
@@ -31,16 +31,16 @@ internal static class ListExtensions {
         return args.Contains(v);
     }
 
-    internal static ClassPropertyNamingRulesRoot ToPropertyRules(this TableAndColumnRulesRoot tableAndColumnRulesRoot) {
-        var rules = new ClassPropertyNamingRulesRoot();
-        foreach (var schema in tableAndColumnRulesRoot.Schemas) {
-            var r = new ClassPropertyNamingRulesRoot();
+    internal static NavigationNamingRules ToPropertyRules(this PrimitiveNamingRules primitiveNamingRules) {
+        var rules = new NavigationNamingRules();
+        foreach (var schema in primitiveNamingRules.Schemas) {
+            var r = new NavigationNamingRules();
             foreach (var table in schema.Tables) {
-                var c = new ClassRenamer();
+                var c = new ClassReference();
                 c.Name = table.Name;
                 r.Classes.Add(c);
                 foreach (var columnNamer in table.Columns) {
-                    var p = new PropertyRenamer();
+                    var p = new NavigationRename();
                     p.Name = columnNamer.Name;
                     p.NewName = columnNamer.NewName;
                     c.Properties.Add(p);

@@ -6,11 +6,11 @@ namespace EdmxRuler;
 public sealed class RuleFileNameOptions {
     /// <summary> table and column renaming file. i.e. primitive properties only </summary>
     [DataMember]
-    public string RenamingFilename { get; set; } = "primitive-renaming.json";
+    public string RenamingFilename { get; set; } = "primitive-naming.json";
 
     /// <summary> property renaming rules file (for renaming navigations) </summary>
     [DataMember]
-    public string PropertyFilename { get; set; } = "property-renaming.json";
+    public string PropertyFilename { get; set; } = "navigation-naming.json";
 
     /// <summary> enum mapping rule file. </summary>
     [DataMember]

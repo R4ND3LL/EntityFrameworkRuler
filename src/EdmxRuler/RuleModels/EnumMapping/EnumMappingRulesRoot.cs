@@ -1,7 +1,6 @@
 ﻿using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
-using EdmxRuler.RuleModels.TableColumnRenaming;
 
 namespace EdmxRuler.RuleModels.EnumMapping;
 

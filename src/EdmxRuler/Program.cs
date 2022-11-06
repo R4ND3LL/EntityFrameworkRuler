@@ -14,11 +14,12 @@ internal static class Program {
             switch (option) {
                 case 'g': {
                     // generate rules
-                    if (!GeneratorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var edmxPath, out var projectBasePath))
+                    if (!GeneratorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var edmxPath,
+                            out var projectBasePath))
                         return await ShowHelpInfo();
 
                     var start = DateTimeExtensions.GetTime();
-                    var edmxProcessor = new EdmxRuleGenerator(edmxPath);
+                    var edmxProcessor = new RuleGenerator(edmxPath);
                     var rules = edmxProcessor.TryGenerateRules();
                     await edmxProcessor.TrySaveRules(projectBasePath);
                     var elapsed = DateTimeExtensions.GetTime() - start;
@@ -40,13 +41,17 @@ internal static class Program {
                     if (!ApplicatorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var projectBasePath))
                         return await ShowHelpInfo();
 
-                    var errors = await RoslynRuleApplicator.ApplyRulesToPath(projectBasePath);
+                    var applicator = new RuleApplicator(projectBasePath);
+                    var response = await applicator.ApplyRulesInProjectPath();
 
-                    foreach (var error in errors)
+                    var errorCount = 0;
+                    foreach (var error in response.GetErrors()) {
+                        errorCount++;
                         await Console.Out.WriteLineAsync($"Rule applicator error encountered: {error}")
                             .ConfigureAwait(false);
+                    }
 
-                    return errors.Count;
+                    return errorCount;
                 }
                 default:
                     return await ShowHelpInfo();

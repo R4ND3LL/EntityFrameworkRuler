@@ -1,6 +1,6 @@
 ﻿using System.Runtime.Serialization;
 
-namespace EdmxRuler.RuleModels.TableColumnRenaming;
+namespace EdmxRuler.RuleModels.PrimitiveNaming;
 
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1724:", Justification = "Reviewed.")]
 [DataContract]

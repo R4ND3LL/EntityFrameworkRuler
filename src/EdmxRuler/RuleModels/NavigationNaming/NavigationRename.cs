@@ -1,9 +1,9 @@
 ﻿using System.Runtime.Serialization;
 
-namespace EdmxRuler.RuleModels.PropertyRenaming; 
+namespace EdmxRuler.RuleModels.NavigationNaming; 
 
 [DataContract]
-public sealed class PropertyRenamer {
+public sealed class NavigationRename {
     [DataMember]
     public string Name { get; set; }
 

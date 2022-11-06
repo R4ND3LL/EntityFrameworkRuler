@@ -2,11 +2,13 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using EdmxRuler.Applicator;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator;
 using EdmxRuler.RuleModels.EnumMapping;
-using EdmxRuler.RuleModels.PropertyRenaming;
-using EdmxRuler.RuleModels.TableColumnRenaming;
+using EdmxRuler.RuleModels.NavigationNaming;
+using EdmxRuler.RuleModels.PrimitiveNaming;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
@@ -21,11 +23,11 @@ public sealed class GeneralTests {
     }
 
     [Fact]
-    public void Test() {
+    public async Task Test() {
         var edmxPath = ResolveNorthwindEdmxPath();
 
         var start = DateTimeExtensions.GetTime();
-        var edmxProcessor = new EdmxRuleGenerator(edmxPath);
+        var edmxProcessor = new RuleGenerator(edmxPath);
         var rules = edmxProcessor.TryGenerateRules();
         var elapsed = DateTimeExtensions.GetTime() - start;
         edmxProcessor.Errors.Count.ShouldBe(0);
@@ -33,8 +35,8 @@ public sealed class GeneralTests {
         output.WriteLine($"Successfully generated {edmxProcessor.Rules.Count} rule files in {elapsed}ms");
         rules.ShouldBe(edmxProcessor.Rules);
         var enumRules = rules.OfType<EnumMappingRulesRoot>().Single();
-        var tableAndColumnRules = rules.OfType<TableAndColumnRulesRoot>().Single();
-        var classPropertyNamingRules = rules.OfType<ClassPropertyNamingRulesRoot>().Single();
+        var tableAndColumnRules = rules.OfType<PrimitiveNamingRules>().Single();
+        var classPropertyNamingRules = rules.OfType<NavigationNamingRules>().Single();
 
         enumRules.Classes.Count.ShouldBe(2);
         enumRules.Classes[0].Name.ShouldBe("Orders");
@@ -62,6 +64,10 @@ public sealed class GeneralTests {
         output.WriteLine($"Rule contents look good");
 
         var csProj = ResolveNorthwindProject();
+        var projBasePath = new FileInfo(csProj).Directory!.FullName;
+        var applicator = new RuleApplicator(projBasePath);
+        var response = await applicator.ApplyRules(classPropertyNamingRules);
+        response.Errors.Count().ShouldBe(0);
     }
 
     public static string ResolveNorthwindEdmxPath() {
