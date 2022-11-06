@@ -7,7 +7,7 @@ public partial class Product {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
         "CA2214:DoNotCallOverridableMethodsInConstructors")]
     public Product() {
-        OrderDetailsNav = new HashSet<Order_Detail>();
+        Order_Detail = new HashSet<Order_Detail>();
     }
 
     public int ProductID { get; set; }
@@ -25,10 +25,10 @@ public partial class Product {
 
     public bool Discontinued { get; set; }
 
-    public virtual Category Category { get; set; }
+    public virtual Category CategoryIDNavigation { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual ICollection<Order_Detail> OrderDetailsNav { get; set; }
+    public virtual ICollection<Order_Detail> Order_Detail { get; set; }
 
-    public virtual Supplier Supplier { get; set; }
+    public virtual Supplier SupplierIDNavigation { get; set; }
 }

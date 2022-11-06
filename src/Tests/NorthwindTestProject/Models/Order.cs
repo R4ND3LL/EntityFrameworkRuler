@@ -7,7 +7,7 @@ public partial class Order {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
         "CA2214:DoNotCallOverridableMethodsInConstructors")]
     public Order() {
-        Order_Details = new HashSet<Order_Detail>();
+        Order_Detail = new HashSet<Order_Detail>();
     }
 
     public int OrderID { get; set; }
@@ -33,10 +33,10 @@ public partial class Order {
     /// <summary> Should rename to Customer </summary>
     public virtual Customer CustomerIDNavigation { get; set; }
 
-    public virtual Employee Employee { get; set; }
+    public virtual Employee EmployeeIDNavigation { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual ICollection<Order_Detail> Order_Details { get; set; }
+    public virtual ICollection<Order_Detail> Order_Detail { get; set; }
 
-    public virtual Shipper Shipper { get; set; }
+    public virtual Shipper ShipViaFkNavigation { get; set; }
 }

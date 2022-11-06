@@ -7,8 +7,8 @@ public partial class Employee {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
         "CA2214:DoNotCallOverridableMethodsInConstructors")]
     public Employee() {
-        Employees1 = new HashSet<Employee>();
-        Orders = new HashSet<Order>();
+        ReportsToFkNavigations = new HashSet<Employee>();
+        OrderEmployeeIDNavigations = new HashSet<Order>();
         Territories = new HashSet<Territory>();
     }
 
@@ -35,12 +35,12 @@ public partial class Employee {
     public string PhotoPath { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual ICollection<Employee> Employees1 { get; set; }
+    public virtual ICollection<Employee> ReportsToFkNavigations { get; set; }
 
-    public virtual Employee Employee1 { get; set; }
+    public virtual Employee ReportsToFkNavigation { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual ICollection<Order> Orders { get; set; }
+    public virtual ICollection<Order> OrderEmployeeIDNavigations { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
     public virtual ICollection<Territory> Territories { get; set; }

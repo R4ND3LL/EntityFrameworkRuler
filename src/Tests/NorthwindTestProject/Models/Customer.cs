@@ -7,7 +7,7 @@ public partial class Customer {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
         "CA2214:DoNotCallOverridableMethodsInConstructors")]
     public Customer() {
-        Orders = new HashSet<Order>();
+        OrderCustomerIDNavigations = new HashSet<Order>();
         CustomerDemographics = new HashSet<CustomerDemographic>();
     }
 
@@ -24,7 +24,7 @@ public partial class Customer {
     public string Fax { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual ICollection<Order> Orders { get; set; }
+    public virtual ICollection<Order> OrderCustomerIDNavigations { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
     public virtual ICollection<CustomerDemographic> CustomerDemographics { get; set; }
