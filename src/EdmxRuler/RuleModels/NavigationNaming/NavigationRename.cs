@@ -1,7 +1,8 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics;
+using System.Runtime.Serialization;
 
-namespace EdmxRuler.RuleModels.NavigationNaming; 
-
+namespace EdmxRuler.RuleModels.NavigationNaming;
+[DebuggerDisplay("Nav {Name} to {NewName}")]
 [DataContract]
 public sealed class NavigationRename {
     [DataMember]

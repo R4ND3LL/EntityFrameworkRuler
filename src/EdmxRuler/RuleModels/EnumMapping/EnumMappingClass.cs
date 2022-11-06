@@ -1,7 +1,8 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics;
+using System.Runtime.Serialization;
 
-namespace EdmxRuler.RuleModels.EnumMapping; 
-
+namespace EdmxRuler.RuleModels.EnumMapping;
+[DebuggerDisplay("Class {Name}")]
 [DataContract]
 public sealed class EnumMappingClass {
     public EnumMappingClass() {

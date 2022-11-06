@@ -34,7 +34,7 @@ public sealed class GeneralTests {
         edmxProcessor.Rules.Count.ShouldBe(3);
         output.WriteLine($"Successfully generated {edmxProcessor.Rules.Count} rule files in {elapsed}ms");
         rules.ShouldBe(edmxProcessor.Rules);
-        var enumRules = rules.OfType<EnumMappingRulesRoot>().Single();
+        var enumRules = rules.OfType<EnumMappingRules>().Single();
         var tableAndColumnRules = rules.OfType<PrimitiveNamingRules>().Single();
         var classPropertyNamingRules = rules.OfType<NavigationNamingRules>().Single();
 

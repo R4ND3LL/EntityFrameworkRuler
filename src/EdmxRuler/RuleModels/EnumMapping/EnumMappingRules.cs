@@ -5,7 +5,7 @@ using System.Xml.Serialization;
 namespace EdmxRuler.RuleModels.EnumMapping;
 
 [DataContract]
-public sealed class EnumMappingRulesRoot : IEdmxRuleModelRoot {
+public sealed class EnumMappingRules : IEdmxRuleModelRoot {
     [DataMember(EmitDefaultValue = false, IsRequired = false)]
     public string Namespace { get; set; }
 

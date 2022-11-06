@@ -1,7 +1,8 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics;
+using System.Runtime.Serialization;
 
 namespace EdmxRuler.RuleModels.NavigationNaming;
-
+[DebuggerDisplay("Class {Name}")]
 [DataContract]
 public sealed class ClassReference {
     [DataMember]

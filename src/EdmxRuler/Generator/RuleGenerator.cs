@@ -37,7 +37,7 @@ public sealed class RuleGenerator {
     /// <summary> The rules generated from the EDMX via the TryGenerateRules() call </summary>
     public IReadOnlyCollection<IEdmxRuleModelRoot> Rules => rules;
 
-    public EnumMappingRulesRoot EnumRules => rules.OfType<EnumMappingRulesRoot>().SingleOrDefault();
+    public EnumMappingRules EnumRules => rules.OfType<EnumMappingRules>().SingleOrDefault();
     public PrimitiveNamingRules PrimitiveNamingRules => rules.OfType<PrimitiveNamingRules>().SingleOrDefault();
 
     public NavigationNamingRules NavigationNamingRules =>
@@ -60,8 +60,8 @@ public sealed class RuleGenerator {
         }
 
 
-        GenerateAndAdd(GetTableAndColumnRenameRules);
-        GenerateAndAdd(GetNavigationRenameRules);
+        GenerateAndAdd(GetPrimitiveNamingRules);
+        GenerateAndAdd(GetNavigationNamingRules);
         GenerateAndAdd(GetEnumMappingRules);
         return Rules;
 
@@ -107,7 +107,7 @@ public sealed class RuleGenerator {
 
     #region Main rule gen methods
 
-    private PrimitiveNamingRules GetTableAndColumnRenameRules() {
+    private PrimitiveNamingRules GetPrimitiveNamingRules() {
         var edmx = EdmxParsed;
         if (edmx?.Entities.IsNullOrEmpty() != false) return new PrimitiveNamingRules();
 
@@ -153,7 +153,7 @@ public sealed class RuleGenerator {
         return root;
     }
 
-    private NavigationNamingRules GetNavigationRenameRules() {
+    private NavigationNamingRules GetNavigationNamingRules() {
         var edmx = EdmxParsed;
         var rule = new NavigationNamingRules();
         rule.Classes ??= new List<ClassReference>();
@@ -161,12 +161,12 @@ public sealed class RuleGenerator {
         if (edmx?.Entities.IsNullOrEmpty() != false) return new NavigationNamingRules();
 
         foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
-            if (rule.Namespace == null) rule.Namespace = entity.Namespace;
+            rule.Namespace ??= entity.Namespace;
 
             // if entity name is different than db, it has to go into output
             var tbl = new ClassReference();
             var renamed = false;
-            tbl.Name = entity.StorageEntity?.Name.CleanseSymbolName() ?? entity.Name;
+            tbl.Name = entity.Name;
 
             foreach (var navigation in entity.NavigationProperties) {
                 if (navigation.Association == null) continue;
@@ -211,9 +211,9 @@ public sealed class RuleGenerator {
         return rule;
     }
 
-    private EnumMappingRulesRoot GetEnumMappingRules() {
+    private EnumMappingRules GetEnumMappingRules() {
         var edmx = EdmxParsed;
-        var rule = new EnumMappingRulesRoot();
+        var rule = new EnumMappingRules();
         rule.Classes ??= new List<EnumMappingClass>();
 
         if (edmx?.Entities.IsNullOrEmpty() != false) return rule;

@@ -58,7 +58,7 @@ public class RuleApplicator {
                 var response = rule switch {
                     PrimitiveNamingRules primitiveNamingRules => await ApplyRules(primitiveNamingRules),
                     NavigationNamingRules navigationNamingRules => await ApplyRules(navigationNamingRules),
-                    EnumMappingRulesRoot enumMappingRulesRoot => await ApplyRules(enumMappingRulesRoot),
+                    EnumMappingRules enumMappingRulesRoot => await ApplyRules(enumMappingRulesRoot),
                     _ => null
                 };
 
@@ -109,11 +109,10 @@ public class RuleApplicator {
                         if (await TryReadRules<PrimitiveNamingRules>(fileInfo, errors) is { } schemas)
                             rules.Add(schemas);
                     } else if (jsonFile == fileNameOptions.PropertyFilename) {
-                        if (await TryReadRules<NavigationNamingRules>(fileInfo, errors) is
-                            { } propertyRenamingRoot)
+                        if (await TryReadRules<NavigationNamingRules>(fileInfo, errors) is { } propertyRenamingRoot)
                             rules.Add(propertyRenamingRoot);
                     } else if (jsonFile == fileNameOptions.EnumMappingFilename) {
-                        if (await TryReadRules<EnumMappingRulesRoot>(fileInfo, errors) is { } enumMappingRoot)
+                        if (await TryReadRules<EnumMappingRules>(fileInfo, errors) is { } enumMappingRoot)
                             rules.Add(enumMappingRoot);
                     }
                 } catch (Exception ex) {
@@ -150,30 +149,31 @@ public class RuleApplicator {
 
         var renameCount = 0;
         foreach (var classRename in navigationNamingRules.Classes)
-        foreach (var refRename in classRename.Properties) {
-            var fromNames = new[] { refRename.Name, refRename.AlternateName }
-                .Where(o => !string.IsNullOrEmpty(o)).Distinct().ToArray();
-            if (fromNames.Length == 0) continue;
+            foreach (var refRename in classRename.Properties) {
+                var fromNames = new[] { refRename.Name, refRename.AlternateName }
+                    .Where(o => !string.IsNullOrEmpty(o)).Distinct().ToArray();
+                if (fromNames.Length == 0) continue;
 
-            Document docWithRename = null;
-            foreach (var fromName in fromNames) {
-                docWithRename = await project.Documents.RenamePropertyAsync(
-                    classRename.Name,
-                    fromName,
-                    refRename.NewName);
-                if (docWithRename != null) break;
+                Document docWithRename = null;
+                foreach (var fromName in fromNames) {
+                    if (fromName == refRename.NewName) continue;
+                    docWithRename = await project.Documents.RenamePropertyAsync(
+                        classRename.Name,
+                        fromName,
+                        refRename.NewName);
+                    if (docWithRename != null) break;
+                }
+
+                if (docWithRename != null) {
+                    // documents have been mutated. update reference to workspace:
+                    project = docWithRename.Project;
+                    renameCount++;
+                    response.Information.Add(
+                        $"Renamed class {classRename.Name} property {fromNames[0]} -> {refRename.NewName}");
+                } else
+                    response.Information.Add(
+                        $"Could not find table {classRename.Name} property {string.Join(", ", fromNames)}");
             }
-
-            if (docWithRename != null) {
-                // documents have been mutated. update reference to workspace:
-                project = docWithRename.Project;
-                renameCount++;
-                response.Information.Add(
-                    $"Renamed class {classRename.Name} property {fromNames[0]} -> {refRename.NewName}");
-            } else
-                response.Information.Add(
-                    $"Could not find table {classRename.Name} property {string.Join(", ", fromNames)}");
-        }
 
         if (renameCount == 0) {
             response.Information.Add("No properties renamed");
@@ -185,36 +185,36 @@ public class RuleApplicator {
         return response;
     }
 
-    public async Task<ApplyRulesResponse> ApplyRules(EnumMappingRulesRoot enumMappingRulesRoot,
+    public async Task<ApplyRulesResponse> ApplyRules(EnumMappingRules enumMappingRules,
         string contextFolder = null,
         string modelsFolder = null) {
-        var response = new ApplyRulesResponse(enumMappingRulesRoot);
-        if (enumMappingRulesRoot.Classes == null || enumMappingRulesRoot.Classes.Count == 0)
+        var response = new ApplyRulesResponse(enumMappingRules);
+        if (enumMappingRules.Classes == null || enumMappingRules.Classes.Count == 0)
             return response; // nothing to do
 
         var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response.Errors);
         if (project == null || !project.Documents.Any()) return response;
 
         var renameCount = 0;
-        foreach (var classRename in enumMappingRulesRoot.Classes)
-        foreach (var refRename in classRename.Properties) {
-            var fromName = refRename.Name?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(fromName)) continue;
+        foreach (var classRename in enumMappingRules.Classes)
+            foreach (var refRename in classRename.Properties) {
+                var fromName = refRename.Name?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(fromName)) continue;
 
-            var docWithRename = await project.Documents.ChangePropertyTypeAsync(
-                classRename.Name,
-                fromName,
-                refRename.EnumType);
+                var docWithRename = await project.Documents.ChangePropertyTypeAsync(
+                    classRename.Name,
+                    fromName,
+                    refRename.EnumType);
 
-            if (docWithRename != null) {
-                // documents have been mutated. update reference to workspace:
-                project = docWithRename.Project;
-                renameCount++;
-                response.Information.Add(
-                    $"Update class {classRename.Name} property {fromName} type to {refRename.EnumType}");
-            } else
-                response.Information.Add($"Could not find table {classRename.Name} property {fromName}");
-        }
+                if (docWithRename != null) {
+                    // documents have been mutated. update reference to workspace:
+                    project = docWithRename.Project;
+                    renameCount++;
+                    response.Information.Add(
+                        $"Update class {classRename.Name} property {fromName} type to {refRename.EnumType}");
+                } else
+                    response.Information.Add($"Could not find table {classRename.Name} property {fromName}");
+            }
 
         if (renameCount == 0) {
             response.Information.Add("No properties types updated");
@@ -237,14 +237,19 @@ public class RuleApplicator {
     }
 
 
-    private static async Task<Project> TryLoadProjectOrFallback(string fullProjectPath, string contextFolder,
+    private static async Task<Project> TryLoadProjectOrFallback(string projectBasePath, string contextFolder,
         string modelsFolder, List<string> errors) {
         try {
-            var dir = Path.GetDirectoryName(fullProjectPath);
-            var project = await RoslynExtensions.LoadExistingProjectAsync(fullProjectPath);
-            if (project?.Documents.Any() == true) return project;
+            var dir = new DirectoryInfo(projectBasePath);
+            var csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
 
-            project = TryLoadFallbackAdhocProject(dir, contextFolder, modelsFolder, errors);
+            Project project;
+            foreach (var csProjFile in csProjFiles) {
+                project = await RoslynExtensions.LoadExistingProjectAsync(csProjFile.FullName);
+                if (project?.Documents.Any() == true) return project;
+            }
+
+            project = TryLoadFallbackAdhocProject(projectBasePath, contextFolder, modelsFolder, errors);
             return project;
         } catch (Exception ex) {
             errors.Add($"Error loading project: {ex.Message}");

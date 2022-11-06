@@ -1,7 +1,8 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics;
+using System.Runtime.Serialization;
 
 namespace EdmxRuler.RuleModels.PrimitiveNaming;
-
+[DebuggerDisplay("Table {Name} to {NewName}")]
 [DataContract]
 public sealed class TableRenamer {
     [DataMember]

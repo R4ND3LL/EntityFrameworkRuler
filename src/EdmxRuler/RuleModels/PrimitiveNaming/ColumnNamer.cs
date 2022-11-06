@@ -1,7 +1,8 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics;
+using System.Runtime.Serialization;
 
-namespace EdmxRuler.RuleModels.PrimitiveNaming; 
-
+namespace EdmxRuler.RuleModels.PrimitiveNaming;
+[DebuggerDisplay("Col {Name} to {NewName}")]
 [DataContract]
 public sealed class ColumnNamer {
     [DataMember]

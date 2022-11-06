@@ -1,7 +1,8 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics;
+using System.Runtime.Serialization;
 
 namespace EdmxRuler.RuleModels.PrimitiveNaming;
-
+[DebuggerDisplay("Schema {Name}")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1724:", Justification = "Reviewed.")]
 [DataContract]
 public sealed class Schema {
