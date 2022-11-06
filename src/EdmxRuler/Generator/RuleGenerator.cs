@@ -1,4 +1,5 @@
-﻿using Bricelam.EntityFrameworkCore.Design;
+﻿using System.Diagnostics;
+using Bricelam.EntityFrameworkCore.Design;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator.EdmxModel;
 using EdmxRuler.RuleModels;
@@ -124,23 +125,26 @@ public sealed class RuleGenerator {
                 // if entity name is different than db, it has to go into output
                 var tbl = new TableRenamer();
                 var renamed = false;
-                tbl.Name = entity.StorageEntity?.Name ?? entity.Name;
+                tbl.Name = entity.StorageEntity?.Name.CleanseSymbolName() ?? entity.Name;
                 tbl.NewName = entity.ConceptualEntity?.Name ?? tbl.Name;
-                if (tbl.Name != tbl.NewName) {
-                    tbl.NewName = entity.ConceptualEntity.Name;
+                if (tbl.Name != tbl.NewName) renamed = true;
+
+                Debug.Assert(tbl.Name.IsValidSymbolName());
+                Debug.Assert(tbl.NewName.IsValidSymbolName());
+
+                foreach (var property in entity.Properties) {
+                    // if property name is different than db, it has to go into output
+                    var storagePropertyName = property.StorageProperty?.Name.CleanseSymbolName();
+                    if (storagePropertyName.IsNullOrWhiteSpace() ||
+                        property.Name == storagePropertyName) continue;
+                    tbl.Columns ??= new List<ColumnNamer>();
+                    tbl.Columns.Add(new ColumnNamer {
+                        Name = storagePropertyName, NewName = property.Name
+                    });
+                    Debug.Assert(tbl.Columns[^1].Name.IsValidSymbolName());
+                    Debug.Assert(tbl.Columns[^1].NewName.IsValidSymbolName());
                     renamed = true;
                 }
-
-                foreach (var property in entity.Properties)
-                    // if property name is different than db, it has to go into output
-                    if (property.StorageProperty != null &&
-                        property.PropertyName != property.StorageProperty.Name) {
-                        tbl.Columns ??= new List<ColumnNamer>();
-                        tbl.Columns.Add(new ColumnNamer {
-                            Name = property.StorageProperty.Name, NewName = property.PropertyName
-                        });
-                        renamed = true;
-                    }
 
                 if (renamed) schemaRule.Tables.Add(tbl);
             }
@@ -162,7 +166,7 @@ public sealed class RuleGenerator {
             // if entity name is different than db, it has to go into output
             var tbl = new ClassReference();
             var renamed = false;
-            tbl.Name = entity.StorageEntity?.Name ?? entity.Name;
+            tbl.Name = entity.StorageEntity?.Name.CleanseSymbolName() ?? entity.Name;
 
             foreach (var navigation in entity.NavigationProperties) {
                 if (navigation.Association == null) continue;
@@ -187,14 +191,14 @@ public sealed class RuleGenerator {
                 string efCoreName;
                 string altName;
                 if (isMany) {
-                    efCoreName = $"{prefix}{dep.PropertyName}Navigations";
+                    efCoreName = $"{prefix}{dep.Name}Navigations";
                     altName = pluralizer.Pluralize(navigation.ToRole.Entity.Name);
                 } else {
-                    efCoreName = $"{prefix}{dep.PropertyName}Navigation";
+                    efCoreName = $"{prefix}{dep.Name}Navigation";
                     altName = navigation.ToRole.Entity.Name;
                 }
 
-                var newName = navigation.PropertyName;
+                var newName = navigation.Name;
                 tbl.Properties ??= new List<NavigationRename>();
                 tbl.Properties.Add(
                     new NavigationRename { Name = efCoreName, AlternateName = altName, NewName = newName });
@@ -215,23 +219,23 @@ public sealed class RuleGenerator {
         if (edmx?.Entities.IsNullOrEmpty() != false) return rule;
 
         foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
-            if (rule.Namespace == null) rule.Namespace = entity.Namespace;
+            rule.Namespace ??= entity.Namespace;
 
             // if entity name is different than db, it has to go into output
             var tbl = new EnumMappingClass();
             var renamed = false;
-            tbl.Name = entity.StorageEntity?.Name ?? entity.Name;
+            tbl.Name = entity.Name;
 
-            foreach (var property in entity.Properties)
+            foreach (var property in entity.Properties) {
                 // if property name is different than db, it has to go into output
-                if (property?.EnumType != null) {
-                    tbl.Properties ??= new List<EnumMappingProperty>();
-                    tbl.Properties.Add(new EnumMappingProperty {
-                        Name = property.StorageProperty.Name,
-                        EnumType = property.EnumType.ExternalTypeName ?? property.EnumType.FullName
-                    });
-                    renamed = true;
-                }
+                if (property?.EnumType == null) continue;
+                tbl.Properties ??= new List<EnumMappingProperty>();
+                tbl.Properties.Add(new EnumMappingProperty {
+                    Name = property.Name,
+                    EnumType = property.EnumType.ExternalTypeName ?? property.EnumType.FullName
+                });
+                renamed = true;
+            }
 
             if (renamed) rule.Classes.Add(tbl);
         }

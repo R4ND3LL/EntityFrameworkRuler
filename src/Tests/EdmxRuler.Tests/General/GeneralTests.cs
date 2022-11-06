@@ -38,9 +38,11 @@ public sealed class GeneralTests {
         var tableAndColumnRules = rules.OfType<PrimitiveNamingRules>().Single();
         var classPropertyNamingRules = rules.OfType<NavigationNamingRules>().Single();
 
+        enumRules.Classes.ForEach(o => o.Name.IsValidSymbolName().ShouldBeTrue());
+        enumRules.Classes.SelectMany(o => o.Properties).ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         enumRules.Classes.Count.ShouldBe(2);
-        enumRules.Classes[0].Name.ShouldBe("Orders");
-        enumRules.Classes[1].Name.ShouldBe("Products");
+        enumRules.Classes[0].Name.ShouldBe("Order");
+        enumRules.Classes[1].Name.ShouldBe("Product");
         enumRules.Classes[0].Properties.Count.ShouldBe(1);
         enumRules.Classes[1].Properties.Count.ShouldBe(1);
         enumRules.Classes[0].Properties[0].Name.ShouldBe("Freight");
@@ -55,12 +57,20 @@ public sealed class GeneralTests {
         tableAndColumnRules.Schemas[0].Tables[4].Columns.Count.ShouldBe(1);
         tableAndColumnRules.Schemas[0].Tables[3].Columns[0].Name.ShouldBe("ReportsTo");
         tableAndColumnRules.Schemas[0].Tables[3].Columns[0].NewName.ShouldBe("ReportsToFk");
+        tableAndColumnRules.Schemas[0].Tables.ForEach(o => o.Name.IsValidSymbolName().ShouldBeTrue());
+        tableAndColumnRules.Schemas[0].Tables.ForEach(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
+        tableAndColumnRules.Schemas[0].Tables.SelectMany(o => o.Columns).ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
+        tableAndColumnRules.Schemas[0].Tables.SelectMany(o => o.Columns).ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
 
         classPropertyNamingRules.Classes.Count.ShouldBe(10);
         classPropertyNamingRules.Classes.All(o => o.Properties.Count > 0).ShouldBeTrue();
         classPropertyNamingRules.Classes[0].Properties[0].Name.ShouldBe("ProductCategoryIDNavigations");
         classPropertyNamingRules.Classes[0].Properties[0].AlternateName.ShouldBe("Products");
         classPropertyNamingRules.Classes[0].Properties[0].NewName.ShouldBe("Products");
+        classPropertyNamingRules.Classes.ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
+        classPropertyNamingRules.Classes.SelectMany(o => o.Properties).ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
+        classPropertyNamingRules.Classes.SelectMany(o => o.Properties).ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
+
         output.WriteLine($"Rule contents look good");
 
         var csProj = ResolveNorthwindProject();

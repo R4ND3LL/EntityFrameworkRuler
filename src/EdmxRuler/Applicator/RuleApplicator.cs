@@ -181,7 +181,6 @@ public class RuleApplicator {
         }
 
         var saved = await project.Documents.SaveDocumentsAsync();
-        Debug.Assert(saved > 0, "No documents saved");
         response.Information.Add($"{renameCount} properties renamed across {saved} files");
         return response;
     }

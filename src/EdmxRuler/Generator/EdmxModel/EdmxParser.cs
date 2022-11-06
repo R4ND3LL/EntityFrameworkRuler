@@ -66,7 +66,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
                 entity.Properties.Add(property);
                 if (entity.MappingFragments?.Count > 0) {
                     property.Mapping = entity.MappingFragments.SelectMany(o => o.ScalarProperties)
-                        .Single(o => o.Name == property.PropertyName);
+                        .Single(o => o.Name == property.Name);
                     if (property.Mapping?.ColumnName != null && entity.StorageEntity?.Properties?.Count > 0)
                         property.StorageProperty =
                             entity.StorageEntity.Properties.Single(o => o.Name == property.Mapping.ColumnName);
@@ -187,7 +187,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
         if (entity == null) throw new ArgumentNullException(nameof(entity));
 
         var props = entity.AllProperties.Where(o =>
-                propNames.Any(n => string.Compare(o.PropertyName, n, StringComparison.InvariantCultureIgnoreCase) == 0))
+                propNames.Any(n => string.Compare(o.Name, n, StringComparison.InvariantCultureIgnoreCase) == 0))
             .ToArray();
         return props;
     }

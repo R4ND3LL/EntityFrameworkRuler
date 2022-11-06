@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
+using Remotion.Linq.Clauses.ResultOperators;
 
 namespace EdmxRuler.Extensions;
 
@@ -66,5 +68,56 @@ internal static class StringExtensions {
                 ? strings.Select(o => o?.Invoke()).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))
                 : null)
             : str;
+    }
+
+    /// <summary> will return true if the string is a valid symbol name </summary>
+    internal static bool IsValidSymbolName(this string str) {
+        if (string.IsNullOrEmpty(str)) return false;
+        for (var i = 0; i < str.Length; i++) {
+            var c = str[i];
+            if (!IsValidInIdentifier(c, i == 0)) return false;
+        }
+
+        return true;
+    }
+
+    /// <summary> will return _ in place of invalid chars </summary>
+    internal static string CleanseSymbolName(this string str) {
+        if (string.IsNullOrEmpty(str)) return "";
+        return new string(CleanseSymbolNameChars(str).ToArray());
+
+        static IEnumerable<char> CleanseSymbolNameChars(string str) {
+            if (string.IsNullOrEmpty(str)) yield break;
+            for (var i = 0; i < str.Length; i++) {
+                var c = str[i];
+                if (IsValidInIdentifier(c, i == 0))
+                    yield return c;
+                else
+                    yield return '_';
+            }
+        }
+    }
+
+    private static bool IsValidInIdentifier(this char c, bool firstChar = true) {
+        switch (char.GetUnicodeCategory(c)) {
+            case UnicodeCategory.UppercaseLetter:
+            case UnicodeCategory.LowercaseLetter:
+            case UnicodeCategory.TitlecaseLetter:
+            case UnicodeCategory.ModifierLetter:
+            case UnicodeCategory.OtherLetter:
+                // Always allowed in C# identifiers
+                return true;
+
+            case UnicodeCategory.LetterNumber:
+            case UnicodeCategory.NonSpacingMark:
+            case UnicodeCategory.SpacingCombiningMark:
+            case UnicodeCategory.DecimalDigitNumber:
+            case UnicodeCategory.ConnectorPunctuation:
+            case UnicodeCategory.Format:
+                // Only allowed after first char
+                return c.In('_') || !firstChar;
+            default:
+                return false;
+        }
     }
 }

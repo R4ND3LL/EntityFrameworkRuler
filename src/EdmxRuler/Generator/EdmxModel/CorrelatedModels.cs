@@ -31,6 +31,8 @@ public sealed class EntityType : NotifyPropertyChanged {
     public string Namespace => Schema.Namespace;
     public string FullName => $"{Namespace}.{Name}";
     public string SelfName => $"Self.{Name}";
+
+    /// <summary> The conceptual name of the entity </summary>
     public string Name => ConceptualEntity.Name;
 
     public ObservableCollection<NavigationProperty> NavigationProperties { get; } = new();
@@ -61,7 +63,8 @@ public class EntityPropertyBase : NotifyPropertyChanged {
         Entity = e;
     }
 
-    public string PropertyName => ConceptualProperty.Name;
+    /// <summary> The conceptual name of the property </summary>
+    public string Name => ConceptualProperty.Name;
 
     public EntityType Entity { get; }
     public IConceptualProperty ConceptualProperty { get; }
@@ -91,7 +94,7 @@ public sealed class EntityProperty : EntityPropertyBase {
     public string DbColumnName => Mapping?.ColumnName;
     public new ConceptualProperty ConceptualProperty => (ConceptualProperty)base.ConceptualProperty;
 
-    public override string ToString() { return $"Prop: {PropertyName}"; }
+    public override string ToString() { return $"Prop: {Name}"; }
 }
 
 public sealed class NavigationProperty : EntityPropertyBase {
@@ -130,7 +133,7 @@ public sealed class NavigationProperty : EntityPropertyBase {
 
     public ConceptualAssociation ConceptualAssociation { get; set; }
 
-    public override string ToString() { return $"NProp: {PropertyName}"; }
+    public override string ToString() { return $"NProp: {Name}"; }
 }
 
 public sealed class Association : NotifyPropertyChanged {
