@@ -12,7 +12,7 @@ public sealed class EdmxParsed {
     public string FilePath { get; }
     public Dictionary<string, Association> AssociationsByName { get; internal set; }
     public Dictionary<string, EnumType> EnumsByName { get; internal set; }
-    public Dictionary<string, EnumType> EnumsBySchemaName { get; internal set; }
+    public Dictionary<string, EnumType> EnumsByConceptualSchemaName { get; internal set; }
     public Dictionary<string, EnumType> EnumsByExternalTypeName { get; internal set; }
 
     public ObservableCollection<Schema> Schemas { get; } = new();

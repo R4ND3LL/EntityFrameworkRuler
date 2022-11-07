@@ -119,4 +119,15 @@ internal static class StringExtensions {
                 return false;
         }
     }
+
+    public static (string namespaceName, string name) SplitNamespaceAndName(this string fullName) {
+        if (fullName.IsNullOrEmpty()) return default;
+
+        var parts = fullName.Split('.');
+        Debug.Assert(parts.Length > 0);
+        if (parts.Length <= 1) return ("", parts[0]);
+
+        var typeName = parts[^1];
+        return (parts.Take(parts.Length - 1).Join("."), typeName);
+    }
 }

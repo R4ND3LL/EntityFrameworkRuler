@@ -30,9 +30,6 @@
     <None Update="Resources\CeoChart3yIBM.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Resources\Data.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Remove="Services\**" />
   </ItemGroup>
 
@@ -46,6 +43,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\EdmxRuler\EdmxRuler.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources" />
   </ItemGroup>
 
 </Project>

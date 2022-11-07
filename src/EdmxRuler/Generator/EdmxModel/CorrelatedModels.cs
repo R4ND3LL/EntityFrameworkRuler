@@ -7,17 +7,17 @@
 namespace EdmxRuler.Generator.EdmxModel;
 
 public sealed class Schema : NotifyPropertyChanged {
-    public Schema(string ns, EdmxParser edmxParser) {
-        Namespace = ns;
-        EdmxParser = edmxParser ?? throw new ArgumentNullException(nameof(edmxParser));
-        Entities = new ObservableCollection<EntityType>();
-        Associations = new ObservableCollection<Association>();
+    public Schema(ConceptualSchema conceptualSchema, StorageSchema storageSchema) {
+        ConceptualSchema = conceptualSchema ?? throw new ArgumentNullException(nameof(conceptualSchema));
+        StorageSchema = storageSchema ?? throw new ArgumentNullException(nameof(storageSchema)); 
     }
 
-    public string Namespace { get; }
-    public EdmxParser EdmxParser { get; }
-    public ObservableCollection<EntityType> Entities { get; }
-    public ObservableCollection<Association> Associations { get; }
+    /// <summary> Conceptual namespace.  The namespace that the actual code models are expected to use </summary>
+    public string Namespace => ConceptualSchema.Namespace;
+    public ConceptualSchema ConceptualSchema { get; }
+    public StorageSchema StorageSchema { get; }
+    public IList<EntityType> Entities { get; } = new ObservableCollection<EntityType>();
+    public IList<Association> Associations { get; } = new ObservableCollection<Association>();
     public override string ToString() { return $"Schema: {Namespace}"; }
 }
 
@@ -35,24 +35,26 @@ public sealed class EntityType : NotifyPropertyChanged {
     /// <summary> The conceptual name of the entity </summary>
     public string Name => ConceptualEntity.Name;
 
-    public ObservableCollection<NavigationProperty> NavigationProperties { get; } = new();
-    public ObservableCollection<EntityProperty> Properties { get; } = new();
+    public IList<NavigationProperty> NavigationProperties { get; } =
+        new ObservableCollection<NavigationProperty>();
+
+    public IList<EntityProperty> Properties { get; } = new ObservableCollection<EntityProperty>();
 
     public IEnumerable<EntityPropertyBase> AllProperties =>
         Properties.OfType<EntityPropertyBase>().Union(NavigationProperties);
 
-    public ObservableCollection<EndRole> EndRoles { get; } = new();
+    public IList<EndRole> EndRoles { get; } = new ObservableCollection<EndRole>();
     public Schema Schema { get; }
     public StorageEntityType StorageEntity { get; set; }
     public ConceptualEntityType ConceptualEntity { get; set; }
-    public List<MappingFragment> MappingFragments { get; set; }
+    public IList<MappingFragment> MappingFragments { get; set; }
     public string DbSchema => StorageEntitySet?.Schema ?? StorageEntitySet?.Schema1;
     public EntitySetMapping EntitySetMapping { get; set; }
     public string EntitySetName => EntitySetMapping?.Name;
     public string[] StoreEntitySetNames { get; set; }
     public StorageEntityContainer StorageContainer { get; set; }
     public StorageEntitySet StorageEntitySet { get; set; }
-    public List<ConceptualAssociation> Associations { get; set; }
+    public IList<ConceptualAssociation> Associations { get; set; }
 
     public override string ToString() { return $"Entity: {Name}"; }
 }
@@ -160,7 +162,7 @@ public sealed class Association : NotifyPropertyChanged {
     public ConceptualAssociation ConceptualAssociation { get; }
     public IList<EndRole> EndRoles { get; }
     public IList<ReferentialConstraint> ReferentialConstraints { get; }
-    public ObservableCollection<NavigationProperty> NavigationProperties { get; } = new();
+    public IList<NavigationProperty> NavigationProperties { get; } = new List<NavigationProperty>();
     public Schema Schema { get; }
 
     public bool IsSelfReference => EndRoles.Count > 0 && EndRoles[0].Entity != null &&
@@ -209,7 +211,7 @@ public sealed class EnumType : NotifyPropertyChanged {
     public Schema Schema { get; }
 
     /// <summary> properties that use this enum </summary>
-    public ObservableCollection<EntityProperty> Properties { get; } = new();
+    public IList<EntityProperty> Properties { get; } = new ObservableCollection<EntityProperty>();
 
     public override string ToString() { return $"EnumType: {Name} (Ext: {ExternalTypeName})"; }
 }

@@ -1,5 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.Collections.Immutable;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
+using System.Linq.Expressions;
+using System.Xml;
 using EdmxRuler.Applicator.CsProjParser;
 using EdmxRuler.Extensions;
 using EdmxRuler.RuleModels;
@@ -148,31 +151,31 @@ public sealed class RuleApplicator {
 
         var renameCount = 0;
         foreach (var classRename in navigationNamingRules.Classes)
-            foreach (var refRename in classRename.Properties) {
-                var fromNames = new[] { refRename.Name, refRename.AlternateName }
-                    .Where(o => !string.IsNullOrEmpty(o)).Distinct().ToArray();
-                if (fromNames.Length == 0) continue;
+        foreach (var refRename in classRename.Properties) {
+            var fromNames = new[] { refRename.Name, refRename.AlternateName }
+                .Where(o => !string.IsNullOrEmpty(o)).Distinct().ToArray();
+            if (fromNames.Length == 0) continue;
 
-                Document docWithRename = null;
-                foreach (var fromName in fromNames) {
-                    if (fromName == refRename.NewName) continue;
-                    docWithRename = await project.Documents.RenamePropertyAsync(
-                        classRename.Name,
-                        fromName,
-                        refRename.NewName);
-                    if (docWithRename != null) break;
-                }
-
-                if (docWithRename != null) {
-                    // documents have been mutated. update reference to workspace:
-                    project = docWithRename.Project;
-                    renameCount++;
-                    response.Information.Add(
-                        $"Renamed class {classRename.Name} property {fromNames[0]} -> {refRename.NewName}");
-                } else
-                    response.Information.Add(
-                        $"Could not find table {classRename.Name} property {string.Join(", ", fromNames)}");
+            Document docWithRename = null;
+            foreach (var fromName in fromNames) {
+                if (fromName == refRename.NewName) continue;
+                docWithRename = await project.Documents.RenamePropertyAsync(navigationNamingRules.Namespace,
+                    classRename.Name,
+                    fromName,
+                    refRename.NewName);
+                if (docWithRename != null) break;
             }
+
+            if (docWithRename != null) {
+                // documents have been mutated. update reference to workspace:
+                project = docWithRename.Project;
+                renameCount++;
+                response.Information.Add(
+                    $"Renamed class {classRename.Name} property {fromNames[0]} -> {refRename.NewName}");
+            } else
+                response.Information.Add(
+                    $"Could not find table {classRename.Name} property {string.Join(", ", fromNames)}");
+        }
 
         if (renameCount == 0) {
             response.Information.Add("No properties renamed");
@@ -196,24 +199,24 @@ public sealed class RuleApplicator {
 
         var renameCount = 0;
         foreach (var classRename in enumMappingRules.Classes)
-            foreach (var refRename in classRename.Properties) {
-                var fromName = refRename.Name?.Trim() ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(fromName)) continue;
+        foreach (var refRename in classRename.Properties) {
+            var fromName = refRename.Name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(fromName)) continue;
 
-                var docWithRename = await project.Documents.ChangePropertyTypeAsync(
-                    classRename.Name,
-                    fromName,
-                    refRename.EnumType);
+            var docWithRename = await project.Documents.ChangePropertyTypeAsync(enumMappingRules.Namespace,
+                classRename.Name,
+                fromName,
+                refRename.EnumType);
 
-                if (docWithRename != null) {
-                    // documents have been mutated. update reference to workspace:
-                    project = docWithRename.Project;
-                    renameCount++;
-                    response.Information.Add(
-                        $"Update class {classRename.Name} property {fromName} type to {refRename.EnumType}");
-                } else
-                    response.Information.Add($"Could not find table {classRename.Name} property {fromName}");
-            }
+            if (docWithRename != null) {
+                // documents have been mutated. update reference to workspace:
+                project = docWithRename.Project;
+                renameCount++;
+                response.Information.Add(
+                    $"Update class {classRename.Name} property {fromName} type to {refRename.EnumType}");
+            } else
+                response.Information.Add($"Could not find table {classRename.Name} property {fromName}");
+        }
 
         if (renameCount == 0) {
             response.Information.Add("No properties types updated");
@@ -272,7 +275,7 @@ public sealed class RuleApplicator {
                   *
                   * To do: resolve paths to EFC assemblies and use those in the refAssemblies list below.
                   */
-        
+
         var csProj = InspectProject(projectBasePath, errors);
 
         var cSharpFolders = new HashSet<string>();
@@ -290,21 +293,39 @@ public sealed class RuleApplicator {
             .SelectMany(o => Directory.GetFiles(o, "*.cs", SearchOption.AllDirectories))
             .Distinct().ToList();
 
+        var ignorePaths = new HashSet<string> {
+            Path.Combine(projectBasePath, "obj") + Path.DirectorySeparatorChar,
+            Path.Combine(projectBasePath, "Debug") + Path.DirectorySeparatorChar,
+        };
+        var toIgnore = cSharpFiles
+            .Where(o => ignorePaths.Any(ip => o.StartsWith(ip, StringComparison.OrdinalIgnoreCase))).ToList();
+        toIgnore.ForEach(o => cSharpFiles.Remove(o));
+
         if (cSharpFiles.Count == 0) {
             errors.Add("No .cs files found");
             return null;
         }
 
         var refAssemblies = new[] {
+            typeof(object).Assembly,
+            typeof(Expression<>).Assembly,
+            typeof(IQueryable<>).Assembly,
+            typeof(ImmutableArray<>).Assembly,
+            typeof(ImmutableDictionary<,>).Assembly,
+            typeof(ImmutableDictionary<,>).Assembly,
+            typeof(XmlDocument).Assembly,
+            typeof(HttpClient).Assembly,
+            typeof(HashSet<>).Assembly,
             // typeof(IEntityTypeConfiguration<>).Assembly, typeof(SqlServerValueGenerationStrategy).Assembly,
             // typeof(Microsoft.EntityFrameworkCore.SqlServer.Query.Internal.SearchConditionConvertingExpressionVisitor).Assembly,
             // typeof(Microsoft.EntityFrameworkCore.RelationalDbFunctionsExtensions).Assembly,
             typeof(NotMappedAttribute).Assembly
         }.Distinct().ToList();
-        var refs = refAssemblies.Select(o => MetadataReference.CreateFromFile(o.Location)).ToList();
 
         try {
-            using var workspace = cSharpFiles.GetWorkspaceForFilePaths(refs);
+            using var workspace = cSharpFiles
+                .GetWorkspaceForFilePaths(refAssemblies)
+                .AddEntityResources();
             var project = workspace.CurrentSolution.Projects.First();
             if (project?.Documents.Any() == true) {
                 // add project references?
@@ -332,11 +353,13 @@ public sealed class RuleApplicator {
                     errors?.Add($"Unable to parse csproj: {ex.Message}");
                     continue;
                 }
+
                 return csProj;
             }
         } catch (Exception ex) {
             errors?.Add($"Unable to read csproj: {ex.Message}");
         }
+
         return new CsProject();
     }
 }

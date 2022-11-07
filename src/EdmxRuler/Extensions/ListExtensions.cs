@@ -50,7 +50,12 @@ internal static class ListExtensions {
 
         return rules;
     }
+
     public static void ForAll<T>(this IEnumerable<T> sequence, Action<T> action) {
         foreach (var item in sequence) action(item);
+    }
+
+    public static void AddRange<T>(this HashSet<T> c, IEnumerable<T> list) {
+        foreach (var o in list) c.Add(o);
     }
 }

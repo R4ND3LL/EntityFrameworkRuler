@@ -23,7 +23,7 @@ public sealed class GeneralTests {
     }
 
     [Fact]
-    public async Task Test() {
+    public async Task TestGenAndApply() {
         var edmxPath = ResolveNorthwindEdmxPath();
 
         var start = DateTimeExtensions.GetTime();
@@ -46,7 +46,7 @@ public sealed class GeneralTests {
         enumMappingRules.Classes[0].Properties.Count.ShouldBe(1);
         enumMappingRules.Classes[1].Properties.Count.ShouldBe(1);
         enumMappingRules.Classes[0].Properties[0].Name.ShouldBe("Freight");
-        enumMappingRules.Classes[0].Properties[0].EnumType.ShouldBe("NorthwindModel.FreightEnum"); // internal type
+        enumMappingRules.Classes[0].Properties[0].EnumType.ShouldBe("NorthwindTestProject.Models.FreightEnum"); // internal type
         enumMappingRules.Classes[1].Properties[0].Name.ShouldBe("ReorderLevel");
         enumMappingRules.Classes[1].Properties[0].EnumType.ShouldBe("Common.OrderLevelEnum"); // external type
 
@@ -64,6 +64,7 @@ public sealed class GeneralTests {
         primitiveNamingRules.Schemas[0].Tables.SelectMany(o => o.Columns)
             .ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
 
+        navigationNamingRules.Namespace.ShouldBe("NorthwindTestProject.Models");
         navigationNamingRules.Classes.Count.ShouldBe(10);
         navigationNamingRules.Classes.All(o => o.Properties.Count > 0).ShouldBeTrue();
         navigationNamingRules.Classes[0].Properties[0].Name.ShouldBe("ProductCategoryIDNavigations");

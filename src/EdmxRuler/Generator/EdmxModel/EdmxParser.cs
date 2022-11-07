@@ -17,17 +17,20 @@ public sealed class EdmxParser : NotifyPropertyChanged {
         var edmxModel = EdmxSerializer.Deserialize(File.ReadAllText(fileInstancePath));
         var edmx = edmxModel.Runtime;
 
+        var schema = new Schema(edmx.ConceptualModels.Schema, edmx.StorageModels.Schema);
+        Schemas.Add(schema);
+
         // weave the model data together starting with enums, then on to the conceptual entities
         var enums = edmx.ConceptualModels.Schema.EnumTypes
-            .Select(enumItem => new EnumType(enumItem, GetSchema(edmx.ConceptualModels.Schema.Namespace))).ToArray();
+            .Select(enumItem => new EnumType(enumItem, schema)).ToArray();
         State.EnumsByName = enums.ToDictionary(o => o.Name);
-        State.EnumsBySchemaName = enums.Where(o => o.Schema?.Namespace.HasNonWhiteSpace() == true)
+        State.EnumsByConceptualSchemaName = enums.Where(o => o.Schema?.Namespace.HasNonWhiteSpace() == true)
             .ToDictionary(o => o.Schema.Namespace + "." + o.Name);
         State.EnumsByExternalTypeName = enums.Where(o => o.ExternalTypeName.HasNonWhiteSpace())
             .ToDictionary(o => o.ExternalTypeName);
 
         foreach (var conceptualEntityType in edmx.ConceptualModels.Schema.EntityTypes) {
-            var entity = new EntityType(conceptualEntityType, GetSchema(edmx.ConceptualModels.Schema.Namespace));
+            var entity = new EntityType(conceptualEntityType, schema);
             Entities.Add(entity);
 
             var fullName = entity.FullName;
@@ -36,9 +39,9 @@ public sealed class EdmxParser : NotifyPropertyChanged {
                 o.EntityTypeMappings.Any(etm =>
                     string.Equals(etm.TypeName, fullName, StringComparison.OrdinalIgnoreCase)));
             entity.EntitySetMapping = setMapping;
-            entity.MappingFragments = setMapping.EntityTypeMappings
+            entity.MappingFragments = setMapping?.EntityTypeMappings?
                 .FirstOrDefault(etm => string.Equals(etm.TypeName, fullName, StringComparison.OrdinalIgnoreCase))
-                ?.MappingFragments;
+                ?.MappingFragments ?? new List<MappingFragment>();
 
             if (entity.MappingFragments?.Count > 0) {
                 entity.StoreEntitySetNames = entity.MappingFragments.Select(o => o.StoreEntitySet).Distinct().ToArray();
@@ -76,16 +79,18 @@ public sealed class EdmxParser : NotifyPropertyChanged {
                 Props.Add(property);
 
                 // link up enums: 
-                if (EnumsByExternalTypeName.TryGetValue(property.TypeName, out var enumType)) {
-                    property.EnumType = enumType;
-                    enumType.Properties.Add(property);
-                } else if (entity.Schema?.Namespace?.HasNonWhiteSpace() == true &&
-                           property.TypeName.StartsWith(entity.Schema.Namespace) &&
-                           EnumsBySchemaName.TryGetValue(property.TypeName, out enumType)) {
-                    property.EnumType = enumType;
-                    enumType.Properties.Add(property);
-                } else if (
-                    EnumsByName.TryGetValue(property.TypeName, out enumType)) {
+                var typeNameParts = property.TypeName.SplitNamespaceAndName();
+                EnumType enumType;
+                if (typeNameParts.namespaceName.HasNonWhiteSpace()) {
+                    // namespace itself it not reliable. just use the type name to see if we hit an enum
+                    if (EnumsByName.TryGetValue(typeNameParts.name, out enumType)) {
+                        property.EnumType = enumType;
+                        enumType.Properties.Add(property);
+                    }
+                }
+
+                // hail mary:
+                if (property.EnumType is null && EnumsByExternalTypeName.TryGetValue(property.TypeName, out enumType)) {
                     property.EnumType = enumType;
                     enumType.Properties.Add(property);
                 }
@@ -146,31 +151,22 @@ public sealed class EdmxParser : NotifyPropertyChanged {
 
 
     private Schema GetSchema(string schemaNamespace) {
-        if (schemaNamespace.IsNullOrEmpty() && Schemas.Count == 1) return Schemas[0];
+        if (schemaNamespace.IsNullOrEmpty() || schemaNamespace == "Self") return Schemas[0];
 
-        var s = Schemas.FirstOrDefault(o => o.Namespace == schemaNamespace);
-        if (s == null && schemaNamespace.HasCharacters()) {
-            // add new schema
-            s = new Schema(schemaNamespace, this);
-            Schemas.Add(s);
-        }
-
-        return s;
+        var s = Schemas.FirstOrDefault(o => o.ConceptualSchema.Namespace == schemaNamespace)
+                ?? Schemas.FirstOrDefault(o => o.StorageSchema.Namespace == schemaNamespace);
+        // ReSharper disable once UseNullPropagation
+        // ReSharper disable once ConvertIfStatementToReturnStatement
+        if (s != null) return s;
+        return null;
     }
 
     private EntityType GetEntity(string fullName) {
         if (fullName.IsNullOrEmpty()) throw new ArgumentNullException();
-
-        var parts = fullName.Split(new[] { '.' }).ToList();
-        var entityName = string.Empty;
-        if (parts.Count > 1) {
-            entityName = parts.Last();
-            parts.RemoveAt(parts.Count - 1);
-        }
-
-        var ns = parts.Count > 0 ? parts.Join(".") : null;
-        return GetEntity(ns, entityName);
+        var parts = fullName.SplitNamespaceAndName();
+        return GetEntity(parts.namespaceName, parts.name);
     }
+
 
     private EntityType GetEntity(string schemaNamespace, string entityName) {
         var s = schemaNamespace.HasCharacters() || Schemas.Count == 1 ? GetSchema(schemaNamespace) : null;
@@ -252,7 +248,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
     private string FilePath => State.FilePath;
     private Dictionary<string, Association> AssociationsByName => State.AssociationsByName;
     private Dictionary<string, EnumType> EnumsByName => State.EnumsByName;
-    private Dictionary<string, EnumType> EnumsBySchemaName => State.EnumsBySchemaName;
+    private Dictionary<string, EnumType> EnumsByConceptualSchemaName => State.EnumsByConceptualSchemaName; 
     private Dictionary<string, EnumType> EnumsByExternalTypeName => State.EnumsByExternalTypeName;
     private ObservableCollection<Schema> Schemas => State.Schemas;
     private ObservableCollection<EntityType> Entities => State.Entities;

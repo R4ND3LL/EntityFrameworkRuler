@@ -18,6 +18,7 @@ internal static class RoslynExtensions {
 
     public static async Task<Document> RenamePropertyAsync(
         this IEnumerable<Document> documents,
+        string namespaceName,
         string className,
         string oldPropertyName,
         string newPropertyName,
@@ -48,11 +49,11 @@ internal static class RoslynExtensions {
             return currentDocument;
         }
 
-        return await LocateAndActOnProperty(documents, className, oldPropertyName, Action);
+        return await LocateAndActOnProperty(documents, namespaceName, className, oldPropertyName, Action);
     }
 
     public static async Task<Document> ChangePropertyTypeAsync(
-        this IEnumerable<Document> documents,
+        this IEnumerable<Document> documents, string namespaceName,
         string className,
         string propertyName,
         string newTypeName) {
@@ -70,10 +71,11 @@ internal static class RoslynExtensions {
             return Task.FromResult(newDocument);
         }
 
-        return await LocateAndActOnProperty(documents, className, propertyName, Action);
+        return await LocateAndActOnProperty(documents, namespaceName, className, propertyName, Action);
     }
 
-    private static async Task<Document> LocateAndActOnProperty(this IEnumerable<Document> documents, string className,
+    private static async Task<Document> LocateAndActOnProperty(this IEnumerable<Document> documents,
+        string namespaceName, string className,
         string oldPropertyName, Func<Document, SyntaxNode, PropertyDeclarationSyntax, ISymbol, Task<Document>> action) {
         if (string.IsNullOrEmpty(className) || string.IsNullOrEmpty(oldPropertyName) || action == null) return null;
 
@@ -81,16 +83,25 @@ internal static class RoslynExtensions {
             var root = await document.GetSyntaxRootAsync();
             var classSyntax = root?.DescendantNodesAndSelf().OfType<TypeDeclarationSyntax>()
                 .FirstOrDefault(o => o.Identifier.ToString() == className);
-            if (classSyntax == null) continue; // not found in this doc
+            // ReSharper disable once UseNullPropagation
+            if (classSyntax is null) continue; // not found in this doc
 
             // now find property
             var propSyntax = classSyntax.DescendantNodesAndSelf().OfType<PropertyDeclarationSyntax>()
                 .FirstOrDefault(o => o.Identifier.Text == oldPropertyName);
-            if (propSyntax == null) continue; // not found in this class
+            if (propSyntax is null) continue; // not found in this class
 
             // found it
             var model = await document.GetSemanticModelAsync();
+
             var propSymbol = model?.GetDeclaredSymbol(propSyntax) ?? throw new Exception("Property symbol not found");
+
+            if (namespaceName != null) {
+                var ns = propSymbol.ContainingNamespace;
+                var symbolDisplayFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
+                var fullyQualifiedName = ns.ToDisplayString(symbolDisplayFormat);
+                if (fullyQualifiedName != namespaceName) continue; // not the correct namespace
+            }
 
             // perform action and return new document
             var newDocument = await action(document, root, propSyntax, propSymbol);
@@ -170,18 +181,19 @@ internal static class RoslynExtensions {
 
     public static AdhocWorkspace GetWorkspaceForFilePaths(
         this IEnumerable<string> filePaths,
-        IEnumerable<MetadataReference> projReferences = null) {
+        IEnumerable<Assembly> projReferences = null) {
         var ws = new AdhocWorkspace();
-        var mscorlib = MetadataReference.CreateFromFile(typeof(object).Assembly.Location);
-        var references = new List<MetadataReference>() { mscorlib };
-        if (projReferences != null) references.AddRange(projReferences);
+        var refAssemblies = new HashSet<Assembly>();
+        if (projReferences != null) refAssemblies.AddRange(projReferences);
+        refAssemblies.Add(typeof(object).Assembly);
+        var references = refAssemblies.Select(o => MetadataReference.CreateFromFile(o.Location)).ToList();
 
         var projInfo = ProjectInfo.Create(
             ProjectId.CreateNewId(),
             VersionStamp.Create(),
             "MyProject",
             "MyAssembly",
-            "C#",
+            LanguageNames.CSharp,
             metadataReferences: references);
 
         var projectId = ws.AddProject(projInfo).Id;
@@ -202,19 +214,27 @@ internal static class RoslynExtensions {
             ws.AddDocument(documentInfo);
         }
 
+        return ws;
+    }
+
+    public static AdhocWorkspace AddEntityResources(this AdhocWorkspace ws) {
+        var projectId = ws.CurrentSolution.ProjectIds.First();
         // load from resources
         var resources = typeof(RoslynExtensions).Assembly.GetEntityResourceDocuments().ToList();
         for (var i = 0; i < resources.Count; i++) {
             var content = resources[i];
             if (string.IsNullOrEmpty(content)) continue;
-
+            var filePath = Path.GetTempFileName();
+            File.WriteAllText(filePath, content);
+            var info = new FileInfo(filePath);
             var text = SourceText.From(content);
             var documentInfo = DocumentInfo.Create(
-                DocumentId.CreateNewId(projectId),
-                $"EntityDependencyDoc{i++}.cs",
-                null,
-                SourceCodeKind.Regular,
-                TextLoader.From(TextAndVersion.Create(text, VersionStamp.Default)));
+                    DocumentId.CreateNewId(projectId),
+                    info.Name, //$"EntityDependencyDoc{i++}.cs",
+                    null,
+                    SourceCodeKind.Regular,
+                    TextLoader.From(TextAndVersion.Create(text, VersionStamp.Default)))
+                .WithFilePath(info.FullName);
             ws.AddDocument(documentInfo);
         }
 

@@ -388,7 +388,7 @@
     </edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
-      <Schema Namespace="NorthwindModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+      <Schema Namespace="NorthwindTestProject.Models" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
         <EntityType Name="Category">
           <Key>
             <PropertyRef Name="CategoryID" />
@@ -737,7 +737,7 @@
       <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
         <EntityContainerMapping StorageEntityContainer="NorthwindModelStoreContainer" CdmEntityContainer="NorthwindEntities">
           <EntitySetMapping Name="Categories">
-            <EntityTypeMapping TypeName="NorthwindModel.Category">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.Category">
               <MappingFragment StoreEntitySet="Categories">
                 <ScalarProperty Name="CategoryID" ColumnName="CategoryID" />
                 <ScalarProperty Name="CategoryName" ColumnName="CategoryName" />
@@ -747,7 +747,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="CustomerDemographics">
-            <EntityTypeMapping TypeName="NorthwindModel.CustomerDemographic">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.CustomerDemographic">
               <MappingFragment StoreEntitySet="CustomerDemographics">
                 <ScalarProperty Name="CustomerTypeID" ColumnName="CustomerTypeID" />
                 <ScalarProperty Name="CustomerDesc" ColumnName="CustomerDesc" />
@@ -755,7 +755,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Customers">
-            <EntityTypeMapping TypeName="NorthwindModel.Customer">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.Customer">
               <MappingFragment StoreEntitySet="Customers">
                 <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
                 <ScalarProperty Name="CompanyName" ColumnName="CompanyName" />
@@ -772,7 +772,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Employees">
-            <EntityTypeMapping TypeName="NorthwindModel.Employee">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.Employee">
               <MappingFragment StoreEntitySet="Employees">
                 <ScalarProperty Name="EmployeeID" ColumnName="EmployeeID" />
                 <ScalarProperty Name="LastName" ColumnName="LastName" />
@@ -796,7 +796,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Order_Details">
-            <EntityTypeMapping TypeName="NorthwindModel.Order_Detail">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.Order_Detail">
               <MappingFragment StoreEntitySet="Order Details">
                 <ScalarProperty Name="OrderID" ColumnName="OrderID" />
                 <ScalarProperty Name="ProductID" ColumnName="ProductID" />
@@ -807,7 +807,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Orders">
-            <EntityTypeMapping TypeName="NorthwindModel.Order">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.Order">
               <MappingFragment StoreEntitySet="Orders">
                 <ScalarProperty Name="OrderID" ColumnName="OrderID" />
                 <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
@@ -827,7 +827,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Products">
-            <EntityTypeMapping TypeName="NorthwindModel.Product">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.Product">
               <MappingFragment StoreEntitySet="Products">
                 <ScalarProperty Name="ProductID" ColumnName="ProductID" />
                 <ScalarProperty Name="ProductName" ColumnName="ProductName" />
@@ -843,7 +843,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Regions">
-            <EntityTypeMapping TypeName="NorthwindModel.Region">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.Region">
               <MappingFragment StoreEntitySet="Region">
                 <ScalarProperty Name="RegionID" ColumnName="RegionID" />
                 <ScalarProperty Name="RegionDescription" ColumnName="RegionDescription" />
@@ -851,7 +851,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Shippers">
-            <EntityTypeMapping TypeName="NorthwindModel.Shipper">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.Shipper">
               <MappingFragment StoreEntitySet="Shippers">
                 <ScalarProperty Name="ShipperID" ColumnName="ShipperID" />
                 <ScalarProperty Name="CompanyName" ColumnName="CompanyName" />
@@ -860,7 +860,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Suppliers">
-            <EntityTypeMapping TypeName="NorthwindModel.Supplier">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.Supplier">
               <MappingFragment StoreEntitySet="Suppliers">
                 <ScalarProperty Name="SupplierID" ColumnName="SupplierID" />
                 <ScalarProperty Name="CompanyName" ColumnName="CompanyName" />
@@ -878,7 +878,7 @@
             </EntityTypeMapping>
           </EntitySetMapping>
           <EntitySetMapping Name="Territories">
-            <EntityTypeMapping TypeName="NorthwindModel.Territory">
+            <EntityTypeMapping TypeName="NorthwindTestProject.Models.Territory">
               <MappingFragment StoreEntitySet="Territories">
                 <ScalarProperty Name="TerritoryID" ColumnName="TerritoryID" />
                 <ScalarProperty Name="TerritoryDescription" ColumnName="TerritoryDescription" />
@@ -886,7 +886,7 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <AssociationSetMapping Name="CustomerCustomerDemo" TypeName="NorthwindModel.CustomerCustomerDemo" StoreEntitySet="CustomerCustomerDemo">
+          <AssociationSetMapping Name="CustomerCustomerDemo" TypeName="NorthwindTestProject.Models.CustomerCustomerDemo" StoreEntitySet="CustomerCustomerDemo">
             <EndProperty Name="CustomerDemographics">
               <ScalarProperty Name="CustomerTypeID" ColumnName="CustomerTypeID" />
             </EndProperty>
@@ -894,7 +894,7 @@
               <ScalarProperty Name="CustomerID" ColumnName="CustomerID" />
             </EndProperty>
           </AssociationSetMapping>
-          <AssociationSetMapping Name="EmployeeTerritories" TypeName="NorthwindModel.EmployeeTerritories" StoreEntitySet="EmployeeTerritories">
+          <AssociationSetMapping Name="EmployeeTerritories" TypeName="NorthwindTestProject.Models.EmployeeTerritories" StoreEntitySet="EmployeeTerritories">
             <EndProperty Name="Employees">
               <ScalarProperty Name="EmployeeID" ColumnName="EmployeeID" />
             </EndProperty>
