@@ -1,12 +1,14 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 using System.Text;
+using EdmxRuler.Applicator.CsProjParser;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
+using Project = Microsoft.CodeAnalysis.Project;
 using SyntaxFactory = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace EdmxRuler.Applicator;
@@ -117,7 +119,7 @@ internal static class RoslynExtensions {
         return saveCount;
     }
 
-    public static async Task<Project> LoadExistingProjectAsync(string csProjPath) {
+    public static async Task<Project> LoadExistingProjectAsync(string csProjPath, List<string> errors = null) {
         try {
             vsInstance ??= MSBuildLocatorRegisterDefaults();
             Debug.WriteLine($"Using msbuild: {vsInstance.MSBuildPath}");
@@ -132,7 +134,8 @@ internal static class RoslynExtensions {
 
             Debug.Assert(docs.Length > 0);
             return project;
-        } catch {
+        } catch (Exception ex) {
+            errors?.Add($"Error loading existing project: {ex.Message}");
             return null;
         }
     }
@@ -179,7 +182,7 @@ internal static class RoslynExtensions {
             "MyAssembly",
             "C#",
             metadataReferences: references);
-
+        
         var projectId = ws.AddProject(projInfo).Id;
 
         foreach (var filePath in filePaths) {

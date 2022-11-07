@@ -1,7 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using System.Globalization;
+using System.Xml.Linq;
+using System.Xml.XPath;
 using Bricelam.EntityFrameworkCore.Design;
+using EdmxRuler.Applicator.CsProjParser;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator.EdmxModel;
 using EdmxRuler.RuleModels;
@@ -9,12 +12,13 @@ using EdmxRuler.RuleModels.EnumMapping;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
 using Microsoft.CodeAnalysis;
+using Project = Microsoft.CodeAnalysis.Project;
 
 [assembly: CLSCompliant(false)]
 
 namespace EdmxRuler.Applicator;
 
-public class RuleApplicator {
+public sealed class RuleApplicator {
     /// <summary> Create rule applicator for making changes to project files </summary>
     /// <param name="projectBasePath">project folder containing rules and target files.</param>
     public RuleApplicator(string projectBasePath) {
@@ -144,7 +148,7 @@ public class RuleApplicator {
         if (navigationNamingRules.Classes == null ||
             navigationNamingRules.Classes.Count == 0) return response; // nothing to do
 
-        var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response.Errors);
+        var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response);
         if (project == null || !project.Documents.Any()) return response;
 
         var renameCount = 0;
@@ -192,7 +196,7 @@ public class RuleApplicator {
         if (enumMappingRules.Classes == null || enumMappingRules.Classes.Count == 0)
             return response; // nothing to do
 
-        var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response.Errors);
+        var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response);
         if (project == null || !project.Documents.Any()) return response;
 
         var renameCount = 0;
@@ -238,21 +242,23 @@ public class RuleApplicator {
 
 
     private static async Task<Project> TryLoadProjectOrFallback(string projectBasePath, string contextFolder,
-        string modelsFolder, List<string> errors) {
+        string modelsFolder, ApplyRulesResponse response) {
         try {
             var dir = new DirectoryInfo(projectBasePath);
             var csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
 
             Project project;
             foreach (var csProjFile in csProjFiles) {
-                project = await RoslynExtensions.LoadExistingProjectAsync(csProjFile.FullName);
+                project = await RoslynExtensions.LoadExistingProjectAsync(csProjFile.FullName, response?.Errors);
                 if (project?.Documents.Any() == true) return project;
             }
 
-            project = TryLoadFallbackAdhocProject(projectBasePath, contextFolder, modelsFolder, errors);
+            response?.Information?.Add("Direct project load failed. Attempting adhoc project creation...");
+
+            project = TryLoadFallbackAdhocProject(projectBasePath, contextFolder, modelsFolder, response?.Errors);
             return project;
         } catch (Exception ex) {
-            errors.Add($"Error loading project: {ex.Message}");
+            response?.Errors?.Add($"Error loading project: {ex.Message}");
             return null;
         }
     }
@@ -271,6 +277,9 @@ public class RuleApplicator {
                   *
                   * To do: resolve paths to EFC assemblies and use those in the refAssemblies list below.
                   */
+        
+        var csProj = InspectProject(projectBasePath, errors);
+
         var cSharpFolders = new HashSet<string>();
         if (contextFolder?.Length > 0 && Directory.Exists(Path.Combine(projectBasePath, contextFolder)))
             cSharpFolders.Add(Path.Combine(projectBasePath, contextFolder));
@@ -302,13 +311,38 @@ public class RuleApplicator {
         try {
             using var workspace = cSharpFiles.GetWorkspaceForFilePaths(refs);
             var project = workspace.CurrentSolution.Projects.First();
-            if (project?.Documents.Any() == true) return project;
+            if (project?.Documents.Any() == true) {
+                // add project references?
+                return project;
+            }
         } catch (Exception ex) {
             errors.Add($"Unable to get in-memory project from workspace: {ex.Message}");
             return null;
         }
 
         return null;
+    }
+
+    private static CsProject InspectProject(string projectBasePath, List<string> errors) {
+        try {
+            var dir = new DirectoryInfo(projectBasePath);
+            var csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
+            foreach (var csProjFile in csProjFiles) {
+                //var csProjModel = EdmxSerializer.Deserialize(File.ReadAllText(csProjFile.FullName));
+                var text = File.ReadAllText(csProjFile.FullName);
+                CsProject csProj;
+                try {
+                    csProj = CsProjSerializer.Deserialize(text);
+                } catch (Exception ex) {
+                    errors?.Add($"Unable to parse csproj: {ex.Message}");
+                    continue;
+                }
+                return csProj;
+            }
+        } catch (Exception ex) {
+            errors?.Add($"Unable to read csproj: {ex.Message}");
+        }
+        return new CsProject();
     }
 }
 
