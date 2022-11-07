@@ -17,7 +17,7 @@ public partial class Order {
     public Nullable<DateTime> RequiredDate { get; set; }
     public Nullable<DateTime> ShippedDate { get; set; }
 
-    /// <summary> should rename to ShipViaFk </summary>
+    /// <summary> should rename to ShipViaFk via PRIMITIVE rules only </summary>
     public Nullable<int> ShipVia { get; set; }
 
     /// <summary> should reference enum </summary>
