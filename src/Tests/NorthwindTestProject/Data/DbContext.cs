@@ -25,13 +25,20 @@ public sealed class NorthwindDbContext : DbContext {
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new()) {
-        foreach (var entry in ChangeTracker.Entries<Employee>())
+        foreach (var entry in ChangeTracker.Entries<Employee>()) {
+            if (entry.Entity.OrderEmployeeIDNavigations.Count == 0)
+                throw new Exception(nameof(Employee.OrderEmployeeIDNavigations));
+            if (entry.Entity.ReportsToFkNavigations.Count == 0)
+                throw new Exception(nameof(Employee.ReportsToFkNavigations));
             if (entry.Entity.ReportsTo == null)
-                entry.Entity.ReportsTo = 1; // this should rename
+                entry.Entity.ReportsTo = 1; // this should rename with primitive rules
+        }
 
-        foreach (var entry in ChangeTracker.Entries<Order>())
+        foreach (var entry in ChangeTracker.Entries<Order>()) {
+            if (entry.Entity.EmployeeIDNavigation == null) throw new Exception(nameof(Order.EmployeeIDNavigation));
             if (entry.Entity.ShipVia == null)
-                entry.Entity.ShipVia = 1; // this should rename
+                entry.Entity.ShipVia = 1; // this should rename with primitive rules
+        }
 
         return base.SaveChangesAsync(cancellationToken);
     }

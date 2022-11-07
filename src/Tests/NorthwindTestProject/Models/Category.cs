@@ -7,7 +7,7 @@ public partial class Category {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
         "CA2214:DoNotCallOverridableMethodsInConstructors")]
     public Category() {
-        ProductCategoryIDNavigations = new HashSet<Product>();
+        ProductCategoryIDNavigations = new List<Product>();
     }
 
     public int CategoryID { get; set; }
@@ -16,5 +16,5 @@ public partial class Category {
     public byte[] Picture { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual ICollection<Product> ProductCategoryIDNavigations { get; set; }
+    public virtual IList<Product> ProductCategoryIDNavigations { get; set; }
 }
