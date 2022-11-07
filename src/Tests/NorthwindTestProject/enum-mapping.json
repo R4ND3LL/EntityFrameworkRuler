@@ -1,0 +1,23 @@
+﻿{
+   "Classes": [
+      {
+         "Name": "Order",
+         "Properties": [
+            {
+               "EnumType": "NorthwindTestProject.Models.FreightEnum",
+               "Name": "Freight"
+            }
+         ]
+      },
+      {
+         "Name": "Product",
+         "Properties": [
+            {
+               "EnumType": "Common.OrderLevelEnum",
+               "Name": "ReorderLevel"
+            }
+         ]
+      }
+   ],
+   "Namespace": "NorthwindTestProject.Models"
+}

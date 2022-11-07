@@ -1,0 +1,70 @@
+﻿{
+   "Schemas": [
+      {
+         "SchemaName": "dbo",
+         "Tables": [
+            {
+               "Columns": [ ],
+               "Name": "Categories",
+               "NewName": "Category"
+            },
+            {
+               "Columns": [ ],
+               "Name": "Customers",
+               "NewName": "Customer"
+            },
+            {
+               "Columns": [ ],
+               "Name": "CustomerDemographics",
+               "NewName": "CustomerDemographic"
+            },
+            {
+               "Columns": [
+                  {
+                     "Name": "ReportsTo",
+                     "NewName": "ReportsToFk"
+                  }
+               ],
+               "Name": "Employees",
+               "NewName": "Employee"
+            },
+            {
+               "Columns": [
+                  {
+                     "Name": "ShipVia",
+                     "NewName": "ShipViaFk"
+                  }
+               ],
+               "Name": "Orders",
+               "NewName": "Order"
+            },
+            {
+               "Columns": [ ],
+               "Name": "Order_Details",
+               "NewName": "Order_Detail"
+            },
+            {
+               "Columns": [ ],
+               "Name": "Products",
+               "NewName": "Product"
+            },
+            {
+               "Columns": [ ],
+               "Name": "Shippers",
+               "NewName": "Shipper"
+            },
+            {
+               "Columns": [ ],
+               "Name": "Suppliers",
+               "NewName": "Supplier"
+            },
+            {
+               "Columns": [ ],
+               "Name": "Territories",
+               "NewName": "Territory"
+            }
+         ],
+         "UseSchemaName": false
+      }
+   ]
+}

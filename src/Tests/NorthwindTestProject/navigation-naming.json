@@ -1,0 +1,145 @@
+﻿{
+   "Classes": [
+      {
+         "Name": "Category",
+         "Properties": [
+            {
+               "AlternateName": "Products",
+               "Name": "ProductCategoryIDNavigations",
+               "NewName": "Products"
+            }
+         ]
+      },
+      {
+         "Name": "Customer",
+         "Properties": [
+            {
+               "AlternateName": "Orders",
+               "Name": "OrderCustomerIDNavigations",
+               "NewName": "Orders"
+            }
+         ]
+      },
+      {
+         "Name": "Employee",
+         "Properties": [
+            {
+               "AlternateName": "Employees",
+               "Name": "ReportsToFkNavigations",
+               "NewName": "Employees1"
+            },
+            {
+               "AlternateName": "Employee",
+               "Name": "ReportsToFkNavigation",
+               "NewName": "Employee1"
+            },
+            {
+               "AlternateName": "Orders",
+               "Name": "OrderEmployeeIDNavigations",
+               "NewName": "Orders"
+            }
+         ]
+      },
+      {
+         "Name": "Order",
+         "Properties": [
+            {
+               "AlternateName": "Customer",
+               "Name": "CustomerIDNavigation",
+               "NewName": "Customer"
+            },
+            {
+               "AlternateName": "Employee",
+               "Name": "EmployeeIDNavigation",
+               "NewName": "Employee"
+            },
+            {
+               "AlternateName": "Order_Detail",
+               "Name": "Order_DetailOrderIDNavigations",
+               "NewName": "Order_Details"
+            },
+            {
+               "AlternateName": "Shipper",
+               "Name": "ShipViaFkNavigation",
+               "NewName": "Shipper"
+            }
+         ]
+      },
+      {
+         "Name": "Order_Detail",
+         "Properties": [
+            {
+               "AlternateName": "Order",
+               "Name": "OrderIDNavigation",
+               "NewName": "Order"
+            },
+            {
+               "AlternateName": "Product",
+               "Name": "ProductIDNavigation",
+               "NewName": "Product"
+            }
+         ]
+      },
+      {
+         "Name": "Product",
+         "Properties": [
+            {
+               "AlternateName": "Category",
+               "Name": "CategoryIDNavigation",
+               "NewName": "Category"
+            },
+            {
+               "AlternateName": "Order_Detail",
+               "Name": "Order_DetailProductIDNavigations",
+               "NewName": "OrderDetailsNav"
+            },
+            {
+               "AlternateName": "Supplier",
+               "Name": "SupplierIDNavigation",
+               "NewName": "Supplier"
+            }
+         ]
+      },
+      {
+         "Name": "Region",
+         "Properties": [
+            {
+               "AlternateName": "Territories",
+               "Name": "TerritoryRegionIDNavigations",
+               "NewName": "Territories"
+            }
+         ]
+      },
+      {
+         "Name": "Shipper",
+         "Properties": [
+            {
+               "AlternateName": "Orders",
+               "Name": "OrderShipViaFkNavigations",
+               "NewName": "Orders"
+            }
+         ]
+      },
+      {
+         "Name": "Supplier",
+         "Properties": [
+            {
+               "AlternateName": "Products",
+               "Name": "ProductSupplierIDNavigations",
+               "NewName": "Products"
+            }
+         ]
+      },
+      {
+         "Name": "Territory",
+         "Properties": [
+            {
+               "AlternateName": "Region",
+               "Name": "RegionIDNavigation",
+               "NewName": "Region"
+            }
+         ]
+      }
+   ],
+   "Namespace": "NorthwindTestProject.Models"
+}

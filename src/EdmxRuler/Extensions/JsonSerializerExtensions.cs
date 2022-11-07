@@ -23,8 +23,9 @@ public static class JsonSerializerExtensions {
             var text = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
             using var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
             var ser = new DataContractJsonSerializer(typeof(T));
+            var result = ser.ReadObject(ms) as T;
             ms.Close();
-            return ser.ReadObject(ms) as T;
+            return result;
         } catch {
             return null;
         }
