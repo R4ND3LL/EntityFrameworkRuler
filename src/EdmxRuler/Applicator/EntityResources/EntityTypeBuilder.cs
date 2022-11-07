@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using EdmxRuler.Generator.EdmxModel;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 // ReSharper disable CheckNamespace
@@ -336,6 +337,25 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         public virtual EntityTypeBuilder<TEntity> HasNoDiscriminator() {
             return default;
         }
+
+        public void ToTable(string categories) {
+            
+        }
+    }
+
+    public class DiscriminatorBuilder<TDiscriminator> : DiscriminatorBuilder {
+        public virtual DiscriminatorBuilder<TDiscriminator> IsComplete(bool complete = true)
+            => default;
+
+        public virtual DiscriminatorBuilder<TDiscriminator> HasValue(TDiscriminator value) => default;
+        public virtual DiscriminatorBuilder<TDiscriminator> HasValue<TEntity>(TDiscriminator value) => default;
+        public virtual DiscriminatorBuilder<TDiscriminator> HasValue(Type entityType, TDiscriminator value) => default;
+
+        public virtual DiscriminatorBuilder<TDiscriminator> HasValue(string entityTypeName, TDiscriminator value) =>
+            default;
+    }
+
+    public class DiscriminatorBuilder {
     }
 
     public interface IMutableEntityType {
@@ -599,5 +619,8 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         public virtual EntityTypeBuilder HasNoDiscriminator() {
             return default;
         }
+    }
+
+    public class ForeignKey {
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using System.Linq.Expressions;
+using System.Reflection;
 
 // ReSharper disable CheckNamespace
 namespace Microsoft.EntityFrameworkCore {
@@ -166,6 +165,52 @@ namespace Microsoft.EntityFrameworkCore {
             Expression<Func<IQueryable<TResult>>> expression) {
             return default;
         }
+
+        protected virtual void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void OnModelCreating(ModelBuilder modelBuilder) {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class DatabaseFacade {
+    }
+
+    public interface IModel {
+    }
+
+    public class DbContextOptions<TContext> : DbContextOptions
+        where TContext : DbContext {
+        public DbContextOptions(params object[] args) { }
+
+
+        /// <inheritdoc />
+        public override DbContextOptions WithExtension<TExtension>(TExtension extension)
+            => this;
+
+        /// <summary>
+        ///     The type of context that these options are for (<typeparamref name="TContext" />).
+        /// </summary>
+        public override Type ContextType
+            => typeof(TContext);
+    }
+
+    public class DbContextOptions {
+        public virtual DbContextOptions WithExtension<TExtension>(TExtension extension) => default;
+        public virtual Type ContextType => default;
+    }
+
+    public class DbContextOptionsBuilder {
+        public DbContextOptionsBuilder LogTo(params object[] writeLine) => this;
+        public DbContextOptionsBuilder LogTo(Action<string> writeLine) => this;
+        public DbContextOptionsBuilder EnableSensitiveDataLogging() => this;
+        public DbContextOptionsBuilder EnableDetailedErrors() => this;
+    }
+
+    public class ModelBuilder {
+        public ModelBuilder ApplyConfigurationsFromAssembly(params object[] args) => this;
     }
 
     public readonly struct DbContextId {

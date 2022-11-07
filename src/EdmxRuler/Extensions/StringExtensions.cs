@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
-using Remotion.Linq.Clauses.ResultOperators;
 
 namespace EdmxRuler.Extensions;
 

@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using Bricelam.EntityFrameworkCore.Design;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator.EdmxModel;
 using EdmxRuler.RuleModels;

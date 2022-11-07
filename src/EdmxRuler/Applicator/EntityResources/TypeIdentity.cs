@@ -10,4 +10,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Internal {
         public bool IsNamed { get; }
         public bool Equals(TypeIdentity other) { return false; }
     }
+
+    public class Model {
+    }
 }

@@ -1,9 +1,5 @@
-﻿using System.Xml;
-using System.Xml.Linq;
-using System.Xml.Serialization;
+﻿using System.Xml.Linq;
 using System.Xml.XPath;
-using EdmxRuler.Extensions;
-using EdmxRuler.Generator.EdmxModel;
 
 namespace EdmxRuler.Applicator.CsProjParser;
 

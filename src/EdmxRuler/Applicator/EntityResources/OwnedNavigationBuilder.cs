@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using EdmxRuler.Generator.EdmxModel;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 // ReSharper disable CheckNamespace
@@ -269,6 +270,12 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         public virtual DataBuilder<TDependentEntity> HasData(IEnumerable<object> data) {
             return default;
         }
+    }
+
+    public enum ChangeTrackingStrategy {
+    }
+
+    public interface IMutableForeignKey {
     }
 
     public class OwnedNavigationBuilder {

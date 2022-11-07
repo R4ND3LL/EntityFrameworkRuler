@@ -35,6 +35,8 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
     }
 
+    public enum PropertyAccessMode { }
+
     public class NavigationBuilder {
         public NavigationBuilder(IMutableNavigationBase navigationOrSkipNavigation) {
         }

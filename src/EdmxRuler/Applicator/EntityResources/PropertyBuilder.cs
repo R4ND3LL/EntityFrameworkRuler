@@ -1,7 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Microsoft.EntityFrameworkCore.ValueGeneration;
-using System.Linq.Expressions;
 
 // ReSharper disable CheckNamespace
 
@@ -163,6 +161,12 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
     }
 
+    public class ValueComparer {
+    }
+
+    public interface IProperty {
+    }
+
     public class PropertyBuilder {
         public PropertyBuilder(IMutableProperty property) { }
         public virtual IMutableProperty Metadata => default;
@@ -289,5 +293,11 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             Type? comparerType) {
             return default;
         }
+    }
+
+    public class ValueGeneratorFactory {
+    }
+
+    public class ValueGenerator {
     }
 }

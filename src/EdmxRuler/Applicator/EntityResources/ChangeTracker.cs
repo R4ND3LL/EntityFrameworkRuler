@@ -1,17 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
+﻿// ReSharper disable CheckNamespace
 
-// ReSharper disable CheckNamespace
 namespace Microsoft.EntityFrameworkCore.ChangeTracking {
     public class ChangeTracker {
-        public ChangeTracker(
-            DbContext context,
-            IStateManager stateManager,
-            IChangeDetector changeDetector,
-            IModel model,
-            IEntityEntryGraphIterator graphIterator) {
-        }
+        public ChangeTracker(DbContext context) { }
 
         public virtual bool AutoDetectChangesEnabled { get; set; } = true;
 
@@ -52,22 +43,26 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking {
         public virtual object DebugView => default;
     }
 
+    public enum QueryTrackingBehavior { }
+
     public class EntityEntryGraphNode<TState> : EntityEntryGraphNode {
         public virtual TState? NodeState { get; set; }
     }
 
-    public class EntityEntryGraphNode : IInfrastructure<InternalEntityEntry> {
+    public class EntityEntryGraphNode {
         public virtual EntityEntry SourceEntry => default;
         public virtual INavigation InboundNavigation => default;
         public virtual object NodeState => default;
         public virtual EntityEntry Entry => default;
-        InternalEntityEntry IInfrastructure<InternalEntityEntry>.Instance => default;
 
         public virtual EntityEntryGraphNode CreateNode(
             EntityEntryGraphNode currentNode,
-            InternalEntityEntry internalEntityEntry,
+            object internalEntityEntry,
             INavigation reachedVia) {
             return default;
         }
+    }
+
+    public interface INavigation {
     }
 }

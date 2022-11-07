@@ -1,12 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
-using System.Globalization;
-using System.Xml.Linq;
-using System.Xml.XPath;
-using Bricelam.EntityFrameworkCore.Design;
 using EdmxRuler.Applicator.CsProjParser;
 using EdmxRuler.Extensions;
-using EdmxRuler.Generator.EdmxModel;
 using EdmxRuler.RuleModels;
 using EdmxRuler.RuleModels.EnumMapping;
 using EdmxRuler.RuleModels.NavigationNaming;
