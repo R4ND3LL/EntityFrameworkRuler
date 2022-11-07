@@ -15,7 +15,7 @@
         <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
         <Copyright>Copyright (c) 2022 MARK RANDELL (R4ND3LL)</Copyright>
         <PackageProjectUrl>https://github.com/R4ND3LL/EdmxRuler</PackageProjectUrl>
-        <PackageIcon>crown.png</PackageIcon>
+        <PackageIcon>crown128.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup> 
@@ -37,10 +37,10 @@
 
     <ItemGroup>
         <None Include="..\..\LICENSE.txt" Pack="true" PackagePath="LICENSE.txt" />
-        <None Include="..\Resources\crown.png">
+        <None Include="..\Resources\crown128.png">
           <Pack>True</Pack>
           <PackagePath></PackagePath>
-          <Link>crown.png</Link>
+          <Link>crown128.png</Link>
         </None>
     </ItemGroup>
     
