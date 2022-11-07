@@ -1,7 +1,9 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Xml;
 using EdmxRuler.Applicator.CsProjParser;
 using EdmxRuler.Extensions;
@@ -149,33 +151,36 @@ public sealed class RuleApplicator {
         var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response);
         if (project == null || !project.Documents.Any()) return response;
 
+        //var compilation = await project.GetCompilationAsync();
+        //var references1 = compilation.ExternalReferences;
+
         var renameCount = 0;
         foreach (var classRename in navigationNamingRules.Classes)
-        foreach (var refRename in classRename.Properties) {
-            var fromNames = new[] { refRename.Name, refRename.AlternateName }
-                .Where(o => !string.IsNullOrEmpty(o)).Distinct().ToArray();
-            if (fromNames.Length == 0) continue;
+            foreach (var refRename in classRename.Properties) {
+                var fromNames = new[] { refRename.Name, refRename.AlternateName }
+                    .Where(o => !string.IsNullOrEmpty(o)).Distinct().ToArray();
+                if (fromNames.Length == 0) continue;
 
-            Document docWithRename = null;
-            foreach (var fromName in fromNames) {
-                if (fromName == refRename.NewName) continue;
-                docWithRename = await project.Documents.RenamePropertyAsync(navigationNamingRules.Namespace,
-                    classRename.Name,
-                    fromName,
-                    refRename.NewName);
-                if (docWithRename != null) break;
+                Document docWithRename = null;
+                foreach (var fromName in fromNames) {
+                    if (fromName == refRename.NewName) continue;
+                    docWithRename = await project.Documents.RenamePropertyAsync(navigationNamingRules.Namespace,
+                        classRename.Name,
+                        fromName,
+                        refRename.NewName);
+                    if (docWithRename != null) break;
+                }
+
+                if (docWithRename != null) {
+                    // documents have been mutated. update reference to workspace:
+                    project = docWithRename.Project;
+                    renameCount++;
+                    response.Information.Add(
+                        $"Renamed class {classRename.Name} property {fromNames[0]} -> {refRename.NewName}");
+                } else
+                    response.Information.Add(
+                        $"Could not find table {classRename.Name} property {string.Join(", ", fromNames)}");
             }
-
-            if (docWithRename != null) {
-                // documents have been mutated. update reference to workspace:
-                project = docWithRename.Project;
-                renameCount++;
-                response.Information.Add(
-                    $"Renamed class {classRename.Name} property {fromNames[0]} -> {refRename.NewName}");
-            } else
-                response.Information.Add(
-                    $"Could not find table {classRename.Name} property {string.Join(", ", fromNames)}");
-        }
 
         if (renameCount == 0) {
             response.Information.Add("No properties renamed");
@@ -199,24 +204,24 @@ public sealed class RuleApplicator {
 
         var renameCount = 0;
         foreach (var classRename in enumMappingRules.Classes)
-        foreach (var refRename in classRename.Properties) {
-            var fromName = refRename.Name?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(fromName)) continue;
+            foreach (var refRename in classRename.Properties) {
+                var fromName = refRename.Name?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(fromName)) continue;
 
-            var docWithRename = await project.Documents.ChangePropertyTypeAsync(enumMappingRules.Namespace,
-                classRename.Name,
-                fromName,
-                refRename.EnumType);
+                var docWithRename = await project.Documents.ChangePropertyTypeAsync(enumMappingRules.Namespace,
+                    classRename.Name,
+                    fromName,
+                    refRename.EnumType);
 
-            if (docWithRename != null) {
-                // documents have been mutated. update reference to workspace:
-                project = docWithRename.Project;
-                renameCount++;
-                response.Information.Add(
-                    $"Updated class {classRename.Name} property {fromName} type to {refRename.EnumType}");
-            } else
-                response.Information.Add($"Could not find table {classRename.Name} property {fromName}");
-        }
+                if (docWithRename != null) {
+                    // documents have been mutated. update reference to workspace:
+                    project = docWithRename.Project;
+                    renameCount++;
+                    response.Information.Add(
+                        $"Updated class {classRename.Name} property {fromName} type to {refRename.EnumType}");
+                } else
+                    response.Information.Add($"Could not find table {classRename.Name} property {fromName}");
+            }
 
         if (renameCount == 0) {
             response.Information.Add("No properties types updated");
@@ -306,22 +311,48 @@ public sealed class RuleApplicator {
             return null;
         }
 
-        var refAssemblies = new[] {
-            typeof(object).Assembly,
-            typeof(Expression<>).Assembly,
-            typeof(IQueryable<>).Assembly,
-            typeof(ImmutableArray<>).Assembly,
-            typeof(ImmutableDictionary<,>).Assembly,
-            typeof(ImmutableDictionary<,>).Assembly,
-            typeof(XmlDocument).Assembly,
-            typeof(HttpClient).Assembly,
-            typeof(HashSet<>).Assembly,
-            typeof(List<>).Assembly,
-            // typeof(IEntityTypeConfiguration<>).Assembly, typeof(SqlServerValueGenerationStrategy).Assembly,
-            // typeof(Microsoft.EntityFrameworkCore.SqlServer.Query.Internal.SearchConditionConvertingExpressionVisitor).Assembly,
-            // typeof(Microsoft.EntityFrameworkCore.RelationalDbFunctionsExtensions).Assembly,
-            typeof(NotMappedAttribute).Assembly
-        }.Distinct().ToList();
+        //var refAssemblies = new[] {
+        //    typeof(object).Assembly,
+        //    typeof(Expression<>).Assembly,
+        //    typeof(IQueryable<>).Assembly,
+        //    typeof(ImmutableArray<>).Assembly,
+        //    typeof(ImmutableDictionary<,>).Assembly,
+        //    typeof(ImmutableDictionary<,>).Assembly,
+        //    typeof(XmlDocument).Assembly,
+        //    typeof(HttpClient).Assembly,
+        //    typeof(HashSet<>).Assembly,
+        //    typeof(List<>).Assembly,
+        //    typeof(LinkedList<>).Assembly,
+        //    typeof(ConcurrentDictionary<,>).Assembly,
+        //    typeof(Uri).Assembly,
+        //    typeof(System.IO.FileStream).Assembly,
+        //    typeof(System.Linq.IGrouping<,>).Assembly,
+        //    typeof(System.Linq.Lookup<,>).Assembly,
+        //    typeof(System.Linq.Enumerable).Assembly,
+        //    typeof(System.Linq.Expressions.Expression).Assembly,
+        //    typeof(System.Linq.Expressions.CatchBlock).Assembly,
+        //    typeof(System.Data.CommandBehavior).Assembly,
+        //    typeof(Action<>).Assembly,
+        //    typeof(System.ComponentModel.CancelEventArgs).Assembly,
+        //    typeof(System.Runtime.JitInfo).Assembly,
+        //    typeof(System.Text.Decoder).Assembly,
+        //    typeof(System.Text.Json.JsonDocument).Assembly,
+        //    typeof(System.ValueTuple<>).Assembly,
+        //    typeof(System.Threading.ReaderWriterLock).Assembly,
+        //    typeof(ValueTask).Assembly,
+        //    typeof(Task).Assembly,
+        //    // typeof(IEntityTypeConfiguration<>).Assembly, typeof(SqlServerValueGenerationStrategy).Assembly,
+        //    // typeof(Microsoft.EntityFrameworkCore.SqlServer.Query.Internal.SearchConditionConvertingExpressionVisitor).Assembly,
+        //    // typeof(Microsoft.EntityFrameworkCore.RelationalDbFunctionsExtensions).Assembly,
+        //    typeof(NotMappedAttribute).Assembly
+        //}.Distinct().ToHashSet();
+
+        var refAssemblies = new HashSet<Assembly>();
+        var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        foreach (var assembly in assemblies) {
+            if (assembly.IsDynamic) continue;
+            refAssemblies.Add(assembly);
+        }
 
         try {
             using var workspace = cSharpFiles

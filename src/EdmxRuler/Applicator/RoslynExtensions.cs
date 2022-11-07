@@ -5,6 +5,7 @@ using EdmxRuler.Extensions;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
@@ -148,8 +149,10 @@ internal static class RoslynExtensions {
             var docs = project.Documents.ToArray();
             var diagnostics = workspace.Diagnostics;
             foreach (var diagnostic in diagnostics)
-                if (diagnostic.Kind == WorkspaceDiagnosticKind.Failure)
-                    throw new Exception(diagnostic.Message);
+                if (diagnostic.Kind == WorkspaceDiagnosticKind.Failure) {
+                    errors?.Add($"Error loading existing project: {diagnostic.Message}");
+                    return null;
+                }
 
             Debug.Assert(docs.Length > 0);
             return project;
@@ -189,7 +192,8 @@ internal static class RoslynExtensions {
     public static AdhocWorkspace GetWorkspaceForFilePaths(
         this IEnumerable<string> filePaths,
         IEnumerable<Assembly> projReferences = null) {
-        var ws = new AdhocWorkspace();
+        var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
+        var ws = new AdhocWorkspace(host);
         var refAssemblies = new HashSet<Assembly>();
         if (projReferences != null) refAssemblies.AddRange(projReferences);
         refAssemblies.Add(typeof(object).Assembly);
