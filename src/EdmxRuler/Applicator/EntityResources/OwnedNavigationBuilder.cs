@@ -1,5 +1,4 @@
-﻿using System.Linq.Expressions;
-using EdmxRuler.Generator.EdmxModel;
+﻿using System.Linq.Expressions; 
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 // ReSharper disable CheckNamespace
