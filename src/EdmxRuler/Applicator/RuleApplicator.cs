@@ -316,6 +316,7 @@ public sealed class RuleApplicator {
             typeof(XmlDocument).Assembly,
             typeof(HttpClient).Assembly,
             typeof(HashSet<>).Assembly,
+            typeof(List<>).Assembly,
             // typeof(IEntityTypeConfiguration<>).Assembly, typeof(SqlServerValueGenerationStrategy).Assembly,
             // typeof(Microsoft.EntityFrameworkCore.SqlServer.Query.Internal.SearchConditionConvertingExpressionVisitor).Assembly,
             // typeof(Microsoft.EntityFrameworkCore.RelationalDbFunctionsExtensions).Assembly,
