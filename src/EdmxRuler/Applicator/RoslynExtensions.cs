@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Text;
 using EdmxRuler.Applicator.CsProjParser;
+using EdmxRuler.Extensions;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -105,14 +106,15 @@ internal static class RoslynExtensions {
     public static async Task<int> SaveDocumentsAsync(this IEnumerable<Document> documents) {
         var saveCount = 0;
         foreach (var document in documents) {
-            var path = document.FilePath ?? throw new Exception("Path unknown for document " + document.Name);
+            var path = document.FilePath;
+            if (path == null) continue;
             var text = string.Join(
                 Environment.NewLine,
                 (await document.GetTextAsync()).Lines.Select(o => o.ToString())).Trim();
-            var orig = File.ReadAllText(path, Encoding.UTF8)?.Trim();
+            var orig = (await File.ReadAllTextAsync(path, Encoding.UTF8))?.Trim();
             if (text == orig) continue;
 
-            File.WriteAllText(path, text, Encoding.UTF8);
+            await File.WriteAllTextAsync(path, text, Encoding.UTF8);
             saveCount++;
         }
 
@@ -182,7 +184,7 @@ internal static class RoslynExtensions {
             "MyAssembly",
             "C#",
             metadataReferences: references);
-        
+
         var projectId = ws.AddProject(projInfo).Id;
 
         foreach (var filePath in filePaths) {
@@ -198,6 +200,22 @@ internal static class RoslynExtensions {
                     SourceCodeKind.Regular,
                     TextLoader.From(TextAndVersion.Create(text, VersionStamp.Default, info.FullName)))
                 .WithFilePath(info.FullName);
+            ws.AddDocument(documentInfo);
+        }
+
+        // load from resources
+        var resources = typeof(RoslynExtensions).Assembly.GetEntityResourceDocuments().ToList();
+        for (var i = 0; i < resources.Count; i++) {
+            var content = resources[i];
+            if (string.IsNullOrEmpty(content)) continue;
+
+            var text = SourceText.From(content);
+            var documentInfo = DocumentInfo.Create(
+                DocumentId.CreateNewId(projectId),
+                $"EntityDependencyDoc{i++}.cs",
+                null,
+                SourceCodeKind.Regular,
+                TextLoader.From(TextAndVersion.Create(text, VersionStamp.Default)));
             ws.AddDocument(documentInfo);
         }
 

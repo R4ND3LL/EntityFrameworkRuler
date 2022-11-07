@@ -47,6 +47,34 @@
 
     <ItemGroup>
       <EmbeddedResource Remove="nupkg\**" />
+      <Compile Remove="Applicator\EntityResources\ChangeTracker.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\ChangeTracker.cs" />
+      <Compile Remove="Applicator\EntityResources\DbContext.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\DbContext.cs" />
+      <Compile Remove="Applicator\EntityResources\DbSet.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\DbSet.cs" />
+      <Compile Remove="Applicator\EntityResources\EntityTypeBuilder.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\EntityTypeBuilder.cs" />
+      <Compile Remove="Applicator\EntityResources\IAsyncEnumerable.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\IAsyncEnumerable.cs" />
+      <Compile Remove="Applicator\EntityResources\IEntityTypeConfiguration.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\IEntityTypeConfiguration.cs" />
+      <Compile Remove="Applicator\EntityResources\IndexBuilder.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\IndexBuilder.cs" />
+      <Compile Remove="Applicator\EntityResources\KeyBuilder.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\KeyBuilder.cs" />
+      <Compile Remove="Applicator\EntityResources\MemberIdentity.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\MemberIdentity.cs" />
+      <Compile Remove="Applicator\EntityResources\NavigationBuilder.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\NavigationBuilder.cs" />
+      <Compile Remove="Applicator\EntityResources\OwnedNavigationBuilder.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\OwnedNavigationBuilder.cs" />
+      <Compile Remove="Applicator\EntityResources\OwnershipBuilder.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\OwnershipBuilder.cs" />
+      <Compile Remove="Applicator\EntityResources\PropertyBuilder.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\PropertyBuilder.cs" />
+      <Compile Remove="Applicator\EntityResources\TypeIdentity.cs" />
+      <EmbeddedResource Include="Applicator\EntityResources\TypeIdentity.cs" />
     </ItemGroup>
 
     <ItemGroup>
