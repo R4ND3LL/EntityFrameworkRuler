@@ -93,8 +93,8 @@ public sealed class RuleApplicator {
             fileNameOptions ??= new RuleFileNameOptions();
 
             var jsonFiles = new[] {
-                    fileNameOptions.RenamingFilename, fileNameOptions.PropertyFilename,
-                    fileNameOptions.EnumMappingFilename
+                    fileNameOptions.PrimitiveNamingFile, fileNameOptions.NavigationNamingFile,
+                    fileNameOptions.EnumMappingFile
                 }
                 .Where(o => o.HasNonWhiteSpace())
                 .Select(o => o.Trim())
@@ -109,13 +109,13 @@ public sealed class RuleApplicator {
                     var fileInfo = new FileInfo(fullPath);
                     if (!fileInfo.Exists) continue;
 
-                    if (jsonFile == fileNameOptions.RenamingFilename) {
+                    if (jsonFile == fileNameOptions.PrimitiveNamingFile) {
                         if (await TryReadRules<PrimitiveNamingRules>(fileInfo, errors) is { } schemas)
                             rules.Add(schemas);
-                    } else if (jsonFile == fileNameOptions.PropertyFilename) {
+                    } else if (jsonFile == fileNameOptions.NavigationNamingFile) {
                         if (await TryReadRules<NavigationNamingRules>(fileInfo, errors) is { } propertyRenamingRoot)
                             rules.Add(propertyRenamingRoot);
-                    } else if (jsonFile == fileNameOptions.EnumMappingFilename) {
+                    } else if (jsonFile == fileNameOptions.EnumMappingFile) {
                         if (await TryReadRules<EnumMappingRules>(fileInfo, errors) is { } enumMappingRoot)
                             rules.Add(enumMappingRoot);
                     }

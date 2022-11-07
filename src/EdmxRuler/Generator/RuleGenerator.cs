@@ -82,9 +82,9 @@ public sealed class RuleGenerator {
         }
 
         fileNameOptions ??= new RuleFileNameOptions();
-        await TryWriteRules(() => PrimitiveNamingRules, fileNameOptions.RenamingFilename);
-        await TryWriteRules(() => NavigationNamingRules, fileNameOptions.PropertyFilename);
-        await TryWriteRules(() => EnumRules, fileNameOptions.EnumMappingFilename);
+        await TryWriteRules(() => PrimitiveNamingRules, fileNameOptions.PrimitiveNamingFile);
+        await TryWriteRules(() => NavigationNamingRules, fileNameOptions.NavigationNamingFile);
+        await TryWriteRules(() => EnumRules, fileNameOptions.EnumMappingFile);
         return Errors.Count == 0;
 
         async Task TryWriteRules<T>(Func<T> ruleGetter, string fileName) where T : class {
