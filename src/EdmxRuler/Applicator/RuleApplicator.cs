@@ -213,7 +213,7 @@ public sealed class RuleApplicator {
                 project = docWithRename.Project;
                 renameCount++;
                 response.Information.Add(
-                    $"Update class {classRename.Name} property {fromName} type to {refRename.EnumType}");
+                    $"Updated class {classRename.Name} property {fromName} type to {refRename.EnumType}");
             } else
                 response.Information.Add($"Could not find table {classRename.Name} property {fromName}");
         }

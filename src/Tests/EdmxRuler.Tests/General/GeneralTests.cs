@@ -46,7 +46,8 @@ public sealed class GeneralTests {
         enumMappingRules.Classes[0].Properties.Count.ShouldBe(1);
         enumMappingRules.Classes[1].Properties.Count.ShouldBe(1);
         enumMappingRules.Classes[0].Properties[0].Name.ShouldBe("Freight");
-        enumMappingRules.Classes[0].Properties[0].EnumType.ShouldBe("NorthwindTestProject.Models.FreightEnum"); // internal type
+        enumMappingRules.Classes[0].Properties[0].EnumType
+            .ShouldBe("NorthwindTestProject.Models.FreightEnum"); // internal type
         enumMappingRules.Classes[1].Properties[0].Name.ShouldBe("ReorderLevel");
         enumMappingRules.Classes[1].Properties[0].EnumType.ShouldBe("Common.OrderLevelEnum"); // external type
 
@@ -94,6 +95,16 @@ public sealed class GeneralTests {
         response.Information.Last().ShouldContain("16 properties renamed across 8 files", Case.Insensitive);
 
         output.WriteLine($"Navigation naming rules applied correctly");
+
+        response = await applicator.ApplyRules(enumMappingRules);
+        response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
+        if (response.Errors.Count == 1) {
+            response.Errors[0].ShouldStartWith("Error loading existing project");
+        }
+
+        response.Information.Count(o => o.StartsWith("Update")).ShouldBe(2);
+        response.Information.Last().ShouldContain("2 properties mapped to enums across 2 files", Case.Insensitive);
+        output.WriteLine($"Enum mapping rules applied correctly");
     }
 
     public static string ResolveNorthwindEdmxPath() {

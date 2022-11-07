@@ -64,7 +64,13 @@ internal static class RoslynExtensions {
         Task<Document> Action(Document document, SyntaxNode root, PropertyDeclarationSyntax propSyntax,
             ISymbol propSymbol) {
             // change type
-            var newType = SyntaxFactory.ParseTypeName($"{newTypeName} ");
+            var currentTypeText = propSyntax.Type?.ToString()?.Trim();
+            var nullable = string.Empty;
+            if (currentTypeText != null && (currentTypeText.StartsWith("Nullable<") || currentTypeText.EndsWith("?"))) {
+                nullable = "?";
+            }
+
+            var newType = SyntaxFactory.ParseTypeName($"{newTypeName}{nullable} ");
             var updatedProp = propSyntax.WithType(newType);
             var newRoot = root!.ReplaceNode(propSyntax, updatedProp);
             var newDocument = document.WithSyntaxRoot(newRoot);
@@ -98,7 +104,8 @@ internal static class RoslynExtensions {
 
             if (namespaceName != null) {
                 var ns = propSymbol.ContainingNamespace;
-                var symbolDisplayFormat = new SymbolDisplayFormat(typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
+                var symbolDisplayFormat = new SymbolDisplayFormat(
+                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
                 var fullyQualifiedName = ns.ToDisplayString(symbolDisplayFormat);
                 if (fullyQualifiedName != namespaceName) continue; // not the correct namespace
             }

@@ -51,6 +51,11 @@ internal static class Program {
                             .ConfigureAwait(false);
                     }
 
+                    foreach (var info in response.GetInformation()) {
+                        await Console.Out.WriteLineAsync($"Info: {info}")
+                            .ConfigureAwait(false);
+                    }
+
                     return errorCount;
                 }
                 default:
