@@ -65,11 +65,11 @@ public sealed class GeneralTests {
         primitiveNamingRules.Schemas[0].Tables.SelectMany(o => o.Columns)
             .ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
 
-        navigationNamingRules.Namespace.ShouldBe("NorthwindTestProject.Models");
+        navigationNamingRules.Namespace.ShouldBe("");
         navigationNamingRules.Classes.Count.ShouldBe(10);
         navigationNamingRules.Classes.All(o => o.Properties.Count > 0).ShouldBeTrue();
-        navigationNamingRules.Classes[0].Properties[0].Name.ShouldContain("ProductCategoryIDNavigations");
-        navigationNamingRules.Classes[0].Properties[0].Name.ShouldContain("Products");
+        navigationNamingRules.Classes[0].Properties[0].Name.Contains("ProductsCategoryIDNavigations").ShouldBeTrue();
+        navigationNamingRules.Classes[0].Properties[0].Name.Contains("Products").ShouldBeTrue();
         navigationNamingRules.Classes[0].Properties[0].NewName.ShouldBe("Products");
         navigationNamingRules.Classes.ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         navigationNamingRules.Classes.SelectMany(o => o.Properties)

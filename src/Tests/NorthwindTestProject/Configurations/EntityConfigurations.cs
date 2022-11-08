@@ -8,7 +8,7 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Categories> {
     public void Configure(EntityTypeBuilder<Categories> builder) {
         builder.ToTable("Categories");
         builder.Property(o => o.CategoryID).IsRequired();
-        builder.HasMany(o => o.ProductCategoryIDNavigations).WithOne(o => o.CategoryIDNavigation);
+        builder.HasMany(o => o.ProductsCategoryIDNavigations).WithOne(o => o.CategoryIDNavigation);
     }
 }
 
@@ -18,8 +18,8 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employees> {
         builder.HasIndex(o => o.FirstName).IsUnique();
         builder.HasIndex(o => o.LastName).IsUnique();
         builder.Property(o => o.ReportsTo).IsRequired();
-        builder.OwnsMany(o => o.OrderEmployeeIDNavigations).HasOne(o => o.EmployeeIDNavigation);
-        builder.OwnsMany(o => o.ReportsToFkNavigations).HasOne(o => o.ReportsToFkNavigation);
+        builder.OwnsMany(o => o.OrdersEmployeeIDNavigations).HasOne(o => o.EmployeeIDNavigation);
+        builder.OwnsMany(o => o.ReportsToNavigations).HasOne(o => o.ReportsToFkNavigation);
     }
 }
 
@@ -27,9 +27,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order> {
     public void Configure(EntityTypeBuilder<Order> builder) {
         builder.ToTable("Orders");
         builder.Property(o => o.ShipVia).IsRequired();
-        builder.HasOne(o => o.CustomerIDNavigation).WithMany(o => o.OrderCustomerIDNavigations);
-        builder.HasOne(o => o.EmployeeIDNavigation).WithMany(o => o.OrderEmployeeIDNavigations);
-        builder.HasMany(o => o.Order_Detail).WithOne(o => o.OrderIDNavigation);
+        builder.HasOne(o => o.CustomerIDNavigation).WithMany(o => o.OrdersCustomerIDNavigations);
+        builder.HasOne(o => o.EmployeeIDNavigation).WithMany(o => o.OrdersEmployeeIDNavigations);
+        builder.HasMany(o => o.Order_DetailsOrderIDNavigations).WithOne(o => o.OrderIDNavigation);
     }
 }
 
@@ -42,7 +42,7 @@ public class SuppliersConfiguration : IEntityTypeConfiguration<Supplier> {
 public class CustomerConfiguration : IEntityTypeConfiguration<Customers> {
     public void Configure(EntityTypeBuilder<Customers> builder) {
         builder.ToTable("Customers");
-        builder.OwnsMany(o => o.OrderCustomerIDNavigations).HasOne(o => o.CustomerIDNavigation);
+        builder.OwnsMany(o => o.OrdersCustomerIDNavigations).HasOne(o => o.CustomerIDNavigation);
     }
 }
 
@@ -55,13 +55,13 @@ public class Order_DetailConfiguration : IEntityTypeConfiguration<Order_Detail> 
 public class RegionConfiguration : IEntityTypeConfiguration<Region> {
     public void Configure(EntityTypeBuilder<Region> builder) {
         builder.ToTable("Regions");
-        builder.OwnsMany(o => o.TerritoryRegionIDNavigations).HasOne(o => o.Region);
+        builder.OwnsMany(o => o.TerritoriesRegionIDNavigations).HasOne(o => o.Region);
     }
 }
 
 public class ShipperConfiguration : IEntityTypeConfiguration<Shipper> {
     public void Configure(EntityTypeBuilder<Shipper> builder) {
         builder.ToTable("Shippers");
-        builder.OwnsMany(o => o.OrderShipViaFkNavigations).HasOne(o => o.ShipViaFkNavigation);
+        builder.OwnsMany(o => o.OrdersShipViaNavigations).HasOne(o => o.Shippers);
     }
 }

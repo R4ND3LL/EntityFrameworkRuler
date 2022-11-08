@@ -24,14 +24,14 @@ internal class Program {
         order.ShipVia = 1;
         Products product = new Products();
         Categories category = product.CategoryIDNavigation;
-        var allCategoryProducts = category.ProductCategoryIDNavigations;
+        var allCategoryProducts = category.ProductsCategoryIDNavigations;
 
         Console.WriteLine($"Some comment {nameof(Products.CategoryIDNavigation)}");
-        Console.WriteLine($"Some comment {nameof(Categories.ProductCategoryIDNavigations)}");
+        Console.WriteLine($"Some comment {nameof(Categories.ProductsCategoryIDNavigations)}");
 
         if (allCategoryProducts?.Count > 0) {
             var list = new List<Categories>();
-            list[0].ProductCategoryIDNavigations.Clear();
+            list[0].ProductsCategoryIDNavigations.Clear();
         }
 
         Console.WriteLine("This is a fake test project to illustrate rule application only!");

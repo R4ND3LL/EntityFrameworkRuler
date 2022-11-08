@@ -29,10 +29,10 @@ public sealed class NorthwindDbContext : DbContext {
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new()) {
         foreach (var entry in ChangeTracker.Entries<Employees>()) {
-            if (entry.Entity.OrderEmployeeIDNavigations.Count == 0)
-                throw new Exception(nameof(Models.Employees.OrderEmployeeIDNavigations));
-            if (entry.Entity.ReportsToFkNavigations.Count == 0)
-                throw new Exception(nameof(Models.Employees.ReportsToFkNavigations));
+            if (entry.Entity.OrdersEmployeeIDNavigations.Count == 0)
+                throw new Exception(nameof(Models.Employees.OrdersEmployeeIDNavigations));
+            if (entry.Entity.ReportsToNavigations.Count == 0)
+                throw new Exception(nameof(Models.Employees.ReportsToNavigations));
             if (entry.Entity.ReportsTo == null)
                 entry.Entity.ReportsTo = 1; // this should rename with primitive rules
         }
