@@ -4,6 +4,7 @@ namespace NorthwindTestProject.Models;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class Product {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
@@ -42,6 +43,7 @@ public partial class Product {
 
         var productWrapper = new ModelWrapper<Product>(this);
         var products = productWrapper.Model.CategoryIDNavigation.ProductCategoryIDNavigations;
+        var cat1= products[0].CategoryIDNavigation;
         var cat2= products.First().CategoryIDNavigation;
         
         var categoryWrapper = new ModelWrapper<Category>(list2[0].CategoryIDNavigation);
