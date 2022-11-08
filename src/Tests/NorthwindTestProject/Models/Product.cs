@@ -42,7 +42,8 @@ public partial class Product {
 
         var productWrapper = new ModelWrapper<Product>(this);
         var products = productWrapper.Model.CategoryIDNavigation.ProductCategoryIDNavigations;
-
+        var cat2= products.First().CategoryIDNavigation;
+        
         var categoryWrapper = new ModelWrapper<Category>(list2[0].CategoryIDNavigation);
         var category = categoryWrapper.Model.ProductCategoryIDNavigations[0].CategoryIDNavigation;
     }
