@@ -177,7 +177,8 @@ public sealed class RuleGenerator {
         if (edmx?.Entities.IsNullOrEmpty() != false) return new NavigationNamingRules();
 
         foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
-            rule.Namespace ??= entity.Namespace;
+            // omit the namespace. it often does not match the Reverse Engineered value
+            rule.Namespace ??= ""; //entity.Namespace;
 
             // if entity name is different than db, it has to go into output
             var tbl = new ClassReference();
@@ -235,7 +236,8 @@ public sealed class RuleGenerator {
         if (edmx?.Entities.IsNullOrEmpty() != false) return rule;
 
         foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
-            rule.Namespace ??= entity.Namespace;
+            // omit the namespace. it often does not match the Reverse Engineered value
+            rule.Namespace ??= ""; //entity.Namespace;
 
             // if entity name is different than db, it has to go into output
             var tbl = new EnumMappingClass();
