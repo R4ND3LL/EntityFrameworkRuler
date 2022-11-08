@@ -8,12 +8,12 @@ using NorthwindTestProject.Models;
 namespace NorthwindTestProject.Data;
 
 public sealed class NorthwindDbContext : DbContext {
-    public DbSet<Category> Categories { get; set; }
-    public DbSet<Customer> Customer { get; set; }
-    public DbSet<Employee> Employees { get; set; }
+    public DbSet<Categories> Categories { get; set; }
+    public DbSet<Customers> Customer { get; set; }
+    public DbSet<Employees> Employees { get; set; }
     public DbSet<Order> Orders { get; set; }
     public DbSet<Order_Detail> OrderDetails { get; set; }
-    public DbSet<Product> Products { get; set; }
+    public DbSet<Products> Products { get; set; }
     public DbSet<Region> Regions { get; set; }
     public DbSet<Shipper> Shippers { get; set; }
     public DbSet<Territory> Territories { get; set; }
@@ -28,11 +28,11 @@ public sealed class NorthwindDbContext : DbContext {
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new()) {
-        foreach (var entry in ChangeTracker.Entries<Employee>()) {
+        foreach (var entry in ChangeTracker.Entries<Employees>()) {
             if (entry.Entity.OrderEmployeeIDNavigations.Count == 0)
-                throw new Exception(nameof(Employee.OrderEmployeeIDNavigations));
+                throw new Exception(nameof(Models.Employees.OrderEmployeeIDNavigations));
             if (entry.Entity.ReportsToFkNavigations.Count == 0)
-                throw new Exception(nameof(Employee.ReportsToFkNavigations));
+                throw new Exception(nameof(Models.Employees.ReportsToFkNavigations));
             if (entry.Entity.ReportsTo == null)
                 entry.Entity.ReportsTo = 1; // this should rename with primitive rules
         }

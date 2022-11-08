@@ -1,4 +1,4 @@
-namespace NorthwindTestProject.Models;
+﻿namespace NorthwindTestProject.Models;
 
 using System;
 using System.Collections.Generic;
@@ -31,9 +31,9 @@ public partial class Order {
     public string ShipCountry { get; set; }
 
     /// <summary> Should rename to Customer </summary>
-    public virtual Customer CustomerIDNavigation { get; set; }
+    public virtual Customers CustomerIDNavigation { get; set; }
 
-    public virtual Employee EmployeeIDNavigation { get; set; }
+    public virtual Employees EmployeeIDNavigation { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
     public virtual ICollection<Order_Detail> Order_Detail { get; set; }

@@ -1,13 +1,13 @@
-namespace NorthwindTestProject.Models;
+﻿namespace NorthwindTestProject.Models;
 
 using System;
 using System.Collections.Generic;
 
-public partial class Employee {
+public partial class Employees {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
         "CA2214:DoNotCallOverridableMethodsInConstructors")]
-    public Employee() {
-        ReportsToFkNavigations = new HashSet<Employee>();
+    public Employees() {
+        ReportsToFkNavigations = new HashSet<Employees>();
         OrderEmployeeIDNavigations = new HashSet<Order>();
         Territories = new HashSet<Territory>();
     }
@@ -35,9 +35,9 @@ public partial class Employee {
     public string PhotoPath { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual ICollection<Employee> ReportsToFkNavigations { get; set; }
+    public virtual ICollection<Employees> ReportsToFkNavigations { get; set; }
 
-    public virtual Employee ReportsToFkNavigation { get; set; }
+    public virtual Employees ReportsToFkNavigation { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
     public virtual ICollection<Order> OrderEmployeeIDNavigations { get; set; }

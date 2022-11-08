@@ -1,4 +1,4 @@
-namespace NorthwindTestProject.Models;
+﻿namespace NorthwindTestProject.Models;
 
 using System;
 using System.Collections.Generic;
@@ -11,5 +11,5 @@ public partial class Order_Detail {
     public float Discount { get; set; }
 
     public virtual Order OrderIDNavigation { get; set; }
-    public virtual Product ProductIDNavigation { get; set; }
+    public virtual Products ProductIDNavigation { get; set; }
 }

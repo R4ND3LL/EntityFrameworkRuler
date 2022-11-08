@@ -4,16 +4,16 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace NorthwindTestProject.Configurations;
 
-public class CategoryConfiguration : IEntityTypeConfiguration<Category> {
-    public void Configure(EntityTypeBuilder<Category> builder) {
+public class CategoryConfiguration : IEntityTypeConfiguration<Categories> {
+    public void Configure(EntityTypeBuilder<Categories> builder) {
         builder.ToTable("Categories");
         builder.Property(o => o.CategoryID).IsRequired();
         builder.HasMany(o => o.ProductCategoryIDNavigations).WithOne(o => o.CategoryIDNavigation);
     }
 }
 
-public class EmployeeConfiguration : IEntityTypeConfiguration<Employee> {
-    public void Configure(EntityTypeBuilder<Employee> builder) {
+public class EmployeeConfiguration : IEntityTypeConfiguration<Employees> {
+    public void Configure(EntityTypeBuilder<Employees> builder) {
         builder.ToTable("Employees");
         builder.HasIndex(o => o.FirstName).IsUnique();
         builder.HasIndex(o => o.LastName).IsUnique();
@@ -39,8 +39,8 @@ public class SuppliersConfiguration : IEntityTypeConfiguration<Supplier> {
     }
 }
 
-public class CustomerConfiguration : IEntityTypeConfiguration<Customer> {
-    public void Configure(EntityTypeBuilder<Customer> builder) {
+public class CustomerConfiguration : IEntityTypeConfiguration<Customers> {
+    public void Configure(EntityTypeBuilder<Customers> builder) {
         builder.ToTable("Customers");
         builder.OwnsMany(o => o.OrderCustomerIDNavigations).HasOne(o => o.CustomerIDNavigation);
     }

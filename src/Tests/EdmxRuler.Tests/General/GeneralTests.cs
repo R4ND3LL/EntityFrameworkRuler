@@ -82,12 +82,22 @@ public sealed class GeneralTests {
         var csProj = ResolveNorthwindProject();
         var projBasePath = new FileInfo(csProj).Directory!.FullName;
         var applicator = new RuleApplicator(projBasePath);
-        var response = await applicator.ApplyRules(navigationNamingRules);
+        
+        ApplyRulesResponse response;
+        response = await applicator.ApplyRules(primitiveNamingRules);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count == 1) {
             response.Errors[0].ShouldStartWith("Error loading existing project");
         }
-
+        response.Information.Count(o => o.StartsWith("Update")).ShouldBe(2);
+        response.Information.Last().ShouldContain("2 properties mapped to enums across 2 files", Case.Insensitive);
+        output.WriteLine($"Primitive naming rules applied correctly");
+        
+        response = await applicator.ApplyRules(navigationNamingRules);
+        response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
+        if (response.Errors.Count == 1) {
+            response.Errors[0].ShouldStartWith("Error loading existing project");
+        }
         var renamed = response.Information.Where(o => o.StartsWith("Renamed")).ToArray();
         renamed.Length.ShouldBe(16);
         var couldNotFind = response.Information.Where(o => o.StartsWith("Could not find ")).ToArray();
@@ -103,7 +113,7 @@ public sealed class GeneralTests {
         }
 
         response.Information.Count(o => o.StartsWith("Update")).ShouldBe(2);
-        response.Information.Last().ShouldContain("2 properties mapped to enums across 2 files", Case.Insensitive);
+        response.Information.Last().ShouldContain("2 property types changed across 2 files", Case.Insensitive);
         output.WriteLine($"Enum mapping rules applied correctly");
     }
 

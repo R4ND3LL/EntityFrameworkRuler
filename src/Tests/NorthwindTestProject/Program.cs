@@ -22,15 +22,15 @@ internal class Program {
         // ReSharper disable once SuggestVarOrType_SimpleTypes
         Order order = dbContext.Orders.FirstOrDefault();
         order.ShipVia = 1;
-        Product product = new Product();
-        Category category = product.CategoryIDNavigation;
+        Products product = new Products();
+        Categories category = product.CategoryIDNavigation;
         var allCategoryProducts = category.ProductCategoryIDNavigations;
 
-        Console.WriteLine($"Some comment {nameof(Product.CategoryIDNavigation)}");
-        Console.WriteLine($"Some comment {nameof(Category.ProductCategoryIDNavigations)}");
+        Console.WriteLine($"Some comment {nameof(Products.CategoryIDNavigation)}");
+        Console.WriteLine($"Some comment {nameof(Categories.ProductCategoryIDNavigations)}");
 
         if (allCategoryProducts?.Count > 0) {
-            var list = new List<Category>();
+            var list = new List<Categories>();
             list[0].ProductCategoryIDNavigations.Clear();
         }
 

@@ -178,10 +178,15 @@ public sealed class RuleApplicator {
     /// <returns></returns>
     public async Task<ApplyRulesResponse> ApplyRules(PrimitiveNamingRules primitiveNamingRules,
         string contextFolder = null, string modelsFolder = null) {
-        // map to class renaming 
-        var rules = primitiveNamingRules.ToPropertyRules();
-        var response = await ApplyRules(rules, contextFolder, modelsFolder);
-        response.Rule = primitiveNamingRules;
+        // map to class renaming
+        var response = new ApplyRulesResponse(primitiveNamingRules);
+        foreach (var schema in primitiveNamingRules.Schemas) {
+            var schemaResponse = new ApplyRulesResponse(null);
+            await ApplyRulesCore(schema.Tables, null, schemaResponse, contextFolder, modelsFolder);
+            response.Errors.AddRange(schemaResponse.Errors);
+            response.Information.AddRange(schemaResponse.Information);
+        }
+
         return response;
     }
 
@@ -297,6 +302,7 @@ public sealed class RuleApplicator {
             return response;
         }
 
+        throw new Exception(" no save ! ");
         var saved = await project.Documents.SaveDocumentsAsync();
 
         var sb = new StringBuilder();

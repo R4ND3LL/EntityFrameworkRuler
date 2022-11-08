@@ -6,10 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public partial class Product {
+public partial class Products {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
         "CA2214:DoNotCallOverridableMethodsInConstructors")]
-    public Product() {
+    public Products() {
         Order_Detail = new HashSet<Order_Detail>();
     }
 
@@ -28,7 +28,7 @@ public partial class Product {
 
     public bool Discontinued { get; set; }
 
-    public virtual Category CategoryIDNavigation { get; set; }
+    public virtual Categories CategoryIDNavigation { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
     public virtual ICollection<Order_Detail> Order_Detail { get; set; }
@@ -36,17 +36,17 @@ public partial class Product {
     public virtual Supplier SupplierIDNavigation { get; set; }
 
     public void SomeMethod() {
-        var list = new List<Category>();
+        var list = new List<Categories>();
         list[0].ProductCategoryIDNavigations.Clear(); // generic rename challenge
-        var list2 = new List<Product>();
+        var list2 = new List<Products>();
         list2[0].CategoryIDNavigation = null; // generic rename challenge
 
-        var productWrapper = new ModelWrapper<Product>(this);
+        var productWrapper = new ModelWrapper<Products>(this);
         var products = productWrapper.Model.CategoryIDNavigation.ProductCategoryIDNavigations;
         var cat1= products[0].CategoryIDNavigation;
         var cat2= products.First().CategoryIDNavigation;
         
-        var categoryWrapper = new ModelWrapper<Category>(list2[0].CategoryIDNavigation);
+        var categoryWrapper = new ModelWrapper<Categories>(list2[0].CategoryIDNavigation);
         var category = categoryWrapper.Model.ProductCategoryIDNavigations[0].CategoryIDNavigation;
     }
 }

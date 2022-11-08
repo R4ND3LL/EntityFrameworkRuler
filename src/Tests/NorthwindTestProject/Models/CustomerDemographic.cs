@@ -7,12 +7,12 @@ public partial class CustomerDemographic {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
         "CA2214:DoNotCallOverridableMethodsInConstructors")]
     public CustomerDemographic() {
-        Customers = new HashSet<Customer>();
+        Customers = new HashSet<Customers>();
     }
 
     public string CustomerTypeID { get; set; }
     public string CustomerDesc { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual ICollection<Customer> Customers { get; set; }
+    public virtual ICollection<Customers> Customers { get; set; }
 }
