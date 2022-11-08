@@ -34,6 +34,6 @@ public sealed class SchemaReference {
     public string ColumnPatternReplaceWith { get; set; }
 
     /// <summary> Optional namespace used when identifying classes.  Setting this will help to positively identify ambiguously names classes. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false)]
+    [DataMember(EmitDefaultValue = true, IsRequired = false)]
     public string Namespace { get; set; }
 }

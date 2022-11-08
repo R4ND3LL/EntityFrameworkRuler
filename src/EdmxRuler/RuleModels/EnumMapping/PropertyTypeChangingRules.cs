@@ -9,7 +9,7 @@ namespace EdmxRuler.RuleModels.EnumMapping;
 [DataContract]
 public sealed class PropertyTypeChangingRules : IEdmxRuleModelRoot {
     /// <summary> Optional namespace used when identifying classes.  Setting this will help to positively identify ambiguously names classes. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false)]
+    [DataMember(EmitDefaultValue = true, IsRequired = false)]
     public string Namespace { get; set; }
 
     [DataMember(EmitDefaultValue = false, IsRequired = false)]
