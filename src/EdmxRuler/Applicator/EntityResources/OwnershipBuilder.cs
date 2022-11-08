@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Linq.Expressions;
 
 // ReSharper disable CheckNamespace
 
@@ -21,7 +22,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual OwnershipBuilder<TEntity, TDependentEntity> HasAnnotation(
             string annotation,
-            object? value) {
+            object value) {
             return default;
         }
 
@@ -41,7 +42,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual OwnershipBuilder<TEntity, TDependentEntity> HasPrincipalKey(
-            Expression<Func<TEntity, object?>> keyExpression) {
+            Expression<Func<TEntity, object>> keyExpression) {
             return default;
         }
     }
@@ -53,7 +54,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             IMutableForeignKey foreignKey) {
         }
 
-        public virtual OwnershipBuilder HasAnnotation(string annotation, object? value) {
+        public virtual OwnershipBuilder HasAnnotation(string annotation, object value) {
             return default;
         }
 

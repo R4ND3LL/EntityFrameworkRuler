@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             : base(key) {
         }
 
-        public virtual KeyBuilder<T> HasAnnotation(string annotation, object? value) {
+        public virtual KeyBuilder<T> HasAnnotation(string annotation, object value) {
             return (KeyBuilder<T>)base.HasAnnotation(annotation, value);
         }
     }
@@ -18,7 +18,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         public KeyBuilder(IMutableKey key) {
         }
 
-        public virtual KeyBuilder HasAnnotation(string annotation, object? value) {
+        public virtual KeyBuilder HasAnnotation(string annotation, object value) {
             return default;
         }
     }

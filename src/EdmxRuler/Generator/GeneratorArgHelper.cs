@@ -1,4 +1,7 @@
-﻿using EdmxRuler.Extensions;
+﻿using System;
+using System.IO;
+using System.Linq;
+using EdmxRuler.Extensions;
 
 namespace EdmxRuler.Generator;
 

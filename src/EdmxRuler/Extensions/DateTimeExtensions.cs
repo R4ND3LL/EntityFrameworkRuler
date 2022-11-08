@@ -1,4 +1,6 @@
-﻿namespace EdmxRuler.Extensions;
+﻿using System;
+
+namespace EdmxRuler.Extensions;
 
 internal static class DateTimeExtensions {
     /// <summary>

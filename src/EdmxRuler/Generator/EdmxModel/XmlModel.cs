@@ -5,6 +5,7 @@
  http://www.apache.org/licenses/LICENSE-2.0
  */
 
+using System.Collections.Generic;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 

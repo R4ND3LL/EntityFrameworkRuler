@@ -1,4 +1,8 @@
-﻿namespace EdmxRuler.Applicator;
+﻿using System;
+using System.IO;
+using System.Linq;
+
+namespace EdmxRuler.Applicator;
 
 public static class ApplicatorArgHelper {
     internal static bool TryParseArgs(string[] args, out string projectBasePath) {

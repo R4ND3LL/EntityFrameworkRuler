@@ -1,5 +1,8 @@
 ﻿// ReSharper disable CheckNamespace
 
+using System;
+using System.Collections.Generic;
+
 namespace Microsoft.EntityFrameworkCore.ChangeTracking {
     public class ChangeTracker {
         public ChangeTracker(DbContext context) { }
@@ -35,7 +38,7 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking {
 
         public virtual void TrackGraph<TState>(
             object rootEntity,
-            TState? state,
+            TState state,
             Func<EntityEntryGraphNode<TState>, bool> callback) {
         }
 
@@ -46,7 +49,7 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking {
     public enum QueryTrackingBehavior { }
 
     public class EntityEntryGraphNode<TState> : EntityEntryGraphNode {
-        public virtual TState? NodeState { get; set; }
+        public virtual TState NodeState { get; set; }
     }
 
     public class EntityEntryGraphNode {

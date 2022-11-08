@@ -1,6 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using NorthwindTestProject.Data;
 using NorthwindTestProject.Models;
+using System.Collections.Generic;
+using System.Linq;
+
 // ReSharper disable CollectionNeverUpdated.Local
 // ReSharper disable SuggestVarOrType_SimpleTypes
 // ReSharper disable PossibleNullReferenceException

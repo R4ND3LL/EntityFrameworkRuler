@@ -1,6 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 // ReSharper disable CheckNamespace
 namespace Microsoft.EntityFrameworkCore {
@@ -131,31 +136,31 @@ namespace Microsoft.EntityFrameworkCore {
 
         public virtual void RemoveRange(IEnumerable<object> entities) { }
 
-        public virtual object? Find(Type entityType, params object?[]? keyValues) {
+        public virtual object Find(Type entityType, params object[] keyValues) {
             return default;
         }
 
-        public virtual ValueTask<object?> FindAsync(Type entityType, params object?[]? keyValues) {
+        public virtual ValueTask<object> FindAsync(Type entityType, params object[] keyValues) {
             return default;
         }
 
-        public virtual ValueTask<object?> FindAsync(
+        public virtual ValueTask<object> FindAsync(
             Type entityType,
-            object?[]? keyValues,
+            object[] keyValues,
             CancellationToken cancellationToken) {
             return default;
         }
 
-        public virtual TEntity? Find<TEntity>(params object?[]? keyValues) where TEntity : class {
+        public virtual TEntity Find<TEntity>(params object[] keyValues) where TEntity : class {
             return default;
         }
 
-        public virtual ValueTask<TEntity?> FindAsync<TEntity>(params object?[]? keyValues) where TEntity : class {
+        public virtual ValueTask<TEntity> FindAsync<TEntity>(params object[] keyValues) where TEntity : class {
             return default;
         }
 
-        public virtual ValueTask<TEntity?> FindAsync<TEntity>(
-            object?[]? keyValues,
+        public virtual ValueTask<TEntity> FindAsync<TEntity>(
+            object[] keyValues,
             CancellationToken cancellationToken)
             where TEntity : class {
             return default;

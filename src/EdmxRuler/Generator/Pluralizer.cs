@@ -16,7 +16,10 @@
 //     Microsoft Open Technologies, Inc. - initial API and implementation
 //     Brice Lambson - simplify and port to EF Core
 
+using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text.RegularExpressions; 
 
 namespace EdmxRuler.Generator;

@@ -1,4 +1,6 @@
-﻿using System.Linq.Expressions; 
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions; 
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 // ReSharper disable CheckNamespace
@@ -16,7 +18,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual OwnedNavigationBuilder<TOwnerEntity, TDependentEntity> HasAnnotation(
             string annotation,
-            object? value) {
+            object value) {
             return default;
         }
 
@@ -35,13 +37,13 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual NavigationBuilder<TDependentEntity, TNavigation> Navigation<TNavigation>(
-            Expression<Func<TDependentEntity, TNavigation?>> navigationExpression)
+            Expression<Func<TDependentEntity, TNavigation>> navigationExpression)
             where TNavigation : class {
             return default;
         }
 
         public virtual NavigationBuilder<TDependentEntity, TNavigation> Navigation<TNavigation>(
-            Expression<Func<TDependentEntity, IEnumerable<TNavigation>?>> navigationExpression)
+            Expression<Func<TDependentEntity, IEnumerable<TNavigation>>> navigationExpression)
             where TNavigation : class {
             return default;
         }
@@ -52,12 +54,12 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual OwnedNavigationBuilder<TOwnerEntity, TDependentEntity> Ignore(
-            Expression<Func<TDependentEntity, object?>> propertyExpression) {
+            Expression<Func<TDependentEntity, object>> propertyExpression) {
             return default;
         }
 
         public virtual IndexBuilder<TDependentEntity> HasIndex(
-            Expression<Func<TDependentEntity, object?>> indexExpression) {
+            Expression<Func<TDependentEntity, object>> indexExpression) {
             return default;
         }
 
@@ -66,12 +68,12 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual OwnershipBuilder<TOwnerEntity, TDependentEntity> WithOwner(
-            string? ownerReference = null) {
+            string ownerReference = null) {
             return default;
         }
 
         public virtual OwnershipBuilder<TOwnerEntity, TDependentEntity> WithOwner(
-            Expression<Func<TDependentEntity, TOwnerEntity?>>? referenceExpression) {
+            Expression<Func<TDependentEntity, TOwnerEntity>> referenceExpression) {
             return default;
         }
 
@@ -89,14 +91,14 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual OwnedNavigationBuilder<TDependentEntity, TNewDependentEntity> OwnsOne<TNewDependentEntity>(
-            Expression<Func<TDependentEntity, TNewDependentEntity?>> navigationExpression)
+            Expression<Func<TDependentEntity, TNewDependentEntity>> navigationExpression)
             where TNewDependentEntity : class {
             return default;
         }
 
         public virtual OwnedNavigationBuilder<TDependentEntity, TNewDependentEntity> OwnsOne<TNewDependentEntity>(
             string ownedTypeName,
-            Expression<Func<TDependentEntity, TNewDependentEntity?>> navigationExpression)
+            Expression<Func<TDependentEntity, TNewDependentEntity>> navigationExpression)
             where TNewDependentEntity : class {
             return default;
         }
@@ -139,7 +141,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual OwnedNavigationBuilder<TOwnerEntity, TDependentEntity> OwnsOne<TNewDependentEntity>(
-            Expression<Func<TDependentEntity, TNewDependentEntity?>> navigationExpression,
+            Expression<Func<TDependentEntity, TNewDependentEntity>> navigationExpression,
             Action<OwnedNavigationBuilder<TDependentEntity, TNewDependentEntity>> buildAction)
             where TNewDependentEntity : class {
             return default;
@@ -147,7 +149,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual OwnedNavigationBuilder<TOwnerEntity, TDependentEntity> OwnsOne<TNewDependentEntity>(
             string ownedTypeName,
-            Expression<Func<TDependentEntity, TNewDependentEntity?>> navigationExpression,
+            Expression<Func<TDependentEntity, TNewDependentEntity>> navigationExpression,
             Action<OwnedNavigationBuilder<TDependentEntity, TNewDependentEntity>> buildAction)
             where TNewDependentEntity : class {
             return default;
@@ -167,14 +169,14 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual OwnedNavigationBuilder<TDependentEntity, TNewDependentEntity> OwnsMany<TNewDependentEntity>(
-            Expression<Func<TDependentEntity, IEnumerable<TNewDependentEntity>?>> navigationExpression)
+            Expression<Func<TDependentEntity, IEnumerable<TNewDependentEntity>>> navigationExpression)
             where TNewDependentEntity : class {
             return default;
         }
 
         public virtual OwnedNavigationBuilder<TDependentEntity, TNewDependentEntity> OwnsMany<TNewDependentEntity>(
             string ownedTypeName,
-            Expression<Func<TDependentEntity, IEnumerable<TNewDependentEntity>?>> navigationExpression)
+            Expression<Func<TDependentEntity, IEnumerable<TNewDependentEntity>>> navigationExpression)
             where TNewDependentEntity : class {
             return default;
         }
@@ -217,7 +219,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual OwnedNavigationBuilder<TOwnerEntity, TDependentEntity> OwnsMany<TNewDependentEntity>(
-            Expression<Func<TDependentEntity, IEnumerable<TNewDependentEntity>?>> navigationExpression,
+            Expression<Func<TDependentEntity, IEnumerable<TNewDependentEntity>>> navigationExpression,
             Action<OwnedNavigationBuilder<TDependentEntity, TNewDependentEntity>> buildAction)
             where TNewDependentEntity : class {
             return default;
@@ -225,20 +227,20 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual OwnedNavigationBuilder<TOwnerEntity, TDependentEntity> OwnsMany<TNewDependentEntity>(
             string ownedTypeName,
-            Expression<Func<TDependentEntity, IEnumerable<TNewDependentEntity>?>> navigationExpression,
+            Expression<Func<TDependentEntity, IEnumerable<TNewDependentEntity>>> navigationExpression,
             Action<OwnedNavigationBuilder<TDependentEntity, TNewDependentEntity>> buildAction)
             where TNewDependentEntity : class {
             return default;
         }
 
         public virtual ReferenceNavigationBuilder<TDependentEntity, TNewRelatedEntity> HasOne<TNewRelatedEntity>(
-            string? navigationName)
+            string navigationName)
             where TNewRelatedEntity : class {
             return default;
         }
 
         public virtual ReferenceNavigationBuilder<TDependentEntity, TNewRelatedEntity> HasOne<TNewRelatedEntity>(
-            Expression<Func<TDependentEntity, TNewRelatedEntity?>>? navigationExpression = null)
+            Expression<Func<TDependentEntity, TNewRelatedEntity>> navigationExpression = null)
             where TNewRelatedEntity : class {
             return default;
         }
@@ -286,7 +288,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual OwnedNavigationBuilder HasAnnotation(
             string annotation,
-            object? value) {
+            object value) {
             return default;
         }
 
@@ -329,7 +331,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             return default;
         }
 
-        public virtual OwnershipBuilder WithOwner(string? ownerReference = null) {
+        public virtual OwnershipBuilder WithOwner(string ownerReference = null) {
             return default;
         }
 
@@ -429,7 +431,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual ReferenceNavigationBuilder HasOne(
             string relatedTypeName,
-            string? navigationName) {
+            string navigationName) {
             return default;
         }
 
@@ -439,19 +441,19 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual ReferenceNavigationBuilder HasOne(
             Type relatedType,
-            string? navigationName = null) {
+            string navigationName = null) {
             return default;
         }
 
         protected virtual EntityType FindRelatedEntityType(
             string relatedTypeName,
-            string? navigationName) {
+            string navigationName) {
             return default;
         }
 
         protected virtual EntityType FindRelatedEntityType(
             Type relatedType,
-            string? navigationName) {
+            string navigationName) {
             return default;
         }
 

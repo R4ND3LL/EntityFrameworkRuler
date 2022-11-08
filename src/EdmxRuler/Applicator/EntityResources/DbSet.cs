@@ -1,5 +1,10 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 // ReSharper disable CheckNamespace
@@ -36,16 +41,16 @@ namespace Microsoft.EntityFrameworkCore {
 
         public virtual LocalView<TEntity> Local => throw new NotSupportedException();
 
-        public virtual TEntity? Find(params object?[]? keyValues) {
+        public virtual TEntity Find(params object[] keyValues) {
             throw new NotSupportedException();
         }
 
-        public virtual ValueTask<TEntity?> FindAsync(params object?[]? keyValues) {
+        public virtual ValueTask<TEntity> FindAsync(params object[] keyValues) {
             throw new NotSupportedException();
         }
 
-        public virtual ValueTask<TEntity?> FindAsync(
-            object?[]? keyValues,
+        public virtual ValueTask<TEntity> FindAsync(
+            object[] keyValues,
             CancellationToken cancellationToken) {
             throw new NotSupportedException();
         }

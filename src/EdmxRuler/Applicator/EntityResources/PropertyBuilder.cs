@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 // ReSharper disable CheckNamespace
@@ -10,7 +11,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
     public class PropertyBuilder<TProperty> : PropertyBuilder {
         public PropertyBuilder(IMutableProperty property) : base(property) { }
 
-        public virtual PropertyBuilder<TProperty> HasAnnotation(string annotation, object? value) {
+        public virtual PropertyBuilder<TProperty> HasAnnotation(string annotation, object value) {
             return this;
         }
 
@@ -43,7 +44,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual PropertyBuilder<TProperty> HasValueGenerator(
-            Type? valueGeneratorType) {
+            Type valueGeneratorType) {
             return this;
         }
 
@@ -58,7 +59,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual PropertyBuilder<TProperty> HasValueGeneratorFactory(
-            Type? valueGeneratorFactoryType) {
+            Type valueGeneratorFactoryType) {
             return this;
         }
 
@@ -100,7 +101,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             return this;
         }
 
-        public virtual PropertyBuilder<TProperty> HasConversion(Type? providerClrType) {
+        public virtual PropertyBuilder<TProperty> HasConversion(Type providerClrType) {
             return this;
         }
 
@@ -111,41 +112,41 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual PropertyBuilder<TProperty> HasConversion<TProvider>(
-            ValueConverter<TProperty, TProvider>? converter) {
+            ValueConverter<TProperty, TProvider> converter) {
             return this;
         }
 
-        public virtual PropertyBuilder<TProperty> HasConversion(ValueConverter? converter) {
+        public virtual PropertyBuilder<TProperty> HasConversion(ValueConverter converter) {
             return this;
         }
 
         public virtual PropertyBuilder<TProperty> HasConversion<TConversion>(
-            ValueComparer? valueComparer) {
+            ValueComparer valueComparer) {
             return this;
         }
 
         public virtual PropertyBuilder<TProperty> HasConversion(
             Type conversionType,
-            ValueComparer? valueComparer) {
+            ValueComparer valueComparer) {
             return this;
         }
 
         public virtual PropertyBuilder<TProperty> HasConversion<TProvider>(
             Expression<Func<TProperty, TProvider>> convertToProviderExpression,
             Expression<Func<TProvider, TProperty>> convertFromProviderExpression,
-            ValueComparer? valueComparer) {
+            ValueComparer valueComparer) {
             return this;
         }
 
         public virtual PropertyBuilder<TProperty> HasConversion<TProvider>(
-            ValueConverter<TProperty, TProvider>? converter,
-            ValueComparer? valueComparer) {
+            ValueConverter<TProperty, TProvider> converter,
+            ValueComparer valueComparer) {
             return this;
         }
 
         public virtual PropertyBuilder<TProperty> HasConversion(
-            ValueConverter? converter,
-            ValueComparer? valueComparer) {
+            ValueConverter converter,
+            ValueComparer valueComparer) {
             return this;
         }
 
@@ -156,7 +157,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual PropertyBuilder<TProperty> HasConversion(
             Type conversionType,
-            Type? comparerType) {
+            Type comparerType) {
             return this;
         }
     }
@@ -171,7 +172,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         public PropertyBuilder(IMutableProperty property) { }
         public virtual IMutableProperty Metadata => default;
 
-        public virtual PropertyBuilder HasAnnotation(string annotation, object? value) {
+        public virtual PropertyBuilder HasAnnotation(string annotation, object value) {
             return default;
         }
 
@@ -203,7 +204,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             return default;
         }
 
-        public virtual PropertyBuilder HasValueGenerator(Type? valueGeneratorType) {
+        public virtual PropertyBuilder HasValueGenerator(Type valueGeneratorType) {
             return default;
         }
 
@@ -217,7 +218,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual PropertyBuilder HasValueGeneratorFactory(
-            Type? valueGeneratorFactoryType) {
+            Type valueGeneratorFactoryType) {
             return default;
         }
 
@@ -259,28 +260,28 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             return default;
         }
 
-        public virtual PropertyBuilder HasConversion(Type? conversionType) {
+        public virtual PropertyBuilder HasConversion(Type conversionType) {
             return default;
         }
 
-        public virtual PropertyBuilder HasConversion(ValueConverter? converter) {
+        public virtual PropertyBuilder HasConversion(ValueConverter converter) {
             return default;
         }
 
         public virtual PropertyBuilder HasConversion<TConversion>(
-            ValueComparer? valueComparer) {
+            ValueComparer valueComparer) {
             return default;
         }
 
         public virtual PropertyBuilder HasConversion(
             Type conversionType,
-            ValueComparer? valueComparer) {
+            ValueComparer valueComparer) {
             return default;
         }
 
         public virtual PropertyBuilder HasConversion(
-            ValueConverter? converter,
-            ValueComparer? valueComparer) {
+            ValueConverter converter,
+            ValueComparer valueComparer) {
             return default;
         }
 
@@ -290,7 +291,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual PropertyBuilder HasConversion(
             Type conversionType,
-            Type? comparerType) {
+            Type comparerType) {
             return default;
         }
     }

@@ -1,4 +1,6 @@
 ﻿
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection; 
@@ -8,36 +10,36 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         where TEntity : class
         where TRelatedEntity : class {
         public new virtual ReferenceCollectionBuilder<TRelatedEntity, TEntity> WithMany(
-            string? navigationName = null)
+            string navigationName = null)
             => default;
 
         public virtual ReferenceCollectionBuilder<TRelatedEntity, TEntity> WithMany(
-            Expression<Func<TRelatedEntity, IEnumerable<TEntity>>>? navigationExpression)
+            Expression<Func<TRelatedEntity, IEnumerable<TEntity>>> navigationExpression)
             => default;
 
         public new virtual ReferenceReferenceBuilder<TEntity, TRelatedEntity> WithOne(
-            string? navigationName = null)
+            string navigationName = null)
             => default;
 
         public virtual ReferenceReferenceBuilder<TEntity, TRelatedEntity> WithOne(
-            Expression<Func<TRelatedEntity, TEntity?>>? navigationExpression)
+            Expression<Func<TRelatedEntity, TEntity>> navigationExpression)
             => default;
     }
 
     public class ReferenceNavigationBuilder {
         protected virtual InternalForeignKeyBuilder Builder { [DebuggerStepThrough] get; }
 
-        protected virtual string? ReferenceName { [DebuggerStepThrough] get; }
+        protected virtual string ReferenceName { [DebuggerStepThrough] get; }
 
-        protected virtual MemberInfo? ReferenceMember { [DebuggerStepThrough] get; }
+        protected virtual MemberInfo ReferenceMember { [DebuggerStepThrough] get; }
 
         protected virtual IMutableEntityType RelatedEntityType { [DebuggerStepThrough] get; }
 
         protected virtual IMutableEntityType DeclaringEntityType { [DebuggerStepThrough] get; }
 
-        public virtual ReferenceCollectionBuilder WithMany(string? collection = null) => default;
-        public virtual ReferenceReferenceBuilder WithOne(string? reference = null) => default;
-        protected virtual InternalForeignKeyBuilder WithOneBuilder(string? navigationName) => default;
+        public virtual ReferenceCollectionBuilder WithMany(string collection = null) => default;
+        public virtual ReferenceReferenceBuilder WithOne(string reference = null) => default;
+        protected virtual InternalForeignKeyBuilder WithOneBuilder(string navigationName) => default;
     }
 
     public class ReferenceReferenceBuilder<TEntity, TRelatedEntity> : ReferenceReferenceBuilder
@@ -45,7 +47,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         where TRelatedEntity : class {
         public new virtual ReferenceReferenceBuilder<TEntity, TRelatedEntity> HasAnnotation(
             string annotation,
-            object? value)
+            object value)
             => default;
 
         public new virtual ReferenceReferenceBuilder<TEntity, TRelatedEntity> HasForeignKey(
@@ -64,7 +66,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             => default;
 
         public virtual ReferenceReferenceBuilder<TEntity, TRelatedEntity> HasForeignKey<TDependentEntity>(
-            Expression<Func<TDependentEntity, object?>> foreignKeyExpression)
+            Expression<Func<TDependentEntity, object>> foreignKeyExpression)
             where TDependentEntity : class
             => default;
 
@@ -84,7 +86,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             => default;
 
         public virtual ReferenceReferenceBuilder<TEntity, TRelatedEntity> HasPrincipalKey<TPrincipalEntity>(
-            Expression<Func<TPrincipalEntity, object?>> keyExpression)
+            Expression<Func<TPrincipalEntity, object>> keyExpression)
             where TPrincipalEntity : class
             => default;
 
@@ -105,7 +107,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         where TDependentEntity : class {
         public new virtual ReferenceCollectionBuilder<TPrincipalEntity, TDependentEntity> HasAnnotation(
             string annotation,
-            object? value)
+            object value)
             => default;
 
         public new virtual ReferenceCollectionBuilder<TPrincipalEntity, TDependentEntity> HasForeignKey(
@@ -113,7 +115,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             => default;
 
         public virtual ReferenceCollectionBuilder<TPrincipalEntity, TDependentEntity> HasForeignKey(
-            Expression<Func<TDependentEntity, object?>> foreignKeyExpression)
+            Expression<Func<TDependentEntity, object>> foreignKeyExpression)
             => default;
 
         public new virtual ReferenceCollectionBuilder<TPrincipalEntity, TDependentEntity> HasPrincipalKey(
@@ -121,7 +123,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             => default;
 
         public virtual ReferenceCollectionBuilder<TPrincipalEntity, TDependentEntity> HasPrincipalKey(
-            Expression<Func<TPrincipalEntity, object?>> keyExpression)
+            Expression<Func<TPrincipalEntity, object>> keyExpression)
             => default;
 
         public new virtual ReferenceCollectionBuilder<TPrincipalEntity, TDependentEntity> IsRequired(

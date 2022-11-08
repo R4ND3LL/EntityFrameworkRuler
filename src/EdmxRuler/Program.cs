@@ -1,4 +1,7 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 using EdmxRuler.Applicator;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator;

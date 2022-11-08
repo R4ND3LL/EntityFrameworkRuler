@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
 
@@ -28,7 +30,11 @@ internal static class ListExtensions {
     [DebuggerStepThrough]
     public static bool In<T>(this T v, params T[] args) {
         if (args == null || args.Length == 0) return false;
-        return args.Contains(v);
+        foreach (var arg in args) {
+            if (EqualityComparer<T>.Default.Equals(v, arg)) return true;
+        }
+
+        return false;
     }
 
     internal static NavigationNamingRules ToPropertyRules(this PrimitiveNamingRules primitiveNamingRules) {

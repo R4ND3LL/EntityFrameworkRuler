@@ -13,7 +13,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual NavigationBuilder<TSource, TTarget> HasAnnotation(
             string annotation,
-            object? value) {
+            object value) {
             return default;
         }
 
@@ -22,7 +22,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             return default;
         }
 
-        public virtual NavigationBuilder<TSource, TTarget> HasField(string? fieldName) {
+        public virtual NavigationBuilder<TSource, TTarget> HasField(string fieldName) {
             return default;
         }
 
@@ -43,7 +43,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual IMutableNavigationBase Metadata { get; }
 
-        public virtual NavigationBuilder HasAnnotation(string annotation, object? value) {
+        public virtual NavigationBuilder HasAnnotation(string annotation, object value) {
             return default;
         }
 
@@ -52,7 +52,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             return default;
         }
 
-        public virtual NavigationBuilder HasField(string? fieldName) {
+        public virtual NavigationBuilder HasField(string fieldName) {
             return default;
         }
 

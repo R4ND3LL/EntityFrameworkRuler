@@ -1,6 +1,11 @@
 ﻿// ReSharper disable CheckNamespace
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.EntityFrameworkCore.ChangeTracking {
     public enum EntityState { }
@@ -14,13 +19,13 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking {
         public new virtual EntityEntry<TEntity> EntityEntry
             => default;
 
-        public new virtual IEnumerable<TRelatedEntity>? CurrentValue {
+        public new virtual IEnumerable<TRelatedEntity> CurrentValue {
             get => default;
             set { }
         }
 
         public new virtual IQueryable<TRelatedEntity> Query() => default;
-        public new virtual EntityEntry<TRelatedEntity>? FindEntry(object entity) => default;
+        public new virtual EntityEntry<TRelatedEntity> FindEntry(object entity) => default;
     }
 
     public class CollectionEntry : NavigationEntry {
@@ -31,9 +36,9 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking {
         where TProperty : class {
         public new virtual EntityEntry<TEntity> EntityEntry => default;
 
-        public new virtual EntityEntry<TProperty>? TargetEntry => default;
+        public new virtual EntityEntry<TProperty> TargetEntry => default;
 
-        public new virtual TProperty? CurrentValue => default;
+        public new virtual TProperty CurrentValue => default;
 
         public new virtual IQueryable<TProperty> Query() => default;
     }
@@ -71,7 +76,7 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking {
             Expression<Func<TEntity, TProperty>> propertyExpression) => default;
 
         public virtual ReferenceEntry<TEntity, TProperty> Reference<TProperty>(
-            Expression<Func<TEntity, TProperty?>> propertyExpression)
+            Expression<Func<TEntity, TProperty>> propertyExpression)
             where TProperty : class => default;
 
         public virtual CollectionEntry<TEntity, TProperty> Collection<TProperty>(
@@ -112,9 +117,9 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking {
         public virtual bool IsKeySet => default;
         public virtual PropertyValues CurrentValues => default;
         public virtual PropertyValues OriginalValues => default;
-        public virtual PropertyValues? GetDatabaseValues() => default;
+        public virtual PropertyValues GetDatabaseValues() => default;
 
-        public virtual Task<PropertyValues?> GetDatabaseValuesAsync(CancellationToken cancellationToken = default) =>
+        public virtual Task<PropertyValues> GetDatabaseValuesAsync(CancellationToken cancellationToken = default) =>
             default;
 
         public virtual void Reload() { }

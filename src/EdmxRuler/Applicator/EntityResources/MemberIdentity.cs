@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 
 // ReSharper disable CheckNamespace
 
@@ -14,18 +15,18 @@ namespace Microsoft.EntityFrameworkCore.Metadata {
             return default;
         }
 
-        public static MemberIdentity Create(string? name) {
+        public static MemberIdentity Create(string name) {
             return default;
         }
 
-        public static MemberIdentity Create(MemberInfo? memberInfo) {
+        public static MemberIdentity Create(MemberInfo memberInfo) {
             return default;
         }
 
-        public string? Name
+        public string Name
             => default;
 
-        public MemberInfo? MemberInfo
+        public MemberInfo MemberInfo
             => default;
 
         public bool Equals(MemberIdentity other) {

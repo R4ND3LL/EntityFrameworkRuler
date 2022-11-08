@@ -1,4 +1,7 @@
-﻿using System.Linq.Expressions; 
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions; 
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 // ReSharper disable CheckNamespace
@@ -11,15 +14,15 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual EntityTypeBuilder<TEntity> HasAnnotation(
             string annotation,
-            object? value) {
+            object value) {
             return this;
         }
 
-        public virtual EntityTypeBuilder<TEntity> HasBaseType(string? name) {
+        public virtual EntityTypeBuilder<TEntity> HasBaseType(string name) {
             return this;
         }
 
-        public virtual EntityTypeBuilder<TEntity> HasBaseType(Type? entityType) {
+        public virtual EntityTypeBuilder<TEntity> HasBaseType(Type entityType) {
             return this;
         }
 
@@ -27,7 +30,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             return this;
         }
 
-        public virtual KeyBuilder HasKey(Expression<Func<TEntity, object?>> keyExpression) {
+        public virtual KeyBuilder HasKey(Expression<Func<TEntity, object>> keyExpression) {
             return default;
         }
 
@@ -36,7 +39,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual KeyBuilder<TEntity> HasAlternateKey(
-            Expression<Func<TEntity, object?>> keyExpression) {
+            Expression<Func<TEntity, object>> keyExpression) {
             return default;
         }
 
@@ -54,19 +57,19 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual NavigationBuilder<TEntity, TNavigation> Navigation<TNavigation>(
-            Expression<Func<TEntity, TNavigation?>> navigationExpression)
+            Expression<Func<TEntity, TNavigation>> navigationExpression)
             where TNavigation : class {
             return default;
         }
 
         public virtual NavigationBuilder<TEntity, TNavigation> Navigation<TNavigation>(
-            Expression<Func<TEntity, IEnumerable<TNavigation>?>> navigationExpression)
+            Expression<Func<TEntity, IEnumerable<TNavigation>>> navigationExpression)
             where TNavigation : class {
             return default;
         }
 
         public virtual EntityTypeBuilder<TEntity> Ignore(
-            Expression<Func<TEntity, object?>> propertyExpression) {
+            Expression<Func<TEntity, object>> propertyExpression) {
             return default;
         }
 
@@ -75,12 +78,12 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual EntityTypeBuilder<TEntity> HasQueryFilter(
-            LambdaExpression? filter) {
+            LambdaExpression filter) {
             return default;
         }
 
         public virtual EntityTypeBuilder<TEntity> HasQueryFilter(
-            Expression<Func<TEntity, bool>>? filter) {
+            Expression<Func<TEntity, bool>> filter) {
             return default;
         }
 
@@ -90,12 +93,12 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual IndexBuilder<TEntity> HasIndex(
-            Expression<Func<TEntity, object?>> indexExpression) {
+            Expression<Func<TEntity, object>> indexExpression) {
             return default;
         }
 
         public virtual IndexBuilder<TEntity> HasIndex(
-            Expression<Func<TEntity, object?>> indexExpression,
+            Expression<Func<TEntity, object>> indexExpression,
             string name) {
             return default;
         }
@@ -122,14 +125,14 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual OwnedNavigationBuilder<TEntity, TRelatedEntity> OwnsOne<TRelatedEntity>(
-            Expression<Func<TEntity, TRelatedEntity?>> navigationExpression)
+            Expression<Func<TEntity, TRelatedEntity>> navigationExpression)
             where TRelatedEntity : class {
             return default;
         }
 
         public virtual OwnedNavigationBuilder<TEntity, TRelatedEntity> OwnsOne<TRelatedEntity>(
             string ownedTypeName,
-            Expression<Func<TEntity, TRelatedEntity?>> navigationExpression)
+            Expression<Func<TEntity, TRelatedEntity>> navigationExpression)
             where TRelatedEntity : class {
             return default;
         }
@@ -172,7 +175,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual EntityTypeBuilder<TEntity> OwnsOne<TRelatedEntity>(
-            Expression<Func<TEntity, TRelatedEntity?>> navigationExpression,
+            Expression<Func<TEntity, TRelatedEntity>> navigationExpression,
             Action<OwnedNavigationBuilder<TEntity, TRelatedEntity>> buildAction)
             where TRelatedEntity : class {
             return default;
@@ -180,7 +183,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual EntityTypeBuilder<TEntity> OwnsOne<TRelatedEntity>(
             string ownedTypeName,
-            Expression<Func<TEntity, TRelatedEntity?>> navigationExpression,
+            Expression<Func<TEntity, TRelatedEntity>> navigationExpression,
             Action<OwnedNavigationBuilder<TEntity, TRelatedEntity>> buildAction)
             where TRelatedEntity : class {
             return default;
@@ -207,14 +210,14 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual OwnedNavigationBuilder<TEntity, TRelatedEntity> OwnsMany<TRelatedEntity>(
-            Expression<Func<TEntity, IEnumerable<TRelatedEntity>?>> navigationExpression)
+            Expression<Func<TEntity, IEnumerable<TRelatedEntity>>> navigationExpression)
             where TRelatedEntity : class {
             return default;
         }
 
         public virtual OwnedNavigationBuilder<TEntity, TRelatedEntity> OwnsMany<TRelatedEntity>(
             string ownedTypeName,
-            Expression<Func<TEntity, IEnumerable<TRelatedEntity>?>> navigationExpression)
+            Expression<Func<TEntity, IEnumerable<TRelatedEntity>>> navigationExpression)
             where TRelatedEntity : class {
             return default;
         }
@@ -257,7 +260,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual EntityTypeBuilder<TEntity> OwnsMany<TRelatedEntity>(
-            Expression<Func<TEntity, IEnumerable<TRelatedEntity>?>> navigationExpression,
+            Expression<Func<TEntity, IEnumerable<TRelatedEntity>>> navigationExpression,
             Action<OwnedNavigationBuilder<TEntity, TRelatedEntity>> buildAction)
             where TRelatedEntity : class {
             return default;
@@ -265,7 +268,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual EntityTypeBuilder<TEntity> OwnsMany<TRelatedEntity>(
             string ownedTypeName,
-            Expression<Func<TEntity, IEnumerable<TRelatedEntity>?>> navigationExpression,
+            Expression<Func<TEntity, IEnumerable<TRelatedEntity>>> navigationExpression,
             Action<OwnedNavigationBuilder<TEntity, TRelatedEntity>> buildAction)
             where TRelatedEntity : class {
             return default;
@@ -279,25 +282,25 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         }
 
         public virtual ReferenceNavigationBuilder<TEntity, TRelatedEntity> HasOne<TRelatedEntity>(
-            string? navigationName)
+            string navigationName)
             where TRelatedEntity : class {
             return default;
         }
 
         public virtual ReferenceNavigationBuilder<TEntity, TRelatedEntity> HasOne<TRelatedEntity>(
-            Expression<Func<TEntity, TRelatedEntity?>>? navigationExpression = null)
+            Expression<Func<TEntity, TRelatedEntity>> navigationExpression = null)
             where TRelatedEntity : class {
             return default;
         }
 
         public virtual CollectionNavigationBuilder<TEntity, TRelatedEntity> HasMany<TRelatedEntity>(
-            string? navigationName)
+            string navigationName)
             where TRelatedEntity : class {
             return default;
         }
 
         public virtual CollectionNavigationBuilder<TEntity, TRelatedEntity> HasMany<TRelatedEntity>(
-            Expression<Func<TEntity, IEnumerable<TRelatedEntity>?>>? navigationExpression = null)
+            Expression<Func<TEntity, IEnumerable<TRelatedEntity>>> navigationExpression = null)
             where TRelatedEntity : class {
             return default;
         }
@@ -366,15 +369,15 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual IMutableEntityType Metadata { get; }
 
-        public virtual EntityTypeBuilder HasAnnotation(string annotation, object? value) {
+        public virtual EntityTypeBuilder HasAnnotation(string annotation, object value) {
             return this;
         }
 
-        public virtual EntityTypeBuilder HasBaseType(string? name) {
+        public virtual EntityTypeBuilder HasBaseType(string name) {
             return this;
         }
 
-        public virtual EntityTypeBuilder HasBaseType(Type? entityType) {
+        public virtual EntityTypeBuilder HasBaseType(Type entityType) {
             return this;
         }
 
@@ -421,7 +424,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
             return default;
         }
 
-        public virtual EntityTypeBuilder HasQueryFilter(LambdaExpression? filter) {
+        public virtual EntityTypeBuilder HasQueryFilter(LambdaExpression filter) {
             return default;
         }
 
@@ -529,17 +532,17 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual ReferenceNavigationBuilder HasOne(
             string relatedTypeName,
-            string? navigationName) {
+            string navigationName) {
             return default;
         }
 
         public virtual ReferenceNavigationBuilder HasOne(
             Type relatedType,
-            string? navigationName = null) {
+            string navigationName = null) {
             return default;
         }
 
-        public virtual ReferenceNavigationBuilder HasOne(string? navigationName) {
+        public virtual ReferenceNavigationBuilder HasOne(string navigationName) {
             return default;
         }
 
@@ -551,7 +554,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual CollectionNavigationBuilder HasMany(
             string relatedTypeName,
-            string? navigationName) {
+            string navigationName) {
             return default;
         }
 
@@ -562,25 +565,25 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
 
         public virtual CollectionNavigationBuilder HasMany(
             Type relatedType,
-            string? navigationName = null) {
+            string navigationName = null) {
             return default;
         }
 
         private CollectionNavigationBuilder HasMany(
-            string? navigationName,
+            string navigationName,
             EntityType relatedEntityType) {
             return default;
         }
 
         protected virtual EntityType FindRelatedEntityType(
             string relatedTypeName,
-            string? navigationName) {
+            string navigationName) {
             return default;
         }
 
         protected virtual EntityType FindRelatedEntityType(
             Type relatedType,
-            string? navigationName) {
+            string navigationName) {
             return default;
         }
 

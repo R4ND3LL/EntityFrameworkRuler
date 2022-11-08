@@ -2,7 +2,7 @@
 
 namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
     public class IndexBuilder<T> : IndexBuilder {
-        public virtual IndexBuilder<T> HasAnnotation(string annotation, object? value) {
+        public virtual IndexBuilder<T> HasAnnotation(string annotation, object value) {
             return this;
         }
 

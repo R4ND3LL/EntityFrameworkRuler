@@ -9,18 +9,18 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Builders {
         where TEntity : class
         where TRelatedEntity : class {
         public new virtual ReferenceCollectionBuilder<TEntity, TRelatedEntity> WithOne(
-            string? navigationName = null)
+            string navigationName = null)
             => default;
 
         public virtual ReferenceCollectionBuilder<TEntity, TRelatedEntity> WithOne(
-            Expression<Func<TRelatedEntity, TEntity?>>? navigationExpression)
+            Expression<Func<TRelatedEntity, TEntity>> navigationExpression)
             => default;
 
         public new virtual CollectionCollectionBuilder<TRelatedEntity, TEntity> WithMany(string navigationName)
             => default;
 
         public virtual CollectionCollectionBuilder<TRelatedEntity, TEntity> WithMany(
-            Expression<Func<TRelatedEntity, IEnumerable<TEntity>?>> navigationExpression)
+            Expression<Func<TRelatedEntity, IEnumerable<TEntity>>> navigationExpression)
             => default;
     }
 
