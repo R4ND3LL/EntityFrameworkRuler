@@ -10,6 +10,11 @@ The approach is simple:
 
 You only need to generate the rules from the EDMX once.  From then on, applying the customization rules is a single, easy step executed after Reverse Engineering the model (from the database).
 
+## EDMX Customizations Supported
+- Class renaming
+- Property renaming (including both primitives and navigations)
+- Property enum type usage
+
 ## Installation
 There are 2 ways to use this tool:
 1. CLI:
