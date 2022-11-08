@@ -22,6 +22,40 @@ namespace EdmxRuler.Applicator;
 internal static class RoslynExtensions {
     private static VisualStudioInstance vsInstance;
 
+    public static async Task<Document> RenameClassAsync(
+        this IEnumerable<Document> documents,
+        string namespaceName,
+        string oldClassName,
+        string newClassName,
+        bool renameOverloads = false,
+        bool renameInStrings = false,
+        bool renameInComments = false,
+        bool renameFile = false) {
+        if (string.IsNullOrEmpty(oldClassName) || string.IsNullOrEmpty(newClassName) ||
+            oldClassName == newClassName) return null;
+
+        async Task<Document> Action(Document document, SyntaxNode root, TypeDeclarationSyntax classSyntax,
+            ISymbol classSymbol) {
+            // rename all references to the property
+            if (classSymbol.Name == newClassName) {
+                // name already matches target.
+                return document;
+            }
+
+            var newSolution = await Renamer.RenameSymbolAsync(
+                document.Project.Solution,
+                classSymbol,
+                new SymbolRenameOptions(renameOverloads, renameInStrings, renameInComments, renameFile),
+                newClassName);
+
+            // sln has been revised. return new doc
+            var currentDocument = newSolution.GetDocument(document.Id);
+            return currentDocument;
+        }
+
+        return await LocateAndActOnClass(documents, namespaceName, oldClassName, Action);
+    }
+
     public static async Task<Document> RenamePropertyAsync(
         this IEnumerable<Document> documents,
         string namespaceName,
@@ -33,7 +67,7 @@ internal static class RoslynExtensions {
         bool renameInComments = false,
         bool renameFile = false) {
         if (string.IsNullOrEmpty(className) || string.IsNullOrEmpty(oldPropertyName) ||
-            string.IsNullOrEmpty(newPropertyName))
+            string.IsNullOrEmpty(newPropertyName) || oldPropertyName == newPropertyName)
             return null;
 
         async Task<Document> Action(Document document, SyntaxNode root, PropertyDeclarationSyntax propSyntax,
@@ -84,6 +118,40 @@ internal static class RoslynExtensions {
         }
 
         return await LocateAndActOnProperty(documents, namespaceName, className, propertyName, Action);
+    }
+
+    private static async Task<Document> LocateAndActOnClass(this IEnumerable<Document> documents,
+        string namespaceName, string className,
+        Func<Document, SyntaxNode, TypeDeclarationSyntax, ISymbol, Task<Document>> action) {
+        if (string.IsNullOrEmpty(className) || action == null) return null;
+
+        foreach (var document in documents) {
+            var root = await document.GetSyntaxRootAsync();
+            var classSyntax = root?.DescendantNodesAndSelf().OfType<TypeDeclarationSyntax>()
+                .FirstOrDefault(o => o.Identifier.ToString() == className);
+            // ReSharper disable once UseNullPropagation
+            if (classSyntax is null) continue; // not found in this doc
+
+            // found it
+            var model = await document.GetSemanticModelAsync();
+
+            var classSymbol = model?.GetDeclaredSymbol(classSyntax) ?? throw new Exception("Class symbol not found");
+
+            if (namespaceName != null) {
+                var ns = classSymbol.ContainingNamespace;
+                var symbolDisplayFormat = new SymbolDisplayFormat(
+                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
+                var fullyQualifiedName = ns.ToDisplayString(symbolDisplayFormat);
+                if (fullyQualifiedName != namespaceName) continue; // not the correct namespace
+            }
+
+            // perform action and return new document
+            var newDocument = await action(document, root, classSyntax, classSymbol);
+            Debug.Assert(newDocument != null);
+            return newDocument;
+        }
+
+        return null;
     }
 
     private static async Task<Document> LocateAndActOnProperty(this IEnumerable<Document> documents,

@@ -1,10 +1,14 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Runtime.Serialization;
+using EdmxRuler.Extensions;
 
 namespace EdmxRuler.RuleModels.NavigationNaming;
+
 [DebuggerDisplay("Nav {Name} to {NewName}")]
 [DataContract]
-public sealed class NavigationRename {
+public sealed class NavigationRename : IEdmxRulePropertyModel {
     [DataMember]
     public string Name { get; set; }
 
@@ -19,4 +23,10 @@ public sealed class NavigationRename {
     /// </summary>
     [DataMember]
     public string AlternateName { get; set; }
+
+    IEnumerable<string> IEdmxRulePropertyModel.GetCurrentNameOptions() =>
+        new[] { Name, AlternateName }.Where(o => o.HasNonWhiteSpace()).Distinct();
+
+    string IEdmxRulePropertyModel.GetNewName() => NewName;
+    string IEdmxRulePropertyModel.GetNewTypeName() => null;
 }

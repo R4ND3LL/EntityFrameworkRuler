@@ -17,4 +17,5 @@ public sealed class NavigationNamingRules : IEdmxRuleModelRoot {
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     public EdmxRuleModelKind Kind => EdmxRuleModelKind.ClassAndNavigationNaming;
+    IEnumerable<IEdmxRuleClassModel> IEdmxRuleModelRoot. GetClasses() => Classes;
 }

@@ -16,4 +16,5 @@ public sealed class EnumMappingRules : IEdmxRuleModelRoot {
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     public EdmxRuleModelKind Kind => EdmxRuleModelKind.EnumMapping;
+    IEnumerable<IEdmxRuleClassModel> IEdmxRuleModelRoot. GetClasses() => Classes;
 }

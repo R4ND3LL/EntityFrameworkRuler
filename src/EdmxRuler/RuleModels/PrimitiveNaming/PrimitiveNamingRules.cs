@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
@@ -16,4 +17,6 @@ public sealed class PrimitiveNamingRules : IEdmxRuleModelRoot {
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     public EdmxRuleModelKind Kind => EdmxRuleModelKind.TableAndColumnNaming;
+
+    IEnumerable<IEdmxRuleClassModel> IEdmxRuleModelRoot.GetClasses() => Schemas.SelectMany(o => o.Tables);
 }

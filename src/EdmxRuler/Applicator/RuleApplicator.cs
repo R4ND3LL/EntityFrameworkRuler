@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using EdmxRuler.Applicator.CsProjParser;
 using EdmxRuler.Extensions;
@@ -14,6 +15,7 @@ using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
 using Microsoft.CodeAnalysis;
 using Project = Microsoft.CodeAnalysis.Project;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable MemberCanBeInternal
@@ -147,51 +149,12 @@ public sealed class RuleApplicator {
     /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <returns></returns>
-    public async Task<ApplyRulesResponse> ApplyRules(NavigationNamingRules navigationNamingRules,
+    public Task<ApplyRulesResponse> ApplyRules(NavigationNamingRules navigationNamingRules,
         string contextFolder = null, string modelsFolder = null) {
         var response = new ApplyRulesResponse(navigationNamingRules);
-        if (navigationNamingRules.Classes == null ||
-            navigationNamingRules.Classes.Count == 0) return response; // nothing to do
-
-        var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response);
-        if (project == null || !project.Documents.Any()) return response;
-
-        var renameCount = 0;
-        foreach (var classRename in navigationNamingRules.Classes)
-        foreach (var refRename in classRename.Properties) {
-            var fromNames = new[] { refRename.Name, refRename.AlternateName }
-                .Where(o => !string.IsNullOrEmpty(o)).Distinct().ToArray();
-            if (fromNames.Length == 0) continue;
-
-            Document docWithRename = null;
-            foreach (var fromName in fromNames) {
-                if (fromName == refRename.NewName) continue;
-                docWithRename = await project.Documents.RenamePropertyAsync(navigationNamingRules.Namespace,
-                    classRename.Name,
-                    fromName,
-                    refRename.NewName);
-                if (docWithRename != null) break;
-            }
-
-            if (docWithRename != null) {
-                // documents have been mutated. update reference to workspace:
-                project = docWithRename.Project;
-                renameCount++;
-                response.Information.Add(
-                    $"Renamed class {classRename.Name} property {fromNames[0]} -> {refRename.NewName}");
-            } else
-                response.Information.Add(
-                    $"Could not find table {classRename.Name} property {string.Join(", ", fromNames)}");
-        }
-
-        if (renameCount == 0) {
-            response.Information.Add("No properties renamed");
-            return response;
-        }
-
-        var saved = await project.Documents.SaveDocumentsAsync();
-        response.Information.Add($"{renameCount} properties renamed across {saved} files");
-        return response;
+        return ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace, response,
+            contextFolder: contextFolder,
+            modelsFolder: modelsFolder);
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
@@ -199,46 +162,13 @@ public sealed class RuleApplicator {
     /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <returns></returns>
-    public async Task<ApplyRulesResponse> ApplyRules(EnumMappingRules enumMappingRules,
+    public Task<ApplyRulesResponse> ApplyRules(EnumMappingRules enumMappingRules,
         string contextFolder = null,
         string modelsFolder = null) {
         var response = new ApplyRulesResponse(enumMappingRules);
-        if (enumMappingRules.Classes == null || enumMappingRules.Classes.Count == 0)
-            return response; // nothing to do
-
-        var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response);
-        if (project == null || !project.Documents.Any()) return response;
-
-        var renameCount = 0;
-        foreach (var classRename in enumMappingRules.Classes)
-        foreach (var refRename in classRename.Properties) {
-            var fromName = refRename.Name?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(fromName)) continue;
-
-            var docWithRename = await project.Documents.ChangePropertyTypeAsync(enumMappingRules.Namespace,
-                classRename.Name,
-                fromName,
-                refRename.EnumType);
-
-            if (docWithRename != null) {
-                // documents have been mutated. update reference to workspace:
-                project = docWithRename.Project;
-                renameCount++;
-                response.Information.Add(
-                    $"Updated class {classRename.Name} property {fromName} type to {refRename.EnumType}");
-            } else
-                response.Information.Add($"Could not find table {classRename.Name} property {fromName}");
-        }
-
-        if (renameCount == 0) {
-            response.Information.Add("No properties types updated");
-            return response;
-        }
-
-        var saved = await project.Documents.SaveDocumentsAsync();
-        Debug.Assert(saved > 0, "No documents saved");
-        response.Information.Add($"{renameCount} properties mapped to enums across {saved} files");
-        return response;
+        return ApplyRulesCore(enumMappingRules.Classes, enumMappingRules.Namespace, response,
+            contextFolder: contextFolder,
+            modelsFolder: modelsFolder);
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
@@ -255,6 +185,140 @@ public sealed class RuleApplicator {
         return response;
     }
 
+    /// <summary> Apply the given rules to the target project. </summary>
+    /// <param name="classRules"> The rules to apply. </param>
+    /// <param name="namespaceName"></param>
+    /// <param name="response"> The response to fill. </param>
+    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <returns></returns>
+    private async Task<ApplyRulesResponse> ApplyRulesCore(IEnumerable<IEdmxRuleClassModel> classRules,
+        string namespaceName,
+        ApplyRulesResponse response,
+        string contextFolder = null, string modelsFolder = null) {
+        if (classRules == null) return response; // nothing to do
+
+        var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response);
+        if (project == null || !project.Documents.Any()) return response;
+
+        var renameCount = 0;
+        var classRenameCount = 0;
+        var typeMapCount = 0;
+        foreach (var classRef in classRules) {
+            var newClassName = classRef.GetNewName();
+            var oldClassName = classRef.GetOldName().CoalesceWhiteSpace(newClassName);
+            newClassName = newClassName.CoalesceWhiteSpace(oldClassName);
+            if (newClassName.IsNullOrWhiteSpace()) continue; // invalid entry
+
+            // first rename class if needed
+            var canRenameClass = newClassName != oldClassName;
+            if (canRenameClass) {
+                var docWithChange = await project.Documents.RenameClassAsync(namespaceName, oldClassName, newClassName);
+
+                if (docWithChange != null) {
+                    // documents have been mutated. update reference to project:
+                    project = docWithChange.Project;
+                    classRenameCount++;
+                    response.Information.Add($"Renamed class {oldClassName} to {newClassName}");
+                } else {
+                    response.Information.Add($"Could not find class {oldClassName}");
+                    // property processing may still work if the class is found under the new name
+                }
+            }
+
+            // process property changes
+            foreach (var propertyRef in classRef.GetProperties()) {
+                var newName = propertyRef.GetNewName().NullIfWhitespace();
+                var currentNames = propertyRef.GetCurrentNameOptions()
+                    .Where(o => o.HasNonWhiteSpace()).Select(o => o.Trim()).Distinct().ToArray();
+
+                var canRename = currentNames.Length > 0 && newName.HasNonWhiteSpace() &&
+                                currentNames.Any(o => o != newName);
+                if (canRename) {
+                    Document docWithChange = null;
+                    int i;
+                    var fromNames = currentNames.Where(o => o != newName).ToArray();
+                    for (i = 0; i < fromNames.Length; i++) {
+                        var fromName = fromNames[i];
+                        if (fromName == newName) continue;
+                        docWithChange = await project.Documents.RenamePropertyAsync(namespaceName,
+                            newClassName,
+                            fromName,
+                            newName);
+                        if (docWithChange != null) break;
+                    }
+
+                    if (docWithChange != null) {
+                        // documents have been mutated. update reference to project:
+                        project = docWithChange.Project;
+                        renameCount++;
+                        response.Information.Add(
+                            $"Renamed class {newClassName} property {fromNames[i]} -> {newName}");
+                    } else {
+                        response.Information.Add(
+                            $"Could not find class {newClassName} property {string.Join(", ", fromNames)}");
+                        // further processing may still work if the property is found under the new name
+                    }
+                }
+
+                if (newName.HasNonWhiteSpace())
+                    currentNames = new[] { newName }; // ensure we are looking for the new name only
+                newName ??= currentNames.FirstOrDefault();
+
+                var newType = propertyRef.GetNewTypeName();
+                var canChangeType = newType.HasNonWhiteSpace() && currentNames.Any(o => o.HasNonWhiteSpace());
+                if (canChangeType) {
+                    Document docWithChange = null;
+                    int i;
+                    for (i = 0; i < currentNames.Length; i++) {
+                        var fromName = currentNames[i];
+                        docWithChange = await project.Documents.ChangePropertyTypeAsync(namespaceName,
+                            newClassName,
+                            fromName,
+                            newType);
+                        if (docWithChange != null) break;
+                    }
+
+                    if (docWithChange != null) {
+                        // documents have been mutated. update reference to project:
+                        project = docWithChange.Project;
+                        typeMapCount++;
+                        response.Information.Add(
+                            $"Updated class {newClassName} property {currentNames[i]} type to {newType}");
+                    } else
+                        response.Information.Add(
+                            $"Could not find class {newClassName} property {string.Join(", ", currentNames)}");
+                }
+            }
+        }
+
+        if (classRenameCount == 0 && renameCount == 0 && typeMapCount == 0) {
+            response.Information.Add("No changes made");
+            return response;
+        }
+
+        var saved = await project.Documents.SaveDocumentsAsync();
+
+        var sb = new StringBuilder();
+        if (classRenameCount > 0) {
+            if (sb.Length > 0) sb.Append(", ");
+            sb.Append($"{classRenameCount} classes renamed");
+        }
+
+        if (renameCount > 0) {
+            if (sb.Length > 0) sb.Append(", ");
+            sb.Append($"{renameCount} properties renamed");
+        }
+
+        if (typeMapCount > 0) {
+            if (sb.Length > 0) sb.Append(", ");
+            sb.Append($"{typeMapCount} property types changed");
+        }
+
+        sb.Append($" across {saved} files");
+        response.Information.Add(sb.ToString());
+        return response;
+    }
 
     private static async Task<Project> TryLoadProjectOrFallback(string projectBasePath, string contextFolder,
         string modelsFolder, ApplyRulesResponse response) {
@@ -304,7 +368,7 @@ public sealed class RuleApplicator {
         string modelsFolder, ApplyRulesResponse response) {
         var csProj = InspectProject(projectBasePath, response?.Errors);
 
-        if (csProj?.ImplicitUsings.In("enabled", "true") == true) {
+        if (csProj?.ImplicitUsings.In("enabled", "enable", "true") == true) {
             // symbol renaming will likely not work correctly. 
             response?.Information.Add(
                 "WARNING: ImplicitUsings is enabled on this project. Symbol renaming may not fully work due to missing reference information.");
