@@ -9,30 +9,36 @@ using System.Diagnostics;
 using System.Xml.Serialization;
 
 namespace EdmxRuler.Applicator.CsProjParser {
-
-    [DebuggerDisplay("PackageReference={Include} v{Version} PrivateAssets={PrivateAssets} IncludeAssets={IncludeAssets}")]
+    [DebuggerDisplay(
+        "PackageReference={Include} v{Version} PrivateAssets={PrivateAssets} IncludeAssets={IncludeAssets}")]
     [XmlRoot(ElementName = "PackageReference")]
     internal class CsProjPackageReference {
         [XmlAttribute(AttributeName = "Include")]
         public string Include { get; set; }
+
         [XmlAttribute(AttributeName = "Version")]
         public string Version { get; set; }
+
         [XmlElement(ElementName = "IncludeAssets")]
         public string IncludeAssets { get; set; }
+
         [XmlElement(ElementName = "PrivateAssets")]
         public string PrivateAssets { get; set; }
     }
+
     [DebuggerDisplay("ProjectReference={Include}")]
     [XmlRoot(ElementName = "ProjectReference")]
     internal class CsProjProjectReference {
         [XmlAttribute(AttributeName = "Include")]
         public string Include { get; set; }
     }
+
     [DebuggerDisplay("Reference={Include} HintPath={HintPath}")]
     [XmlRoot(ElementName = "Reference")]
     internal class CsProjReference {
         [XmlElement(ElementName = "HintPath")]
         public string HintPath { get; set; }
+
         [XmlAttribute(AttributeName = "Include")]
         public string Include { get; set; }
     }
@@ -41,6 +47,15 @@ namespace EdmxRuler.Applicator.CsProjParser {
     internal class CsProject {
         [XmlAttribute(AttributeName = "Sdk")]
         public string Sdk { get; set; }
+
+        [XmlAttribute(AttributeName = "TargetFrameworks")]
+        public string TargetFrameworks { get; set; }
+
+        [XmlAttribute(AttributeName = "TargetFramework")]
+        public string TargetFramework { get; set; }
+
+        [XmlAttribute(AttributeName = "ImplicitUsings")]
+        public string ImplicitUsings { get; set; }
 
         [XmlElement(ElementName = "PackageReference")]
         public List<CsProjPackageReference> PackageReference { get; set; } = new();
@@ -51,5 +66,4 @@ namespace EdmxRuler.Applicator.CsProjParser {
         [XmlElement(ElementName = "Reference")]
         public List<CsProjReference> References { get; set; } = new();
     }
-
 }

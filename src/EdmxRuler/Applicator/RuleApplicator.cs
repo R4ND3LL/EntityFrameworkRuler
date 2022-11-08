@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
-using System.Xml;
 using EdmxRuler.Applicator.CsProjParser;
 using EdmxRuler.Extensions;
 using EdmxRuler.RuleModels;
@@ -18,7 +14,9 @@ using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
 using Microsoft.CodeAnalysis;
 using Project = Microsoft.CodeAnalysis.Project;
-
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable MemberCanBeInternal
 [assembly: CLSCompliant(false)]
 
 namespace EdmxRuler.Applicator;
@@ -32,6 +30,7 @@ public sealed class RuleApplicator {
 
     #region properties
 
+    /// <summary> The target project path. </summary>
     public string ProjectBasePath { get; }
 
     #endregion
@@ -138,15 +137,16 @@ public sealed class RuleApplicator {
 
     private static async Task<T> TryReadRules<T>(FileInfo jsonFile, List<string> errors) where T : class, new() {
         var rules = await jsonFile.FullName.TryReadJsonFile<T>();
-        if (rules == null) {
-            errors.Add($"Unable to open {jsonFile.Name}");
-            return null;
-        }
-
-        return rules;
+        if (rules != null) return rules;
+        errors.Add($"Unable to open {jsonFile.Name}");
+        return null;
     }
 
-
+    /// <summary> Apply the given rules to the target project. </summary>
+    /// <param name="navigationNamingRules"> The rules to apply. </param>
+    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <returns></returns>
     public async Task<ApplyRulesResponse> ApplyRules(NavigationNamingRules navigationNamingRules,
         string contextFolder = null, string modelsFolder = null) {
         var response = new ApplyRulesResponse(navigationNamingRules);
@@ -156,36 +156,33 @@ public sealed class RuleApplicator {
         var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response);
         if (project == null || !project.Documents.Any()) return response;
 
-        //var compilation = await project.GetCompilationAsync();
-        //var references1 = compilation.ExternalReferences;
-
         var renameCount = 0;
         foreach (var classRename in navigationNamingRules.Classes)
-            foreach (var refRename in classRename.Properties) {
-                var fromNames = new[] { refRename.Name, refRename.AlternateName }
-                    .Where(o => !string.IsNullOrEmpty(o)).Distinct().ToArray();
-                if (fromNames.Length == 0) continue;
+        foreach (var refRename in classRename.Properties) {
+            var fromNames = new[] { refRename.Name, refRename.AlternateName }
+                .Where(o => !string.IsNullOrEmpty(o)).Distinct().ToArray();
+            if (fromNames.Length == 0) continue;
 
-                Document docWithRename = null;
-                foreach (var fromName in fromNames) {
-                    if (fromName == refRename.NewName) continue;
-                    docWithRename = await project.Documents.RenamePropertyAsync(navigationNamingRules.Namespace,
-                        classRename.Name,
-                        fromName,
-                        refRename.NewName);
-                    if (docWithRename != null) break;
-                }
-
-                if (docWithRename != null) {
-                    // documents have been mutated. update reference to workspace:
-                    project = docWithRename.Project;
-                    renameCount++;
-                    response.Information.Add(
-                        $"Renamed class {classRename.Name} property {fromNames[0]} -> {refRename.NewName}");
-                } else
-                    response.Information.Add(
-                        $"Could not find table {classRename.Name} property {string.Join(", ", fromNames)}");
+            Document docWithRename = null;
+            foreach (var fromName in fromNames) {
+                if (fromName == refRename.NewName) continue;
+                docWithRename = await project.Documents.RenamePropertyAsync(navigationNamingRules.Namespace,
+                    classRename.Name,
+                    fromName,
+                    refRename.NewName);
+                if (docWithRename != null) break;
             }
+
+            if (docWithRename != null) {
+                // documents have been mutated. update reference to workspace:
+                project = docWithRename.Project;
+                renameCount++;
+                response.Information.Add(
+                    $"Renamed class {classRename.Name} property {fromNames[0]} -> {refRename.NewName}");
+            } else
+                response.Information.Add(
+                    $"Could not find table {classRename.Name} property {string.Join(", ", fromNames)}");
+        }
 
         if (renameCount == 0) {
             response.Information.Add("No properties renamed");
@@ -197,6 +194,11 @@ public sealed class RuleApplicator {
         return response;
     }
 
+    /// <summary> Apply the given rules to the target project. </summary>
+    /// <param name="enumMappingRules"> The rules to apply. </param>
+    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <returns></returns>
     public async Task<ApplyRulesResponse> ApplyRules(EnumMappingRules enumMappingRules,
         string contextFolder = null,
         string modelsFolder = null) {
@@ -209,24 +211,24 @@ public sealed class RuleApplicator {
 
         var renameCount = 0;
         foreach (var classRename in enumMappingRules.Classes)
-            foreach (var refRename in classRename.Properties) {
-                var fromName = refRename.Name?.Trim() ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(fromName)) continue;
+        foreach (var refRename in classRename.Properties) {
+            var fromName = refRename.Name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(fromName)) continue;
 
-                var docWithRename = await project.Documents.ChangePropertyTypeAsync(enumMappingRules.Namespace,
-                    classRename.Name,
-                    fromName,
-                    refRename.EnumType);
+            var docWithRename = await project.Documents.ChangePropertyTypeAsync(enumMappingRules.Namespace,
+                classRename.Name,
+                fromName,
+                refRename.EnumType);
 
-                if (docWithRename != null) {
-                    // documents have been mutated. update reference to workspace:
-                    project = docWithRename.Project;
-                    renameCount++;
-                    response.Information.Add(
-                        $"Updated class {classRename.Name} property {fromName} type to {refRename.EnumType}");
-                } else
-                    response.Information.Add($"Could not find table {classRename.Name} property {fromName}");
-            }
+            if (docWithRename != null) {
+                // documents have been mutated. update reference to workspace:
+                project = docWithRename.Project;
+                renameCount++;
+                response.Information.Add(
+                    $"Updated class {classRename.Name} property {fromName} type to {refRename.EnumType}");
+            } else
+                response.Information.Add($"Could not find table {classRename.Name} property {fromName}");
+        }
 
         if (renameCount == 0) {
             response.Information.Add("No properties types updated");
@@ -239,6 +241,11 @@ public sealed class RuleApplicator {
         return response;
     }
 
+    /// <summary> Apply the given rules to the target project. </summary>
+    /// <param name="primitiveNamingRules"> The rules to apply. </param>
+    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <returns></returns>
     public async Task<ApplyRulesResponse> ApplyRules(PrimitiveNamingRules primitiveNamingRules,
         string contextFolder = null, string modelsFolder = null) {
         // map to class renaming 
@@ -263,7 +270,7 @@ public sealed class RuleApplicator {
 
             response?.Information?.Add("Direct project load failed. Attempting adhoc project creation...");
 
-            project = TryLoadFallbackAdhocProject(projectBasePath, contextFolder, modelsFolder, response?.Errors);
+            project = TryLoadFallbackAdhocProject(projectBasePath, contextFolder, modelsFolder, response);
             return project;
         } catch (Exception ex) {
             response?.Errors?.Add($"Error loading project: {ex.Message}");
@@ -271,22 +278,37 @@ public sealed class RuleApplicator {
         }
     }
 
+    /// <summary>
+    /// If existing project file fails to load, we can fallback to creating an adhoc workspace with an in memory project.
+    /// that contains only the cs files we are concerned with.
+    ///
+    /// This approach is sensitive to lack of referenced symbols such as missing usings and references especially around
+    /// the EF references.  i.e. if those references are not resolved then symbol inspection cannot fully work,
+    /// and therefore some symbols is not be renamed.
+    ///
+    /// To combat that, we add all assemblies referenced by the current project to cover the basics.  Then we add
+    /// in my mocked EF resources as substitution for EF references, which works well because all we need is the API surface.
+    ///
+    /// All entity configurations are then processed properly from a renaming perspective.
+    ///
+    /// Known issue:  Target projects that have ImplicitUsings enabled are naturally missing numerous usings statements.
+    /// This interferes with symbol identification and will result in some symbols not being renamed.  Therefore,
+    /// the target project should ideally have this feature disabled: &lt;ImplicitUsings&gt;disable&lt;/ImplicitUsings&gt;
+    /// </summary>
+    /// <param name="projectBasePath"> Project base path</param>
+    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <param name="response"> Errors list. </param>
+    /// <returns></returns>
     private static Project TryLoadFallbackAdhocProject(string projectBasePath, string contextFolder,
-        string modelsFolder, List<string> errors) {
-        /* If existing project file fails to load, we can fallback to creating an adhoc workspace with an in memory project
-                  * that contains only the cs files we are concerned with.
-                  *
-                  * Currently, this will successfully rename the model properties but it does NOT process the references from the Configuration
-                  * classes.  This is likely because Roslyn is not resolving information about EntityTypeBuilder<> such that it
-                  * can identify the model property references.
-                  *
-                  * This issue *should* be resolved simply by adding EFC references to the project (as is illustrated below) but
-                  * it's still not working.
-                  *
-                  * To do: resolve paths to EFC assemblies and use those in the refAssemblies list below.
-                  */
+        string modelsFolder, ApplyRulesResponse response) {
+        var csProj = InspectProject(projectBasePath, response?.Errors);
 
-        var csProj = InspectProject(projectBasePath, errors);
+        if (csProj?.ImplicitUsings.In("enabled", "true") == true) {
+            // symbol renaming will likely not work correctly. 
+            response?.Information.Add(
+                "WARNING: ImplicitUsings is enabled on this project. Symbol renaming may not fully work due to missing reference information.");
+        }
 
         var cSharpFolders = new HashSet<string>();
         if (contextFolder?.Length > 0 && Directory.Exists(Path.Combine(projectBasePath, contextFolder)))
@@ -312,45 +334,9 @@ public sealed class RuleApplicator {
         toIgnore.ForEach(o => cSharpFiles.Remove(o));
 
         if (cSharpFiles.Count == 0) {
-            errors.Add("No .cs files found");
+            response?.Errors.Add("No .cs files found");
             return null;
         }
-
-        //var refAssemblies = new[] {
-        //    typeof(object).Assembly,
-        //    typeof(Expression<>).Assembly,
-        //    typeof(IQueryable<>).Assembly,
-        //    typeof(ImmutableArray<>).Assembly,
-        //    typeof(ImmutableDictionary<,>).Assembly,
-        //    typeof(ImmutableDictionary<,>).Assembly,
-        //    typeof(XmlDocument).Assembly,
-        //    typeof(HttpClient).Assembly,
-        //    typeof(HashSet<>).Assembly,
-        //    typeof(List<>).Assembly,
-        //    typeof(LinkedList<>).Assembly,
-        //    typeof(ConcurrentDictionary<,>).Assembly,
-        //    typeof(Uri).Assembly,
-        //    typeof(System.IO.FileStream).Assembly,
-        //    typeof(System.Linq.IGrouping<,>).Assembly,
-        //    typeof(System.Linq.Lookup<,>).Assembly,
-        //    typeof(System.Linq.Enumerable).Assembly,
-        //    typeof(System.Linq.Expressions.Expression).Assembly,
-        //    typeof(System.Linq.Expressions.CatchBlock).Assembly,
-        //    typeof(System.Data.CommandBehavior).Assembly,
-        //    typeof(Action<>).Assembly,
-        //    typeof(System.ComponentModel.CancelEventArgs).Assembly,
-        //    typeof(System.Runtime.JitInfo).Assembly,
-        //    typeof(System.Text.Decoder).Assembly,
-        //    typeof(System.Text.Json.JsonDocument).Assembly,
-        //    typeof(System.ValueTuple<>).Assembly,
-        //    typeof(System.Threading.ReaderWriterLock).Assembly,
-        //    typeof(ValueTask).Assembly,
-        //    typeof(Task).Assembly,
-        //    // typeof(IEntityTypeConfiguration<>).Assembly, typeof(SqlServerValueGenerationStrategy).Assembly,
-        //    // typeof(Microsoft.EntityFrameworkCore.SqlServer.Query.Internal.SearchConditionConvertingExpressionVisitor).Assembly,
-        //    // typeof(Microsoft.EntityFrameworkCore.RelationalDbFunctionsExtensions).Assembly,
-        //    typeof(NotMappedAttribute).Assembly
-        //}.Distinct().ToHashSet();
 
         var refAssemblies = new HashSet<Assembly>();
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -369,7 +355,7 @@ public sealed class RuleApplicator {
                 return project;
             }
         } catch (Exception ex) {
-            errors.Add($"Unable to get in-memory project from workspace: {ex.Message}");
+            response?.Errors.Add($"Unable to get in-memory project from workspace: {ex.Message}");
             return null;
         }
 
@@ -416,6 +402,7 @@ public sealed class ApplyRulesResponse {
     public List<string> Information { get; } = new();
 }
 
+[SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
 public sealed class LoadAndApplyRulesResponse {
     public LoadRulesResponse LoadRulesResponse { get; internal set; }
     public List<ApplyRulesResponse> ApplyRulesResponses { get; internal set; }

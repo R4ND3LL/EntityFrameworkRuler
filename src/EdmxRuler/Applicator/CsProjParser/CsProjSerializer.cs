@@ -1,14 +1,28 @@
 ﻿using System.Linq;
 using System.Xml.Linq;
 using System.Xml.XPath;
+using EdmxRuler.Extensions;
 
 namespace EdmxRuler.Applicator.CsProjParser;
 
 internal static class CsProjSerializer {
-  
     public static CsProject Deserialize(string csprojContent) {
         var doc = XDocument.Parse(csprojContent);
         var csProj = new CsProject();
+
+        foreach (var propertyGroup in doc.XPathSelectElements("//PropertyGroup")) {
+            var implicitUsings = propertyGroup.Attribute("ImplicitUsings")?.Value ??
+                                 propertyGroup.Element("ImplicitUsings")?.Value;
+            if (implicitUsings.HasNonWhiteSpace()) csProj.ImplicitUsings = implicitUsings;
+
+            var targetFramework = propertyGroup.Attribute("TargetFramework")?.Value ??
+                                  propertyGroup.Element("TargetFramework")?.Value;
+            if (targetFramework.HasNonWhiteSpace()) csProj.TargetFramework = targetFramework;
+
+            var targetFrameworks = propertyGroup.Attribute("TargetFrameworks")?.Value ??
+                                   propertyGroup.Element("TargetFrameworks")?.Value;
+            if (targetFrameworks.HasNonWhiteSpace()) csProj.TargetFrameworks = targetFrameworks;
+        }
 
         csProj.PackageReference.AddRange(doc.XPathSelectElements("//PackageReference")
             .Select(pr => new CsProjPackageReference {

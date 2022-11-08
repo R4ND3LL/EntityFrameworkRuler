@@ -5,6 +5,7 @@ using System.Xml.Serialization;
 
 namespace EdmxRuler.RuleModels.NavigationNaming;
 
+/// <summary> Navigation property naming rules </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1724:", Justification = "Reviewed.")]
 [DataContract]
 public sealed class NavigationNamingRules : IEdmxRuleModelRoot {

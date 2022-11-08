@@ -5,6 +5,10 @@ using System.Xml.Serialization;
 
 namespace EdmxRuler.RuleModels.PrimitiveNaming;
 
+/// <summary>
+/// Renaming rules for primitive properties (database columns) as well as the classes themselves (tables).
+/// Navigations are not referenced in this file.
+/// </summary>
 [DataContract]
 public sealed class PrimitiveNamingRules : IEdmxRuleModelRoot {
     [DataMember]

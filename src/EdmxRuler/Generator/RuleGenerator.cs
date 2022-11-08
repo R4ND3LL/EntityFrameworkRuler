@@ -12,8 +12,13 @@ using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
 using Schema = EdmxRuler.RuleModels.PrimitiveNaming.Schema;
 
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable MemberCanBeInternal
+
 namespace EdmxRuler.Generator;
 
+/// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX. </summary>
 public sealed class RuleGenerator {
     public RuleGenerator(string edmxFilePath) {
         EdmxFilePath = edmxFilePath;
@@ -52,7 +57,8 @@ public sealed class RuleGenerator {
 
     #endregion
 
-    /// <summary> Parse the EDMX and generate rule models.  Monitor the Errors collection for issues. </summary>
+    /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
+    /// Errors are monitored and added to local Errors collection. </summary>
     public IReadOnlyCollection<IEdmxRuleModelRoot> TryGenerateRules() {
         var e = errors = new List<string>();
         var r = rules = new List<IEdmxRuleModelRoot>();
@@ -79,6 +85,11 @@ public sealed class RuleGenerator {
         }
     }
 
+    /// <summary> Persist the previously generated rules to the given target path. </summary>
+    /// <param name="projectBasePath"> The location to save the rule files. </param>
+    /// <param name="fileNameOptions"> Custom naming options for the rule files.  Optional. This parameter can be used to skip writing a rule file by setting that rule file to null. </param>
+    /// <returns> True if completed with no errors.  When false, see Errors collection for details. </returns>
+    /// <exception cref="Exception"></exception>
     public async Task<bool> TrySaveRules(string projectBasePath, RuleFileNameOptions fileNameOptions = null) {
         var dir = new DirectoryInfo(projectBasePath);
         if (!dir.Exists) {
@@ -94,6 +105,7 @@ public sealed class RuleGenerator {
 
         async Task TryWriteRules<T>(Func<T> ruleGetter, string fileName) where T : class {
             try {
+                if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
                 var rulesRoot = ruleGetter() ?? throw new Exception("Rule model null");
                 await WriteRules(rulesRoot, fileName);
             } catch (Exception ex) {
