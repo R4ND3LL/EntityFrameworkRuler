@@ -12,7 +12,7 @@ You only need to generate the rules from the EDMX once.  From then on, applying 
 
 ## Installation
 There are 2 ways to use this tool:
-1. CLI tool:
+1. CLI:
    ```
    > dotnet tool install --global EdmxRuler
    ```
