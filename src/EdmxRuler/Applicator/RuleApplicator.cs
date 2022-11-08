@@ -258,7 +258,7 @@ public sealed class RuleApplicator {
                         project = docWithChange.Project;
                         renameCount++;
                         response.Information.Add(
-                            $"Renamed class {newClassName} property {fromNames[i]} -> {newName}");
+                            $"Renamed class {newClassName} property {fromNames[i]} to {newName}");
                     } else {
                         response.Information.Add(
                             $"Could not find class {newClassName} property {string.Join(", ", fromNames)}");
