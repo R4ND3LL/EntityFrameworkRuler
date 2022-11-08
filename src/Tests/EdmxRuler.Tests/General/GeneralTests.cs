@@ -92,7 +92,7 @@ public sealed class GeneralTests {
         renamed.Length.ShouldBe(16);
         var couldNotFind = response.Information.Where(o => o.StartsWith("Could not find ")).ToArray();
         couldNotFind.Length.ShouldBe(2);
-        response.Information.Last().ShouldContain("16 properties renamed across 11 files", Case.Insensitive);
+        response.Information.Last().ShouldContain("16 properties renamed across 12 files", Case.Insensitive);
 
         output.WriteLine($"Navigation naming rules applied correctly");
 
