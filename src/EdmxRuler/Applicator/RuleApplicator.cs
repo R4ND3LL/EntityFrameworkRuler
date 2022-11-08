@@ -302,7 +302,6 @@ public sealed class RuleApplicator {
             return response;
         }
 
-        throw new Exception(" no save ! ");
         var saved = await project.Documents.SaveDocumentsAsync();
 
         var sb = new StringBuilder();
