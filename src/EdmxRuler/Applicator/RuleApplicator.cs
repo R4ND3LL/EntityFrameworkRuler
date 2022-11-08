@@ -61,16 +61,29 @@ public sealed class RuleApplicator {
     private async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRulesInternal(IEnumerable<IEdmxRuleModelRoot> rules) {
         if (rules == null) throw new ArgumentNullException(nameof(rules));
 
+        var state = new RoslynProjectState();
         List<ApplyRulesResponse> responses = new();
         foreach (var rule in rules.Where(o => o != null).OrderBy(o => o.Kind))
             try {
                 if (rule == null) continue;
-                var response = rule switch {
-                    PrimitiveNamingRules primitiveNamingRules => await ApplyRules(primitiveNamingRules),
-                    NavigationNamingRules navigationNamingRules => await ApplyRules(navigationNamingRules),
-                    PropertyTypeChangingRules propertyTypeChangingRules => await ApplyRules(propertyTypeChangingRules),
-                    _ => null
-                };
+
+                var response = new ApplyRulesResponse(rule);
+                switch (rule) {
+                    case PrimitiveNamingRules primitiveNamingRules:
+                        await ApplyPrimitiveRulesCore(primitiveNamingRules, response, null, null, state);
+                        break;
+                    case NavigationNamingRules navigationNamingRules:
+                        await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace,
+                            response, state: state);
+                        break;
+                    case PropertyTypeChangingRules propertyTypeChangingRules:
+                        await ApplyRulesCore(propertyTypeChangingRules.Classes,
+                            propertyTypeChangingRules.Namespace, response, state: state);
+                        break;
+                    default:
+                        response = (ApplyRulesResponse)null;
+                        break;
+                }
 
                 if (response != null) responses.Add(response);
             } catch (Exception ex) {
@@ -150,12 +163,13 @@ public sealed class RuleApplicator {
     /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <returns></returns>
-    public Task<ApplyRulesResponse> ApplyRules(NavigationNamingRules navigationNamingRules,
+    public async Task<ApplyRulesResponse> ApplyRules(NavigationNamingRules navigationNamingRules,
         string contextFolder = null, string modelsFolder = null) {
         var response = new ApplyRulesResponse(navigationNamingRules);
-        return ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace, response,
+        await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace, response,
             contextFolder: contextFolder,
             modelsFolder: modelsFolder);
+        return response;
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
@@ -163,13 +177,14 @@ public sealed class RuleApplicator {
     /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <returns></returns>
-    public Task<ApplyRulesResponse> ApplyRules(PropertyTypeChangingRules propertyTypeChangingRules,
+    public async Task<ApplyRulesResponse> ApplyRules(PropertyTypeChangingRules propertyTypeChangingRules,
         string contextFolder = null,
         string modelsFolder = null) {
         var response = new ApplyRulesResponse(propertyTypeChangingRules);
-        return ApplyRulesCore(propertyTypeChangingRules.Classes, propertyTypeChangingRules.Namespace, response,
+        await ApplyRulesCore(propertyTypeChangingRules.Classes, propertyTypeChangingRules.Namespace, response,
             contextFolder: contextFolder,
             modelsFolder: modelsFolder);
+        return response;
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
@@ -181,14 +196,20 @@ public sealed class RuleApplicator {
         string contextFolder = null, string modelsFolder = null) {
         // map to class renaming
         var response = new ApplyRulesResponse(primitiveNamingRules);
+        var state = new RoslynProjectState();
+        await ApplyPrimitiveRulesCore(primitiveNamingRules, response, contextFolder, modelsFolder, state);
+        return response;
+    }
+
+    private async Task ApplyPrimitiveRulesCore(PrimitiveNamingRules primitiveNamingRules, ApplyRulesResponse response,
+        string contextFolder,
+        string modelsFolder, RoslynProjectState state) {
         foreach (var schema in primitiveNamingRules.Schemas) {
             var schemaResponse = new ApplyRulesResponse(null);
-            await ApplyRulesCore(schema.Tables, schema.Namespace, schemaResponse, contextFolder, modelsFolder);
+            await ApplyRulesCore(schema.Tables, schema.Namespace, schemaResponse, contextFolder, modelsFolder, state);
             response.Errors.AddRange(schemaResponse.Errors);
             response.Information.AddRange(schemaResponse.Information);
         }
-
-        return response;
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
@@ -197,19 +218,21 @@ public sealed class RuleApplicator {
     /// <param name="response"> The response to fill. </param>
     /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <param name="state"> Roslyn project state. Internal use only. </param>
     /// <returns></returns>
-    private async Task<ApplyRulesResponse> ApplyRulesCore(IEnumerable<IEdmxRuleClassModel> classRules,
+    private async Task ApplyRulesCore(IEnumerable<IEdmxRuleClassModel> classRules,
         string namespaceName,
         ApplyRulesResponse response,
-        string contextFolder = null, string modelsFolder = null) {
+        string contextFolder = null, string modelsFolder = null, RoslynProjectState state = null) {
         string ToFullClassName(string className) {
             return namespaceName.HasNonWhiteSpace() ? $"{namespaceName}.{className}" : className;
         }
 
-        if (classRules == null) return response; // nothing to do
+        if (classRules == null) return; // nothing to do
 
-        var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response);
-        if (project == null || !project.Documents.Any()) return response;
+        state ??= new RoslynProjectState();
+        await state.TryLoadProjectOrFallbackOnce(ProjectBasePath, contextFolder, modelsFolder, response);
+        if (state.Project == null || !state.Project.Documents.Any()) return;
 
         var renameCount = 0;
         var classRenameCount = 0;
@@ -224,17 +247,18 @@ public sealed class RuleApplicator {
             var canRenameClass = newClassName != oldClassName;
             bool classExists;
             if (canRenameClass) {
-                var docWithChange = await project.Documents.RenameClassAsync(namespaceName, oldClassName, newClassName);
+                var docWithChange =
+                    await state.Project.Documents.RenameClassAsync(namespaceName, oldClassName, newClassName);
 
                 if (docWithChange != null) {
                     // documents have been mutated. update reference to project:
-                    project = docWithChange.Project;
+                    state.Project = docWithChange.Project;
                     classRenameCount++;
                     classExists = true;
                     response.Information.Add($"Renamed class {oldClassName} to {newClassName}");
                 } else {
                     // property processing may still work if the class is found under the new name
-                    classExists = await project.Documents.ClassExists(namespaceName, newClassName);
+                    classExists = await state.Project.Documents.ClassExists(namespaceName, newClassName);
                     if (classExists)
                         response.Information.Add(
                             $"Class already exists with target name: {ToFullClassName(newClassName)}");
@@ -244,7 +268,7 @@ public sealed class RuleApplicator {
                     }
                 }
             } else {
-                classExists = await project.Documents.ClassExists(namespaceName, newClassName);
+                classExists = await state.Project.Documents.ClassExists(namespaceName, newClassName);
             }
 
             if (!classExists) {
@@ -268,7 +292,7 @@ public sealed class RuleApplicator {
                     for (i = 0; i < fromNames.Length; i++) {
                         var fromName = fromNames[i];
                         if (fromName == newPropName) continue;
-                        docWithChange = await project.Documents.RenamePropertyAsync(namespaceName,
+                        docWithChange = await state.Project.Documents.RenamePropertyAsync(namespaceName,
                             newClassName,
                             fromName,
                             newPropName);
@@ -277,7 +301,7 @@ public sealed class RuleApplicator {
 
                     if (docWithChange != null) {
                         // documents have been mutated. update reference to project:
-                        project = docWithChange.Project;
+                        state.Project = docWithChange.Project;
                         renameCount++;
                         propertyExists = true;
                         response.Information.Add(
@@ -285,7 +309,7 @@ public sealed class RuleApplicator {
                     } else {
                         // further processing may still work if the property is found under the new name
                         propertyExists =
-                            await project.Documents.PropertyExists(namespaceName, newClassName, newPropName);
+                            await state.Project.Documents.PropertyExists(namespaceName, newClassName, newPropName);
                         if (propertyExists.Value)
                             response.Information.Add(
                                 $"Property already exists with target name: {newClassName}.{newPropName}");
@@ -302,7 +326,8 @@ public sealed class RuleApplicator {
                 newPropName ??= currentNames.FirstOrDefault();
 
                 if (!propertyExists.HasValue)
-                    propertyExists = await project.Documents.PropertyExists(namespaceName, newClassName, newPropName);
+                    propertyExists =
+                        await state.Project.Documents.PropertyExists(namespaceName, newClassName, newPropName);
                 if (propertyExists != true) {
                     response.Information.Add($"Could not find property {ToFullClassName(newClassName)}.{newPropName}");
                     continue;
@@ -316,7 +341,7 @@ public sealed class RuleApplicator {
                     int i;
                     for (i = 0; i < currentNames.Length; i++) {
                         var fromName = currentNames[i];
-                        docWithChange = await project.Documents.ChangePropertyTypeAsync(namespaceName,
+                        docWithChange = await state.Project.Documents.ChangePropertyTypeAsync(namespaceName,
                             newClassName,
                             fromName,
                             newType);
@@ -325,7 +350,7 @@ public sealed class RuleApplicator {
 
                     if (docWithChange != null) {
                         // documents have been mutated. update reference to project:
-                        project = docWithChange.Project;
+                        state.Project = docWithChange.Project;
                         typeMapCount++;
                         response.Information.Add(
                             $"Updated property {newClassName}.{currentNames[i]} type to {newType}");
@@ -343,10 +368,10 @@ public sealed class RuleApplicator {
 
         if (classRenameCount == 0 && renameCount == 0 && typeMapCount == 0) {
             response.Information.Add("No changes made");
-            return response;
+            return;
         }
 
-        var saved = await project.Documents.SaveDocumentsAsync();
+        var saved = await state.Project.Documents.SaveDocumentsAsync();
 
         var sb = new StringBuilder();
         if (classRenameCount > 0) {
@@ -366,7 +391,7 @@ public sealed class RuleApplicator {
 
         sb.Append($" across {saved} files");
         response.Information.Add(sb.ToString());
-        return response;
+        return;
     }
 
     private static async Task<Project> TryLoadProjectOrFallback(string projectBasePath, string contextFolder,
@@ -497,6 +522,22 @@ public sealed class RuleApplicator {
         }
 
         return new CsProject();
+    }
+
+    internal sealed class RoslynProjectState {
+        public RoslynProjectState() {
+        }
+
+        private bool loadAttempted = false;
+        public Project Project { get; set; }
+
+        internal async Task TryLoadProjectOrFallbackOnce(string projectBasePath, string contextFolder,
+            string modelsFolder, ApplyRulesResponse response) {
+            if (loadAttempted) return;
+            loadAttempted = true;
+            Project = await TryLoadProjectOrFallback(projectBasePath, contextFolder, modelsFolder,
+                response);
+        }
     }
 }
 
