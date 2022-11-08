@@ -97,10 +97,10 @@ public sealed class GeneralTests {
         if (response.Errors.Count == 1) response.Errors[0].ShouldStartWith("Error loading existing project");
 
         var renamed = response.Information.Where(o => o.StartsWith("Renamed")).ToArray();
-        renamed.Length.ShouldBe(16);
+        renamed.Length.ShouldBe(15);
         var couldNotFind = response.Information.Where(o => o.StartsWith("Could not find ")).ToArray();
-        couldNotFind.Length.ShouldBe(2);
-        response.Information.Last().ShouldContain("16 properties renamed across 12 files", Case.Insensitive);
+        couldNotFind.Length.ShouldBe(1);
+        response.Information.Last().ShouldContain("15 properties renamed across 12 files", Case.Insensitive);
 
         output.WriteLine($"Navigation naming rules applied correctly");
 
