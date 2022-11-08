@@ -26,17 +26,17 @@ See https://www.nuget.org/packages/EdmxRuler/ for details.
 ## CLI Usage:
 ### To generate rules from an EDMX, run the following:
    ```
-   > edmxruler -g edmxFilePath efCoreProjectBasePath
+   > edmxruler -g <edmxFilePath> <efCoreProjectBasePath>
    ```
    If both paths are the same, i.e. the EDMX is in the EF Core project folder, it is acceptable to run:
    ```
-   > edmxruler -g projectFolderWithEdmx
+   > edmxruler -g <projectFolderWithEdmx>
    ```
 Structure rules will be extracted from the EDMX and saved in the EF Core project folder.
 
 ### To Apply rules to an EF Core model:
    ```
-   > edmxruler -a efCoreProjectBasePath
+   > edmxruler -a <efCoreProjectBasePath>
    ```
 This assumes that you have executed the scaffolding process to generate the model from the database.
 For details on reverse engineering, go to: https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli
