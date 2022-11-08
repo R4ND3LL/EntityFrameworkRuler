@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using EdmxRuler.Applicator;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator;
-using EdmxRuler.RuleModels.EnumMapping;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
+using EdmxRuler.RuleModels.PropertyTypeChanging;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
@@ -68,12 +68,12 @@ public sealed class GeneralTests {
         navigationNamingRules.Namespace.ShouldBe("NorthwindTestProject.Models");
         navigationNamingRules.Classes.Count.ShouldBe(10);
         navigationNamingRules.Classes.All(o => o.Properties.Count > 0).ShouldBeTrue();
-        navigationNamingRules.Classes[0].Properties[0].Name.ShouldBe("ProductCategoryIDNavigations");
-        navigationNamingRules.Classes[0].Properties[0].AlternateName.ShouldBe("Products");
+        navigationNamingRules.Classes[0].Properties[0].Name.ShouldContain("ProductCategoryIDNavigations");
+        navigationNamingRules.Classes[0].Properties[0].Name.ShouldContain("Products");
         navigationNamingRules.Classes[0].Properties[0].NewName.ShouldBe("Products");
         navigationNamingRules.Classes.ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         navigationNamingRules.Classes.SelectMany(o => o.Properties)
-            .ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
+            .ForAll(o => o.Name.ForAll(n => n.IsValidSymbolName().ShouldBeTrue()));
         navigationNamingRules.Classes.SelectMany(o => o.Properties)
             .ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
 

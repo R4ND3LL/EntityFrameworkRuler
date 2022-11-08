@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 using EdmxRuler.Applicator.CsProjParser;
 using EdmxRuler.Extensions;
 using EdmxRuler.RuleModels;
-using EdmxRuler.RuleModels.EnumMapping;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
+using EdmxRuler.RuleModels.PropertyTypeChanging;
 using Microsoft.CodeAnalysis;
 using Project = Microsoft.CodeAnalysis.Project;
 
@@ -51,24 +51,24 @@ public sealed class RuleApplicator {
 
     /// <summary> Apply the given rules to the target project. </summary>   
     /// <returns> List of errors. </returns>
-    public async Task<List<ApplyRulesResponse>> ApplyRules(IEnumerable<IEdmxRuleModelRoot> rules) {
+    public async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(IEnumerable<IEdmxRuleModelRoot> rules) {
         if (rules == null) throw new ArgumentNullException(nameof(rules));
         var responses = await ApplyRulesInternal(rules);
         return responses;
     }
 
     /// <summary> Apply the given rules to the target project. </summary>  
-    private async Task<List<ApplyRulesResponse>> ApplyRulesInternal(IEnumerable<IEdmxRuleModelRoot> rules) {
+    private async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRulesInternal(IEnumerable<IEdmxRuleModelRoot> rules) {
         if (rules == null) throw new ArgumentNullException(nameof(rules));
 
         List<ApplyRulesResponse> responses = new();
-        foreach (var rule in rules)
+        foreach (var rule in rules.Where(o => o != null).OrderBy(o => o.Kind))
             try {
                 if (rule == null) continue;
                 var response = rule switch {
                     PrimitiveNamingRules primitiveNamingRules => await ApplyRules(primitiveNamingRules),
                     NavigationNamingRules navigationNamingRules => await ApplyRules(navigationNamingRules),
-                    PropertyTypeChangingRules enumMappingRulesRoot => await ApplyRules(enumMappingRulesRoot),
+                    PropertyTypeChangingRules propertyTypeChangingRules => await ApplyRules(propertyTypeChangingRules),
                     _ => null
                 };
 
@@ -100,7 +100,7 @@ public sealed class RuleApplicator {
 
             var jsonFiles = new[] {
                     fileNameOptions.PrimitiveNamingFile, fileNameOptions.NavigationNamingFile,
-                    fileNameOptions.EnumMappingFile
+                    fileNameOptions.PropertyTypeChangingFile
                 }
                 .Where(o => o.HasNonWhiteSpace())
                 .Select(o => o.Trim())
@@ -121,9 +121,10 @@ public sealed class RuleApplicator {
                     } else if (jsonFile == fileNameOptions.NavigationNamingFile) {
                         if (await TryReadRules<NavigationNamingRules>(fileInfo, errors) is { } propertyRenamingRoot)
                             rules.Add(propertyRenamingRoot);
-                    } else if (jsonFile == fileNameOptions.EnumMappingFile) {
-                        if (await TryReadRules<PropertyTypeChangingRules>(fileInfo, errors) is { } enumMappingRoot)
-                            rules.Add(enumMappingRoot);
+                    } else if (jsonFile == fileNameOptions.PropertyTypeChangingFile) {
+                        if (await TryReadRules<PropertyTypeChangingRules>(fileInfo, errors) is
+                            { } propertyTypeChangingRules)
+                            rules.Add(propertyTypeChangingRules);
                     }
                 } catch (Exception ex) {
                     Console.WriteLine(ex);
@@ -201,6 +202,10 @@ public sealed class RuleApplicator {
         string namespaceName,
         ApplyRulesResponse response,
         string contextFolder = null, string modelsFolder = null) {
+        string ToFullClassName(string className) {
+            return namespaceName.HasNonWhiteSpace() ? $"{namespaceName}.{className}" : className;
+        }
+
         if (classRules == null) return response; // nothing to do
 
         var project = await TryLoadProjectOrFallback(ProjectBasePath, contextFolder, modelsFolder, response);
@@ -217,6 +222,7 @@ public sealed class RuleApplicator {
 
             // first rename class if needed
             var canRenameClass = newClassName != oldClassName;
+            bool classExists;
             if (canRenameClass) {
                 var docWithChange = await project.Documents.RenameClassAsync(namespaceName, oldClassName, newClassName);
 
@@ -224,33 +230,48 @@ public sealed class RuleApplicator {
                     // documents have been mutated. update reference to project:
                     project = docWithChange.Project;
                     classRenameCount++;
+                    classExists = true;
                     response.Information.Add($"Renamed class {oldClassName} to {newClassName}");
                 } else {
-                    var fullName = namespaceName.HasNonWhiteSpace() ? $"{namespaceName}.{oldClassName}" : oldClassName;
-                    response.Information.Add($"Could not find class {fullName}");
                     // property processing may still work if the class is found under the new name
+                    classExists = await project.Documents.ClassExists(namespaceName, newClassName);
+                    if (classExists)
+                        response.Information.Add(
+                            $"Class already exists with target name: {ToFullClassName(newClassName)}");
+                    else {
+                        response.Information.Add($"Could not find class {ToFullClassName(oldClassName)}");
+                        continue;
+                    }
                 }
+            } else {
+                classExists = await project.Documents.ClassExists(namespaceName, newClassName);
+            }
+
+            if (!classExists) {
+                response.Information.Add($"Could not find class {ToFullClassName(newClassName)}");
+                continue;
             }
 
             // process property changes
             foreach (var propertyRef in classRef.GetProperties()) {
-                var newName = propertyRef.GetNewName().NullIfWhitespace();
+                var newPropName = propertyRef.GetNewName().NullIfWhitespace();
                 var currentNames = propertyRef.GetCurrentNameOptions()
                     .Where(o => o.HasNonWhiteSpace()).Select(o => o.Trim()).Distinct().ToArray();
 
-                var canRename = currentNames.Length > 0 && newName.HasNonWhiteSpace() &&
-                                currentNames.Any(o => o != newName);
+                bool? propertyExists = null;
+                var canRename = currentNames.Length > 0 && newPropName.HasNonWhiteSpace() &&
+                                currentNames.Any(o => o != newPropName);
                 if (canRename) {
                     Document docWithChange = null;
                     int i;
-                    var fromNames = currentNames.Where(o => o != newName).ToArray();
+                    var fromNames = currentNames.Where(o => o != newPropName).ToArray();
                     for (i = 0; i < fromNames.Length; i++) {
                         var fromName = fromNames[i];
-                        if (fromName == newName) continue;
+                        if (fromName == newPropName) continue;
                         docWithChange = await project.Documents.RenamePropertyAsync(namespaceName,
                             newClassName,
                             fromName,
-                            newName);
+                            newPropName);
                         if (docWithChange != null) break;
                     }
 
@@ -258,21 +279,35 @@ public sealed class RuleApplicator {
                         // documents have been mutated. update reference to project:
                         project = docWithChange.Project;
                         renameCount++;
+                        propertyExists = true;
                         response.Information.Add(
-                            $"Renamed class {newClassName} property {fromNames[i]} to {newName}");
+                            $"Renamed property {newClassName}.{fromNames[i]} to {newPropName}");
                     } else {
-                        var fullName = namespaceName.HasNonWhiteSpace()
-                            ? $"{namespaceName}.{newClassName}"
-                            : newClassName;
-                        response.Information.Add(
-                            $"Could not find class {fullName} property {string.Join(", ", fromNames)}");
                         // further processing may still work if the property is found under the new name
+                        propertyExists =
+                            await project.Documents.PropertyExists(namespaceName, newClassName, newPropName);
+                        if (propertyExists.Value)
+                            response.Information.Add(
+                                $"Property already exists with target name: {newClassName}.{newPropName}");
+                        else {
+                            response.Information.Add(
+                                $"Could not find property {ToFullClassName(newClassName)}.{string.Join("/", fromNames)}");
+                            continue;
+                        }
                     }
                 }
 
-                if (newName.HasNonWhiteSpace())
-                    currentNames = new[] { newName }; // ensure we are looking for the new name only
-                newName ??= currentNames.FirstOrDefault();
+                if (newPropName.HasNonWhiteSpace())
+                    currentNames = new[] { newPropName }; // ensure we are looking for the new name only
+                newPropName ??= currentNames.FirstOrDefault();
+
+                if (!propertyExists.HasValue)
+                    propertyExists = await project.Documents.PropertyExists(namespaceName, newClassName, newPropName);
+                if (propertyExists != true) {
+                    response.Information.Add($"Could not find property {ToFullClassName(newClassName)}.{newPropName}");
+                    continue;
+                }
+
 
                 var newType = propertyRef.GetNewTypeName();
                 var canChangeType = newType.HasNonWhiteSpace() && currentNames.Any(o => o.HasNonWhiteSpace());
@@ -293,13 +328,14 @@ public sealed class RuleApplicator {
                         project = docWithChange.Project;
                         typeMapCount++;
                         response.Information.Add(
-                            $"Updated class {newClassName} property {currentNames[i]} type to {newType}");
+                            $"Updated property {newClassName}.{currentNames[i]} type to {newType}");
                     } else {
-                        var fullName = namespaceName.HasNonWhiteSpace()
-                            ? $"{namespaceName}.{newClassName}"
-                            : newClassName;
+                        // should not arrive here because logic above confirms that the property exists
+#if DEBUG
+                        if (Debugger.IsAttached) Debugger.Break();
+#endif
                         response.Information.Add(
-                            $"Could not find class {fullName} property {string.Join(", ", currentNames)}");
+                            $"Could not find property {ToFullClassName(newClassName)}.{string.Join(", ", currentNames)}");
                     }
                 }
             }
@@ -482,7 +518,7 @@ public sealed class ApplyRulesResponse {
 [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
 public sealed class LoadAndApplyRulesResponse {
     public LoadRulesResponse LoadRulesResponse { get; internal set; }
-    public List<ApplyRulesResponse> ApplyRulesResponses { get; internal set; }
+    public IReadOnlyList<ApplyRulesResponse> ApplyRulesResponses { get; internal set; }
 
     /// <summary> return all errors in this response (including rule application responses) </summary>
     public IEnumerable<string> GetErrors() {

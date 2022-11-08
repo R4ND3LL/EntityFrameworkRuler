@@ -41,16 +41,16 @@ internal static class ListExtensions {
         var rules = new NavigationNamingRules();
         foreach (var schema in primitiveNamingRules.Schemas) {
             var r = new NavigationNamingRules();
-            foreach (var table in schema.Tables) {
+            foreach (var classRename in schema.Tables) {
                 var c = new ClassReference {
-                    Name = table.Name
+                    Name = classRename.NewName.CoalesceWhiteSpace(classRename.Name)
                 };
                 r.Classes.Add(c);
-                foreach (var columnNamer in table.Columns) {
+                foreach (var propertyRename in classRename.Columns) {
                     var p = new NavigationRename {
-                        Name = columnNamer.Name,
-                        NewName = columnNamer.NewName
+                        NewName = propertyRename.NewName
                     };
+                    p.Name.Add(propertyRename.Name);
                     c.Properties.Add(p);
                 }
             }

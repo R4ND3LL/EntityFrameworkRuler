@@ -56,6 +56,21 @@ internal static class RoslynExtensions {
         return await LocateAndActOnClass(documents, namespaceName, oldClassName, Action);
     }
 
+    public static async Task<bool> ClassExists(
+        this IEnumerable<Document> documents,
+        string namespaceName,
+        string oldClassName) {
+        if (string.IsNullOrEmpty(oldClassName)) return false;
+
+        Task<Document> Action(Document document, SyntaxNode root, TypeDeclarationSyntax classSyntax,
+            ISymbol classSymbol) {
+            return Task.FromResult(document);
+        }
+
+        var doc = await LocateAndActOnClass(documents, namespaceName, oldClassName, Action);
+        return doc != null;
+    }
+
     public static async Task<Document> RenamePropertyAsync(
         this IEnumerable<Document> documents,
         string namespaceName,
@@ -90,6 +105,20 @@ internal static class RoslynExtensions {
         }
 
         return await LocateAndActOnProperty(documents, namespaceName, className, oldPropertyName, Action);
+    }
+
+    public static async Task<bool> PropertyExists(this IEnumerable<Document> documents, string namespaceName,
+        string className, string propertyName) {
+        if (string.IsNullOrEmpty(className) || string.IsNullOrEmpty(propertyName))
+            return false;
+
+        Task<Document> Action(Document document, SyntaxNode root, PropertyDeclarationSyntax propSyntax,
+            ISymbol propSymbol) {
+            return Task.FromResult(document);
+        }
+
+        var doc = await LocateAndActOnProperty(documents, namespaceName, className, propertyName, Action);
+        return doc != null;
     }
 
     public static async Task<Document> ChangePropertyTypeAsync(
@@ -137,13 +166,7 @@ internal static class RoslynExtensions {
 
             var classSymbol = model?.GetDeclaredSymbol(classSyntax) ?? throw new Exception("Class symbol not found");
 
-            if (namespaceName != null) {
-                var ns = classSymbol.ContainingNamespace;
-                var symbolDisplayFormat = new SymbolDisplayFormat(
-                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
-                var fullyQualifiedName = ns.ToDisplayString(symbolDisplayFormat);
-                if (fullyQualifiedName != namespaceName) continue; // not the correct namespace
-            }
+            if (!classSymbol.IsNamespaceMatch(namespaceName)) continue; // not the correct namespace
 
             // perform action and return new document
             var newDocument = await action(document, root, classSyntax, classSymbol);
@@ -153,6 +176,7 @@ internal static class RoslynExtensions {
 
         return null;
     }
+
 
     private static async Task<Document> LocateAndActOnProperty(this IEnumerable<Document> documents,
         string namespaceName, string className,
@@ -176,13 +200,7 @@ internal static class RoslynExtensions {
 
             var propSymbol = model?.GetDeclaredSymbol(propSyntax) ?? throw new Exception("Property symbol not found");
 
-            if (namespaceName != null) {
-                var ns = propSymbol.ContainingNamespace;
-                var symbolDisplayFormat = new SymbolDisplayFormat(
-                    typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
-                var fullyQualifiedName = ns.ToDisplayString(symbolDisplayFormat);
-                if (fullyQualifiedName != namespaceName) continue; // not the correct namespace
-            }
+            if (!propSymbol.IsNamespaceMatch(namespaceName)) continue; // not the correct namespace
 
             // perform action and return new document
             var newDocument = await action(document, root, propSyntax, propSymbol);
@@ -193,6 +211,15 @@ internal static class RoslynExtensions {
         return null;
     }
 
+    /// <summary> return true if the namespace is empty (effectively dont care to match) or the symbol's containing namespace is a match </summary>
+    private static bool IsNamespaceMatch(this ISymbol classSymbol, string namespaceName) {
+        if (namespaceName.IsNullOrEmpty()) return true;
+        var ns = classSymbol.ContainingNamespace;
+        var symbolDisplayFormat = new SymbolDisplayFormat(
+            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces);
+        var fullyQualifiedName = ns.ToDisplayString(symbolDisplayFormat);
+        return fullyQualifiedName == namespaceName;
+    }
 
     public static async Task<int> SaveDocumentsAsync(this IEnumerable<Document> documents) {
         var saveCount = 0;

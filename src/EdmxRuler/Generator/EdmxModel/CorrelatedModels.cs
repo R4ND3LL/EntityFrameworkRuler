@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using EdmxRuler.Extensions;
 
 // ReSharper disable InvertIf
 // ReSharper disable MemberCanBeInternal
@@ -13,11 +14,12 @@ namespace EdmxRuler.Generator.EdmxModel;
 public sealed class Schema : NotifyPropertyChanged {
     public Schema(ConceptualSchema conceptualSchema, StorageSchema storageSchema) {
         ConceptualSchema = conceptualSchema ?? throw new ArgumentNullException(nameof(conceptualSchema));
-        StorageSchema = storageSchema ?? throw new ArgumentNullException(nameof(storageSchema)); 
+        StorageSchema = storageSchema ?? throw new ArgumentNullException(nameof(storageSchema));
     }
 
     /// <summary> Conceptual namespace.  The namespace that the actual code models are expected to use </summary>
     public string Namespace => ConceptualSchema.Namespace;
+
     public ConceptualSchema ConceptualSchema { get; }
     public StorageSchema StorageSchema { get; }
     public IList<EntityType> Entities { get; } = new ObservableCollection<EntityType>();
@@ -38,6 +40,12 @@ public sealed class EntityType : NotifyPropertyChanged {
 
     /// <summary> The conceptual name of the entity </summary>
     public string Name => ConceptualEntity.Name;
+
+    /// <summary> The storage name of the entity </summary>
+    public string StorageName => StorageEntity?.Name;
+
+    /// <summary> The cleansed storage name (spaces converted to underscore) </summary>
+    public string StorageNameCleansed => StorageName.CleanseSymbolName();
 
     public IList<NavigationProperty> NavigationProperties { get; } =
         new ObservableCollection<NavigationProperty>();
@@ -82,6 +90,7 @@ public sealed class EntityProperty : EntityPropertyBase {
         conceptualProperty) {
     }
 
+
     /// <summary> the database type name </summary>
     public string DbTypeName => StorageProperty?.Type;
 
@@ -98,6 +107,10 @@ public sealed class EntityProperty : EntityPropertyBase {
     public StorageProperty StorageProperty { get; set; }
     public ScalarPropertyMapping Mapping { get; set; }
     public string DbColumnName => Mapping?.ColumnName;
+
+    /// <summary> The cleansed storage column name (spaces converted to underscore) </summary>
+    public string DbColumnNameCleansed => DbColumnName.CleanseSymbolName();
+
     public new ConceptualProperty ConceptualProperty => (ConceptualProperty)base.ConceptualProperty;
 
     public override string ToString() { return $"Prop: {Name}"; }

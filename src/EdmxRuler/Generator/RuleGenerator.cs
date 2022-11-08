@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator.EdmxModel;
 using EdmxRuler.RuleModels;
-using EdmxRuler.RuleModels.EnumMapping;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
+using EdmxRuler.RuleModels.PropertyTypeChanging;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -45,7 +45,9 @@ public sealed class RuleGenerator {
     /// <summary> The rules generated from the EDMX via the TryGenerateRules() call </summary>
     public IReadOnlyCollection<IEdmxRuleModelRoot> Rules => rules;
 
-    public PropertyTypeChangingRules PropertyTypeChangingRules => rules.OfType<PropertyTypeChangingRules>().SingleOrDefault();
+    public PropertyTypeChangingRules PropertyTypeChangingRules =>
+        rules.OfType<PropertyTypeChangingRules>().SingleOrDefault();
+
     public PrimitiveNamingRules PrimitiveNamingRules => rules.OfType<PrimitiveNamingRules>().SingleOrDefault();
     public NavigationNamingRules NavigationNamingRules => rules.OfType<NavigationNamingRules>().SingleOrDefault();
 
@@ -69,7 +71,7 @@ public sealed class RuleGenerator {
 
         GenerateAndAdd(GetPrimitiveNamingRules);
         GenerateAndAdd(GetNavigationNamingRules);
-        GenerateAndAdd(GetEnumMappingRules);
+        GenerateAndAdd(GetPropertyTypeChangingRules);
         return Rules;
 
         void GenerateAndAdd<T>(Func<T> gen) where T : class, IEdmxRuleModelRoot {
@@ -97,7 +99,7 @@ public sealed class RuleGenerator {
         fileNameOptions ??= new RuleFileNameOptions();
         await TryWriteRules(() => PrimitiveNamingRules, fileNameOptions.PrimitiveNamingFile);
         await TryWriteRules(() => NavigationNamingRules, fileNameOptions.NavigationNamingFile);
-        await TryWriteRules(() => PropertyTypeChangingRules, fileNameOptions.EnumMappingFile);
+        await TryWriteRules(() => PropertyTypeChangingRules, fileNameOptions.PropertyTypeChangingFile);
         return Errors.Count == 0;
 
         async Task TryWriteRules<T>(Func<T> ruleGetter, string fileName) where T : class {
@@ -138,7 +140,7 @@ public sealed class RuleGenerator {
                 // if entity name is different than db, it has to go into output
                 var tbl = new ClassRename();
                 var renamed = false;
-                tbl.Name = entity.StorageEntity?.Name.CleanseSymbolName() ?? entity.Name;
+                tbl.Name = entity.StorageNameCleansed ?? entity.Name;
                 tbl.NewName = entity.ConceptualEntity?.Name ?? tbl.Name;
                 if (tbl.Name != tbl.NewName) renamed = true;
 
@@ -147,7 +149,7 @@ public sealed class RuleGenerator {
 
                 foreach (var property in entity.Properties) {
                     // if property name is different than db, it has to go into output
-                    var storagePropertyName = property.StorageProperty?.Name.CleanseSymbolName();
+                    var storagePropertyName = property.DbColumnNameCleansed;
                     if (storagePropertyName.IsNullOrWhiteSpace() ||
                         property.Name == storagePropertyName) continue;
                     tbl.Columns ??= new List<PropertyRename>();
@@ -201,21 +203,26 @@ public sealed class RuleGenerator {
                 var isDependentEnd = dependentEntity.Name == navigation.EntityName;
 
                 var inverseEntity = isPrincipalEnd ? dependentEntity : principalEntity;
-                var prefix = isDependentEnd ? string.Empty : inverseEntity.Name;
+                var prefix = isDependentEnd ? string.Empty : inverseEntity.StorageNameCleansed;
                 string efCoreName;
                 string altName;
                 if (isMany) {
-                    efCoreName = $"{prefix}{dep.Name}Navigations";
-                    altName = pluralizer.Pluralize(navigation.ToRole.Entity.Name);
+                    efCoreName = $"{prefix}{dep.DbColumnNameCleansed}Navigations";
+                    altName = pluralizer.Pluralize(navigation.ToRole.Entity.StorageNameCleansed);
                 } else {
-                    efCoreName = $"{prefix}{dep.Name}Navigation";
-                    altName = navigation.ToRole.Entity.Name;
+                    efCoreName = $"{prefix}{dep.DbColumnNameCleansed}Navigation";
+                    altName = navigation.ToRole.Entity.StorageNameCleansed;
                 }
 
                 var newName = navigation.Name;
+
+                //if (efCoreName == "ProjectFkNavigation") Debugger.Break();
+
                 tbl.Properties ??= new List<NavigationRename>();
-                tbl.Properties.Add(
-                    new NavigationRename { Name = efCoreName, AlternateName = altName, NewName = newName });
+                var navigationRename = new NavigationRename { NewName = newName };
+                if (efCoreName.HasNonWhiteSpace()) navigationRename.Name.Add(efCoreName);
+                if (altName.HasNonWhiteSpace()) navigationRename.Name.Add(altName);
+                if (navigationRename.Name.Count > 0) tbl.Properties.Add(navigationRename);
                 renamed = true;
             }
 
@@ -225,7 +232,7 @@ public sealed class RuleGenerator {
         return rule;
     }
 
-    private PropertyTypeChangingRules GetEnumMappingRules() {
+    private PropertyTypeChangingRules GetPropertyTypeChangingRules() {
         var edmx = EdmxParsed;
         var rule = new PropertyTypeChangingRules();
         rule.Classes ??= new List<TypeChangingClass>();

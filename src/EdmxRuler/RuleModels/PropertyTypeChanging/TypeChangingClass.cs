@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
-namespace EdmxRuler.RuleModels.EnumMapping;
+namespace EdmxRuler.RuleModels.PropertyTypeChanging;
 
 [DebuggerDisplay("Class {Name}")]
 [DataContract]

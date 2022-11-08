@@ -4,7 +4,7 @@
          "Name": "Order",
          "Properties": [
             {
-               "EnumType": "NorthwindTestProject.Models.FreightEnum",
+               "NewType": "NorthwindTestProject.Models.FreightEnum",
                "Name": "Freight"
             }
          ]
@@ -13,7 +13,7 @@
          "Name": "Product",
          "Properties": [
             {
-               "EnumType": "Common.OrderLevelEnum",
+               "NewType": "Common.OrderLevelEnum",
                "Name": "ReorderLevel"
             }
          ]

@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
-namespace EdmxRuler.RuleModels.EnumMapping;
+namespace EdmxRuler.RuleModels.PropertyTypeChanging;
 
 /// <summary> Property type changing rules. </summary>
 [DataContract]
@@ -16,7 +16,7 @@ public sealed class PropertyTypeChangingRules : IEdmxRuleModelRoot {
     public List<TypeChangingClass> Classes { get; set; } = new();
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
-    public EdmxRuleModelKind Kind => EdmxRuleModelKind.PropertyTypeMapping;
+    public EdmxRuleModelKind Kind => EdmxRuleModelKind.PropertyTypeChanging;
 
     IEnumerable<IEdmxRuleClassModel> IEdmxRuleModelRoot.GetClasses() => Classes;
 }

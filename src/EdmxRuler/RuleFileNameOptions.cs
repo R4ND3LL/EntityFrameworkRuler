@@ -12,7 +12,7 @@ public sealed class RuleFileNameOptions {
     [DataMember]
     public string NavigationNamingFile { get; set; } = "navigation-naming.json";
 
-    /// <summary> enum mapping rule file. </summary>
+    /// <summary> property type mapping rule file. </summary>
     [DataMember]
-    public string EnumMappingFile { get; set; } = "enum-mapping.json";
+    public string PropertyTypeChangingFile { get; set; } = "property-types.json";
 }
