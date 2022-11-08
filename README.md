@@ -54,9 +54,9 @@ EdmxRuler.Applicator.RuleApplicator
 
 #### Generate and save rules:
 ```csharp
-var edmxProcessor = new RuleGenerator(edmxPath);  
-var rules = edmxProcessor.TryGenerateRules();  
-await edmxProcessor.TrySaveRules(projectBasePath);
+var ruleGen = new RuleGenerator(edmxPath);  
+var rules = ruleGen.TryGenerateRules();  
+await ruleGen.TrySaveRules(projectBasePath);
 ```
 #### Apply rules already in project path:
 ```csharp
@@ -75,9 +75,9 @@ var applyResponse = await applicator.ApplyRules(enumRules);
 
 #### Customize rule file names:
 ```csharp
-var edmxProcessor = new RuleGenerator(edmxPath);  
-var rules = edmxProcessor.TryGenerateRules();  
-await edmxProcessor.TrySaveRules(projectBasePath,  
+var ruleGen = new RuleGenerator(edmxPath);  
+var rules = ruleGen.TryGenerateRules();  
+await ruleGen.TrySaveRules(projectBasePath,  
     new RuleFileNameOptions() {  
         NavigationNamingFile = "NavRenaming.json",   
         EnumMappingFile = "MyEnumMap.json"  
