@@ -6,7 +6,7 @@ namespace EdmxRuler.RuleModels.PrimitiveNaming;
 
 [DebuggerDisplay("Table {Name} to {NewName}")]
 [DataContract]
-public sealed class TableRenamer : IEdmxRuleClassModel {
+public sealed class ClassRename : IEdmxRuleClassModel {
     [DataMember]
     public string Name { get; set; }
 
@@ -14,7 +14,7 @@ public sealed class TableRenamer : IEdmxRuleClassModel {
     public string NewName { get; set; }
 
     [DataMember(EmitDefaultValue = false, IsRequired = false)]
-    public List<ColumnNamer> Columns { get; set; } = new();
+    public List<PropertyRename> Columns { get; set; } = new();
 
     string IEdmxRuleClassModel.GetOldName() => Name;
     string IEdmxRuleClassModel.GetNewName() => NewName;

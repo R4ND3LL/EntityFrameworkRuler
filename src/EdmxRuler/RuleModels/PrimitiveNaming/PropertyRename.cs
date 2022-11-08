@@ -6,7 +6,7 @@ namespace EdmxRuler.RuleModels.PrimitiveNaming;
 
 [DebuggerDisplay("Col {Name} to {NewName}")]
 [DataContract]
-public sealed class ColumnNamer : IEdmxRulePropertyModel {
+public sealed class PropertyRename : IEdmxRulePropertyModel {
     [DataMember]
     public string Name { get; set; }
 

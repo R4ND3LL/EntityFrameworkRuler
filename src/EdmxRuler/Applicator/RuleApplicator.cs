@@ -68,7 +68,7 @@ public sealed class RuleApplicator {
                 var response = rule switch {
                     PrimitiveNamingRules primitiveNamingRules => await ApplyRules(primitiveNamingRules),
                     NavigationNamingRules navigationNamingRules => await ApplyRules(navigationNamingRules),
-                    EnumMappingRules enumMappingRulesRoot => await ApplyRules(enumMappingRulesRoot),
+                    PropertyTypeChangingRules enumMappingRulesRoot => await ApplyRules(enumMappingRulesRoot),
                     _ => null
                 };
 
@@ -122,7 +122,7 @@ public sealed class RuleApplicator {
                         if (await TryReadRules<NavigationNamingRules>(fileInfo, errors) is { } propertyRenamingRoot)
                             rules.Add(propertyRenamingRoot);
                     } else if (jsonFile == fileNameOptions.EnumMappingFile) {
-                        if (await TryReadRules<EnumMappingRules>(fileInfo, errors) is { } enumMappingRoot)
+                        if (await TryReadRules<PropertyTypeChangingRules>(fileInfo, errors) is { } enumMappingRoot)
                             rules.Add(enumMappingRoot);
                     }
                 } catch (Exception ex) {
@@ -158,15 +158,15 @@ public sealed class RuleApplicator {
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
-    /// <param name="enumMappingRules"> The rules to apply. </param>
+    /// <param name="propertyTypeChangingRules"> The rules to apply. </param>
     /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <returns></returns>
-    public Task<ApplyRulesResponse> ApplyRules(EnumMappingRules enumMappingRules,
+    public Task<ApplyRulesResponse> ApplyRules(PropertyTypeChangingRules propertyTypeChangingRules,
         string contextFolder = null,
         string modelsFolder = null) {
-        var response = new ApplyRulesResponse(enumMappingRules);
-        return ApplyRulesCore(enumMappingRules.Classes, enumMappingRules.Namespace, response,
+        var response = new ApplyRulesResponse(propertyTypeChangingRules);
+        return ApplyRulesCore(propertyTypeChangingRules.Classes, propertyTypeChangingRules.Namespace, response,
             contextFolder: contextFolder,
             modelsFolder: modelsFolder);
     }
@@ -182,7 +182,7 @@ public sealed class RuleApplicator {
         var response = new ApplyRulesResponse(primitiveNamingRules);
         foreach (var schema in primitiveNamingRules.Schemas) {
             var schemaResponse = new ApplyRulesResponse(null);
-            await ApplyRulesCore(schema.Tables, null, schemaResponse, contextFolder, modelsFolder);
+            await ApplyRulesCore(schema.Tables, schema.Namespace, schemaResponse, contextFolder, modelsFolder);
             response.Errors.AddRange(schemaResponse.Errors);
             response.Information.AddRange(schemaResponse.Information);
         }
@@ -226,7 +226,8 @@ public sealed class RuleApplicator {
                     classRenameCount++;
                     response.Information.Add($"Renamed class {oldClassName} to {newClassName}");
                 } else {
-                    response.Information.Add($"Could not find class {oldClassName}");
+                    var fullName = namespaceName.HasNonWhiteSpace() ? $"{namespaceName}.{oldClassName}" : oldClassName;
+                    response.Information.Add($"Could not find class {fullName}");
                     // property processing may still work if the class is found under the new name
                 }
             }
@@ -260,8 +261,11 @@ public sealed class RuleApplicator {
                         response.Information.Add(
                             $"Renamed class {newClassName} property {fromNames[i]} to {newName}");
                     } else {
+                        var fullName = namespaceName.HasNonWhiteSpace()
+                            ? $"{namespaceName}.{newClassName}"
+                            : newClassName;
                         response.Information.Add(
-                            $"Could not find class {newClassName} property {string.Join(", ", fromNames)}");
+                            $"Could not find class {fullName} property {string.Join(", ", fromNames)}");
                         // further processing may still work if the property is found under the new name
                     }
                 }
@@ -290,9 +294,13 @@ public sealed class RuleApplicator {
                         typeMapCount++;
                         response.Information.Add(
                             $"Updated class {newClassName} property {currentNames[i]} type to {newType}");
-                    } else
+                    } else {
+                        var fullName = namespaceName.HasNonWhiteSpace()
+                            ? $"{namespaceName}.{newClassName}"
+                            : newClassName;
                         response.Information.Add(
-                            $"Could not find class {newClassName} property {string.Join(", ", currentNames)}");
+                            $"Could not find class {fullName} property {string.Join(", ", currentNames)}");
+                    }
                 }
             }
         }
@@ -493,7 +501,7 @@ public sealed class LoadAndApplyRulesResponse {
         if (!(ApplyRulesResponses?.Count > 0)) yield break;
         foreach (var r in ApplyRulesResponses)
             if (r?.Information?.Count > 0)
-                foreach (var error in r.Information)
-                    yield return error;
+                foreach (var info in r.Information)
+                    yield return info;
     }
 }

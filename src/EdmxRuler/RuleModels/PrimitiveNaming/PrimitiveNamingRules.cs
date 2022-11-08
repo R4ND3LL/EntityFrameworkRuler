@@ -13,10 +13,10 @@ namespace EdmxRuler.RuleModels.PrimitiveNaming;
 [DataContract]
 public sealed class PrimitiveNamingRules : IEdmxRuleModelRoot {
     [DataMember]
-    public List<Schema> Schemas { get; set; } = new();
+    public List<SchemaReference> Schemas { get; set; } = new();
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
-    public EdmxRuleModelKind Kind => EdmxRuleModelKind.TableAndColumnNaming;
+    public EdmxRuleModelKind Kind => EdmxRuleModelKind.PrimitiveNaming;
 
     IEnumerable<IEdmxRuleClassModel> IEdmxRuleModelRoot.GetClasses() => Schemas.SelectMany(o => o.Tables);
 }

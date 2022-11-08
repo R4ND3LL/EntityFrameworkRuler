@@ -34,7 +34,7 @@ public sealed class GeneralTests {
         edmxProcessor.Rules.Count.ShouldBe(3);
         output.WriteLine($"Successfully generated {edmxProcessor.Rules.Count} rule files in {elapsed}ms");
         rules.ShouldBe(edmxProcessor.Rules);
-        var enumMappingRules = rules.OfType<EnumMappingRules>().Single();
+        var enumMappingRules = rules.OfType<PropertyTypeChangingRules>().Single();
         var primitiveNamingRules = rules.OfType<PrimitiveNamingRules>().Single();
         var navigationNamingRules = rules.OfType<NavigationNamingRules>().Single();
 
@@ -46,10 +46,10 @@ public sealed class GeneralTests {
         enumMappingRules.Classes[0].Properties.Count.ShouldBe(1);
         enumMappingRules.Classes[1].Properties.Count.ShouldBe(1);
         enumMappingRules.Classes[0].Properties[0].Name.ShouldBe("Freight");
-        enumMappingRules.Classes[0].Properties[0].EnumType
+        enumMappingRules.Classes[0].Properties[0].NewType
             .ShouldBe("NorthwindTestProject.Models.FreightEnum"); // internal type
         enumMappingRules.Classes[1].Properties[0].Name.ShouldBe("ReorderLevel");
-        enumMappingRules.Classes[1].Properties[0].EnumType.ShouldBe("Common.OrderLevelEnum"); // external type
+        enumMappingRules.Classes[1].Properties[0].NewType.ShouldBe("Common.OrderLevelEnum"); // external type
 
         primitiveNamingRules.Schemas.Count.ShouldBe(1);
         primitiveNamingRules.Schemas[0].Tables.Count.ShouldBe(10);

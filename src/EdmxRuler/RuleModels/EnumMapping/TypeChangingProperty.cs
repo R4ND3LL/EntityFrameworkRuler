@@ -4,16 +4,16 @@ using System.Runtime.Serialization;
 
 namespace EdmxRuler.RuleModels.EnumMapping;
 
-[DebuggerDisplay("Prop {Name} enum type {EnumType}")]
+[DebuggerDisplay("Prop {Name} type {NewType}")]
 [DataContract]
-public sealed class EnumMappingProperty : IEdmxRulePropertyModel {
+public sealed class TypeChangingProperty : IEdmxRulePropertyModel {
     [DataMember]
     public string Name { get; set; }
 
     [DataMember]
-    public string EnumType { get; set; }
+    public string NewType { get; set; }
 
     IEnumerable<string> IEdmxRulePropertyModel.GetCurrentNameOptions() => new[] { Name };
     string IEdmxRulePropertyModel.GetNewName() => Name;
-    string IEdmxRulePropertyModel.GetNewTypeName() => EnumType;
+    string IEdmxRulePropertyModel.GetNewTypeName() => NewType;
 }

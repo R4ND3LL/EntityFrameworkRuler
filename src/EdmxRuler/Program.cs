@@ -21,6 +21,10 @@ internal static class Program {
                             out var projectBasePath))
                         return await ShowHelpInfo();
 
+                    await Console.Out.WriteLineAsync($" - edmx path: {edmxPath}").ConfigureAwait(false);
+                    await Console.Out.WriteLineAsync($" - project base path: {projectBasePath}").ConfigureAwait(false);
+                    await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
+
                     var start = DateTimeExtensions.GetTime();
                     var generator = new RuleGenerator(edmxPath);
                     var rules = generator.TryGenerateRules();
@@ -34,7 +38,7 @@ internal static class Program {
                     }
 
                     foreach (var error in generator.Errors)
-                        await Console.Out.WriteLineAsync($"Edmx generator error encountered: {error}")
+                        await Console.Out.WriteLineAsync($"Error: {error}")
                             .ConfigureAwait(false);
 
                     return generator.Errors.Count;
@@ -44,27 +48,33 @@ internal static class Program {
                     if (!ApplicatorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var projectBasePath))
                         return await ShowHelpInfo();
 
+                    await Console.Out.WriteLineAsync($" - project base path: {projectBasePath}").ConfigureAwait(false);
+                    await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
+
                     var applicator = new RuleApplicator(projectBasePath);
                     var response = await applicator.ApplyRulesInProjectPath();
 
                     var errorCount = 0;
                     foreach (var error in response.GetErrors()) {
                         errorCount++;
-                        await Console.Out.WriteLineAsync($"Rule applicator error encountered: {error}")
-                            .ConfigureAwait(false);
+                        await Console.Out.WriteLineAsync($"Error: {error}").ConfigureAwait(false);
                     }
 
-                    foreach (var info in response.GetInformation()) {
-                        await Console.Out.WriteLineAsync($"Info: {info}")
-                            .ConfigureAwait(false);
+                    foreach (var r in response.ApplyRulesResponses.Where(r => r?.Information?.Count > 0)) {
+                        await Console.Out.WriteLineAsync($"{r.Rule.Kind} log:").ConfigureAwait(false);
+                        foreach (var info in r.Information)
+                            await Console.Out.WriteLineAsync($" Info: {info}").ConfigureAwait(false);
+                        await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
                     }
 
                     return errorCount;
                 }
+
                 default:
                     return await ShowHelpInfo();
             }
-        } catch (Exception ex) {
+        } catch
+            (Exception ex) {
             await Console.Out.WriteLineAsync($"Unexpected error: {ex.Message}").ConfigureAwait(false);
             return 1;
         }

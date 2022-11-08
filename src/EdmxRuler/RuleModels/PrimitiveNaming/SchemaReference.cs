@@ -3,12 +3,13 @@ using System.Diagnostics;
 using System.Runtime.Serialization;
 
 namespace EdmxRuler.RuleModels.PrimitiveNaming;
+
 [DebuggerDisplay("Schema {Name}")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1724:", Justification = "Reviewed.")]
 [DataContract]
-public sealed class Schema {
-    public Schema() {
-        Tables = new List<TableRenamer>();
+public sealed class SchemaReference {
+    public SchemaReference() {
+        Tables = new List<ClassRename>();
     }
 
     [DataMember]
@@ -18,7 +19,7 @@ public sealed class Schema {
     public string SchemaName { get; set; }
 
     [DataMember(EmitDefaultValue = false, IsRequired = false)]
-    public List<TableRenamer> Tables { get; set; }
+    public List<ClassRename> Tables { get; set; }
 
     [DataMember(EmitDefaultValue = false, IsRequired = false)]
     public string TableRegexPattern { get; set; }
@@ -31,4 +32,8 @@ public sealed class Schema {
 
     [DataMember(EmitDefaultValue = false, IsRequired = false)]
     public string ColumnPatternReplaceWith { get; set; }
+
+    /// <summary> Optional namespace used when identifying classes.  Setting this will help to positively identify ambiguously names classes. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false)]
+    public string Namespace { get; set; }
 }

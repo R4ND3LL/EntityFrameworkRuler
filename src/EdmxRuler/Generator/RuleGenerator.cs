@@ -10,7 +10,6 @@ using EdmxRuler.RuleModels;
 using EdmxRuler.RuleModels.EnumMapping;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
-using Schema = EdmxRuler.RuleModels.PrimitiveNaming.Schema;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -46,11 +45,9 @@ public sealed class RuleGenerator {
     /// <summary> The rules generated from the EDMX via the TryGenerateRules() call </summary>
     public IReadOnlyCollection<IEdmxRuleModelRoot> Rules => rules;
 
-    public EnumMappingRules EnumRules => rules.OfType<EnumMappingRules>().SingleOrDefault();
+    public PropertyTypeChangingRules PropertyTypeChangingRules => rules.OfType<PropertyTypeChangingRules>().SingleOrDefault();
     public PrimitiveNamingRules PrimitiveNamingRules => rules.OfType<PrimitiveNamingRules>().SingleOrDefault();
-
-    public NavigationNamingRules NavigationNamingRules =>
-        rules.OfType<NavigationNamingRules>().SingleOrDefault();
+    public NavigationNamingRules NavigationNamingRules => rules.OfType<NavigationNamingRules>().SingleOrDefault();
 
     /// <summary> The correlated EDMX model that is read from the EDMX file during the TryGenerateRules() call </summary>
     public EdmxParsed EdmxParsed { get; private set; }
@@ -100,7 +97,7 @@ public sealed class RuleGenerator {
         fileNameOptions ??= new RuleFileNameOptions();
         await TryWriteRules(() => PrimitiveNamingRules, fileNameOptions.PrimitiveNamingFile);
         await TryWriteRules(() => NavigationNamingRules, fileNameOptions.NavigationNamingFile);
-        await TryWriteRules(() => EnumRules, fileNameOptions.EnumMappingFile);
+        await TryWriteRules(() => PropertyTypeChangingRules, fileNameOptions.EnumMappingFile);
         return Errors.Count == 0;
 
         async Task TryWriteRules<T>(Func<T> ruleGetter, string fileName) where T : class {
@@ -132,14 +129,14 @@ public sealed class RuleGenerator {
         foreach (var grp in edmx.Entities.GroupBy(o => o.DbSchema)) {
             if (grp.Key.IsNullOrWhiteSpace()) continue;
 
-            var schemaRule = new Schema();
+            var schemaRule = new SchemaReference();
             root.Schemas.Add(schemaRule);
             schemaRule.SchemaName = grp.Key;
             schemaRule.UseSchemaName = false; // will append schema name to entity name
 
             foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
                 // if entity name is different than db, it has to go into output
-                var tbl = new TableRenamer();
+                var tbl = new ClassRename();
                 var renamed = false;
                 tbl.Name = entity.StorageEntity?.Name.CleanseSymbolName() ?? entity.Name;
                 tbl.NewName = entity.ConceptualEntity?.Name ?? tbl.Name;
@@ -153,8 +150,8 @@ public sealed class RuleGenerator {
                     var storagePropertyName = property.StorageProperty?.Name.CleanseSymbolName();
                     if (storagePropertyName.IsNullOrWhiteSpace() ||
                         property.Name == storagePropertyName) continue;
-                    tbl.Columns ??= new List<ColumnNamer>();
-                    tbl.Columns.Add(new ColumnNamer {
+                    tbl.Columns ??= new List<PropertyRename>();
+                    tbl.Columns.Add(new PropertyRename {
                         Name = storagePropertyName, NewName = property.Name
                     });
                     Debug.Assert(tbl.Columns[^1].Name.IsValidSymbolName());
@@ -228,10 +225,10 @@ public sealed class RuleGenerator {
         return rule;
     }
 
-    private EnumMappingRules GetEnumMappingRules() {
+    private PropertyTypeChangingRules GetEnumMappingRules() {
         var edmx = EdmxParsed;
-        var rule = new EnumMappingRules();
-        rule.Classes ??= new List<EnumMappingClass>();
+        var rule = new PropertyTypeChangingRules();
+        rule.Classes ??= new List<TypeChangingClass>();
 
         if (edmx?.Entities.IsNullOrEmpty() != false) return rule;
 
@@ -240,17 +237,17 @@ public sealed class RuleGenerator {
             rule.Namespace ??= ""; //entity.Namespace;
 
             // if entity name is different than db, it has to go into output
-            var tbl = new EnumMappingClass();
+            var tbl = new TypeChangingClass();
             var renamed = false;
             tbl.Name = entity.Name;
 
             foreach (var property in entity.Properties) {
                 // if property name is different than db, it has to go into output
                 if (property?.EnumType == null) continue;
-                tbl.Properties ??= new List<EnumMappingProperty>();
-                tbl.Properties.Add(new EnumMappingProperty {
+                tbl.Properties ??= new List<TypeChangingProperty>();
+                tbl.Properties.Add(new TypeChangingProperty {
                     Name = property.Name,
-                    EnumType = property.EnumType.ExternalTypeName ?? property.EnumType.FullName
+                    NewType = property.EnumType.ExternalTypeName ?? property.EnumType.FullName
                 });
                 renamed = true;
             }
