@@ -19,22 +19,22 @@ internal static class Program {
                         return await ShowHelpInfo();
 
                     var start = DateTimeExtensions.GetTime();
-                    var edmxProcessor = new RuleGenerator(edmxPath);
-                    var rules = edmxProcessor.TryGenerateRules();
-                    await edmxProcessor.TrySaveRules(projectBasePath);
+                    var generator = new RuleGenerator(edmxPath);
+                    var rules = generator.TryGenerateRules();
+                    await generator.TrySaveRules(projectBasePath);
                     var elapsed = DateTimeExtensions.GetTime() - start;
-                    if (edmxProcessor.Errors.Count == 0) {
+                    if (generator.Errors.Count == 0) {
                         await Console.Out
                             .WriteLineAsync($"Successfully generated {rules.Count} rule files in {elapsed}ms")
                             .ConfigureAwait(false);
                         return 0;
                     }
 
-                    foreach (var error in edmxProcessor.Errors)
+                    foreach (var error in generator.Errors)
                         await Console.Out.WriteLineAsync($"Edmx generator error encountered: {error}")
                             .ConfigureAwait(false);
 
-                    return edmxProcessor.Errors.Count;
+                    return generator.Errors.Count;
                 }
                 case 'a': {
                     // apply rules
