@@ -4,8 +4,10 @@
          "Name": "Category",
          "Properties": [
             {
-               "AlternateName": "Products",
-               "Name": "ProductCategoryIDNavigations",
+               "Name": [
+                  "ProductsCategoryIDNavigations",
+                  "Products"
+               ],
                "NewName": "Products"
             }
          ]
@@ -14,8 +16,10 @@
          "Name": "Customer",
          "Properties": [
             {
-               "AlternateName": "Orders",
-               "Name": "OrderCustomerIDNavigations",
+               "Name": [
+                  "OrdersCustomerIDNavigations",
+                  "Orders"
+               ],
                "NewName": "Orders"
             }
          ]
@@ -24,18 +28,24 @@
          "Name": "Employee",
          "Properties": [
             {
-               "AlternateName": "Employees",
-               "Name": "ReportsToFkNavigations",
+               "Name": [
+                  "ReportsToNavigations",
+                  "Employees"
+               ],
                "NewName": "Employees1"
             },
             {
-               "AlternateName": "Employee",
-               "Name": "ReportsToFkNavigation",
+               "Name": [
+                  "ReportsToNavigation",
+                  "Employees"
+               ],
                "NewName": "Employee1"
             },
             {
-               "AlternateName": "Orders",
-               "Name": "OrderEmployeeIDNavigations",
+               "Name": [
+                  "OrdersEmployeeIDNavigations",
+                  "Orders"
+               ],
                "NewName": "Orders"
             }
          ]
@@ -44,23 +54,31 @@
          "Name": "Order",
          "Properties": [
             {
-               "AlternateName": "Customer",
-               "Name": "CustomerIDNavigation",
+               "Name": [
+                  "CustomerIDNavigation",
+                  "Customers"
+               ],
                "NewName": "Customer"
             },
             {
-               "AlternateName": "Employee",
-               "Name": "EmployeeIDNavigation",
+               "Name": [
+                  "EmployeeIDNavigation",
+                  "Employees"
+               ],
                "NewName": "Employee"
             },
             {
-               "AlternateName": "Order_Detail",
-               "Name": "Order_DetailOrderIDNavigations",
+               "Name": [
+                  "Order_DetailsOrderIDNavigations",
+                  "Order_Details"
+               ],
                "NewName": "Order_Details"
             },
             {
-               "AlternateName": "Shipper",
-               "Name": "ShipViaFkNavigation",
+               "Name": [
+                  "ShipViaNavigation",
+                  "Shippers"
+               ],
                "NewName": "Shipper"
             }
          ]
@@ -69,13 +87,17 @@
          "Name": "Order_Detail",
          "Properties": [
             {
-               "AlternateName": "Order",
-               "Name": "OrderIDNavigation",
+               "Name": [
+                  "OrderIDNavigation",
+                  "Orders"
+               ],
                "NewName": "Order"
             },
             {
-               "AlternateName": "Product",
-               "Name": "ProductIDNavigation",
+               "Name": [
+                  "ProductIDNavigation",
+                  "Products"
+               ],
                "NewName": "Product"
             }
          ]
@@ -84,18 +106,24 @@
          "Name": "Product",
          "Properties": [
             {
-               "AlternateName": "Category",
-               "Name": "CategoryIDNavigation",
+               "Name": [
+                  "CategoryIDNavigation",
+                  "Categories"
+               ],
                "NewName": "Category"
             },
             {
-               "AlternateName": "Order_Detail",
-               "Name": "Order_DetailProductIDNavigations",
+               "Name": [
+                  "Order_DetailsProductIDNavigations",
+                  "Order_Details"
+               ],
                "NewName": "OrderDetailsNav"
             },
             {
-               "AlternateName": "Supplier",
-               "Name": "SupplierIDNavigation",
+               "Name": [
+                  "SupplierIDNavigation",
+                  "Suppliers"
+               ],
                "NewName": "Supplier"
             }
          ]
@@ -104,8 +132,10 @@
          "Name": "Region",
          "Properties": [
             {
-               "AlternateName": "Territories",
-               "Name": "TerritoryRegionIDNavigations",
+               "Name": [
+                  "TerritoriesRegionIDNavigations",
+                  "Territories"
+               ],
                "NewName": "Territories"
             }
          ]
@@ -114,8 +144,10 @@
          "Name": "Shipper",
          "Properties": [
             {
-               "AlternateName": "Orders",
-               "Name": "OrderShipViaFkNavigations",
+               "Name": [
+                  "OrdersShipViaNavigations",
+                  "Orders"
+               ],
                "NewName": "Orders"
             }
          ]
@@ -124,8 +156,10 @@
          "Name": "Supplier",
          "Properties": [
             {
-               "AlternateName": "Products",
-               "Name": "ProductSupplierIDNavigations",
+               "Name": [
+                  "ProductsSupplierIDNavigations",
+                  "Products"
+               ],
                "NewName": "Products"
             }
          ]
@@ -134,12 +168,14 @@
          "Name": "Territory",
          "Properties": [
             {
-               "AlternateName": "Region",
-               "Name": "RegionIDNavigation",
+               "Name": [
+                  "RegionIDNavigation",
+                  "Region"
+               ],
                "NewName": "Region"
             }
          ]
       }
    ],
-   "Namespace": "NorthwindTestProject.Models"
+   "Namespace": ""
 }

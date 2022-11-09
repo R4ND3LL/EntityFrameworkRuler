@@ -1,6 +1,7 @@
 ﻿{
    "Schemas": [
       {
+         "Namespace": null,
          "SchemaName": "dbo",
          "Tables": [
             {
