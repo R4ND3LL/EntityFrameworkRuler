@@ -234,7 +234,7 @@ public sealed class RuleApplicator {
         await state.TryLoadProjectOrFallbackOnce(ProjectBasePath, contextFolder, modelsFolder, response);
         if (state.Project == null || !state.Project.Documents.Any()) return;
 
-        var renameCount = 0;
+        var propRenameCount = 0;
         var classRenameCount = 0;
         var typeMapCount = 0;
         var dirtyClassStates = new HashSet<ClassState>();
@@ -313,7 +313,7 @@ public sealed class RuleApplicator {
                     if (propertyActionResult.PropertyLocated) {
                         // documents have been mutated. update reference to project:
                         ProjectUpdated(propertyActionResult);
-                        renameCount++;
+                        propRenameCount++;
                         propertyExists = true;
                         response.LogInformation(
                             $"Renamed property {newClassName}.{fromNames[i]} to {newPropName}");
@@ -378,14 +378,21 @@ public sealed class RuleApplicator {
             }
         }
 
-        if (classRenameCount == 0 && renameCount == 0 && typeMapCount == 0) {
+        if (classRenameCount == 0 && propRenameCount == 0 && typeMapCount == 0) {
             response.LogInformation("No changes made");
             return;
         }
 
-        // get short list of changed docs
-        //var changedDocIds = dirtyClassStates.SelectMany(o => o.GetDocumentIds()).Distinct().ToList();
-        var saved = await state.Project.Documents.SaveDocumentsAsync(false);
+        int saved;
+        if (classRenameCount > 0 || propRenameCount > 0) {
+            // unfortunately we have to go over all documents and save because we don't know how far reaching the rename refactoring was.
+            saved = await state.Project.Documents.SaveDocumentsAsync(false);
+        } else {
+            // type mapping only.  we know the exact docs that changed.
+            Debug.Assert(typeMapCount > 0 && dirtyClassStates.Count > 0);
+            var changedDocIds = dirtyClassStates.SelectMany(o => o.GetDocumentIds()).Distinct().ToList();
+            saved = await state.Project.SaveDocumentsAsync(changedDocIds);
+        }
 
         var sb = new StringBuilder();
         if (classRenameCount > 0) {
@@ -393,9 +400,9 @@ public sealed class RuleApplicator {
             sb.Append($"{classRenameCount} classes renamed");
         }
 
-        if (renameCount > 0) {
+        if (propRenameCount > 0) {
             if (sb.Length > 0) sb.Append(", ");
-            sb.Append($"{renameCount} properties renamed");
+            sb.Append($"{propRenameCount} properties renamed");
         }
 
         if (typeMapCount > 0) {

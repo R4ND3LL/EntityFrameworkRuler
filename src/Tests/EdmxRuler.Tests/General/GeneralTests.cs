@@ -111,7 +111,7 @@ public sealed class GeneralTests {
         if (response.Errors.Count == 1) response.Errors[0].ShouldStartWith("Error loading existing project");
 
         response.Information.Count(o => o.StartsWith("Update")).ShouldBe(2);
-        response.Information.Last().ShouldStartWith("2 property types changed across", Case.Insensitive);
+        response.Information.Last().ShouldStartWith("2 property types changed across 2 files", Case.Insensitive);
         output.WriteLine($"Enum mapping rules applied correctly");
         elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"Completed in {elapsed}ms.  FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");

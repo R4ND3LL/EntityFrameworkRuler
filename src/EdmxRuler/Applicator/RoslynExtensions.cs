@@ -219,26 +219,33 @@ internal static class RoslynExtensions {
         var hashSet = new HashSet<DocumentId>();
         foreach (var tree in trees) {
             var doc = project.GetDocument(tree);
+            if (doc == null) {
+                // not a current tree. try another way
+                if (tree.FilePath.HasCharacters()) {
+                    doc = project.Documents.FirstOrDefault(o => o.FilePath == tree.FilePath);
+                }
+            }
+
             if (doc != null && hashSet.Add(doc.Id)) {
                 yield return doc;
             }
         }
     }
 
-    /// <summary> Get the documents containing the given symbol. could be more than one if the class is partial. </summary>
-    public static IEnumerable<Document> GetDocuments(this ISymbol symbol, Solution solution) {
-        if (symbol == null) yield break;
-        var trees = symbol.DeclaringSyntaxReferences
-            .Select(o => o.SyntaxTree)
-            .Where(o => o.HasCompilationUnitRoot);
-        var hashSet = new HashSet<DocumentId>();
-        foreach (var tree in trees) {
-            var doc = solution.GetDocument(tree);
-            if (doc != null && hashSet.Add(doc.Id)) {
-                yield return doc;
-            }
-        }
-    }
+    // /// <summary> Get the documents containing the given symbol. could be more than one if the class is partial. </summary>
+    // public static IEnumerable<Document> GetDocuments(this ISymbol symbol, Solution solution) {
+    //     if (symbol == null) yield break;
+    //     var trees = symbol.DeclaringSyntaxReferences
+    //         .Select(o => o.SyntaxTree)
+    //         .Where(o => o.HasCompilationUnitRoot);
+    //     var hashSet = new HashSet<DocumentId>();
+    //     foreach (var tree in trees) {
+    //         var doc = solution.GetDocument(tree);
+    //         if (doc != null && hashSet.Add(doc.Id)) {
+    //             yield return doc;
+    //         }
+    //     }
+    // }
 
     public static async Task<IList<INamedTypeSymbol>> FindClassesByName(this Project project,
         string namespaceName, string className) {
@@ -344,6 +351,7 @@ internal static class RoslynExtensions {
                 var orig = (await File.ReadAllTextAsync(path, Encoding.UTF8))?.Trim();
                 if (text == orig) continue;
             }
+
             await File.WriteAllTextAsync(path, text, Encoding.UTF8);
             saveCount++;
         }
