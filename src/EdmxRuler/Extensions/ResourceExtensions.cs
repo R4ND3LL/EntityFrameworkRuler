@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace EdmxRuler.Extensions;
-
 internal static class ResourceExtensions {
     public static IEnumerable<string> GetEntityResourceDocuments(this Assembly assembly) {
         return GetResourceDocuments(assembly, "Applicator.EntityResources");

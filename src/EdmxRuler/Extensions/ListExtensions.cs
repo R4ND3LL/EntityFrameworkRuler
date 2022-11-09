@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace EdmxRuler.Extensions;
 

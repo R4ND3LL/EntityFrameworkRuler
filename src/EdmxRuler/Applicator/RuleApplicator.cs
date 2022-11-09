@@ -208,7 +208,7 @@ public sealed class RuleApplicator {
             var schemaResponse = new ApplyRulesResponse(null);
             await ApplyRulesCore(schema.Tables, schema.Namespace, schemaResponse, contextFolder, modelsFolder, state);
             response.Errors.AddRange(schemaResponse.Errors);
-            response.Information.AddRange(schemaResponse.Information);
+            response.LogInformation(schemaResponse.Information);
         }
     }
 
@@ -237,6 +237,7 @@ public sealed class RuleApplicator {
         var renameCount = 0;
         var classRenameCount = 0;
         var typeMapCount = 0;
+        var dirtyClassStates = new HashSet<ClassState>();
         foreach (var classRef in classRules) {
             var newClassName = classRef.GetNewName();
             var oldClassName = classRef.GetOldName().CoalesceWhiteSpace(newClassName);
@@ -245,36 +246,47 @@ public sealed class RuleApplicator {
 
             // first rename class if needed
             var canRenameClass = newClassName != oldClassName;
-            bool classExists;
+            var classState = new ClassState(state);
             if (canRenameClass) {
-                var docWithChange =
-                    await state.Project.Documents.RenameClassAsync(namespaceName, oldClassName, newClassName);
+                var classActionResult =
+                    await state.Project.RenameClassAsync(namespaceName, oldClassName, newClassName);
 
-                if (docWithChange != null) {
+                if (classActionResult.ClassLocated) {
                     // documents have been mutated. update reference to project:
-                    state.Project = docWithChange.Project;
+                    state.Project = classActionResult.Project;
+                    classState.ClassSymbol = classActionResult.ClassSymbol;
                     classRenameCount++;
-                    classExists = true;
-                    response.Information.Add($"Renamed class {oldClassName} to {newClassName}");
+                    dirtyClassStates.Add(classState);
+                    response.LogInformation($"Renamed class {oldClassName} to {newClassName}");
                 } else {
                     // property processing may still work if the class is found under the new name
-                    classExists = await state.Project.Documents.ClassExists(namespaceName, newClassName);
-                    if (classExists)
-                        response.Information.Add(
+                    classState.ClassSymbol = (await state.Project.FindClassesByName(namespaceName, newClassName))
+                        .FirstOrDefault();
+                    if (classState.ClassExists) {
+                        response.LogInformation(
                             $"Class already exists with target name: {ToFullClassName(newClassName)}");
-                    else {
-                        response.Information.Add($"Could not find class {ToFullClassName(oldClassName)}");
+                    } else {
+                        response.LogInformation($"Could not find class {ToFullClassName(oldClassName)}");
                         continue;
                     }
                 }
             } else {
-                classExists = await state.Project.Documents.ClassExists(namespaceName, newClassName);
+                classState.ClassSymbol =
+                    (await state.Project.FindClassesByName(namespaceName, newClassName)).FirstOrDefault();
             }
 
-            if (!classExists) {
-                response.Information.Add($"Could not find class {ToFullClassName(newClassName)}");
+            if (!classState.ClassExists) {
+                response.LogInformation($"Could not find class {ToFullClassName(newClassName)}");
                 continue;
             }
+
+            void ProjectUpdated(PropertyActionResult docWithChange) {
+                Debug.Assert(docWithChange.PropertyLocated);
+                state.Project = docWithChange.Project;
+                classState.MarkClassStale();
+                dirtyClassStates.Add(classState);
+            }
+
 
             // process property changes
             foreach (var propertyRef in classRef.GetProperties()) {
@@ -286,35 +298,34 @@ public sealed class RuleApplicator {
                 var canRename = currentNames.Length > 0 && newPropName.HasNonWhiteSpace() &&
                                 currentNames.Any(o => o != newPropName);
                 if (canRename) {
-                    Document docWithChange = null;
+                    PropertyActionResult propertyActionResult = default;
                     int i;
                     var fromNames = currentNames.Where(o => o != newPropName).ToArray();
                     for (i = 0; i < fromNames.Length; i++) {
                         var fromName = fromNames[i];
                         if (fromName == newPropName) continue;
-                        docWithChange = await state.Project.Documents.RenamePropertyAsync(namespaceName,
-                            newClassName,
-                            fromName,
-                            newPropName);
-                        if (docWithChange != null) break;
+                        propertyActionResult =
+                            await state.Project.RenamePropertyAsync(await classState.GetClassSymbol(), fromName,
+                                newPropName);
+                        if (propertyActionResult.PropertyLocated) break;
                     }
 
-                    if (docWithChange != null) {
+                    if (propertyActionResult.PropertyLocated) {
                         // documents have been mutated. update reference to project:
-                        state.Project = docWithChange.Project;
+                        ProjectUpdated(propertyActionResult);
                         renameCount++;
                         propertyExists = true;
-                        response.Information.Add(
+                        response.LogInformation(
                             $"Renamed property {newClassName}.{fromNames[i]} to {newPropName}");
                     } else {
                         // further processing may still work if the property is found under the new name
-                        propertyExists =
-                            await state.Project.Documents.PropertyExists(namespaceName, newClassName, newPropName);
+                        var currentClassSymbol = await classState.GetClassSymbol();
+                        propertyExists = await currentClassSymbol.PropertyExists(newPropName);
                         if (propertyExists.Value)
-                            response.Information.Add(
+                            response.LogInformation(
                                 $"Property already exists with target name: {newClassName}.{newPropName}");
                         else {
-                            response.Information.Add(
+                            response.LogInformation(
                                 $"Could not find property {ToFullClassName(newClassName)}.{string.Join("/", fromNames)}");
                             continue;
                         }
@@ -325,11 +336,13 @@ public sealed class RuleApplicator {
                     currentNames = new[] { newPropName }; // ensure we are looking for the new name only
                 newPropName ??= currentNames.FirstOrDefault();
 
-                if (!propertyExists.HasValue)
-                    propertyExists =
-                        await state.Project.Documents.PropertyExists(namespaceName, newClassName, newPropName);
+                if (!propertyExists.HasValue) {
+                    var currentClassSymbol = await classState.GetClassSymbol();
+                    propertyExists = await currentClassSymbol.PropertyExists(newPropName);
+                }
+
                 if (propertyExists != true) {
-                    response.Information.Add($"Could not find property {ToFullClassName(newClassName)}.{newPropName}");
+                    response.LogInformation($"Could not find property {ToFullClassName(newClassName)}.{newPropName}");
                     continue;
                 }
 
@@ -337,29 +350,28 @@ public sealed class RuleApplicator {
                 var newType = propertyRef.GetNewTypeName();
                 var canChangeType = newType.HasNonWhiteSpace() && currentNames.Any(o => o.HasNonWhiteSpace());
                 if (canChangeType) {
-                    Document docWithChange = null;
+                    PropertyActionResult propertyActionResult = default;
                     int i;
                     for (i = 0; i < currentNames.Length; i++) {
                         var fromName = currentNames[i];
-                        docWithChange = await state.Project.Documents.ChangePropertyTypeAsync(namespaceName,
-                            newClassName,
-                            fromName,
-                            newType);
-                        if (docWithChange != null) break;
+                        propertyActionResult =
+                            await state.Project.ChangePropertyTypeAsync(await classState.GetClassSymbol(), fromName,
+                                newType);
+                        if (propertyActionResult.PropertyLocated) break;
                     }
 
-                    if (docWithChange != null) {
+                    if (propertyActionResult.PropertyLocated) {
                         // documents have been mutated. update reference to project:
-                        state.Project = docWithChange.Project;
+                        ProjectUpdated(propertyActionResult);
                         typeMapCount++;
-                        response.Information.Add(
+                        response.LogInformation(
                             $"Updated property {newClassName}.{currentNames[i]} type to {newType}");
                     } else {
                         // should not arrive here because logic above confirms that the property exists
 #if DEBUG
                         if (Debugger.IsAttached) Debugger.Break();
 #endif
-                        response.Information.Add(
+                        response.LogInformation(
                             $"Could not find property {ToFullClassName(newClassName)}.{string.Join(", ", currentNames)}");
                     }
                 }
@@ -367,11 +379,13 @@ public sealed class RuleApplicator {
         }
 
         if (classRenameCount == 0 && renameCount == 0 && typeMapCount == 0) {
-            response.Information.Add("No changes made");
+            response.LogInformation("No changes made");
             return;
         }
 
-        var saved = await state.Project.Documents.SaveDocumentsAsync();
+        // get short list of changed docs
+        //var changedDocIds = dirtyClassStates.SelectMany(o => o.GetDocumentIds()).Distinct().ToList();
+        var saved = await state.Project.Documents.SaveDocumentsAsync(false);
 
         var sb = new StringBuilder();
         if (classRenameCount > 0) {
@@ -390,7 +404,7 @@ public sealed class RuleApplicator {
         }
 
         sb.Append($" across {saved} files");
-        response.Information.Add(sb.ToString());
+        response.LogInformation(sb.ToString());
         return;
     }
 
@@ -444,7 +458,7 @@ public sealed class RuleApplicator {
 
         if (csProj?.ImplicitUsings.In("enabled", "enable", "true") == true) {
             // symbol renaming will likely not work correctly. 
-            response?.Information.Add(
+            response?.LogInformation(
                 "WARNING: ImplicitUsings is enabled on this project. Symbol renaming may not fully work due to missing reference information.");
         }
 
@@ -476,10 +490,23 @@ public sealed class RuleApplicator {
             return null;
         }
 
+        var thisAssembly = typeof(RuleApplicator).Assembly;
+        var thisAssemblyReferences = thisAssembly.GetReferencedAssemblies().Select(o => o.Name).ToHashSet();
+
         var refAssemblies = new HashSet<Assembly>();
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
         foreach (var assembly in assemblies) {
             if (assembly.IsDynamic) continue;
+            var assemblyName = assembly.GetName();
+            var name = assemblyName.Name;
+            if (name.StartsWith("Microsoft.CodeAnalysis")) continue;
+            if (name.StartsWith("MinVer")) continue;
+            if (name.StartsWith("JetBrains")) continue;
+            if (name.StartsWith("ReSharper")) continue;
+            if (name.StartsWith("xunit")) continue;
+            if (name.NotIn("System.Private.CoreLib", "netstandard"))
+                if (!thisAssemblyReferences.Contains(name))
+                    continue;
             refAssemblies.Add(assembly);
         }
 
@@ -539,6 +566,55 @@ public sealed class RuleApplicator {
                 response);
         }
     }
+
+    internal sealed class ClassState {
+        public ClassState(RoslynProjectState projectState) {
+            ProjectState = projectState;
+        }
+
+        public RoslynProjectState ProjectState { get; }
+        public Project Project => ProjectState.Project;
+        public bool ClassExists => classSymbol != default;
+        public string ClassFullName { get; private set; }
+
+        private bool classSymbolStale = false;
+        private INamedTypeSymbol classSymbol;
+
+
+        public INamedTypeSymbol ClassSymbol {
+            set {
+                if (SymbolEqualityComparer.Default.Equals(classSymbol, value)) return;
+                classSymbol = value;
+                OnClassStyleChanged();
+            }
+        }
+
+        private void OnClassStyleChanged() {
+            ClassFullName = classSymbol?.GetFullName();
+        }
+
+        public async ValueTask<INamedTypeSymbol> GetClassSymbol() {
+            if (!classSymbolStale || classSymbol == null) return classSymbol;
+
+            // update it from current project
+            var classSymbolTask = classSymbol.CurrentFrom(Project);
+            classSymbol = classSymbolTask.IsCompletedSuccessfully ? classSymbolTask.Result : await classSymbolTask;
+            classSymbolStale = false;
+            return classSymbol;
+        }
+
+        public void MarkClassStale() {
+            classSymbolStale = true;
+        }
+
+        public IEnumerable<DocumentId> GetDocumentIds() {
+            if (classSymbol == null || Project == null) yield break;
+            foreach (var document in classSymbol.GetDocuments(Project)) {
+                if (document == null) continue;
+                yield return document.Id;
+            }
+        }
+    }
 }
 
 public sealed class LoadRulesResponse {
@@ -554,6 +630,22 @@ public sealed class ApplyRulesResponse {
     public IEdmxRuleModelRoot Rule { get; internal set; }
     public List<string> Errors { get; } = new();
     public List<string> Information { get; } = new();
+
+    internal void LogInformation(string msg) {
+        Information.Add(msg);
+    }
+
+    internal void LogWarning(string msg) {
+        Information.Add("Warning: " + msg);
+    }
+
+    internal void LogError(string msg) {
+        Errors.Add(msg);
+    }
+
+    public void LogInformation(IList<string> msgs) {
+        Information.AddRange(msgs);
+    }
 }
 
 [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]

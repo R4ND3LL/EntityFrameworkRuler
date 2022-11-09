@@ -4,214 +4,312 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using EdmxRuler.Extensions;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
+using CSharpSyntaxNode = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxNode;
+using Document = Microsoft.CodeAnalysis.Document;
 using Project = Microsoft.CodeAnalysis.Project;
 using SyntaxFactory = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace EdmxRuler.Applicator;
 
+public struct PropertyActionResult {
+    public Project Project { get; set; }
+
+    //public Document Document { get; set; }
+    //public bool ClassLocated => ClassSymbol != null;
+    public bool PropertyLocated => PropertySyntax != null;
+
+    //public INamedTypeSymbol ClassSymbol { get; set; }
+    public PropertyDeclarationSyntax PropertySyntax { get; set; }
+}
+
+public struct ClassActionResult {
+    public Project Project { get; set; }
+    public bool ClassLocated => ClassSymbol != null; //{ get; set; }
+    public INamedTypeSymbol ClassSymbol { get; set; }
+}
+
+public enum LocationResult {
+    Found, NotFound
+}
+
 internal static class RoslynExtensions {
     private static VisualStudioInstance vsInstance;
+#if DEBUG
+    public static uint FindClassesByNameTime;
+    public static uint RenameClassAsyncTime;
+    public static uint RenamePropertyAsyncTime;
+    public static uint ChangePropertyTypeAsyncTime;
+#endif
 
-    public static async Task<Document> RenameClassAsync(
-        this IEnumerable<Document> documents,
+    public static async Task<ClassActionResult> RenameClassAsync(
+        this Project project,
         string namespaceName,
-        string oldClassName,
+        string className,
         string newClassName,
         bool renameOverloads = false,
         bool renameInStrings = false,
         bool renameInComments = false,
         bool renameFile = false) {
-        if (string.IsNullOrEmpty(oldClassName) || string.IsNullOrEmpty(newClassName) ||
-            oldClassName == newClassName) return null;
+        if (string.IsNullOrEmpty(className) || string.IsNullOrEmpty(newClassName) ||
+            className == newClassName) return new ClassActionResult { Project = project };
 
-        async Task<Document> Action(Document document, SyntaxNode root, TypeDeclarationSyntax classSyntax,
-            ISymbol classSymbol) {
+        var classes = await FindClassesByName(project, namespaceName, className);
+        foreach (var classSymbol in classes) {
+            // perform action and return new project
             // rename all references to the property
             if (classSymbol.Name == newClassName) {
                 // name already matches target.
-                return document;
+                return new ClassActionResult { Project = project, ClassSymbol = classSymbol };
             }
 
+            var start = DateTimeExtensions.GetTime();
             var newSolution = await Renamer.RenameSymbolAsync(
-                document.Project.Solution,
+                project.Solution,
                 classSymbol,
                 new SymbolRenameOptions(renameOverloads, renameInStrings, renameInComments, renameFile),
                 newClassName);
+            RenameClassAsyncTime += DateTimeExtensions.GetTime() - start;
 
             // sln has been revised. return new doc
-            var currentDocument = newSolution.GetDocument(document.Id);
-            return currentDocument;
+            project = newSolution.Projects.Single(o => o.Id == project.Id);
+            var ns = classSymbol.ContainingNamespace.ToDisplayString();
+            var fullName = $"{ns}.{newClassName}";
+            var newSymbol = await FindClassByName(project, fullName);
+            Debug.Assert(fullName != null);
+            return new ClassActionResult { Project = project, ClassSymbol = newSymbol };
         }
 
-        return await LocateAndActOnClass(documents, namespaceName, oldClassName, Action);
+        return new ClassActionResult { Project = project };
     }
 
-    public static async Task<bool> ClassExists(
-        this IEnumerable<Document> documents,
-        string namespaceName,
-        string oldClassName) {
-        if (string.IsNullOrEmpty(oldClassName)) return false;
+    public static async Task<bool> ClassExists(this Project project, string namespaceName, string className) {
+        var classes = await FindClassesByName(project, namespaceName, className);
+        return classes.Count > 0;
+    }
 
-        Task<Document> Action(Document document, SyntaxNode root, TypeDeclarationSyntax classSyntax,
-            ISymbol classSymbol) {
-            return Task.FromResult(document);
+    public static async Task<IList<Document>> FindClassDocuments(this Project project, string namespaceName,
+        string className) {
+        if (string.IsNullOrEmpty(className)) return null;
+
+        var classSymbols = await FindClassesByName(project, namespaceName, className);
+        var docs = classSymbols.SelectMany(o => o.GetDocuments(project)).DistinctBy(o => o.Id).ToArray();
+        return docs;
+    }
+
+
+    public static async Task<PropertyActionResult> RenamePropertyAsync(this Project project,
+        INamedTypeSymbol classSymbol,
+        string oldPropertyName, string newPropertyName, bool renameOverloads = false, bool renameInStrings = false,
+        bool renameInComments = false, bool renameFile = false) {
+        if (project == null) throw new ArgumentNullException(nameof(project));
+        if (classSymbol == null) throw new ArgumentNullException(nameof(classSymbol));
+        if (oldPropertyName.IsNullOrWhiteSpace()) throw new ArgumentNullException(nameof(oldPropertyName));
+        if (newPropertyName.IsNullOrWhiteSpace()) throw new ArgumentNullException(nameof(newPropertyName));
+
+
+        var (_, propSyntax) = await LocateProperty(classSymbol, oldPropertyName);
+        if (propSyntax == null) return new PropertyActionResult { Project = project };
+
+        if (oldPropertyName == newPropertyName) {
+            // name already matches target.
+            return new PropertyActionResult { Project = project, PropertySyntax = propSyntax };
         }
 
-        var doc = await LocateAndActOnClass(documents, namespaceName, oldClassName, Action);
-        return doc != null;
+        // rename all references to the property
+        var document = project.GetDocument(propSyntax.SyntaxTree);
+        if (document == null) {
+            // this indicates that given classSymbol does not match the project. 
+            throw new Exception($"Class {classSymbol.GetFullName()} document could not be found");
+        }
+
+        var model = await document.GetSemanticModelAsync();
+        var propSymbol = model?.GetDeclaredSymbol(propSyntax) ?? throw new Exception("Property symbol not found");
+
+        if (propSymbol.Name == newPropertyName) {
+            // name already matches target.
+            return new PropertyActionResult { Project = project, PropertySyntax = propSyntax };
+        }
+
+        var start = DateTimeExtensions.GetTime();
+        var newSolution = await Renamer.RenameSymbolAsync(
+            project.Solution,
+            propSymbol,
+            new SymbolRenameOptions(renameOverloads, renameInStrings, renameInComments, renameFile),
+            newPropertyName);
+        RenamePropertyAsyncTime += DateTimeExtensions.GetTime() - start;
+
+
+        // sln has been revised. return new doc
+        var newDocument = newSolution.GetDocument(document.Id);
+        // project = newSolution.Projects.Single(o => o.Id == project.Id);
+        // var newClassSymbol = await CurrentFrom(classSymbol, project);
+        Debug.Assert(newDocument != null, nameof(newDocument) + " != null");
+        return new PropertyActionResult { Project = newDocument.Project, PropertySyntax = propSyntax };
     }
 
-    public static async Task<Document> RenamePropertyAsync(
-        this IEnumerable<Document> documents,
-        string namespaceName,
-        string className,
-        string oldPropertyName,
-        string newPropertyName,
-        bool renameOverloads = false,
-        bool renameInStrings = false,
-        bool renameInComments = false,
-        bool renameFile = false) {
-        if (string.IsNullOrEmpty(className) || string.IsNullOrEmpty(oldPropertyName) ||
-            string.IsNullOrEmpty(newPropertyName) || oldPropertyName == newPropertyName)
-            return null;
+    public static async Task<PropertyActionResult> ChangePropertyTypeAsync(this Project project,
+        INamedTypeSymbol classSymbol,
+        string propertyName, string newTypeName) {
+        if (project == null) throw new ArgumentNullException(nameof(project));
+        if (classSymbol == null) throw new ArgumentNullException(nameof(classSymbol));
+        if (propertyName.IsNullOrWhiteSpace()) throw new ArgumentNullException(nameof(propertyName));
+        if (newTypeName.IsNullOrWhiteSpace()) throw new ArgumentNullException(nameof(newTypeName));
 
-        async Task<Document> Action(Document document, SyntaxNode root, PropertyDeclarationSyntax propSyntax,
-            ISymbol propSymbol) {
-            // rename all references to the property
-            if (propSymbol.Name == newPropertyName) {
-                // name already matches target.
-                return document;
+        var (_, propSyntax) = await LocateProperty(classSymbol, propertyName);
+        if (propSyntax == null) return new PropertyActionResult { Project = project };
+
+        // change type
+        var currentTypeText = propSyntax.Type?.ToString()?.Trim();
+        var nullable = string.Empty;
+        if (currentTypeText.HasCharacters() &&
+            (currentTypeText.StartsWith("Nullable<") || currentTypeText.EndsWith("?"))) {
+            nullable = "?";
+        }
+
+        var start = DateTimeExtensions.GetTime();
+        var newType = SyntaxFactory.ParseTypeName($"{newTypeName}{nullable} ");
+        var updatedProp = propSyntax.WithType(newType);
+        var document = project.GetDocument(propSyntax.SyntaxTree);
+        var root = await document.GetSyntaxRootAsync();
+        var newRoot = root!.ReplaceNode(propSyntax, updatedProp);
+        var newDocument = document.WithSyntaxRoot(newRoot);
+        ChangePropertyTypeAsyncTime += DateTimeExtensions.GetTime() - start;
+        //var model = await newDocument.GetSemanticModelAsync();
+        //var propSymbol = model.GetDeclaredSymbol(propSyntax);
+        //var newDocument = newDocument.Project.GetDocument(document.Id);
+        // project = newDocument.Project;
+        // ChangePropertyTypeAsyncTime += DateTimeExtensions.GetTime() - start;
+        //
+        // var newClassSymbol = await CurrentFrom(classSymbol, project);
+        return new PropertyActionResult { Project = newDocument.Project, PropertySyntax = propSyntax };
+    }
+
+    public static async Task<bool> PropertyExists(this Project project, string fullClassName, string propertyName,
+        INamedTypeSymbol classSymbols = null) {
+        if (string.IsNullOrEmpty(fullClassName) || string.IsNullOrEmpty(propertyName)) return false;
+        classSymbols ??= await FindClassByName(project, fullClassName);
+        return await PropertyExists(classSymbols, propertyName);
+    }
+
+    public static async Task<bool> PropertyExists(this INamedTypeSymbol classSymbol, string propertyName) {
+        if (string.IsNullOrEmpty(propertyName)) return false;
+        var tuple = await LocateProperty(classSymbol, propertyName);
+        return tuple.propSyntax != null;
+    }
+
+    /// <summary> Get the documents containing the given symbol. could be more than one if the class is partial. </summary>
+    public static IEnumerable<Document> GetDocuments(this ISymbol symbol, Project project) {
+        if (symbol == null) yield break;
+        var trees = symbol.DeclaringSyntaxReferences
+            .Select(o => o.SyntaxTree)
+            .Where(o => o.HasCompilationUnitRoot);
+        var hashSet = new HashSet<DocumentId>();
+        foreach (var tree in trees) {
+            var doc = project.GetDocument(tree);
+            if (doc != null && hashSet.Add(doc.Id)) {
+                yield return doc;
             }
-
-            var newSolution = await Renamer.RenameSymbolAsync(
-                document.Project.Solution,
-                propSymbol,
-                new SymbolRenameOptions(renameOverloads, renameInStrings, renameInComments, renameFile),
-                newPropertyName);
-
-            // sln has been revised. return new doc
-            var currentDocument = newSolution.GetDocument(document.Id);
-            return currentDocument;
         }
-
-        return await LocateAndActOnProperty(documents, namespaceName, className, oldPropertyName, Action);
     }
 
-    public static async Task<bool> PropertyExists(this IEnumerable<Document> documents, string namespaceName,
-        string className, string propertyName) {
-        if (string.IsNullOrEmpty(className) || string.IsNullOrEmpty(propertyName))
-            return false;
-
-        Task<Document> Action(Document document, SyntaxNode root, PropertyDeclarationSyntax propSyntax,
-            ISymbol propSymbol) {
-            return Task.FromResult(document);
-        }
-
-        var doc = await LocateAndActOnProperty(documents, namespaceName, className, propertyName, Action);
-        return doc != null;
-    }
-
-    public static async Task<Document> ChangePropertyTypeAsync(
-        this IEnumerable<Document> documents, string namespaceName,
-        string className,
-        string propertyName,
-        string newTypeName) {
-        if (string.IsNullOrEmpty(className) || string.IsNullOrEmpty(propertyName) ||
-            string.IsNullOrEmpty(newTypeName))
-            return null;
-
-        Task<Document> Action(Document document, SyntaxNode root, PropertyDeclarationSyntax propSyntax,
-            ISymbol propSymbol) {
-            // change type
-            var currentTypeText = propSyntax.Type?.ToString()?.Trim();
-            var nullable = string.Empty;
-            if (currentTypeText != null && (currentTypeText.StartsWith("Nullable<") || currentTypeText.EndsWith("?"))) {
-                nullable = "?";
+    /// <summary> Get the documents containing the given symbol. could be more than one if the class is partial. </summary>
+    public static IEnumerable<Document> GetDocuments(this ISymbol symbol, Solution solution) {
+        if (symbol == null) yield break;
+        var trees = symbol.DeclaringSyntaxReferences
+            .Select(o => o.SyntaxTree)
+            .Where(o => o.HasCompilationUnitRoot);
+        var hashSet = new HashSet<DocumentId>();
+        foreach (var tree in trees) {
+            var doc = solution.GetDocument(tree);
+            if (doc != null && hashSet.Add(doc.Id)) {
+                yield return doc;
             }
-
-            var newType = SyntaxFactory.ParseTypeName($"{newTypeName}{nullable} ");
-            var updatedProp = propSyntax.WithType(newType);
-            var newRoot = root!.ReplaceNode(propSyntax, updatedProp);
-            var newDocument = document.WithSyntaxRoot(newRoot);
-            return Task.FromResult(newDocument);
         }
-
-        return await LocateAndActOnProperty(documents, namespaceName, className, propertyName, Action);
     }
 
-    private static async Task<Document> LocateAndActOnClass(this IEnumerable<Document> documents,
-        string namespaceName, string className,
-        Func<Document, SyntaxNode, TypeDeclarationSyntax, ISymbol, Task<Document>> action) {
-        if (string.IsNullOrEmpty(className) || action == null) return null;
-
-        foreach (var document in documents) {
-            var root = await document.GetSyntaxRootAsync();
-            var classSyntax = root?.DescendantNodesAndSelf().OfType<TypeDeclarationSyntax>()
-                .FirstOrDefault(o => o.Identifier.ToString() == className);
-            // ReSharper disable once UseNullPropagation
-            if (classSyntax is null) continue; // not found in this doc
-
-            // found it
-            var model = await document.GetSemanticModelAsync();
-
-            var classSymbol = model?.GetDeclaredSymbol(classSyntax) ?? throw new Exception("Class symbol not found");
-
-            if (!classSymbol.IsNamespaceMatch(namespaceName)) continue; // not the correct namespace
-
-            // perform action and return new document
-            var newDocument = await action(document, root, classSyntax, classSymbol);
-            Debug.Assert(newDocument != null);
-            return newDocument;
+    public static async Task<IList<INamedTypeSymbol>> FindClassesByName(this Project project,
+        string namespaceName, string className) {
+        var start = DateTimeExtensions.GetTime();
+        if (string.IsNullOrEmpty(className)) return Array.Empty<INamedTypeSymbol>();
+        if (namespaceName.HasCharacters()) {
+            // use the faster full name
+            var fullName = $"{namespaceName}.{className}";
+            var oneResult = await FindClassByName(project, fullName);
+            return oneResult == null ? Array.Empty<INamedTypeSymbol>() : new[] { oneResult };
         }
 
-        return null;
+        var result = await Microsoft.CodeAnalysis.FindSymbols.SymbolFinder.FindDeclarationsAsync(project, className,
+            false,
+            SymbolFilter.Type, CancellationToken.None);
+        var results = result?.Where(o => o.Kind == SymbolKind.NamedType)
+            .OfType<INamedTypeSymbol>()
+            .Where(o => o.TypeKind == TypeKind.Class && !o.IsAnonymousType && !o.IsValueType &&
+                        o.IsNamespaceMatch(namespaceName))
+            .ToArray();
+        FindClassesByNameTime += DateTimeExtensions.GetTime() - start;
+        return results ?? Array.Empty<INamedTypeSymbol>();
     }
 
 
-    private static async Task<Document> LocateAndActOnProperty(this IEnumerable<Document> documents,
-        string namespaceName, string className,
-        string oldPropertyName, Func<Document, SyntaxNode, PropertyDeclarationSyntax, ISymbol, Task<Document>> action) {
-        if (string.IsNullOrEmpty(className) || string.IsNullOrEmpty(oldPropertyName) || action == null) return null;
+    public static async Task<INamedTypeSymbol> FindClassByName(this Project project, string fullName) {
+        var start = DateTimeExtensions.GetTime();
+        // var parts = fullName.SplitNamespaceAndName();
+        // return (await FindClassesByName(project, parts.namespaceName, parts.name)).FirstOrDefault();
+        var compilation = await project.GetCompilationAsync();
+        var type = compilation.GetTypeByMetadataName(fullName);
+        FindClassesByNameTime += DateTimeExtensions.GetTime() - start;
+        return type;
+    }
 
-        foreach (var document in documents) {
-            var root = await document.GetSyntaxRootAsync();
-            var classSyntax = root?.DescendantNodesAndSelf().OfType<TypeDeclarationSyntax>()
-                .FirstOrDefault(o => o.Identifier.ToString() == className);
-            // ReSharper disable once UseNullPropagation
-            if (classSyntax is null) continue; // not found in this doc
+    private static async
+        Task<(ITypeSymbol classSymbol, SyntaxNode classSyntax, PropertyDeclarationSyntax propSyntax)>
+        LocateProperty(
+            this Project project,
+            string fullClassName,
+            string propertyName) {
+        if (project == null || string.IsNullOrEmpty(fullClassName) || string.IsNullOrEmpty(propertyName))
+            return default;
+        var classSymbol = await FindClassByName(project, fullClassName);
+        var tuple = await LocateProperty(classSymbol, propertyName);
+        return (classSymbol, tuple.classSyntax, tuple.propSyntax);
+    }
 
-            // now find property
+    private static async
+        Task<(SyntaxNode classSyntax, PropertyDeclarationSyntax propSyntax)> LocateProperty(
+            this INamedTypeSymbol classSymbol, string propertyName) {
+        if (classSymbol == null || string.IsNullOrEmpty(propertyName)) return default;
+
+        // now find property
+        var trees = classSymbol.DeclaringSyntaxReferences
+            .Where(o => o.SyntaxTree.HasCompilationUnitRoot);
+        foreach (var classSyntaxRef in trees) {
+            var classSyntax = await classSyntaxRef.GetSyntaxAsync();
             var propSyntax = classSyntax.DescendantNodesAndSelf().OfType<PropertyDeclarationSyntax>()
-                .FirstOrDefault(o => o.Identifier.Text == oldPropertyName);
-            if (propSyntax is null) continue; // not found in this class
+                .FirstOrDefault(o => o.Identifier.Text == propertyName);
+            if (propSyntax is null) continue; // not found in this class tree
 
-            // found it
-            var model = await document.GetSemanticModelAsync();
-
-            var propSymbol = model?.GetDeclaredSymbol(propSyntax) ?? throw new Exception("Property symbol not found");
-
-            if (!propSymbol.IsNamespaceMatch(namespaceName)) continue; // not the correct namespace
-
-            // perform action and return new document
-            var newDocument = await action(document, root, propSyntax, propSymbol);
-            Debug.Assert(newDocument != null);
-            return newDocument;
+            // found the property
+            return (classSyntax, propSyntax);
         }
 
-        return null;
+        return default;
     }
 
-    /// <summary> return true if the namespace is empty (effectively dont care to match) or the symbol's containing namespace is a match </summary>
+
+    /// <summary> return tru e if the namespace is empty (effectively dont care to match) or the symbol's containing namespace is a match </summary>
     private static bool IsNamespaceMatch(this ISymbol classSymbol, string namespaceName) {
         if (namespaceName.IsNullOrEmpty()) return true;
         var ns = classSymbol.ContainingNamespace;
@@ -221,22 +319,42 @@ internal static class RoslynExtensions {
         return fullyQualifiedName == namespaceName;
     }
 
-    public static async Task<int> SaveDocumentsAsync(this IEnumerable<Document> documents) {
+    public static async Task<int> SaveDocumentsAsync(this Project project, IEnumerable<DocumentId> documentIds) {
         var saveCount = 0;
-        foreach (var document in documents) {
-            var path = document.FilePath;
+        foreach (var documentId in documentIds) {
+            var document = project.GetDocument(documentId);
+            var path = document?.FilePath;
             if (path == null) continue;
-            var text = string.Join(
-                Environment.NewLine,
-                (await document.GetTextAsync()).Lines.Select(o => o.ToString())).Trim();
-            var orig = (await File.ReadAllTextAsync(path, Encoding.UTF8))?.Trim();
-            if (text == orig) continue;
-
+            var text = await GetDocumentText(document);
             await File.WriteAllTextAsync(path, text, Encoding.UTF8);
             saveCount++;
         }
 
         return saveCount;
+    }
+
+    public static async Task<int> SaveDocumentsAsync(this IEnumerable<Document> documents,
+        bool compareForChangesFirst = true) {
+        var saveCount = 0;
+        foreach (var document in documents) {
+            var path = document.FilePath;
+            if (path == null) continue;
+            var text = await GetDocumentText(document);
+            if (compareForChangesFirst) {
+                var orig = (await File.ReadAllTextAsync(path, Encoding.UTF8))?.Trim();
+                if (text == orig) continue;
+            }
+            await File.WriteAllTextAsync(path, text, Encoding.UTF8);
+            saveCount++;
+        }
+
+        return saveCount;
+    }
+
+    public static async Task<string> GetDocumentText(this Document document) {
+        return string.Join(
+            Environment.NewLine,
+            (await document.GetTextAsync()).Lines.Select(o => o.ToString())).Trim();
     }
 
     public static async Task<Project> LoadExistingProjectAsync(string csProjPath, List<string> errors = null) {
@@ -270,13 +388,13 @@ internal static class RoslynExtensions {
             if (instances.Length > 0) {
                 var latest = instances.FirstOrDefault();
 
-                latest = (VisualStudioInstance)Activator.CreateInstance(
-                    typeof(VisualStudioInstance),
-                    BindingFlags.NonPublic | BindingFlags.Instance,
-                    null,
-                    new object[] { latest.Name, latest.MSBuildPath + "\\", latest.Version, latest.DiscoveryType },
-                    null,
-                    null)!;
+                // latest = (VisualStudioInstance)Activator.CreateInstance(
+                //     typeof(VisualStudioInstance),
+                //     BindingFlags.NonPublic | BindingFlags.Instance,
+                //     null,
+                //     new object[] { latest.Name, latest.MSBuildPath + "\\", latest.Version, latest.DiscoveryType },
+                //     null,
+                //     null)!;
 
                 MSBuildLocator.RegisterInstance(latest);
                 return latest;
@@ -292,8 +410,8 @@ internal static class RoslynExtensions {
     public static AdhocWorkspace GetWorkspaceForFilePaths(
         this IEnumerable<string> filePaths,
         IEnumerable<Assembly> projReferences = null) {
-        var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
-        var ws = new AdhocWorkspace(host);
+        //var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
+        var ws = new AdhocWorkspace();
         var refAssemblies = new HashSet<Assembly>();
         if (projReferences != null) refAssemblies.AddRange(projReferences);
         refAssemblies.Add(typeof(object).Assembly);
@@ -350,5 +468,85 @@ internal static class RoslynExtensions {
         }
 
         return ws;
+    }
+
+    /// <summary> If the given node is not currently on the given root, get the updated version based on the node's identifier. </summary>
+    public static string GetFullName(this ITypeSymbol symbol) {
+        return $"{symbol.ContainingNamespace.ToDisplayString()}.{symbol.Name}";
+    }
+
+    /// <summary> If the given node is not currently on the given root, get the updated version based on the node's identifier. </summary>
+    public static async Task<INamedTypeSymbol> CurrentFrom(this ITypeSymbol symbol, Project project) {
+        var type = await FindClassByName(project, symbol.GetFullName());
+        Debug.Assert(type != null);
+        return type;
+    }
+
+    /// <summary> If the given node is not currently on the given root, get the updated version based on the node's identifier. </summary>
+    public static ClassDeclarationSyntax
+        CurrentFrom(this ClassDeclarationSyntax syntaxNode, CompilationUnitSyntax root) {
+        return syntaxNode.CurrentFrom(n => n.Identifier, root);
+    }
+
+    /// <summary> If the given node is not currently on the given root, get the updated version based on the node's identifier. </summary>
+    public static ClassDeclarationSyntax CurrentFrom(this ClassDeclarationSyntax syntaxNode, SyntaxNode parent) {
+        return syntaxNode.CurrentFrom(n => n.Identifier, parent);
+    }
+
+    /// <summary> If the given node is not currently on the given root, get the updated version based on the node's identifier. </summary>
+    private static T CurrentFrom<T>(this T syntaxNode, Func<T, SyntaxToken> identifier, CompilationUnitSyntax root,
+        int skipCount = 0) where T : SyntaxNode {
+        if (syntaxNode is null) return null;
+        if (syntaxNode.HasRoot(root)) return syntaxNode;
+
+        // ensure we have a current reference to the node
+        var id = identifier(syntaxNode);
+        return root.DescendantNodes().OfType<T>().Where(o => identifier(o).IsEquivalentTo(id)).Skip(skipCount).First();
+    }
+
+    /// <summary> If the given node is not currently on the given root, get the updated version based on the node's identifier. </summary>
+    private static T CurrentFrom<T>(this T syntaxNode, Func<T, SyntaxToken> identifier, SyntaxNode parent)
+        where T : SyntaxNode {
+        if (syntaxNode is null) return null;
+        if (parent.HasNode(syntaxNode)) return syntaxNode;
+
+        // ensure we have a current reference to the node
+        var id = identifier(syntaxNode);
+        if (id.HasLeadingTrivia || id.HasTrailingTrivia) id = id.WithoutTrivia();
+        return parent.DescendantNodes().OfType<T>().First(o => {
+            var id2 = identifier(o);
+            if (id2.HasLeadingTrivia || id2.HasTrailingTrivia) id2 = id2.WithoutTrivia();
+            return id2.IsEquivalentTo(id);
+        });
+    }
+
+    /// <summary> return true if the root of the given node matches the given root. </summary>
+    public static bool HasRoot(this SyntaxNode syntaxNode, CompilationUnitSyntax root) {
+        return syntaxNode.GetParent<CompilationUnitSyntax>() == root;
+    }
+
+    /// <summary> return true if the root contains the given node. </summary>
+    public static bool HasNode<T>(this T parent, SyntaxNode syntaxNode) where T : SyntaxNode {
+        return syntaxNode.EnumerateParents<T>().Any(o => o == parent);
+    }
+
+    /// <summary> traverse the parents of this node searching for a node of the given type T </summary>
+    public static T GetParent<T>(this SyntaxNode syntaxNode) where T : SyntaxNode {
+        var p = syntaxNode?.Parent;
+        while (p != null && !(p is T))
+            try { p = p.Parent; } catch { p = null; }
+
+        return p as T;
+    }
+
+    /// <summary> traverse the parents of this node searching for a node of the given type T </summary>
+    public static IEnumerable<T> EnumerateParents<T>(this SyntaxNode syntaxNode) where T : SyntaxNode {
+        var p = syntaxNode?.Parent;
+        if (p is T tp) yield return tp;
+        while (p != null) {
+            try { p = p.Parent; } catch { p = null; }
+
+            if (p is T tp2) yield return tp2;
+        }
     }
 }

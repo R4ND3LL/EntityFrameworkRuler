@@ -2,6 +2,8 @@
 using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Threading.Tasks;
+// ReSharper disable MemberCanBeInternal
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace EdmxRuler.Extensions;
 

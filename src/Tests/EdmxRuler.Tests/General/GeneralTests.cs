@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using EdmxRuler.Applicator;
 using EdmxRuler.Extensions;
@@ -9,6 +10,7 @@ using EdmxRuler.Generator;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
 using EdmxRuler.RuleModels.PropertyTypeChanging;
+using Microsoft.CodeAnalysis;
 using Shouldly;
 using Xunit;
 using Xunit.Abstractions;
@@ -82,14 +84,14 @@ public sealed class GeneralTests {
         var csProj = ResolveNorthwindProject();
         var projBasePath = new FileInfo(csProj).Directory!.FullName;
         var applicator = new RuleApplicator(projBasePath);
-
+        start = DateTimeExtensions.GetTime();
         ApplyRulesResponse response;
         response = await applicator.ApplyRules(primitiveNamingRules);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count == 1) response.Errors[0].ShouldStartWith("Error loading existing project");
 
         response.Information.Last()
-            .ShouldContain("4 classes renamed, 2 properties renamed across 13 files", Case.Insensitive);
+            .ShouldStartWith("4 classes renamed, 2 properties renamed across ", Case.Insensitive);
         output.WriteLine($"Primitive naming rules applied correctly");
 
         response = await applicator.ApplyRules(navigationNamingRules);
@@ -100,7 +102,7 @@ public sealed class GeneralTests {
         renamed.Length.ShouldBe(15);
         var couldNotFind = response.Information.Where(o => o.StartsWith("Could not find ")).ToArray();
         couldNotFind.Length.ShouldBe(1);
-        response.Information.Last().ShouldContain("15 properties renamed across 12 files", Case.Insensitive);
+        response.Information.Last().ShouldStartWith("15 properties renamed across ", Case.Insensitive);
 
         output.WriteLine($"Navigation naming rules applied correctly");
 
@@ -109,11 +111,46 @@ public sealed class GeneralTests {
         if (response.Errors.Count == 1) response.Errors[0].ShouldStartWith("Error loading existing project");
 
         response.Information.Count(o => o.StartsWith("Update")).ShouldBe(2);
-        response.Information.Last().ShouldContain("2 property types changed across 2 files", Case.Insensitive);
+        response.Information.Last().ShouldStartWith("2 property types changed across", Case.Insensitive);
         output.WriteLine($"Enum mapping rules applied correctly");
+        elapsed = DateTimeExtensions.GetTime() - start;
+        output.WriteLine($"Completed in {elapsed}ms.  FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");
     }
 
-    public static string ResolveNorthwindEdmxPath() {
+    [Fact]
+    public async Task TypeFinder() {
+        var state = new RuleApplicator.RoslynProjectState();
+        var response = new ApplyRulesResponse(null);
+        await state.TryLoadProjectOrFallbackOnce(ResolveNorthwindProject(), null, null, response);
+        var project = state.Project;
+        project.ShouldNotBeNull();
+        //var ns = "NorthwindTestProject.Models";
+        var result = await Microsoft.CodeAnalysis.FindSymbols.SymbolFinder.FindDeclarationsAsync(project, "Products",
+            false,
+            SymbolFilter.Type, CancellationToken.None);
+        var results = result.Where(o => o.Kind == SymbolKind.NamedType)
+            .OfType<ITypeSymbol>().Where(o => o.TypeKind == TypeKind.Class && !o.IsAnonymousType && !o.IsValueType)
+            .ToList();
+        results.Count.ShouldBe(1);
+        var r = results[0];
+        var syntaxReferences = r.DeclaringSyntaxReferences;
+        foreach (var syntaxReference in syntaxReferences) {
+            var root = await syntaxReference.SyntaxTree.GetRootAsync();
+        }
+
+        var compilation = await project.GetCompilationAsync();
+
+        var type = compilation.GetTypeByMetadataName("NorthwindTestProject.Models.Products");
+        var syntaxReferences2 = type?.DeclaringSyntaxReferences;
+        syntaxReferences2.ShouldNotBeNull();
+        foreach (var syntaxReference in syntaxReferences2) {
+            var syntaxNode = syntaxReference.GetSyntax();
+            var d = syntaxNode.DescendantNodesAndSelf().ToArray();
+            var root = await syntaxReference.SyntaxTree.GetRootAsync();
+        }
+    }
+
+    private static string ResolveNorthwindEdmxPath() {
         var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
         while (dir != null && dir.Name != "src") dir = dir.Parent;
 
@@ -123,7 +160,7 @@ public sealed class GeneralTests {
         return path;
     }
 
-    public static string ResolveNorthwindProject() {
+    private static string ResolveNorthwindProject() {
         var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
         while (dir != null && dir.Name != "Tests") dir = dir.Parent;
 
