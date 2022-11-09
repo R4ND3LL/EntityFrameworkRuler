@@ -60,4 +60,6 @@ public struct LogMessage {
 
     // ReSharper disable once MemberCanBeInternal
     public string Message { get; set; }
+    public static implicit operator string(LogMessage logMessage) => logMessage.ToString();
+    public override string ToString() => $"{Type}: {Message}";
 }

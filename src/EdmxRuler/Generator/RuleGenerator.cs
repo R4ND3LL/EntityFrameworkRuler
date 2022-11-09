@@ -98,7 +98,7 @@ public sealed class RuleGenerator : RuleProcessor {
                     T rulesRoot = rules?.OfType<T>().FirstOrDefault() ??
                                   throw new Exception("Rule model null");
                     await WriteRules<T>(rulesRoot, fileName);
-                    response.LogInformation($"{rulesRoot.Kind} Rule file written to {fileName}");
+                    response.LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");
                 } catch (Exception ex) {
                     response.LogError($"Error writing rule to file {fileName}: {ex.Message}");
                 }
