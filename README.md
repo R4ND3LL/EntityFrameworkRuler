@@ -84,10 +84,15 @@ var generator = new RuleGenerator(edmxPath);
 var rules = generator.TryGenerateRules();  
 await generator.TrySaveRules(projectBasePath,  
     new RuleFileNameOptions() {  
-        PrimitiveNamingFile= null, // null will skip this file
+        PrimitiveNamingFile = null, // null will skip this file
         NavigationNamingFile = "NavRenaming.json",   
         PropertyTypeChangingFile = "MyEnumMap.json"  
   }  
 );
 ```
-
+#### Handle log activity:
+```csharp
+var applicator = new RuleApplicator(projectBasePath);  
+applicator.OnLog += (sender, message) => Console.WriteLine(message);
+var response = await applicator.ApplyRulesInProjectPath();
+```
