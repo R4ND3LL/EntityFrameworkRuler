@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator.EdmxModel;
 using EdmxRuler.RuleModels;
@@ -18,7 +19,7 @@ using EdmxRuler.RuleModels.PropertyTypeChanging;
 namespace EdmxRuler.Generator;
 
 /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX. </summary>
-public sealed class RuleGenerator {
+public sealed class RuleGenerator : RuleProcessor {
     public RuleGenerator(string edmxFilePath) {
         EdmxFilePath = edmxFilePath;
         pluralizer = new Pluralizer();
@@ -32,98 +33,91 @@ public sealed class RuleGenerator {
     /// <summary> The EDMX file path </summary>
     public string EdmxFilePath { get; }
 
-    private List<string> errors;
-
-    // ReSharper disable once MemberCanBePrivate.Global
-    /// <summary> Any errors that were encountered during generation </summary>
-    public IReadOnlyCollection<string> Errors => errors;
-
-
-    private List<IEdmxRuleModelRoot> rules;
-
-    // ReSharper disable once MemberCanBePrivate.Global
-    /// <summary> The rules generated from the EDMX via the TryGenerateRules() call </summary>
-    public IReadOnlyCollection<IEdmxRuleModelRoot> Rules => rules;
-
-    public PropertyTypeChangingRules PropertyTypeChangingRules =>
-        rules.OfType<PropertyTypeChangingRules>().SingleOrDefault();
-
-    public PrimitiveNamingRules PrimitiveNamingRules => rules.OfType<PrimitiveNamingRules>().SingleOrDefault();
-    public NavigationNamingRules NavigationNamingRules => rules.OfType<NavigationNamingRules>().SingleOrDefault();
-
-    /// <summary> The correlated EDMX model that is read from the EDMX file during the TryGenerateRules() call </summary>
-    public EdmxParsed EdmxParsed { get; private set; }
-
     #endregion
 
     /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
     /// Errors are monitored and added to local Errors collection. </summary>
-    public IReadOnlyCollection<IEdmxRuleModelRoot> TryGenerateRules() {
-        var e = errors = new List<string>();
-        var r = rules = new List<IEdmxRuleModelRoot>();
+    public GenerateRulesResponse TryGenerateRules() {
+        var response = new GenerateRulesResponse();
+        response.OnLog += ResponseOnLog;
         try {
-            EdmxParsed ??= EdmxParser.Parse(EdmxFilePath);
-        } catch (Exception ex) {
-            e.Add($"Error parsing EDMX: {ex.Message}");
-            return Array.Empty<IEdmxRuleModelRoot>();
+            try {
+                response.EdmxParsed ??= EdmxParser.Parse(EdmxFilePath);
+            } catch (Exception ex) {
+                response.LogError($"Error parsing EDMX: {ex.Message}");
+                return response;
+            }
+
+
+            GenerateAndAdd(GetPrimitiveNamingRules);
+            GenerateAndAdd(GetNavigationNamingRules);
+            GenerateAndAdd(GetPropertyTypeChangingRules);
+            return response;
+        } finally {
+            response.OnLog -= ResponseOnLog;
         }
 
-
-        GenerateAndAdd(GetPrimitiveNamingRules);
-        GenerateAndAdd(GetNavigationNamingRules);
-        GenerateAndAdd(GetPropertyTypeChangingRules);
-        return Rules;
-
-        void GenerateAndAdd<T>(Func<T> gen) where T : class, IEdmxRuleModelRoot {
+        void GenerateAndAdd<T>(Func<EdmxParsed, T> gen) where T : class, IEdmxRuleModelRoot {
             try {
-                var rulesRoot = gen();
-                r.Add(rulesRoot);
+                var rulesRoot = gen(response.EdmxParsed);
+                response.Add(rulesRoot);
             } catch (Exception ex) {
-                e.Add($"Error generating output for {typeof(T)}: {ex.Message}");
+                response.LogError($"Error generating output for {typeof(T)}: {ex.Message}");
             }
         }
     }
 
+
     /// <summary> Persist the previously generated rules to the given target path. </summary>
+    /// <param name="rules"> The rule models to save. </param>
     /// <param name="projectBasePath"> The location to save the rule files. </param>
     /// <param name="fileNameOptions"> Custom naming options for the rule files.  Optional. This parameter can be used to skip writing a rule file by setting that rule file to null. </param>
     /// <returns> True if completed with no errors.  When false, see Errors collection for details. </returns>
     /// <exception cref="Exception"></exception>
-    public async Task<bool> TrySaveRules(string projectBasePath, RuleFileNameOptions fileNameOptions = null) {
-        var dir = new DirectoryInfo(projectBasePath);
-        if (!dir.Exists) {
-            errors.Add("Output folder does not exist");
-            return false;
-        }
-
-        fileNameOptions ??= new RuleFileNameOptions();
-        await TryWriteRules(() => PrimitiveNamingRules, fileNameOptions.PrimitiveNamingFile);
-        await TryWriteRules(() => NavigationNamingRules, fileNameOptions.NavigationNamingFile);
-        await TryWriteRules(() => PropertyTypeChangingRules, fileNameOptions.PropertyTypeChangingFile);
-        return Errors.Count == 0;
-
-        async Task TryWriteRules<T>(Func<T> ruleGetter, string fileName) where T : class {
-            try {
-                if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
-                var rulesRoot = ruleGetter() ?? throw new Exception("Rule model null");
-                await WriteRules(rulesRoot, fileName);
-            } catch (Exception ex) {
-                errors.Add($"Error writing rule to file {fileName}: {ex.Message}");
+    public async Task<SaveRulesResponse> TrySaveRules(IEnumerable<IEdmxRuleModelRoot> rules, string projectBasePath,
+        RuleFileNameOptions fileNameOptions = null) {
+        var response = new SaveRulesResponse();
+        response.OnLog += ResponseOnLog;
+        try {
+            var dir = new DirectoryInfo(projectBasePath);
+            if (!dir.Exists) {
+                response.LogError("Output folder does not exist");
+                return response;
             }
-        }
 
-        Task WriteRules<T>(T rulesRoot, string filename)
-            where T : class {
-            var path = Path.Combine(dir.FullName, filename);
-            return rulesRoot.ToJson<T>(path);
+            fileNameOptions ??= new RuleFileNameOptions();
+            await TryWriteRules(EdmxRuleModelKind.PrimitiveNaming, fileNameOptions.PrimitiveNamingFile);
+            await TryWriteRules(EdmxRuleModelKind.NavigationNaming, fileNameOptions.NavigationNamingFile);
+            await TryWriteRules(EdmxRuleModelKind.PropertyTypeChanging, fileNameOptions.PropertyTypeChangingFile);
+            return response;
+
+
+            async Task TryWriteRules(EdmxRuleModelKind kind, string fileName) {
+                try {
+                    if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
+                    var rulesRoot = rules?.FirstOrDefault(o => o?.Kind == kind) ??
+                                    throw new Exception("Rule model null");
+                    await WriteRules(rulesRoot, fileName);
+                    response.LogInformation($"Rule file {kind} written to {fileName}");
+                } catch (Exception ex) {
+                    response.LogError($"Error writing rule to file {fileName}: {ex.Message}");
+                }
+            }
+
+            Task WriteRules<T>(T rulesRoot, string filename)
+                where T : class, IEdmxRuleModelRoot {
+                var path = Path.Combine(dir.FullName, filename);
+                return rulesRoot.ToJson<T>(path);
+            }
+        } finally {
+            response.OnLog -= ResponseOnLog;
         }
     }
 
 
     #region Main rule gen methods
 
-    private PrimitiveNamingRules GetPrimitiveNamingRules() {
-        var edmx = EdmxParsed;
+    private PrimitiveNamingRules GetPrimitiveNamingRules(EdmxParsed edmx) {
         if (edmx?.Entities.IsNullOrEmpty() != false) return new PrimitiveNamingRules();
 
         var root = new PrimitiveNamingRules();
@@ -168,8 +162,7 @@ public sealed class RuleGenerator {
         return root;
     }
 
-    private NavigationNamingRules GetNavigationNamingRules() {
-        var edmx = EdmxParsed;
+    private NavigationNamingRules GetNavigationNamingRules(EdmxParsed edmx) {
         var rule = new NavigationNamingRules();
         rule.Classes ??= new List<ClassReference>();
 
@@ -232,8 +225,7 @@ public sealed class RuleGenerator {
         return rule;
     }
 
-    private PropertyTypeChangingRules GetPropertyTypeChangingRules() {
-        var edmx = EdmxParsed;
+    private PropertyTypeChangingRules GetPropertyTypeChangingRules(EdmxParsed edmx) {
         var rule = new PropertyTypeChangingRules();
         rule.Classes ??= new List<TypeChangingClass>();
 
@@ -266,4 +258,28 @@ public sealed class RuleGenerator {
     }
 
     #endregion
+}
+
+public sealed class GenerateRulesResponse : LoggedResponse {
+    private List<IEdmxRuleModelRoot> rules = new();
+
+    // ReSharper disable once MemberCanBePrivate.Global
+    /// <summary> The rules generated from the EDMX via the TryGenerateRules() call </summary>
+    public IReadOnlyCollection<IEdmxRuleModelRoot> Rules => rules;
+
+    public PropertyTypeChangingRules PropertyTypeChangingRules =>
+        rules.OfType<PropertyTypeChangingRules>().SingleOrDefault();
+
+    public PrimitiveNamingRules PrimitiveNamingRules => rules.OfType<PrimitiveNamingRules>().SingleOrDefault();
+    public NavigationNamingRules NavigationNamingRules => rules.OfType<NavigationNamingRules>().SingleOrDefault();
+
+    /// <summary> The correlated EDMX model that is read from the EDMX file during the TryGenerateRules() call </summary>
+    public EdmxParsed EdmxParsed { get; internal set; }
+
+    internal void Add<T>(T rulesRoot) where T : class, IEdmxRuleModelRoot {
+        rules.Add(rulesRoot);
+    }
+}
+
+public sealed class SaveRulesResponse : LoggedResponse {
 }

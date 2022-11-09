@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EdmxRuler.Applicator;
+using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator;
 using EdmxRuler.RuleModels.NavigationNaming;
@@ -27,15 +28,17 @@ public sealed class GeneralTests {
     [Fact]
     public async Task TestGenAndApply() {
         var edmxPath = ResolveNorthwindEdmxPath();
-
+        var logReceivedCount = 0;
         var start = DateTimeExtensions.GetTime();
-        var edmxProcessor = new RuleGenerator(edmxPath);
-        var rules = edmxProcessor.TryGenerateRules();
+        var generator = new RuleGenerator(edmxPath);
+        generator.OnLog += LogReceived;
+        var generateRulesResponse = generator.TryGenerateRules();
+        var rules = generateRulesResponse.Rules;
         var elapsed = DateTimeExtensions.GetTime() - start;
-        edmxProcessor.Errors.Count.ShouldBe(0);
-        edmxProcessor.Rules.Count.ShouldBe(3);
-        output.WriteLine($"Successfully generated {edmxProcessor.Rules.Count} rule files in {elapsed}ms");
-        rules.ShouldBe(edmxProcessor.Rules);
+        generateRulesResponse.Errors.Count().ShouldBe(0);
+        generateRulesResponse.Rules.Count.ShouldBe(3);
+        output.WriteLine($"Successfully generated {generateRulesResponse.Rules.Count} rule files in {elapsed}ms");
+        rules.ShouldBe(generateRulesResponse.Rules);
         var enumMappingRules = rules.OfType<PropertyTypeChangingRules>().Single();
         var primitiveNamingRules = rules.OfType<PrimitiveNamingRules>().Single();
         var navigationNamingRules = rules.OfType<NavigationNamingRules>().Single();
@@ -84,11 +87,12 @@ public sealed class GeneralTests {
         var csProj = ResolveNorthwindProject();
         var projBasePath = new FileInfo(csProj).Directory!.FullName;
         var applicator = new RuleApplicator(projBasePath);
+        applicator.OnLog += LogReceived;
         start = DateTimeExtensions.GetTime();
         ApplyRulesResponse response;
         response = await applicator.ApplyRules(primitiveNamingRules);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
-        if (response.Errors.Count == 1) response.Errors[0].ShouldStartWith("Error loading existing project");
+        if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
         response.Information.Last()
             .ShouldStartWith("4 classes renamed, 2 properties renamed across ", Case.Insensitive);
@@ -96,7 +100,7 @@ public sealed class GeneralTests {
 
         response = await applicator.ApplyRules(navigationNamingRules);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
-        if (response.Errors.Count == 1) response.Errors[0].ShouldStartWith("Error loading existing project");
+        if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
         var renamed = response.Information.Where(o => o.StartsWith("Renamed")).ToArray();
         renamed.Length.ShouldBe(15);
@@ -108,13 +112,19 @@ public sealed class GeneralTests {
 
         response = await applicator.ApplyRules(enumMappingRules);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
-        if (response.Errors.Count == 1) response.Errors[0].ShouldStartWith("Error loading existing project");
+        if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
         response.Information.Count(o => o.StartsWith("Update")).ShouldBe(2);
         response.Information.Last().ShouldStartWith("2 property types changed across 2 files", Case.Insensitive);
         output.WriteLine($"Enum mapping rules applied correctly");
+        logReceivedCount.ShouldBeGreaterThan(30);
         elapsed = DateTimeExtensions.GetTime() - start;
-        output.WriteLine($"Completed in {elapsed}ms.  FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");
+        output.WriteLine(
+            $"Completed in {elapsed}ms.  FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");
+
+        void LogReceived(object sender, LogMessage logMessage) {
+            logReceivedCount++;
+        }
     }
 
     [Fact]

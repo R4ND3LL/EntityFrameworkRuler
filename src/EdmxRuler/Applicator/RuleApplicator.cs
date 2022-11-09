@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using EdmxRuler.Applicator.CsProjParser;
+using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.RuleModels;
 using EdmxRuler.RuleModels.NavigationNaming;
@@ -23,7 +24,7 @@ using Project = Microsoft.CodeAnalysis.Project;
 
 namespace EdmxRuler.Applicator;
 
-public sealed class RuleApplicator {
+public sealed class RuleApplicator : RuleProcessor {
     /// <summary> Create rule applicator for making changes to project files </summary>
     /// <param name="projectBasePath">project folder containing rules and target files.</param>
     public RuleApplicator(string projectBasePath) {
@@ -41,12 +42,17 @@ public sealed class RuleApplicator {
     /// <param name="fileNameOptions"> optional rule file naming options </param>
     /// <returns> List of errors. </returns>
     public async Task<LoadAndApplyRulesResponse> ApplyRulesInProjectPath(RuleFileNameOptions fileNameOptions = null) {
-        var loadAndApplyRulesResponse = new LoadAndApplyRulesResponse {
+        var response = new LoadAndApplyRulesResponse {
             LoadRulesResponse = await LoadRulesInProjectPath(fileNameOptions)
         };
-        loadAndApplyRulesResponse.ApplyRulesResponses =
-            await ApplyRulesInternal(loadAndApplyRulesResponse.LoadRulesResponse.Rules);
-        return loadAndApplyRulesResponse;
+        response.OnLog += ResponseOnLog;
+        try {
+            response.ApplyRulesResponses =
+                await ApplyRulesInternal(response.LoadRulesResponse.Rules);
+            return response;
+        } finally {
+            response.OnLog += ResponseOnLog;
+        }
     }
 
     /// <summary> Apply the given rules to the target project. </summary>   
@@ -63,34 +69,41 @@ public sealed class RuleApplicator {
 
         var state = new RoslynProjectState();
         List<ApplyRulesResponse> responses = new();
-        foreach (var rule in rules.Where(o => o != null).OrderBy(o => o.Kind))
+        foreach (var rule in rules.Where(o => o != null).OrderBy(o => o.Kind)) {
+            ApplyRulesResponse response = null;
             try {
                 if (rule == null) continue;
 
-                var response = new ApplyRulesResponse(rule);
-                switch (rule) {
-                    case PrimitiveNamingRules primitiveNamingRules:
-                        await ApplyPrimitiveRulesCore(primitiveNamingRules, response, null, null, state);
-                        break;
-                    case NavigationNamingRules navigationNamingRules:
-                        await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace,
-                            response, state: state);
-                        break;
-                    case PropertyTypeChangingRules propertyTypeChangingRules:
-                        await ApplyRulesCore(propertyTypeChangingRules.Classes,
-                            propertyTypeChangingRules.Namespace, response, state: state);
-                        break;
-                    default:
-                        response = (ApplyRulesResponse)null;
-                        break;
+                response = new ApplyRulesResponse(rule);
+                response.OnLog += ResponseOnLog;
+                try {
+                    switch (rule) {
+                        case PrimitiveNamingRules primitiveNamingRules:
+                            await ApplyPrimitiveRulesCore(primitiveNamingRules, response, null, null, state);
+                            break;
+                        case NavigationNamingRules navigationNamingRules:
+                            await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace,
+                                response, state: state);
+                            break;
+                        case PropertyTypeChangingRules propertyTypeChangingRules:
+                            await ApplyRulesCore(propertyTypeChangingRules.Classes,
+                                propertyTypeChangingRules.Namespace, response, state: state);
+                            break;
+                        default:
+                            continue;
+                    }
+                } finally {
+                    response.OnLog -= ResponseOnLog;
                 }
 
-                if (response != null) responses.Add(response);
+                responses.Add(response);
             } catch (Exception ex) {
                 Console.WriteLine(ex);
-                var response = new ApplyRulesResponse(rule);
-                response.Errors.Add($"Error processing {rule}: {ex.Message}");
+                response ??= new ApplyRulesResponse(rule);
+                response.LogError($"Error processing {rule}: {ex.Message}");
+                responses.Add(response);
             }
+        }
 
         return responses;
     }
@@ -100,8 +113,8 @@ public sealed class RuleApplicator {
     /// <returns> Response with loaded rules and list of errors. </returns>
     public async Task<LoadRulesResponse> LoadRulesInProjectPath(RuleFileNameOptions fileNameOptions = null) {
         var response = new LoadRulesResponse();
+        response.OnLog += ResponseOnLog;
         var rules = response.Rules;
-        var errors = response.Errors;
         try {
             if (ProjectBasePath == null || !Directory.Exists(ProjectBasePath))
                 throw new ArgumentException(nameof(ProjectBasePath));
@@ -129,32 +142,35 @@ public sealed class RuleApplicator {
                     if (!fileInfo.Exists) continue;
 
                     if (jsonFile == fileNameOptions.PrimitiveNamingFile) {
-                        if (await TryReadRules<PrimitiveNamingRules>(fileInfo, errors) is { } schemas)
+                        if (await TryReadRules<PrimitiveNamingRules>(fileInfo, response) is { } schemas)
                             rules.Add(schemas);
                     } else if (jsonFile == fileNameOptions.NavigationNamingFile) {
-                        if (await TryReadRules<NavigationNamingRules>(fileInfo, errors) is { } propertyRenamingRoot)
+                        if (await TryReadRules<NavigationNamingRules>(fileInfo, response) is { } propertyRenamingRoot)
                             rules.Add(propertyRenamingRoot);
                     } else if (jsonFile == fileNameOptions.PropertyTypeChangingFile) {
-                        if (await TryReadRules<PropertyTypeChangingRules>(fileInfo, errors) is
+                        if (await TryReadRules<PropertyTypeChangingRules>(fileInfo, response) is
                             { } propertyTypeChangingRules)
                             rules.Add(propertyTypeChangingRules);
                     }
                 } catch (Exception ex) {
                     Console.WriteLine(ex);
-                    errors.Add($"Error processing {jsonFile}: {ex.Message}");
+                    response.LogError($"Error processing {jsonFile}: {ex.Message}");
                 }
 
             return response;
         } catch (Exception ex) {
-            errors.Add($"Error: {ex.Message}");
+            response.LogError($"Error: {ex.Message}");
             return response;
+        } finally {
+            response.OnLog -= ResponseOnLog;
         }
     }
 
-    private static async Task<T> TryReadRules<T>(FileInfo jsonFile, List<string> errors) where T : class, new() {
+    private static async Task<T> TryReadRules<T>(FileInfo jsonFile, LoggedResponse loggedResponse)
+        where T : class, new() {
         var rules = await jsonFile.FullName.TryReadJsonFile<T>();
         if (rules != null) return rules;
-        errors.Add($"Unable to open {jsonFile.Name}");
+        loggedResponse.LogError($"Unable to open {jsonFile.Name}");
         return null;
     }
 
@@ -166,9 +182,15 @@ public sealed class RuleApplicator {
     public async Task<ApplyRulesResponse> ApplyRules(NavigationNamingRules navigationNamingRules,
         string contextFolder = null, string modelsFolder = null) {
         var response = new ApplyRulesResponse(navigationNamingRules);
-        await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace, response,
-            contextFolder: contextFolder,
-            modelsFolder: modelsFolder);
+        response.OnLog += ResponseOnLog;
+        try {
+            await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace, response,
+                contextFolder: contextFolder,
+                modelsFolder: modelsFolder);
+        } finally {
+            response.OnLog -= ResponseOnLog;
+        }
+
         return response;
     }
 
@@ -181,10 +203,15 @@ public sealed class RuleApplicator {
         string contextFolder = null,
         string modelsFolder = null) {
         var response = new ApplyRulesResponse(propertyTypeChangingRules);
-        await ApplyRulesCore(propertyTypeChangingRules.Classes, propertyTypeChangingRules.Namespace, response,
-            contextFolder: contextFolder,
-            modelsFolder: modelsFolder);
-        return response;
+        response.OnLog += ResponseOnLog;
+        try {
+            await ApplyRulesCore(propertyTypeChangingRules.Classes, propertyTypeChangingRules.Namespace, response,
+                contextFolder: contextFolder,
+                modelsFolder: modelsFolder);
+            return response;
+        } finally {
+            response.OnLog -= ResponseOnLog;
+        }
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
@@ -196,9 +223,14 @@ public sealed class RuleApplicator {
         string contextFolder = null, string modelsFolder = null) {
         // map to class renaming
         var response = new ApplyRulesResponse(primitiveNamingRules);
-        var state = new RoslynProjectState();
-        await ApplyPrimitiveRulesCore(primitiveNamingRules, response, contextFolder, modelsFolder, state);
-        return response;
+        response.OnLog += ResponseOnLog;
+        try {
+            var state = new RoslynProjectState();
+            await ApplyPrimitiveRulesCore(primitiveNamingRules, response, contextFolder, modelsFolder, state);
+            return response;
+        } finally {
+            response.OnLog -= ResponseOnLog;
+        }
     }
 
     private async Task ApplyPrimitiveRulesCore(PrimitiveNamingRules primitiveNamingRules, ApplyRulesResponse response,
@@ -206,9 +238,14 @@ public sealed class RuleApplicator {
         string modelsFolder, RoslynProjectState state) {
         foreach (var schema in primitiveNamingRules.Schemas) {
             var schemaResponse = new ApplyRulesResponse(null);
-            await ApplyRulesCore(schema.Tables, schema.Namespace, schemaResponse, contextFolder, modelsFolder, state);
-            response.Errors.AddRange(schemaResponse.Errors);
-            response.LogInformation(schemaResponse.Information);
+            schemaResponse.OnLog += ResponseOnLog;
+            try {
+                await ApplyRulesCore(schema.Tables, schema.Namespace, schemaResponse, contextFolder, modelsFolder,
+                    state);
+                response.Merge(schemaResponse);
+            } finally {
+                schemaResponse.OnLog -= ResponseOnLog;
+            }
         }
     }
 
@@ -423,16 +460,16 @@ public sealed class RuleApplicator {
 
             Project project;
             foreach (var csProjFile in csProjFiles) {
-                project = await RoslynExtensions.LoadExistingProjectAsync(csProjFile.FullName, response?.Errors);
+                project = await RoslynExtensions.LoadExistingProjectAsync(csProjFile.FullName, response);
                 if (project?.Documents.Any() == true) return project;
             }
 
-            response?.Information?.Add("Direct project load failed. Attempting adhoc project creation...");
+            response?.LogInformation("Direct project load failed. Attempting adhoc project creation...");
 
             project = TryLoadFallbackAdhocProject(projectBasePath, contextFolder, modelsFolder, response);
             return project;
         } catch (Exception ex) {
-            response?.Errors?.Add($"Error loading project: {ex.Message}");
+            response?.LogError($"Error loading project: {ex.Message}");
             return null;
         }
     }
@@ -461,7 +498,7 @@ public sealed class RuleApplicator {
     /// <returns></returns>
     private static Project TryLoadFallbackAdhocProject(string projectBasePath, string contextFolder,
         string modelsFolder, ApplyRulesResponse response) {
-        var csProj = InspectProject(projectBasePath, response?.Errors);
+        var csProj = InspectProject(projectBasePath, response);
 
         if (csProj?.ImplicitUsings.In("enabled", "enable", "true") == true) {
             // symbol renaming will likely not work correctly. 
@@ -493,7 +530,7 @@ public sealed class RuleApplicator {
         toIgnore.ForEach(o => cSharpFiles.Remove(o));
 
         if (cSharpFiles.Count == 0) {
-            response?.Errors.Add("No .cs files found");
+            response?.LogError("No .cs files found");
             return null;
         }
 
@@ -527,14 +564,14 @@ public sealed class RuleApplicator {
                 return project;
             }
         } catch (Exception ex) {
-            response?.Errors.Add($"Unable to get in-memory project from workspace: {ex.Message}");
+            response?.LogError($"Unable to get in-memory project from workspace: {ex.Message}");
             return null;
         }
 
         return null;
     }
 
-    private static CsProject InspectProject(string projectBasePath, List<string> errors) {
+    private static CsProject InspectProject(string projectBasePath, LoggedResponse loggedResponse) {
         try {
             var dir = new DirectoryInfo(projectBasePath);
             var csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
@@ -545,14 +582,14 @@ public sealed class RuleApplicator {
                 try {
                     csProj = CsProjSerializer.Deserialize(text);
                 } catch (Exception ex) {
-                    errors?.Add($"Unable to parse csproj: {ex.Message}");
+                    loggedResponse.LogError($"Unable to parse csproj: {ex.Message}");
                     continue;
                 }
 
                 return csProj;
             }
         } catch (Exception ex) {
-            errors?.Add($"Unable to read csproj: {ex.Message}");
+            loggedResponse.LogError($"Unable to read csproj: {ex.Message}");
         }
 
         return new CsProject();
@@ -624,60 +661,41 @@ public sealed class RuleApplicator {
     }
 }
 
-public sealed class LoadRulesResponse {
+public sealed class LoadRulesResponse : LoggedResponse {
     public List<IEdmxRuleModelRoot> Rules { get; } = new();
-    public List<string> Errors { get; } = new();
 }
 
-public sealed class ApplyRulesResponse {
+public sealed class ApplyRulesResponse : LoggedResponse {
     internal ApplyRulesResponse(IEdmxRuleModelRoot ruleModelRoot) {
         Rule = ruleModelRoot;
     }
 
     public IEdmxRuleModelRoot Rule { get; internal set; }
-    public List<string> Errors { get; } = new();
-    public List<string> Information { get; } = new();
-
-    internal void LogInformation(string msg) {
-        Information.Add(msg);
-    }
-
-    internal void LogWarning(string msg) {
-        Information.Add("Warning: " + msg);
-    }
-
-    internal void LogError(string msg) {
-        Errors.Add(msg);
-    }
-
-    public void LogInformation(IList<string> msgs) {
-        Information.AddRange(msgs);
-    }
 }
 
 [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
-public sealed class LoadAndApplyRulesResponse {
+public sealed class LoadAndApplyRulesResponse : LoggedResponse {
     public LoadRulesResponse LoadRulesResponse { get; internal set; }
     public IReadOnlyList<ApplyRulesResponse> ApplyRulesResponses { get; internal set; }
 
     /// <summary> return all errors in this response (including rule application responses) </summary>
-    public IEnumerable<string> GetErrors() {
-        if (LoadRulesResponse?.Errors?.Count > 0)
-            foreach (var error in LoadRulesResponse.Errors)
-                yield return error;
-        if (!(ApplyRulesResponses?.Count > 0)) yield break;
-        foreach (var r in ApplyRulesResponses)
-            if (r?.Errors?.Count > 0)
-                foreach (var error in r.Errors)
-                    yield return error;
-    }
+    public IEnumerable<string> GetErrors() => GetAllMessagesOfType(LogType.Error);
 
     /// <summary> return all information statements in this response (including rule application responses) </summary>
-    public IEnumerable<string> GetInformation() {
+    public IEnumerable<string> GetInformation() => GetAllMessagesOfType(LogType.Information);
+
+    /// <summary> return all information statements in this response (including rule application responses) </summary>
+    public IEnumerable<string> GetWarnings() => GetAllMessagesOfType(LogType.Warning);
+
+    /// <summary> return all errors in this response (including rule application responses) </summary>
+    public IEnumerable<string> GetAllMessagesOfType(LogType type) {
+        if (LoadRulesResponse?.Errors != null)
+            foreach (var logMessage in LoadRulesResponse.Messages.Where(o => o.Type == type))
+                yield return logMessage.Message;
         if (!(ApplyRulesResponses?.Count > 0)) yield break;
         foreach (var r in ApplyRulesResponses)
-            if (r?.Information?.Count > 0)
-                foreach (var info in r.Information)
-                    yield return info;
+            if (r?.Messages != null)
+                foreach (var logMessage in r.Messages.Where(o => o.Type == type))
+                    yield return logMessage.Message;
     }
 }

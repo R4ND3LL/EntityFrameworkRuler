@@ -8,6 +8,7 @@ using System.Reflection.Metadata;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
@@ -365,7 +366,8 @@ internal static class RoslynExtensions {
             (await document.GetTextAsync()).Lines.Select(o => o.ToString())).Trim();
     }
 
-    public static async Task<Project> LoadExistingProjectAsync(string csProjPath, List<string> errors = null) {
+    public static async Task<Project>
+        LoadExistingProjectAsync(string csProjPath, LoggedResponse loggedResponse = null) {
         try {
             vsInstance ??= MSBuildLocatorRegisterDefaults();
             Debug.WriteLine($"Using msbuild: {vsInstance.MSBuildPath}");
@@ -376,14 +378,14 @@ internal static class RoslynExtensions {
             var diagnostics = workspace.Diagnostics;
             foreach (var diagnostic in diagnostics)
                 if (diagnostic.Kind == WorkspaceDiagnosticKind.Failure) {
-                    errors?.Add($"Error loading existing project: {diagnostic.Message}");
+                    loggedResponse?.LogWarning($"Error loading existing project: {diagnostic.Message}");
                     return null;
                 }
 
             Debug.Assert(docs.Length > 0);
             return project;
         } catch (Exception ex) {
-            errors?.Add($"Error loading existing project: {ex.Message}");
+            loggedResponse?.LogError($"Error loading existing project: {ex.Message}");
             return null;
         }
     }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using EdmxRuler.Applicator;
+using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator;
 
@@ -27,21 +28,20 @@ internal static class Program {
 
                     var start = DateTimeExtensions.GetTime();
                     var generator = new RuleGenerator(edmxPath);
-                    var rules = generator.TryGenerateRules();
-                    await generator.TrySaveRules(projectBasePath);
+                    generator.OnLog += MessageLogged;
+                    var response = generator.TryGenerateRules();
+                    var rules = response.Rules;
+                    await generator.TrySaveRules(rules, projectBasePath);
                     var elapsed = DateTimeExtensions.GetTime() - start;
-                    if (generator.Errors.Count == 0) {
+                    var errorCount = response.Errors.Count();
+                    if (errorCount == 0) {
                         await Console.Out
                             .WriteLineAsync($"Successfully generated {rules.Count} rule files in {elapsed}ms")
                             .ConfigureAwait(false);
                         return 0;
                     }
 
-                    foreach (var error in generator.Errors)
-                        await Console.Out.WriteLineAsync($"Error: {error}")
-                            .ConfigureAwait(false);
-
-                    return generator.Errors.Count;
+                    return errorCount;
                 }
                 case 'a': {
                     // apply rules
@@ -50,21 +50,17 @@ internal static class Program {
 
                     await Console.Out.WriteLineAsync($" - project base path: {projectBasePath}").ConfigureAwait(false);
                     await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
-
+                    var start = DateTimeExtensions.GetTime();
                     var applicator = new RuleApplicator(projectBasePath);
+                    applicator.OnLog += MessageLogged;
                     var response = await applicator.ApplyRulesInProjectPath();
-
-                    var errorCount = 0;
-                    foreach (var error in response.GetErrors()) {
-                        errorCount++;
-                        await Console.Out.WriteLineAsync($"Error: {error}").ConfigureAwait(false);
-                    }
-
-                    foreach (var r in response.ApplyRulesResponses.Where(r => r?.Information?.Count > 0)) {
-                        await Console.Out.WriteLineAsync($"{r.Rule.Kind} log:").ConfigureAwait(false);
-                        foreach (var info in r.Information)
-                            await Console.Out.WriteLineAsync($" Info: {info}").ConfigureAwait(false);
-                        await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
+                    var elapsed = DateTimeExtensions.GetTime() - start;
+                    var errorCount = response.GetErrors().Count();
+                    if (errorCount == 0) {
+                        await Console.Out
+                            .WriteLineAsync($"Successfully applied rules in {elapsed}ms")
+                            .ConfigureAwait(false);
+                        return 0;
                     }
 
                     return errorCount;
@@ -78,6 +74,31 @@ internal static class Program {
             await Console.Out.WriteLineAsync($"Unexpected error: {ex.Message}").ConfigureAwait(false);
             return 1;
         }
+    }
+
+    private static bool logInfo = true;
+    private static bool logWarning = true;
+    private static bool logError = true;
+
+    private static void MessageLogged(object sender, LogMessage logMessage) {
+        switch (logMessage.Type) {
+            case LogType.Information:
+                if (!logInfo) return;
+                Console.Out.Write("Info: ");
+                break;
+            case LogType.Warning:
+                if (!logWarning) return;
+                Console.Out.Write("Warning: ");
+                break;
+            case LogType.Error:
+                if (!logError) return;
+                Console.Out.Write("Error: ");
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(logMessage.Type), logMessage.Type, null);
+        }
+
+        Console.Out.WriteLine(logMessage.Message);
     }
 
     private static char GetSwitchArg(string arg) {
