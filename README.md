@@ -13,7 +13,7 @@ You only need to generate the rules from the EDMX once.  From then on, applying 
 ## EDMX Customizations Supported
 - Class renaming
 - Property renaming (including both primitives and navigations)
-- Property enum type usage
+- Property type changes such as in enum usage
 
 ## Installation
 There are 2 ways to use this tool:
@@ -84,8 +84,9 @@ var generator = new RuleGenerator(edmxPath);
 var rules = generator.TryGenerateRules();  
 await generator.TrySaveRules(projectBasePath,  
     new RuleFileNameOptions() {  
+        PrimitiveNamingFile= null, // null will skip this file
         NavigationNamingFile = "NavRenaming.json",   
-        EnumMappingFile = "MyEnumMap.json"  
+        PropertyTypeChangingFile = "MyEnumMap.json"  
   }  
 );
 ```
