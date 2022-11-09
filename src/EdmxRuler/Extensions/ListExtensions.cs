@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
+
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace EdmxRuler.Extensions;
@@ -66,5 +67,19 @@ internal static class ListExtensions {
 
     public static void AddRange<T>(this HashSet<T> c, IEnumerable<T> list) {
         foreach (var o in list) c.Add(o);
+    }
+
+    /// <summary> remove items from the list that are program arg switches, but append those to the outbound switchArgs </summary>
+    internal static List<string> RemoveSwitchArgs(this List<string> args, out List<string> switchArgs) {
+        switchArgs = new List<string>();
+        for (var i = args.Count - 1; i >= 0; i--) {
+            var arg = args[i];
+            var switchArg = arg.GetSwitchArg();
+            if (switchArg == null) continue;
+            args.RemoveAt(i);
+            switchArgs.Add(switchArg);
+        }
+
+        return args;
     }
 }

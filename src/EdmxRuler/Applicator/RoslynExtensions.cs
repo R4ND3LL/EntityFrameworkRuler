@@ -284,7 +284,7 @@ internal static class RoslynExtensions {
         // return (await FindClassesByName(project, parts.namespaceName, parts.name)).FirstOrDefault();
         var compilation = await project.GetCompilationAsync();
         var type = compilation.GetTypeByMetadataName(fullName);
-#if DEBUG        
+#if DEBUG
         FindClassesByNameTime += DateTimeExtensions.GetTime() - start;
 #endif
         return type;
@@ -378,19 +378,19 @@ internal static class RoslynExtensions {
         LoadExistingProjectAsync(string csProjPath, LoggedResponse loggedResponse = null) {
         try {
             vsInstance ??= MSBuildLocatorRegisterDefaults();
-            Debug.WriteLine($"Using msbuild: {vsInstance.MSBuildPath}");
+            loggedResponse?.LogInformation($"Using msbuild: {vsInstance.MSBuildPath}");
+            var start = DateTimeExtensions.GetTime();
             using var workspace = MSBuildWorkspace.Create();
-            workspace.WorkspaceFailed += (_, failure) => Debug.WriteLine(failure.Diagnostic);
             var project = await workspace.OpenProjectAsync(csProjPath);
-            var docs = project.Documents.ToArray();
             var diagnostics = workspace.Diagnostics;
-            foreach (var diagnostic in diagnostics)
-                if (diagnostic.Kind == WorkspaceDiagnosticKind.Failure) {
-                    loggedResponse?.LogWarning($"Error loading existing project: {diagnostic.Message}");
-                    return null;
-                }
+            foreach (var diagnostic in diagnostics.Where(diagnostic =>
+                         diagnostic.Kind == WorkspaceDiagnosticKind.Failure)) {
+                loggedResponse?.LogWarning($"Error loading existing project: {diagnostic.Message}");
+                return null;
+            }
 
-            Debug.Assert(docs.Length > 0);
+            var elapsed = DateTimeExtensions.GetTime() - start;
+            loggedResponse?.LogInformation($"Loaded project directly in {elapsed}ms");
             return project;
         } catch (Exception ex) {
             loggedResponse?.LogError($"Error loading existing project: {ex.Message}");

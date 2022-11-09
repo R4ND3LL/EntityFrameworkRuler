@@ -14,7 +14,7 @@ internal static class Program {
         try {
             if (args.IsNullOrEmpty() || args[0].IsNullOrWhiteSpace()) return await ShowHelpInfo();
 
-            var option = GetSwitchArg(args[0]);
+            var option = args[0].GetSwitchArgChar();
             switch (option) {
                 case 'g': {
                     // generate rules
@@ -51,7 +51,7 @@ internal static class Program {
                     await Console.Out.WriteLineAsync($" - project base path: {projectBasePath}").ConfigureAwait(false);
                     await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
                     var start = DateTimeExtensions.GetTime();
-                    var applicator = new RuleApplicator(projectBasePath);
+                    var applicator = new RuleApplicator(projectBasePath.ProjectBasePath, projectBasePath.AdhocOnly);
                     applicator.OnLog += MessageLogged;
                     var response = await applicator.ApplyRulesInProjectPath();
                     var elapsed = DateTimeExtensions.GetTime() - start;
@@ -101,11 +101,6 @@ internal static class Program {
         Console.Out.WriteLine(logMessage.Message);
     }
 
-    private static char GetSwitchArg(string arg) {
-        if (arg.IsNullOrWhiteSpace() || arg.Length < 2) return default;
-        var firstChar = arg[0];
-        return firstChar is '-' or '/' ? char.ToLower(arg[1]) : default;
-    }
 
     private static async Task<int> ShowHelpInfo() {
         var versionString = Assembly.GetEntryAssembly()?

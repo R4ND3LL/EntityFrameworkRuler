@@ -131,9 +131,10 @@ public sealed class GeneralTests {
 
     [Fact]
     public async Task TypeFinder() {
-        var state = new RuleApplicator.RoslynProjectState();
+        string projectBasePath = ResolveNorthwindProject();
+        var state = new RuleApplicator.RoslynProjectState(new RuleApplicator(projectBasePath));
         var response = new ApplyRulesResponse(null);
-        await state.TryLoadProjectOrFallbackOnce(ResolveNorthwindProject(), null, null, response);
+        await state.TryLoadProjectOrFallbackOnce(projectBasePath, null, null, response);
         var project = state.Project;
         project.ShouldNotBeNull();
         //var ns = "NorthwindTestProject.Models";

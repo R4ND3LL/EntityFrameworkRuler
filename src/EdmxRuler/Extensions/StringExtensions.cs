@@ -133,4 +133,15 @@ internal static class StringExtensions {
         var typeName = parts[^1];
         return (parts.Take(parts.Length - 1).Join("."), typeName);
     }
+
+    internal static char GetSwitchArgChar(this string arg) {
+        arg = GetSwitchArg(arg);
+        return arg?[0] ?? default;
+    }
+
+    internal static string GetSwitchArg(this string arg) {
+        if (arg.IsNullOrWhiteSpace() || arg.Length < 2) return default;
+        var firstChar = arg[0];
+        return firstChar is '-' or '/' ? arg[1..].ToLower() : default;
+    }
 }

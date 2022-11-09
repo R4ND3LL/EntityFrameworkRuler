@@ -26,15 +26,23 @@ namespace EdmxRuler.Applicator;
 
 public sealed class RuleApplicator : RuleProcessor {
     /// <summary> Create rule applicator for making changes to project files </summary>
+    public RuleApplicator(ApplicatorArg arg) : this(arg.ProjectBasePath, arg.AdhocOnly) { }
+
+    /// <summary> Create rule applicator for making changes to project files </summary>
     /// <param name="projectBasePath">project folder containing rules and target files.</param>
-    public RuleApplicator(string projectBasePath) {
+    /// <param name="adhocOnly"> Form an adhoc in-memory project out of the target entity model files instead of loading project directly. </param>
+    public RuleApplicator(string projectBasePath, bool adhocOnly = false) {
         ProjectBasePath = projectBasePath;
+        AdhocOnly = adhocOnly;
     }
 
     #region properties
 
     /// <summary> The target project path. </summary>
     public string ProjectBasePath { get; }
+
+    /// <summary> Form an adhoc in-memory project out of the target entity model files instead of loading project directly. </summary>
+    public bool AdhocOnly { get; set; }
 
     #endregion
 
@@ -67,7 +75,7 @@ public sealed class RuleApplicator : RuleProcessor {
     private async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRulesInternal(IEnumerable<IEdmxRuleModelRoot> rules) {
         if (rules == null) throw new ArgumentNullException(nameof(rules));
 
-        var state = new RoslynProjectState();
+        var state = new RoslynProjectState(this);
         List<ApplyRulesResponse> responses = new();
         foreach (var rule in rules.Where(o => o != null).OrderBy(o => o.Kind)) {
             ApplyRulesResponse response = null;
@@ -225,7 +233,7 @@ public sealed class RuleApplicator : RuleProcessor {
         var response = new ApplyRulesResponse(primitiveNamingRules);
         response.OnLog += ResponseOnLog;
         try {
-            var state = new RoslynProjectState();
+            var state = new RoslynProjectState(this);
             await ApplyPrimitiveRulesCore(primitiveNamingRules, response, contextFolder, modelsFolder, state);
             return response;
         } finally {
@@ -267,7 +275,7 @@ public sealed class RuleApplicator : RuleProcessor {
 
         if (classRules == null) return; // nothing to do
 
-        state ??= new RoslynProjectState();
+        state ??= new RoslynProjectState(this);
         await state.TryLoadProjectOrFallbackOnce(ProjectBasePath, contextFolder, modelsFolder, response);
         if (state.Project == null || !state.Project.Documents.Any()) return;
 
@@ -452,19 +460,23 @@ public sealed class RuleApplicator : RuleProcessor {
         return;
     }
 
-    private static async Task<Project> TryLoadProjectOrFallback(string projectBasePath, string contextFolder,
+    private async Task<Project> TryLoadProjectOrFallback(string projectBasePath, string contextFolder,
         string modelsFolder, ApplyRulesResponse response) {
         try {
             var dir = new DirectoryInfo(projectBasePath);
             var csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
 
             Project project;
-            foreach (var csProjFile in csProjFiles) {
-                project = await RoslynExtensions.LoadExistingProjectAsync(csProjFile.FullName, response);
-                if (project?.Documents.Any() == true) return project;
-            }
+            if (!AdhocOnly) {
+                foreach (var csProjFile in csProjFiles) {
+                    project = await RoslynExtensions.LoadExistingProjectAsync(csProjFile.FullName, response);
+                    if (project?.Documents.Any() == true) return project;
+                }
 
-            response?.LogInformation("Direct project load failed. Attempting adhoc project creation...");
+                response?.LogInformation("Direct project load failed. Attempting adhoc project creation...");
+            } else {
+                response?.LogInformation("Attempting adhoc project creation...");
+            }
 
             project = TryLoadFallbackAdhocProject(projectBasePath, contextFolder, modelsFolder, response);
             return project;
@@ -498,6 +510,7 @@ public sealed class RuleApplicator : RuleProcessor {
     /// <returns></returns>
     private static Project TryLoadFallbackAdhocProject(string projectBasePath, string contextFolder,
         string modelsFolder, ApplyRulesResponse response) {
+        var start = DateTimeExtensions.GetTime();
         var csProj = InspectProject(projectBasePath, response);
 
         if (csProj?.ImplicitUsings.In("enabled", "enable", "true") == true) {
@@ -561,6 +574,8 @@ public sealed class RuleApplicator : RuleProcessor {
             var project = workspace.CurrentSolution.Projects.First();
             if (project?.Documents.Any() == true) {
                 // add project references?
+                var elapsed = DateTimeExtensions.GetTime() - start;
+                response?.LogInformation($"Loaded adhoc project in {elapsed}ms");
                 return project;
             }
         } catch (Exception ex) {
@@ -596,7 +611,10 @@ public sealed class RuleApplicator : RuleProcessor {
     }
 
     internal sealed class RoslynProjectState {
-        public RoslynProjectState() {
+        private readonly RuleApplicator applicator;
+
+        public RoslynProjectState(RuleApplicator applicator) {
+            this.applicator = applicator;
         }
 
         private bool loadAttempted = false;
@@ -606,7 +624,7 @@ public sealed class RuleApplicator : RuleProcessor {
             string modelsFolder, ApplyRulesResponse response) {
             if (loadAttempted) return;
             loadAttempted = true;
-            Project = await TryLoadProjectOrFallback(projectBasePath, contextFolder, modelsFolder,
+            Project = await applicator.TryLoadProjectOrFallback(projectBasePath, contextFolder, modelsFolder,
                 response);
         }
     }
