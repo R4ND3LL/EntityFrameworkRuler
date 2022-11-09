@@ -86,19 +86,19 @@ public sealed class RuleGenerator : RuleProcessor {
             }
 
             fileNameOptions ??= new RuleFileNameOptions();
-            await TryWriteRules(EdmxRuleModelKind.PrimitiveNaming, fileNameOptions.PrimitiveNamingFile);
-            await TryWriteRules(EdmxRuleModelKind.NavigationNaming, fileNameOptions.NavigationNamingFile);
-            await TryWriteRules(EdmxRuleModelKind.PropertyTypeChanging, fileNameOptions.PropertyTypeChangingFile);
+            await TryWriteRules<PrimitiveNamingRules>(fileNameOptions.PrimitiveNamingFile);
+            await TryWriteRules<NavigationNamingRules>(fileNameOptions.NavigationNamingFile);
+            await TryWriteRules<PropertyTypeChangingRules>(fileNameOptions.PropertyTypeChangingFile);
             return response;
 
 
-            async Task TryWriteRules(EdmxRuleModelKind kind, string fileName) {
+            async Task TryWriteRules<T>(string fileName) where T : class, IEdmxRuleModelRoot {
                 try {
                     if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
-                    var rulesRoot = rules?.FirstOrDefault(o => o?.Kind == kind) ??
-                                    throw new Exception("Rule model null");
-                    await WriteRules(rulesRoot, fileName);
-                    response.LogInformation($"Rule file {kind} written to {fileName}");
+                    T rulesRoot = rules?.OfType<T>().FirstOrDefault() ??
+                                  throw new Exception("Rule model null");
+                    await WriteRules<T>(rulesRoot, fileName);
+                    response.LogInformation($"{rulesRoot.Kind} Rule file written to {fileName}");
                 } catch (Exception ex) {
                     response.LogError($"Error writing rule to file {fileName}: {ex.Message}");
                 }
