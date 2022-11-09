@@ -82,8 +82,9 @@ internal static class RoslynExtensions {
                 classSymbol,
                 new SymbolRenameOptions(renameOverloads, renameInStrings, renameInComments, renameFile),
                 newClassName);
+#if DEBUG
             RenameClassAsyncTime += DateTimeExtensions.GetTime() - start;
-
+#endif
             // sln has been revised. return new doc
             project = newSolution.Projects.Single(o => o.Id == project.Id);
             var ns = classSymbol.ContainingNamespace.ToDisplayString();
@@ -150,8 +151,9 @@ internal static class RoslynExtensions {
             propSymbol,
             new SymbolRenameOptions(renameOverloads, renameInStrings, renameInComments, renameFile),
             newPropertyName);
+#if DEBUG
         RenamePropertyAsyncTime += DateTimeExtensions.GetTime() - start;
-
+#endif
 
         // sln has been revised. return new doc
         var newDocument = newSolution.GetDocument(document.Id);
@@ -187,7 +189,9 @@ internal static class RoslynExtensions {
         var root = await document.GetSyntaxRootAsync();
         var newRoot = root!.ReplaceNode(propSyntax, updatedProp);
         var newDocument = document.WithSyntaxRoot(newRoot);
+#if DEBUG
         ChangePropertyTypeAsyncTime += DateTimeExtensions.GetTime() - start;
+#endif
         //var model = await newDocument.GetSemanticModelAsync();
         //var propSymbol = model.GetDeclaredSymbol(propSyntax);
         //var newDocument = newDocument.Project.GetDocument(document.Id);
@@ -267,7 +271,9 @@ internal static class RoslynExtensions {
             .Where(o => o.TypeKind == TypeKind.Class && !o.IsAnonymousType && !o.IsValueType &&
                         o.IsNamespaceMatch(namespaceName))
             .ToArray();
+#if DEBUG
         FindClassesByNameTime += DateTimeExtensions.GetTime() - start;
+#endif
         return results ?? Array.Empty<INamedTypeSymbol>();
     }
 
@@ -278,7 +284,9 @@ internal static class RoslynExtensions {
         // return (await FindClassesByName(project, parts.namespaceName, parts.name)).FirstOrDefault();
         var compilation = await project.GetCompilationAsync();
         var type = compilation.GetTypeByMetadataName(fullName);
+#if DEBUG        
         FindClassesByNameTime += DateTimeExtensions.GetTime() - start;
+#endif
         return type;
     }
 

@@ -119,8 +119,10 @@ public sealed class GeneralTests {
         output.WriteLine($"Enum mapping rules applied correctly");
         logReceivedCount.ShouldBeGreaterThan(30);
         elapsed = DateTimeExtensions.GetTime() - start;
-        output.WriteLine(
-            $"Completed in {elapsed}ms.  FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");
+        output.WriteLine($"Completed in {elapsed}ms.");
+#if DEBUG
+        output.WriteLine($"FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");
+#endif
 
         void LogReceived(object sender, LogMessage logMessage) {
             logReceivedCount++;
