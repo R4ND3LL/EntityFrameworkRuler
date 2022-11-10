@@ -7,7 +7,7 @@ public partial class Categories {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
         "CA2214:DoNotCallOverridableMethodsInConstructors")]
     public Categories() {
-        ProductsCategoryIDNavigations = new List<Products>();
+        ProductsNavigation = new List<Products>();
     }
 
     public int CategoryID { get; set; }
@@ -16,5 +16,5 @@ public partial class Categories {
     public byte[] Picture { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual IList<Products> ProductsCategoryIDNavigations { get; set; }
+    public virtual IList<Products> ProductsNavigation { get; set; }
 }

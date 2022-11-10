@@ -32,80 +32,84 @@ public class CandidateNamingService : ICandidateNamingService {
 
         if (navigation.Entity.Name == "WorkPool" && navigation.ToRole.Entity.Name == "Employee") Debugger.Break();
 
-        if (ass is FkAssociation fkAssociation) {
-            var foreignKey = fkAssociation.ReferentialConstraint;
-            if (foreignKey == null) yield break;
+        var isMany = navigation.Multiplicity == Multiplicity.Many;
+        switch (ass) {
+            case FkAssociation fkAssociation: {
+                var foreignKey = fkAssociation.ReferentialConstraint;
+                if (foreignKey == null) yield break;
 
-            var deps = foreignKey.DependentProperties;
-            var dep = deps?.FirstOrDefault();
-            if (dep == null) yield break;
+                var deps = foreignKey.DependentProperties;
+                var dep = deps?.FirstOrDefault();
+                if (dep == null) yield break;
 
-            var isMany = navigation.Multiplicity == Multiplicity.Many;
+                var inverseEntity = navigation.InverseNavigation.Entity;
 
-            var inverseEntity = navigation.InverseNavigation.Entity;
-
-            // EF methodology for determining names:
-            var dependentEndExistingIdentifiers =
-                foreignKey.DependentEntity.GetExistingIdentifiers(); //foreignKey.DeclaringEntityType);
-            var dependentEndNavigationPropertyCandidateName =
-                GetDependentEndCandidateNavigationPropertyName(foreignKey);
-            var dependentEndNavigationPropertyName =
-                cSharpUtilities.GenerateCSharpIdentifier(
-                    dependentEndNavigationPropertyCandidateName,
-                    dependentEndExistingIdentifiers,
-                    singularizePluralizer: null,
-                    uniquifier: NavigationUniquifier);
-            if (navigation.IsDependentEnd) {
-                // typically entity references (not collections)
-                Debug.Assert(navigation.Multiplicity != Multiplicity.Many);
-                yield return dependentEndNavigationPropertyName;
-            }
-
-            if (navigation.IsPrincipalEnd) {
-                // typically collections.  but may be 1-1 relation
-                var principalEndExistingIdentifiers = foreignKey.PrincipalEntity.GetExistingIdentifiers();
-                var principalEndNavigationPropertyCandidateName = foreignKey.IsSelfReferencing()
-                    ? string.Format(
-                        CultureInfo.CurrentCulture,
-                        SelfReferencingPrincipalEndNavigationNamePattern,
-                        dependentEndNavigationPropertyName)
-                    : GetPrincipalEndCandidateNavigationPropertyName(foreignKey, dependentEndNavigationPropertyName);
-
-                if (!foreignKey.IsUnique && !foreignKey.IsSelfReferencing()) {
-                    principalEndNavigationPropertyCandidateName = NoPluralization
-                        ? principalEndNavigationPropertyCandidateName
-                        : pluralizer.Pluralize(principalEndNavigationPropertyCandidateName);
-                }
-
-                var principalEndNavigationPropertyName =
+                // EF methodology for determining names:
+                var dependentEndExistingIdentifiers =
+                    foreignKey.DependentEntity.GetExistingIdentifiers(); //foreignKey.DeclaringEntityType);
+                var dependentEndNavigationPropertyCandidateName =
+                    GetDependentEndCandidateNavigationPropertyName(foreignKey);
+                var dependentEndNavigationPropertyName =
                     cSharpUtilities.GenerateCSharpIdentifier(
-                        principalEndNavigationPropertyCandidateName,
-                        principalEndExistingIdentifiers,
+                        dependentEndNavigationPropertyCandidateName,
+                        dependentEndExistingIdentifiers,
                         singularizePluralizer: null,
                         uniquifier: NavigationUniquifier);
+                if (navigation.IsDependentEnd) {
+                    // typically entity references (not collections)
+                    Debug.Assert(navigation.Multiplicity != Multiplicity.Many);
+                    yield return dependentEndNavigationPropertyName;
+                }
 
-                yield return principalEndNavigationPropertyName;
+                if (navigation.IsPrincipalEnd) {
+                    // typically collections.  but may be 1-1 relation
+                    var principalEndExistingIdentifiers = foreignKey.PrincipalEntity.GetExistingIdentifiers();
+                    var principalEndNavigationPropertyCandidateName = foreignKey.IsSelfReferencing()
+                        ? string.Format(
+                            CultureInfo.CurrentCulture,
+                            SelfReferencingPrincipalEndNavigationNamePattern,
+                            dependentEndNavigationPropertyName)
+                        : GetPrincipalEndCandidateNavigationPropertyName(foreignKey,
+                            dependentEndNavigationPropertyName);
+
+                    if (!foreignKey.IsUnique && !foreignKey.IsSelfReferencing()) {
+                        principalEndNavigationPropertyCandidateName = NoPluralization
+                            ? principalEndNavigationPropertyCandidateName
+                            : pluralizer.Pluralize(principalEndNavigationPropertyCandidateName);
+                    }
+
+                    var principalEndNavigationPropertyName =
+                        cSharpUtilities.GenerateCSharpIdentifier(
+                            principalEndNavigationPropertyCandidateName,
+                            principalEndExistingIdentifiers,
+                            singularizePluralizer: null,
+                            uniquifier: NavigationUniquifier);
+
+                    yield return principalEndNavigationPropertyName;
+                }
+
+                if (RelyOnEfMethodOnly) yield break;
+
+                // last ditch efforts. They usually catch most cases
+                var prefix = navigation.IsDependentEnd ? string.Empty : inverseEntity.StorageNameCleansed;
+
+                if (isMany) {
+                    yield return $"{prefix}{dep.DbColumnNameCleansed}Navigations";
+                    yield return pluralizer.Pluralize(navigation.ToRole.Entity.StorageNameCleansed);
+                } else {
+                    yield return $"{prefix}{dep.DbColumnNameCleansed}Navigation";
+                    yield return navigation.ToRole.Entity.StorageNameCleansed;
+                }
+
+                break;
             }
-
-            if (RelyOnEfMethodOnly) yield break;
-
-            // last ditch efforts. They usually catch most cases
-            var prefix = navigation.IsDependentEnd ? string.Empty : inverseEntity.StorageNameCleansed;
-
-            if (isMany) {
-                yield return $"{prefix}{dep.DbColumnNameCleansed}Navigations";
-                yield return pluralizer.Pluralize(navigation.ToRole.Entity.StorageNameCleansed);
-            } else {
-                yield return $"{prefix}{dep.DbColumnNameCleansed}Navigation";
-                yield return navigation.ToRole.Entity.StorageNameCleansed;
-            }
-        } else if (ass is DesignAssociation designAssociation) {
             // likely a many-to-many relation where the junction is gone
-            if (navigation.Multiplicity == Multiplicity.Many) {
+            case DesignAssociation designAssociation when isMany:
                 yield return pluralizer.Pluralize(navigation.ToRole.Entity.StorageNameCleansed);
-            } else {
+                break;
+            case DesignAssociation designAssociation:
                 yield return navigation.ToRole.Entity.StorageNameCleansed;
-            }
+                break;
         }
     }
 

@@ -432,7 +432,8 @@ public sealed class RuleApplicator : RuleProcessor {
         int saved;
         if (classRenameCount > 0 || propRenameCount > 0) {
             // unfortunately we have to go over all documents and save because we don't know how far reaching the rename refactoring was.
-            saved = await state.Project.Documents.SaveDocumentsAsync(false);
+            var changes = state.Project.GetChangedDocuments(state.OriginalProject);
+            saved = changes?.Count > 0 ? await changes.SaveDocumentsAsync(false) : 0;
         } else {
             // type mapping only.  we know the exact docs that changed.
             Debug.Assert(typeMapCount > 0 && dirtyClassStates.Count > 0);
@@ -619,13 +620,15 @@ public sealed class RuleApplicator : RuleProcessor {
         }
 
         private bool loadAttempted = false;
+        public Project OriginalProject { get; private set; }
         public Project Project { get; set; }
 
         internal async Task TryLoadProjectOrFallbackOnce(string projectBasePath, string contextFolder,
             string modelsFolder, ApplyRulesResponse response) {
             if (loadAttempted) return;
             loadAttempted = true;
-            Project = await applicator.TryLoadProjectOrFallback(projectBasePath, contextFolder, modelsFolder,
+            OriginalProject = Project = await applicator.TryLoadProjectOrFallback(projectBasePath, contextFolder,
+                modelsFolder,
                 response);
         }
     }

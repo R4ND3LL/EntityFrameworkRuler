@@ -5,8 +5,7 @@
          "Properties": [
             {
                "Name": [
-                  "ProductsCategoryIDNavigations",
-                  "Products"
+                  "ProductsNavigation"
                ],
                "NewName": "Products"
             }
@@ -17,8 +16,7 @@
          "Properties": [
             {
                "Name": [
-                  "OrdersCustomerIDNavigations",
-                  "Orders"
+                  "OrdersNavigation"
                ],
                "NewName": "Orders"
             }
@@ -29,22 +27,19 @@
          "Properties": [
             {
                "Name": [
-                  "ReportsToNavigations",
-                  "Employees"
+                  "InverseReportsToFk"
                ],
                "NewName": "Employees1"
             },
             {
                "Name": [
-                  "ReportsToNavigation",
-                  "Employees"
+                  "ReportsToFk"
                ],
                "NewName": "Employee1"
             },
             {
                "Name": [
-                  "OrdersEmployeeIDNavigations",
-                  "Orders"
+                  "OrdersNavigation"
                ],
                "NewName": "Orders"
             }
@@ -55,29 +50,25 @@
          "Properties": [
             {
                "Name": [
-                  "CustomerIDNavigation",
-                  "Customers"
+                  "CustomerNavigation"
                ],
                "NewName": "Customer"
             },
             {
                "Name": [
-                  "EmployeeIDNavigation",
-                  "Employees"
+                  "EmployeeNavigation"
                ],
                "NewName": "Employee"
             },
             {
                "Name": [
-                  "Order_DetailsOrderIDNavigations",
-                  "Order_Details"
+                  "Order_DetailsNavigation"
                ],
                "NewName": "Order_Details"
             },
             {
                "Name": [
-                  "ShipViaNavigation",
-                  "Shippers"
+                  "ShipViaFk"
                ],
                "NewName": "Shipper"
             }
@@ -88,15 +79,13 @@
          "Properties": [
             {
                "Name": [
-                  "OrderIDNavigation",
-                  "Orders"
+                  "OrderNavigation"
                ],
                "NewName": "Order"
             },
             {
                "Name": [
-                  "ProductIDNavigation",
-                  "Products"
+                  "ProductNavigation"
                ],
                "NewName": "Product"
             }
@@ -107,22 +96,19 @@
          "Properties": [
             {
                "Name": [
-                  "CategoryIDNavigation",
-                  "Categories"
+                  "CategoryNavigation"
                ],
                "NewName": "Category"
             },
             {
                "Name": [
-                  "Order_DetailsProductIDNavigations",
                   "Order_Details"
                ],
                "NewName": "OrderDetailsNav"
             },
             {
                "Name": [
-                  "SupplierIDNavigation",
-                  "Suppliers"
+                  "SupplierNavigation"
                ],
                "NewName": "Supplier"
             }
@@ -133,8 +119,7 @@
          "Properties": [
             {
                "Name": [
-                  "TerritoriesRegionIDNavigations",
-                  "Territories"
+                  "TerritoriesNavigation"
                ],
                "NewName": "Territories"
             }
@@ -145,8 +130,7 @@
          "Properties": [
             {
                "Name": [
-                  "OrdersShipViaNavigations",
-                  "Orders"
+                  "OrdersNavigation"
                ],
                "NewName": "Orders"
             }
@@ -157,8 +141,7 @@
          "Properties": [
             {
                "Name": [
-                  "ProductsSupplierIDNavigations",
-                  "Products"
+                  "ProductsNavigation"
                ],
                "NewName": "Products"
             }
@@ -169,8 +152,7 @@
          "Properties": [
             {
                "Name": [
-                  "RegionIDNavigation",
-                  "Region"
+                  "RegionNavigation"
                ],
                "NewName": "Region"
             }

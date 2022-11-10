@@ -23,15 +23,15 @@ internal class Program {
         Order order = dbContext.Orders.FirstOrDefault();
         order.ShipVia = 1;
         Products product = new Products();
-        Categories category = product.CategoryIDNavigation;
-        var allCategoryProducts = category.ProductsCategoryIDNavigations;
+        Categories category = product.CategoryNavigation;
+        var allCategoryProducts = category.ProductsNavigation;
 
-        Console.WriteLine($"Some comment {nameof(Products.CategoryIDNavigation)}");
-        Console.WriteLine($"Some comment {nameof(Categories.ProductsCategoryIDNavigations)}");
+        Console.WriteLine($"Some comment {nameof(Products.CategoryNavigation)}");
+        Console.WriteLine($"Some comment {nameof(Categories.ProductsNavigation)}");
 
         if (allCategoryProducts?.Count > 0) {
             var list = new List<Categories>();
-            list[0].ProductsCategoryIDNavigations.Clear();
+            list[0].ProductsNavigation.Clear();
         }
 
         Console.WriteLine("This is a fake test project to illustrate rule application only!");

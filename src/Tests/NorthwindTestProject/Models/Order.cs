@@ -7,7 +7,7 @@ public partial class Order {
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
         "CA2214:DoNotCallOverridableMethodsInConstructors")]
     public Order() {
-        Order_DetailsOrderIDNavigations = new HashSet<Order_Detail>();
+        Order_DetailsNavigation = new HashSet<Order_Detail>();
     }
 
     public int OrderID { get; set; }
@@ -31,12 +31,12 @@ public partial class Order {
     public string ShipCountry { get; set; }
 
     /// <summary> Should rename to Customer </summary>
-    public virtual Customers CustomerIDNavigation { get; set; }
+    public virtual Customers CustomerNavigation { get; set; }
 
-    public virtual Employees EmployeeIDNavigation { get; set; }
+    public virtual Employees EmployeeNavigation { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual ICollection<Order_Detail> Order_DetailsOrderIDNavigations { get; set; }
+    public virtual ICollection<Order_Detail> Order_DetailsNavigation { get; set; }
 
     public virtual Shipper Shippers { get; set; }
 }

@@ -29,8 +29,8 @@ public sealed class NorthwindDbContext : DbContext {
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new()) {
         foreach (var entry in ChangeTracker.Entries<Employees>()) {
-            if (entry.Entity.OrdersEmployeeIDNavigations.Count == 0)
-                throw new Exception(nameof(Models.Employees.OrdersEmployeeIDNavigations));
+            if (entry.Entity.OrdersNavigation.Count == 0)
+                throw new Exception(nameof(Models.Employees.OrdersNavigation));
             if (entry.Entity.ReportsToNavigations.Count == 0)
                 throw new Exception(nameof(Models.Employees.ReportsToNavigations));
             if (entry.Entity.ReportsTo == null)
@@ -38,7 +38,7 @@ public sealed class NorthwindDbContext : DbContext {
         }
 
         foreach (var entry in ChangeTracker.Entries<Order>()) {
-            if (entry.Entity.EmployeeIDNavigation == null) throw new Exception(nameof(Order.EmployeeIDNavigation));
+            if (entry.Entity.EmployeeNavigation == null) throw new Exception(nameof(Order.EmployeeNavigation));
             if (entry.Entity.ShipVia == null)
                 entry.Entity.ShipVia = 1; // this should rename with primitive rules
         }

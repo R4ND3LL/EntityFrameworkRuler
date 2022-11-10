@@ -28,26 +28,26 @@ public partial class Products {
 
     public bool Discontinued { get; set; }
 
-    public virtual Categories CategoryIDNavigation { get; set; }
+    public virtual Categories CategoryNavigation { get; set; }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
     public virtual ICollection<Order_Detail> Order_Details { get; set; }
 
-    public virtual Supplier SupplierIDNavigation { get; set; }
+    public virtual Supplier SupplierNavigation { get; set; }
 
     public void SomeMethod() {
         var list = new List<Categories>();
-        list[0].ProductsCategoryIDNavigations.Clear(); // generic rename challenge
+        list[0].ProductsNavigation.Clear(); // generic rename challenge
         var list2 = new List<Products>();
-        list2[0].CategoryIDNavigation = null; // generic rename challenge
+        list2[0].CategoryNavigation = null; // generic rename challenge
 
         var productWrapper = new ModelWrapper<Products>(this);
-        var products = productWrapper.Model.CategoryIDNavigation.ProductsCategoryIDNavigations;
-        var cat1= products[0].CategoryIDNavigation;
-        var cat2= products.First().CategoryIDNavigation;
+        var products = productWrapper.Model.CategoryNavigation.ProductsNavigation;
+        var cat1= products[0].CategoryNavigation;
+        var cat2= products.First().CategoryNavigation;
         
-        var categoryWrapper = new ModelWrapper<Categories>(list2[0].CategoryIDNavigation);
-        var category = categoryWrapper.Model.ProductsCategoryIDNavigations[0].CategoryIDNavigation;
+        var categoryWrapper = new ModelWrapper<Categories>(list2[0].CategoryNavigation);
+        var category = categoryWrapper.Model.ProductsNavigation[0].CategoryNavigation;
     }
 }
 

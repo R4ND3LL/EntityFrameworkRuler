@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -72,8 +73,7 @@ public sealed class GeneralTests {
         navigationNamingRules.Namespace.ShouldBe("");
         navigationNamingRules.Classes.Count.ShouldBe(10);
         navigationNamingRules.Classes.All(o => o.Properties.Count > 0).ShouldBeTrue();
-        navigationNamingRules.Classes[0].Properties[0].Name.Contains("ProductsCategoryIDNavigations").ShouldBeTrue();
-        navigationNamingRules.Classes[0].Properties[0].Name.Contains("Products").ShouldBeTrue();
+        navigationNamingRules.Classes[0].Properties[0].Name.Contains("ProductsNavigation").ShouldBeTrue();
         navigationNamingRules.Classes[0].Properties[0].NewName.ShouldBe("Products");
         navigationNamingRules.Classes.ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         navigationNamingRules.Classes.SelectMany(o => o.Properties)
@@ -90,6 +90,7 @@ public sealed class GeneralTests {
         start = DateTimeExtensions.GetTime();
         ApplyRulesResponse response;
         response = await applicator.ApplyRules(primitiveNamingRules);
+        var allMessages1 = response.Messages.Select(o => o.Message).Join(Environment.NewLine);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
@@ -98,9 +99,9 @@ public sealed class GeneralTests {
         output.WriteLine($"Primitive naming rules applied correctly");
 
         response = await applicator.ApplyRules(navigationNamingRules);
+        var allMessages2 = response.Messages.Select(o => o.Message).Join(Environment.NewLine);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
-
         var renamed = response.Information.Where(o => o.StartsWith("Renamed")).ToArray();
         renamed.Length.ShouldBe(15);
         var couldNotFind = response.Information.Where(o => o.StartsWith("Could not find ")).ToArray();
@@ -110,6 +111,7 @@ public sealed class GeneralTests {
         output.WriteLine($"Navigation naming rules applied correctly");
 
         response = await applicator.ApplyRules(enumMappingRules);
+        var allMessages3 = response.Messages.Select(o => o.Message).Join(Environment.NewLine);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
@@ -162,7 +164,7 @@ public sealed class GeneralTests {
             var root = await syntaxReference.SyntaxTree.GetRootAsync();
         }
     }
- 
+
 
     private static string ResolveNorthwindEdmxPath() {
         var dir = new DirectoryInfo(Directory.GetCurrentDirectory());

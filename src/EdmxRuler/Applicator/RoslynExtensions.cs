@@ -335,6 +335,32 @@ internal static class RoslynExtensions {
         return fullyQualifiedName == namespaceName;
     }
 
+    /// <summary> Analyze the documents within the project and return those with changes. </summary>
+    public static IList<Document> GetChangedDocuments(this Project project, Project orig, bool requireFilePath = true) {
+        var docs = new List<Document>();
+        foreach (var newDocument in project.Documents) {
+            if (requireFilePath && newDocument.FilePath.IsNullOrWhiteSpace())
+                continue;
+            var oldDocument = orig.GetDocument(newDocument.Id);
+            if (oldDocument == null) {
+                docs.Add(newDocument);
+                continue;
+            }
+
+            var syntaxTree = newDocument.TryGetSyntaxTree(out var st) ? st : null;
+            var oldSyntaxTree = oldDocument.TryGetSyntaxTree(out st) ? st : null;
+            if (syntaxTree == null || oldSyntaxTree == null) {
+                docs.Add(newDocument);
+                continue;
+            }
+
+            var changedSpans = syntaxTree.GetChangedSpans(oldSyntaxTree);
+            if (changedSpans.Count > 0) docs.Add(newDocument);
+        }
+
+        return docs;
+    }
+
     public static async Task<int> SaveDocumentsAsync(this Project project, IEnumerable<DocumentId> documentIds) {
         var saveCount = 0;
         foreach (var documentId in documentIds) {

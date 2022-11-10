@@ -10,6 +10,6 @@ public partial class Order_Detail {
     public short Quantity { get; set; }
     public float Discount { get; set; }
 
-    public virtual Order OrderIDNavigation { get; set; }
-    public virtual Products ProductIDNavigation { get; set; }
+    public virtual Order OrderNavigation { get; set; }
+    public virtual Products ProductNavigation { get; set; }
 }
