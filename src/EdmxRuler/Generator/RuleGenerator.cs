@@ -19,19 +19,18 @@ using EdmxRuler.RuleModels.PropertyTypeChanging;
 namespace EdmxRuler.Generator;
 
 /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX. </summary>
-public sealed class RuleGenerator : RuleProcessor {
+public sealed partial class RuleGenerator : RuleProcessor {
     public RuleGenerator(string edmxFilePath) {
         EdmxFilePath = edmxFilePath;
-        pluralizer = new Pluralizer();
     }
 
     #region properties
 
-    private readonly Pluralizer pluralizer;
-
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary> The EDMX file path </summary>
     public string EdmxFilePath { get; }
+
+    public ICandidateNamingService CandidateNamingService { get; } = new CandidateNamingService();
 
     #endregion
 
@@ -178,44 +177,15 @@ public sealed class RuleGenerator : RuleProcessor {
             tbl.Name = entity.Name;
 
             foreach (var navigation in entity.NavigationProperties) {
-                if (navigation.Association == null) continue;
-
-                var ass = navigation.Association;
-                var constraint = ass.ReferentialConstraints.FirstOrDefault();
-                if (constraint == null) continue;
-
-                var deps = constraint.DependentProperties;
-                var dep = deps?.FirstOrDefault();
-                if (dep == null) continue;
-
-                var isMany = navigation.Multiplicity == Multiplicity.Many;
-
-                var principalEntity = constraint.PrincipalEntity;
-                var dependentEntity = constraint.DependentEntity;
-                var isPrincipalEnd = principalEntity.Name == navigation.EntityName;
-                var isDependentEnd = dependentEntity.Name == navigation.EntityName;
-
-                var inverseEntity = isPrincipalEnd ? dependentEntity : principalEntity;
-                var prefix = isDependentEnd ? string.Empty : inverseEntity.StorageNameCleansed;
-                string efCoreName;
-                string altName;
-                if (isMany) {
-                    efCoreName = $"{prefix}{dep.DbColumnNameCleansed}Navigations";
-                    altName = pluralizer.Pluralize(navigation.ToRole.Entity.StorageNameCleansed);
-                } else {
-                    efCoreName = $"{prefix}{dep.DbColumnNameCleansed}Navigation";
-                    altName = navigation.ToRole.Entity.StorageNameCleansed;
-                }
-
-                var newName = navigation.Name;
-
-                //if (efCoreName == "ProjectFkNavigation") Debugger.Break();
-
                 tbl.Properties ??= new List<NavigationRename>();
-                var navigationRename = new NavigationRename { NewName = newName };
-                if (efCoreName.HasNonWhiteSpace()) navigationRename.Name.Add(efCoreName);
-                if (altName.HasNonWhiteSpace()) navigationRename.Name.Add(altName);
-                if (navigationRename.Name.Count > 0) tbl.Properties.Add(navigationRename);
+                var navigationRename = new NavigationRename { NewName = navigation.Name };
+
+                navigationRename.Name
+                    .AddRange(CandidateNamingService.FindCandidateNavigationNames(navigation)
+                        .Where(o => o != navigation.Name));
+
+                if (navigationRename.Name.Count == 0) continue;
+                tbl.Properties.Add(navigationRename);
                 renamed = true;
             }
 
@@ -224,6 +194,7 @@ public sealed class RuleGenerator : RuleProcessor {
 
         return rule;
     }
+
 
     private PropertyTypeChangingRules GetPropertyTypeChangingRules(EdmxParsed edmx) {
         var rule = new PropertyTypeChangingRules();

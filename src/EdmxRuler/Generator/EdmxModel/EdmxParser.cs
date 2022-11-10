@@ -1,6 +1,8 @@
-﻿using System;
+﻿#define DEBUGPARSER
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -33,17 +35,27 @@ public sealed class EdmxParser : NotifyPropertyChanged {
         State.EnumsByExternalTypeName = enums.Where(o => o.ExternalTypeName.HasNonWhiteSpace())
             .ToDictionary(o => o.ExternalTypeName);
 
+        var conceptualAssociationsByName =
+            edmx.ConceptualModels.Schema.Associations
+                .Where(o => o.Name?.Length > 0)
+                .ToDictionary(o =>
+                    o.Name.Split('.').Last() ?? string.Empty, StringComparer.OrdinalIgnoreCase);
+
         foreach (var conceptualEntityType in edmx.ConceptualModels.Schema.EntityTypes) {
             var entity = new EntityType(conceptualEntityType, schema);
             Entities.Add(entity);
+            //if (entity.Name == "CustomerDemographic") Debugger.Break();
+            if (entity.Name == "CustomerCustomerDemo") Debugger.Break();
 
             var fullName = entity.FullName;
             var selfName = entity.SelfName;
-            var setMapping = edmx.Mappings.Mapping.EntityContainerMapping.EntitySetMappings.FirstOrDefault(o =>
-                o.EntityTypeMappings.Any(etm =>
-                    string.Equals(etm.TypeName, fullName, StringComparison.OrdinalIgnoreCase)));
-            entity.EntitySetMapping = setMapping;
-            entity.MappingFragments = setMapping?.EntityTypeMappings?
+
+            entity.EntitySetMapping = edmx.Mappings.Mapping.EntityContainerMapping.EntitySetMappings?.FirstOrDefault(
+                o =>
+                    o.EntityTypeMappings.Any(etm =>
+                        string.Equals(etm.TypeName, fullName, StringComparison.OrdinalIgnoreCase)));
+
+            entity.MappingFragments = entity.EntitySetMapping?.EntityTypeMappings?
                 .FirstOrDefault(etm => string.Equals(etm.TypeName, fullName, StringComparison.OrdinalIgnoreCase))
                 ?.MappingFragments ?? new List<MappingFragment>();
 
@@ -82,6 +94,20 @@ public sealed class EdmxParser : NotifyPropertyChanged {
                 Debug.Assert(property.StorageProperty != null);
                 Props.Add(property);
 
+                if (conceptualEntityType.Key?.PropertyRefs?.Count > 0) {
+                    var key = conceptualEntityType.Key.PropertyRefs.FirstOrDefault(o => o.Name == property.Name);
+                    property.IsConceptualKey = key != null;
+                    if (property.IsConceptualKey)
+                        entity.ConceptualKey.Add(property);
+                }
+
+                if (entity.StorageEntity?.Key?.PropertyRefs?.Count > 0) {
+                    var key = entity.StorageEntity.Key.PropertyRefs.FirstOrDefault(o => o.Name == property.Name);
+                    property.IsStorageKey = key != null;
+                    if (property.IsConceptualKey)
+                        entity.StorageKey.Add(property);
+                }
+
                 // link up enums: 
                 var typeNameParts = property.TypeName.SplitNamespaceAndName();
                 EnumType enumType;
@@ -100,51 +126,78 @@ public sealed class EdmxParser : NotifyPropertyChanged {
                 }
             }
 
-            // link navigations to association elements
+            // link navigations to association elements 
             foreach (var conceptualProperty in conceptualEntityType.NavigationProperties) {
                 var property = new NavigationProperty(entity, conceptualProperty);
                 entity.NavigationProperties.Add(property);
                 NavProps.Add(property);
-                if (conceptualProperty.Relationship?.Length > 0) {
-                    var relationship = conceptualProperty.Relationship;
-                    relationship = relationship.Split('.').LastOrDefault(); // remove namespace
-                    property.ConceptualAssociation = entity.Associations?.FirstOrDefault(o =>
-                        string.Equals(o.Name, relationship, StringComparison.OrdinalIgnoreCase));
-                    if (property.ConceptualAssociation == null) {
-                        // take a broader look. suspicious end Type in here
-                        var match = edmx.ConceptualModels.Schema.Associations.FirstOrDefault(o =>
-                            string.Equals(o.Name, relationship, StringComparison.OrdinalIgnoreCase));
-                        if (match != null) property.ConceptualAssociation = match;
-                    }
 
-                    Debug.Assert(property.ConceptualAssociation != null);
+                if (conceptualProperty.Relationship.IsNullOrEmpty()) continue;
+
+                var relationship = conceptualProperty.Relationship;
+                relationship = relationship.Split('.').Last() ?? string.Empty; // remove namespace
+                property.ConceptualAssociation = entity.Associations?.FirstOrDefault(o =>
+                    string.Equals(o.Name, relationship, StringComparison.OrdinalIgnoreCase));
+                if (property.ConceptualAssociation == null) {
+                    // take a broader look. suspicious end Type in here
+                    var match = conceptualAssociationsByName.TryGetValue(relationship, out var v) ? v : null;
+                    // var match = edmx.ConceptualModels.Schema.Associations.FirstOrDefault(o =>
+                    //     string.Equals(o.Name, relationship, StringComparison.OrdinalIgnoreCase));
+                    if (match != null) property.ConceptualAssociation = match;
                 }
+
+                Debug.Assert(property.ConceptualAssociation != null);
             }
         }
 
+        var associationSetMappings = edmx.Mappings.Mapping.EntityContainerMapping?.AssociationSetMapping;
+
         // with all entities loaded, perform association linking
         foreach (var entity in Entities)
-        foreach (var property in entity.NavigationProperties) {
-            if (!(entity.Associations?.Count > 0)) continue;
-
-            var ass = property.ConceptualAssociation;
+        foreach (var navigation in entity.NavigationProperties) {
+            // if (entity.Name == "CustomerDemographic") Debugger.Break();
+            //if (entity.Associations.IsNullOrEmpty()) continue;
+            if (navigation.Association != null) continue; // wired up from the opposite end!
+            var ass = navigation.ConceptualAssociation;
             if (ass == null) continue;
 
-            var endRoles = ass.Ends.Select(end => GetEndRole(ass, end, true)).ToArray();
+            var endRoles = ass.Ends.Select(end => CreateEndRole(ass, end)).ToArray();
             Debug.Assert(ass.Ends.Count == 0 || endRoles.Length > 0);
-            var constraint = ass.ReferentialConstraint;
-            if (constraint == null) continue; // invalid association
+            Debug.Assert(endRoles.Length == 2);
 
-            property.Association = new Association(ass,
-                GetSchema(edmx.ConceptualModels.Schema.Namespace),
-                endRoles
-                , new ReferentialConstraint(constraint,
-                    GetProperties(GetEndRole(ass.Name, constraint.Principal.Role).Entity,
-                        constraint.Principal.PropertyRefs.Select(o => o.Name).ToArray()),
-                    GetProperties(GetEndRole(ass.Name, constraint.Dependent.Role).Entity,
-                        constraint.Dependent.PropertyRefs.Select(o => o.Name).ToArray()))
-            );
+            var toEndRole = endRoles.FirstOrDefault(o => o.Role == navigation.ToRoleName);
+            var fromEndRole = endRoles.FirstOrDefault(o => o.Role == navigation.FromRoleName);
+
+            if (toEndRole == null || fromEndRole == null) {
+#if DEBUGPARSER
+                if (Debugger.IsAttached) Debugger.Break(); // invalid association!?
+#endif
+                continue;
+            }
+
+            if (ass.ReferentialConstraint == null) {
+                // constraint missing probably because this is a many-to-many relationship with a suppressed junction.
+                ResolveDesignAssociation(navigation, ass, endRoles, toEndRole, associationSetMappings);
+            } else {
+                // normal fk association
+                ResolveFkAssociation(navigation, ass, endRoles, toEndRole);
+            }
+#if DEBUGPARSER
+            if (navigation.Association == null && Debugger.IsAttached)
+                Debugger.Break(); // invalid association. May be design time only?  
+#endif
         }
+#if DEBUGPARSER
+        // ensure associations are properly linked.
+        var navsWithNoAssociation = Entities.SelectMany(o => o.NavigationProperties).Where(o => o.Association == null)
+            .ToHashSet();
+        var associationsLinked = Entities.SelectMany(o => o.Associations).ToHashSet();
+        var allAssociations = edmx.ConceptualModels.Schema.Associations.ToHashSet();
+        var associationsNotLinked = allAssociations.Where(o => !associationsLinked.Contains(o))
+            .OrderBy(o => o.ReferentialConstraint.Principal.Role).ToArray();
+        Debug.Assert(navsWithNoAssociation.Count == 0);
+        Debug.Assert(associationsNotLinked.Length == 0);
+#endif
 
         State.AssociationsByName = Entities.SelectMany(o => o.NavigationProperties)
             .Where(o => o.Association != null)
@@ -153,6 +206,49 @@ public sealed class EdmxParser : NotifyPropertyChanged {
             .ToDictionary(o => o.Key, o => o.First(), StringComparer.InvariantCultureIgnoreCase);
     }
 
+    private void ResolveDesignAssociation(NavigationProperty navigation, ConceptualAssociation ass,
+        EndRole[] endRoles, EndRole toEndRole,
+        List<AssociationSetMapping> associationSetMappings) {
+        if (associationSetMappings.IsNullOrEmpty()) return;
+        var associationSetMapping = associationSetMappings.FirstOrDefault(o =>
+            o.Name == navigation.Relationship.SplitNamespaceAndName().name);
+        if (associationSetMapping?.EndProperties?.Count != 2) return;
+        var endProperty =
+            associationSetMapping.EndProperties.FirstOrDefault(o => o.Name == navigation.Name);
+        if (endProperty == null) return;
+        var inverseEndProperty = associationSetMapping.EndProperties?.FirstOrDefault(o => o != endProperty);
+        if (inverseEndProperty == null) return;
+        var inverseEntity = toEndRole?.Entity;
+        var inverseNavigation =
+            inverseEntity?.NavigationProperties?.FirstOrDefault(o => o.Name == inverseEndProperty.Name);
+        if (inverseNavigation == null || navigation == inverseNavigation) return;
+        // Note, for a many-to-many, there are no dependents in the end entities. Rather, the FKs are all in the junction,
+        // which has no conceptual representation.  Therefore, the ScalarProperties in the mapping ends refer to the junction only.
+        var a = new DesignAssociation(ass, endRoles, navigation, inverseNavigation);
+        if (navigation.Association != a) throw new InvalidConstraintException("Association not wired to navigation");
+    }
+
+    private void ResolveFkAssociation(NavigationProperty navigation, ConceptualAssociation ass,
+        EndRole[] endRoles, EndRole toEndRole) {
+        var constraint = navigation?.ConceptualAssociation?.ReferentialConstraint;
+        if (constraint == null) return;
+        var principalEndRole = endRoles.FirstOrDefault(o => o.Role == constraint.Principal.Role);
+        var dependentEndRole = endRoles.FirstOrDefault(o => o.Role == constraint.Dependent.Role);
+        if (principalEndRole?.Entity == null || dependentEndRole?.Entity == null) return;
+        var pProps = GetProperties(principalEndRole.Entity,
+            constraint.Principal.PropertyRefs.Select(o => o.Name).ToArray());
+        var dProps = GetProperties(dependentEndRole.Entity,
+            constraint.Dependent.PropertyRefs.Select(o => o.Name).ToArray());
+        if (pProps.IsNullOrEmpty() || dProps.IsNullOrEmpty()) return;
+        var inverseNavigation =
+            toEndRole.Entity.NavigationProperties.SingleOrDefault(o =>
+                o.Relationship == navigation.Relationship && o != navigation);
+        if (inverseNavigation == null || navigation == inverseNavigation) return;
+        var a = new FkAssociation(ass, endRoles, navigation, inverseNavigation,
+            new ReferentialConstraint(constraint, pProps, dProps)
+        );
+        if (navigation.Association != a) throw new InvalidConstraintException("Association not wired to navigation");
+    }
 
     private Schema GetSchema(string schemaNamespace) {
         if (schemaNamespace.IsNullOrEmpty() || schemaNamespace == "Self") return Schemas[0];
@@ -183,32 +279,20 @@ public sealed class EdmxParser : NotifyPropertyChanged {
         return e;
     }
 
-    private EntityPropertyBase[] GetProperties(EntityType entity, string[] propNames) {
+    private EntityProperty[] GetProperties(EntityType entity, string[] propNames) {
         if (entity == null) throw new ArgumentNullException(nameof(entity));
-
-        var props = entity.AllProperties.Where(o =>
-                propNames.Any(n => string.Compare(o.Name, n, StringComparison.InvariantCultureIgnoreCase) == 0))
-            .ToArray();
+        var props = propNames.Select(n => entity.Properties.FirstOrDefault(o =>
+                string.Equals(o.Name, n, StringComparison.OrdinalIgnoreCase)))
+            .Where(o => o != null).ToArray();
         return props;
     }
 
-    private EndRole GetEndRole(string association, string role) {
-        var e = EndRoles.FirstOrDefault(o => o.AssociationName == association && o.Role == role);
-        if (e == null) throw new InvalidDataException("Role not found: " + role);
 
-        return e;
-    }
-
-    private EndRole GetEndRole(ConceptualAssociation association, ConceptualEnd end, bool autoAdd) {
-        var entityType = GetEntity(end.Type);
+    private EndRole CreateEndRole(ConceptualAssociation association, ConceptualEnd end) {
+        if (end?.Type.IsNullOrEmpty() != false) return null;
+        var entityType = GetEntity(end?.Type);
         if (entityType == null) return null;
-
-        var e = EndRoles.FirstOrDefault(o =>
-            o.AssociationName == association.Name && o.Role == end.Role && o.Entity.Name == entityType.Name);
-        if (e != null || !autoAdd) return e;
-
-        e = new EndRole(association, end, entityType);
-        EndRoles.Add(e);
+        var e = new EndRole(association, end, entityType);
         return e;
     }
 
@@ -250,15 +334,14 @@ public sealed class EdmxParser : NotifyPropertyChanged {
 
     private EdmxParsed State { get; }
     private string FilePath => State.FilePath;
-    private Dictionary<string, Association> AssociationsByName => State.AssociationsByName;
+    private Dictionary<string, AssociationBase> AssociationsByName => State.AssociationsByName;
     private Dictionary<string, EnumType> EnumsByName => State.EnumsByName;
-    private Dictionary<string, EnumType> EnumsByConceptualSchemaName => State.EnumsByConceptualSchemaName; 
+    private Dictionary<string, EnumType> EnumsByConceptualSchemaName => State.EnumsByConceptualSchemaName;
     private Dictionary<string, EnumType> EnumsByExternalTypeName => State.EnumsByExternalTypeName;
     private ObservableCollection<Schema> Schemas => State.Schemas;
     private ObservableCollection<EntityType> Entities => State.Entities;
     private ObservableCollection<NavigationProperty> NavProps => State.NavProps;
     private ObservableCollection<EntityProperty> Props => State.Props;
-    private ObservableCollection<EndRole> EndRoles => State.EndRoles;
 
     #endregion
 }

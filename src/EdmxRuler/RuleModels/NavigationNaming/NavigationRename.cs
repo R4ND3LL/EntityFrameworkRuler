@@ -19,7 +19,7 @@ public sealed class NavigationRename : IEdmxRulePropertyModel {
     /// as well as the basic pluralized form.
     /// </summary>
     [DataMember]
-    public List<string> Name { get; set; } = new(2);
+    public HashSet<string> Name { get; set; } = new(2);
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     internal string FirstName => Name?.FirstOrDefault();

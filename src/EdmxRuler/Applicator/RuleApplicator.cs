@@ -145,6 +145,7 @@ public sealed class RuleApplicator : RuleProcessor {
 
             foreach (var jsonFile in jsonFiles)
                 try {
+                    if (jsonFile.IsNullOrWhiteSpace()) continue;
                     var fullPath = Path.Combine(ProjectBasePath, jsonFile);
                     var fileInfo = new FileInfo(fullPath);
                     if (!fileInfo.Exists) continue;

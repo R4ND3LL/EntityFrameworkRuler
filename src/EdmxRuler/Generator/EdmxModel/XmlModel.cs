@@ -6,8 +6,12 @@
  */
 
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using EdmxRuler.Extensions;
 
 namespace EdmxRuler.Generator.EdmxModel;
 
@@ -23,6 +27,7 @@ public interface IConceptualProperty {
 
 #region storage elements
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "EntityType", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageEntityType {
     [XmlElement(ElementName = "Key", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
@@ -41,6 +46,7 @@ public class StorageEntityKey {
     public List<StoragePropertyRef> PropertyRefs { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "Property", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageProperty {
     [XmlAttribute(AttributeName = "Name")]
@@ -65,6 +71,7 @@ public class StorageProperty {
     public string Scale { get; set; }
 }
 
+[DebuggerDisplay("Role={Role} Type={Type} Multiplicity={Multiplicity}")]
 [XmlRoot(ElementName = "End", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageEnd {
     [XmlAttribute(AttributeName = "Role")]
@@ -83,6 +90,7 @@ public class StorageEnd {
     public string EntitySet { get; set; }
 }
 
+[DebuggerDisplay("StoragePrincipal Role {Role}")]
 [XmlRoot(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StoragePrincipal {
     [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
@@ -92,6 +100,7 @@ public class StoragePrincipal {
     public string Role { get; set; }
 }
 
+[DebuggerDisplay("StorageDependent Role {Role}")]
 [XmlRoot(ElementName = "Dependent", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageDependent {
     [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
@@ -101,6 +110,7 @@ public class StorageDependent {
     public string Role { get; set; }
 }
 
+[DebuggerDisplay("Storage FK Principal {Principal} Dependent {Dependent}")]
 [XmlRoot(ElementName = "ReferentialConstraint", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageReferentialConstraint {
     [XmlElement(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
@@ -110,6 +120,7 @@ public class StorageReferentialConstraint {
     public StorageDependent Dependent { get; set; }
 }
 
+[DebuggerDisplay("StorageAssociation {Name}")]
 [XmlRoot(ElementName = "Association", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageAssociation {
     [XmlElement(ElementName = "End", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
@@ -128,6 +139,7 @@ public class StorageOnDelete {
     public string Action { get; set; }
 }
 
+[DebuggerDisplay("StorageParameter {Name}")]
 [XmlRoot(ElementName = "Parameter", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageParameter {
     [XmlAttribute(AttributeName = "Name")]
@@ -140,12 +152,14 @@ public class StorageParameter {
     public string Mode { get; set; }
 }
 
+[DebuggerDisplay("StoragePropertyRef {Name}")]
 [XmlRoot(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StoragePropertyRef {
     [XmlAttribute(AttributeName = "Name")]
     public string Name { get; set; }
 }
 
+[DebuggerDisplay("StorageFunction {Name}")]
 [XmlRoot(ElementName = "Function", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageFunction {
     [XmlElement(ElementName = "Parameter", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
@@ -173,6 +187,7 @@ public class StorageFunction {
     public string Schema { get; set; }
 }
 
+[DebuggerDisplay("StorageEntitySet {Name}")]
 [XmlRoot(ElementName = "EntitySet", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageEntitySet {
     [XmlAttribute(AttributeName = "Name")]
@@ -199,6 +214,7 @@ public class StorageEntitySet {
     public string DefiningQuery { get; set; }
 }
 
+[DebuggerDisplay("StorageAssociationSet {Name} Association={Association}")]
 [XmlRoot(ElementName = "AssociationSet", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageAssociationSet {
     [XmlElement(ElementName = "End", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
@@ -223,6 +239,7 @@ public class StorageEntityContainer {
     public string Name { get; set; }
 }
 
+[DebuggerDisplay("{Namespace}")]
 [XmlRoot(ElementName = "Schema", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageSchema {
     [XmlElement(ElementName = "EntityType", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
@@ -278,6 +295,7 @@ public class ConceptualEntitySet {
     public string EntityType { get; set; }
 }
 
+[DebuggerDisplay("{Role} Type={Type} Multiplicity={Multiplicity}")]
 [XmlRoot(ElementName = "End", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualEnd {
     [XmlAttribute(AttributeName = "Role")]
@@ -296,6 +314,7 @@ public class ConceptualEnd {
     public List<ConceptualOnDelete> OnDelete { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "AssociationSet", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualAssociationSet {
     [XmlElement(ElementName = "End", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -308,6 +327,7 @@ public class ConceptualAssociationSet {
     public string Association { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "Parameter", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualParameter {
     [XmlAttribute(AttributeName = "Name")]
@@ -320,6 +340,7 @@ public class ConceptualParameter {
     public string Type { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "FunctionImport", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualFunctionImport {
     [XmlElement(ElementName = "Parameter", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -332,6 +353,7 @@ public class ConceptualFunctionImport {
     public string ReturnType { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "EntityContainer", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualEntityContainer {
     [XmlElement(ElementName = "EntitySet", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -352,6 +374,7 @@ public class ConceptualEntityContainer {
     public string LazyLoadingEnabled { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "Property", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualProperty : IConceptualProperty {
     [XmlAttribute(AttributeName = "Type")]
@@ -396,6 +419,7 @@ public class ConceptualProperty : IConceptualProperty {
     public ConceptualDocumentation Documentation { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "ComplexType", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ComplexType {
     [XmlElement(ElementName = "Property", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -405,6 +429,7 @@ public class ComplexType {
     public string Name { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "Member", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualEnumMember {
     [XmlAttribute(AttributeName = "Name")]
@@ -414,6 +439,7 @@ public class ConceptualEnumMember {
     public string Value { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "EnumType", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualEnumType {
     [XmlElement(ElementName = "Member", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -437,6 +463,7 @@ public class ConceptualEnumType {
     public string IsFlags { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualPropertyRef {
     [XmlAttribute(AttributeName = "Name")]
@@ -449,6 +476,7 @@ public class ConceptualEntityKey {
     public List<ConceptualPropertyRef> PropertyRefs { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "NavigationProperty", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualNavigationProperty : IConceptualProperty {
     [XmlAttribute(AttributeName = "Name")]
@@ -464,6 +492,7 @@ public class ConceptualNavigationProperty : IConceptualProperty {
     public string ToRole { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "EntityType", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualEntityType {
     [XmlElement(ElementName = "Key", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -485,6 +514,7 @@ public class ConceptualDocumentation {
     public string Summary { get; set; }
 }
 
+[DebuggerDisplay("{Role}")]
 [XmlRoot(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualPrincipal {
     [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -494,6 +524,7 @@ public class ConceptualPrincipal {
     public string Role { get; set; }
 }
 
+[DebuggerDisplay("{Role}")]
 [XmlRoot(ElementName = "Dependent", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualDependent {
     [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -503,6 +534,7 @@ public class ConceptualDependent {
     public string Role { get; set; }
 }
 
+[DebuggerDisplay("{Principal} {Dependent}")]
 [XmlRoot(ElementName = "ReferentialConstraint", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualReferentialConstraint {
     [XmlElement(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -512,11 +544,16 @@ public class ConceptualReferentialConstraint {
     public ConceptualDependent Dependent { get; set; }
 }
 
+[DebuggerDisplay("{Name} {ReferentialConstraint}")]
 [XmlRoot(ElementName = "Association", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualAssociation {
     [XmlElement(ElementName = "End", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public List<ConceptualEnd> Ends { get; set; }
 
+    /// <summary>
+    /// The foreign key that describes the relationship.  This will be null for associations that span a suppressed
+    /// many-to-many junction (because there are actually 2 foreign keys that are abstracted away from the EF model).
+    /// </summary>
     [XmlElement(ElementName = "ReferentialConstraint", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public ConceptualReferentialConstraint ReferentialConstraint { get; set; }
 
@@ -530,6 +567,7 @@ public class ConceptualOnDelete {
     public string Action { get; set; }
 }
 
+[DebuggerDisplay("{Namespace}")]
 [XmlRoot(ElementName = "Schema", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualSchema {
     [XmlElement(ElementName = "EntityContainer", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -565,6 +603,7 @@ public class ConceptualSchema {
     public string Annotation { get; set; }
 }
 
+[DebuggerDisplay("{Schema}")]
 [XmlRoot(ElementName = "ConceptualModels", Namespace = "http://schemas.microsoft.com/ado/2009/11/edmx")]
 public class ConceptualModels {
     [XmlElement(ElementName = "Schema", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -575,6 +614,7 @@ public class ConceptualModels {
 
 #region mapping elements
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "ScalarProperty", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
 public class ScalarPropertyMapping {
     [XmlAttribute(AttributeName = "Name")]
@@ -584,6 +624,7 @@ public class ScalarPropertyMapping {
     public string ColumnName { get; set; }
 }
 
+[DebuggerDisplay("{StoreEntitySet}")]
 [XmlRoot(ElementName = "MappingFragment", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
 public class MappingFragment {
     [XmlElement(ElementName = "ScalarProperty", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
@@ -593,6 +634,7 @@ public class MappingFragment {
     public string StoreEntitySet { get; set; }
 }
 
+[DebuggerDisplay("{TypeName}")]
 [XmlRoot(ElementName = "EntityTypeMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
 public class EntityTypeMapping {
     [XmlElement(ElementName = "MappingFragment", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
@@ -602,6 +644,7 @@ public class EntityTypeMapping {
     public string TypeName { get; set; }
 }
 
+[DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "EntitySetMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
 public class EntitySetMapping {
     [XmlElement(ElementName = "EntityTypeMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
@@ -611,6 +654,50 @@ public class EntitySetMapping {
     public string Name { get; set; }
 }
 
+[DebuggerDisplay("{Name} TypeName={TypeName}")]
+[XmlRoot(ElementName = "AssociationSetMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
+public class AssociationSetMapping {
+    [XmlElement(ElementName = "EndProperty", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
+    public List<MappingEndProperty> EndProperties { get; set; }
+
+    [XmlAttribute(AttributeName = "Name")]
+    public string Name { get; set; }
+
+    /// <summary> The full name of the entity with code namespace </summary>
+    [XmlAttribute(AttributeName = "TypeName")]
+    public string TypeName { get; set; }
+
+    private (string namespaceName, string name)? typeNamespaceAndName;
+
+    [XmlAttribute(AttributeName = "StoreEntitySet")]
+    public string StoreEntitySet { get; set; }
+
+    [IgnoreDataMember, JsonIgnore, XmlIgnore]
+    public (string namespaceName, string name) TypeNamespaceAndName =>
+        typeNamespaceAndName ??= TypeName.SplitNamespaceAndName();
+}
+
+[DebuggerDisplay("{Name} ScalarProperty={ScalarProperties}")]
+[XmlRoot(ElementName = "EndProperty", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
+public class MappingEndProperty {
+    [XmlElement(ElementName = "ScalarProperty", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
+    public List<MappingScalarProperty> ScalarProperties { get; set; }
+
+    [XmlAttribute(AttributeName = "Name")]
+    public string Name { get; set; }
+}
+
+[DebuggerDisplay("{Name} ColumnName={ColumnName}")]
+[XmlRoot(ElementName = "ScalarProperty", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
+public class MappingScalarProperty {
+    [XmlAttribute(AttributeName = "Name")]
+    public string Name { get; set; }
+
+    [XmlAttribute(AttributeName = "ColumnName")]
+    public string ColumnName { get; set; }
+}
+
+[DebuggerDisplay("{TypeName}")]
 [XmlRoot(ElementName = "ComplexTypeMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
 public class ComplexTypeMapping {
     [XmlElement(ElementName = "ScalarProperty", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
@@ -620,12 +707,14 @@ public class ComplexTypeMapping {
     public string TypeName { get; set; }
 }
 
+[DebuggerDisplay("{ComplexTypeMapping}")]
 [XmlRoot(ElementName = "ResultMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
 public class ResultMapping {
     [XmlElement(ElementName = "ComplexTypeMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
     public ComplexTypeMapping ComplexTypeMapping { get; set; }
 }
 
+[DebuggerDisplay("{FunctionName}")]
 [XmlRoot(ElementName = "FunctionImportMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
 public class FunctionImportMapping {
     [XmlElement(ElementName = "ResultMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
@@ -638,10 +727,15 @@ public class FunctionImportMapping {
     public string FunctionName { get; set; }
 }
 
+[DebuggerDisplay("{StorageEntityContainer}")]
 [XmlRoot(ElementName = "EntityContainerMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
 public class EntityContainerMapping {
     [XmlElement(ElementName = "EntitySetMapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
     public List<EntitySetMapping> EntitySetMappings { get; set; }
+
+    [XmlElement(ElementName = "AssociationSetMapping",
+        Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
+    public List<AssociationSetMapping> AssociationSetMapping { get; set; }
 
     [XmlElement(
         ElementName = "FunctionImportMapping",
@@ -655,6 +749,7 @@ public class EntityContainerMapping {
     public string CdmEntityContainer { get; set; }
 }
 
+[DebuggerDisplay("{EntityContainerMapping}")]
 [XmlRoot(ElementName = "Mapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
 public class Mapping {
     [XmlElement(
@@ -669,6 +764,7 @@ public class Mapping {
     public string Xmlns { get; set; }
 }
 
+[DebuggerDisplay("{Mapping}")]
 [XmlRoot(ElementName = "Mappings", Namespace = "http://schemas.microsoft.com/ado/2009/11/edmx")]
 public class Mappings {
     [XmlElement(ElementName = "Mapping", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
@@ -719,6 +815,7 @@ public class Designer {
 
 #endregion
 
+[DebuggerDisplay("{ConceptualModels} {StorageModels}")]
 [XmlRoot(ElementName = "Runtime", Namespace = "http://schemas.microsoft.com/ado/2009/11/edmx")]
 public class Runtime {
     [XmlElement(ElementName = "StorageModels", Namespace = "http://schemas.microsoft.com/ado/2009/11/edmx")]
@@ -731,6 +828,7 @@ public class Runtime {
     public Mappings Mappings { get; set; }
 }
 
+[DebuggerDisplay("{Runtime}")]
 [XmlRoot(ElementName = "Edmx", Namespace = "http://schemas.microsoft.com/ado/2009/11/edmx")]
 public class EdmxRoot {
     [XmlElement(ElementName = "Runtime", Namespace = "http://schemas.microsoft.com/ado/2009/11/edmx")]

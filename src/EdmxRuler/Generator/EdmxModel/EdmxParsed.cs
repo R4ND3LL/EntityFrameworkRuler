@@ -11,7 +11,7 @@ public sealed class EdmxParsed {
     }
 
     public string FilePath { get; }
-    public Dictionary<string, Association> AssociationsByName { get; internal set; }
+    public Dictionary<string, AssociationBase> AssociationsByName { get; internal set; }
     public Dictionary<string, EnumType> EnumsByName { get; internal set; }
     public Dictionary<string, EnumType> EnumsByConceptualSchemaName { get; internal set; }
     public Dictionary<string, EnumType> EnumsByExternalTypeName { get; internal set; }
@@ -23,6 +23,5 @@ public sealed class EdmxParsed {
     public ObservableCollection<NavigationProperty> NavProps { get; } = new();
 
     public ObservableCollection<EntityProperty> Props { get; } = new();
-
-    public ObservableCollection<EndRole> EndRoles { get; } = new();
+ 
 }
