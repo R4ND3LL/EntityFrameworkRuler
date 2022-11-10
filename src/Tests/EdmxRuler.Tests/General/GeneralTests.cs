@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -121,7 +120,8 @@ public sealed class GeneralTests {
         elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"Completed in {elapsed}ms.");
 #if DEBUG
-        output.WriteLine($"FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");
+        output.WriteLine(
+            $"FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");
 #endif
 
         void LogReceived(object sender, LogMessage logMessage) {
@@ -162,6 +162,7 @@ public sealed class GeneralTests {
             var root = await syntaxReference.SyntaxTree.GetRootAsync();
         }
     }
+ 
 
     private static string ResolveNorthwindEdmxPath() {
         var dir = new DirectoryInfo(Directory.GetCurrentDirectory());

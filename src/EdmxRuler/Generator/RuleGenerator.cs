@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator.EdmxModel;
+using EdmxRuler.Generator.Services;
 using EdmxRuler.RuleModels;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
@@ -30,7 +31,7 @@ public sealed partial class RuleGenerator : RuleProcessor {
     /// <summary> The EDMX file path </summary>
     public string EdmxFilePath { get; }
 
-    public ICandidateNamingService CandidateNamingService { get; } = new CandidateNamingService();
+    public ICandidateNamingService CandidateNamingService { get; } = new CandidateNamingService(new HumanizerPluralizer());
 
     #endregion
 

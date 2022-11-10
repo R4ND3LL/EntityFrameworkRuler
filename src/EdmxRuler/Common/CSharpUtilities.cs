@@ -111,8 +111,8 @@ public class CSharpUtilities : ICSharpUtilities
     /// </summary>
     public virtual string GenerateCSharpIdentifier(
         string identifier,
-        ICollection<string>? existingIdentifiers,
-        Func<string, string>? singularizePluralizer)
+        ICollection<string> existingIdentifiers,
+        Func<string, string> singularizePluralizer)
         => GenerateCSharpIdentifier(identifier, existingIdentifiers, singularizePluralizer, Uniquifier);
 
     /// <summary>
@@ -123,9 +123,9 @@ public class CSharpUtilities : ICSharpUtilities
     /// </summary>
     public virtual string GenerateCSharpIdentifier(
         string identifier,
-        ICollection<string>? existingIdentifiers,
-        Func<string, string>? singularizePluralizer,
-        Func<string, ICollection<string>?, string> uniquifier)
+        ICollection<string> existingIdentifiers,
+        Func<string, string> singularizePluralizer,
+        Func<string, ICollection<string>, string> uniquifier)
     {
         var proposedIdentifier =
             identifier.Length > 1 && identifier[0] == '@'
@@ -164,7 +164,7 @@ public class CSharpUtilities : ICSharpUtilities
     /// </summary>
     public virtual string Uniquifier(
         string proposedIdentifier,
-        ICollection<string>? existingIdentifiers)
+        ICollection<string> existingIdentifiers)
     {
         if (existingIdentifiers == null)
         {
@@ -188,7 +188,7 @@ public class CSharpUtilities : ICSharpUtilities
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool IsValidIdentifier(string? name)
+    public virtual bool IsValidIdentifier(string name)
     {
         if (string.IsNullOrEmpty(name))
         {

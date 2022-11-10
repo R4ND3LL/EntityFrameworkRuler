@@ -1,4 +1,4 @@
-﻿#define DEBUGPARSER
+﻿#define DEBUGPARSER2
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -45,7 +45,6 @@ public sealed class EdmxParser : NotifyPropertyChanged {
             var entity = new EntityType(conceptualEntityType, schema);
             Entities.Add(entity);
             //if (entity.Name == "CustomerDemographic") Debugger.Break();
-            if (entity.Name == "CustomerCustomerDemo") Debugger.Break();
 
             var fullName = entity.FullName;
             var selfName = entity.SelfName;
@@ -154,9 +153,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
 
         // with all entities loaded, perform association linking
         foreach (var entity in Entities)
-        foreach (var navigation in entity.NavigationProperties) {
-            // if (entity.Name == "CustomerDemographic") Debugger.Break();
-            //if (entity.Associations.IsNullOrEmpty()) continue;
+        foreach (var navigation in entity.NavigationProperties) { 
             if (navigation.Association != null) continue; // wired up from the opposite end!
             var ass = navigation.ConceptualAssociation;
             if (ass == null) continue;

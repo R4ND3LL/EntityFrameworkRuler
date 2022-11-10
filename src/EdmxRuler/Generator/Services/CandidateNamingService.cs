@@ -3,27 +3,34 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using EdmxRuler.Generator;
+using EdmxRuler.Common;
 using EdmxRuler.Generator.EdmxModel;
 
-namespace EdmxRuler.Common;
+// ReSharper disable MemberCanBeInternal
+// ReSharper disable once ClassCanBeSealed.Global
+// ReSharper disable once MemberCanBeInternal
+
+namespace EdmxRuler.Generator.Services;
 
 public class CandidateNamingService : ICandidateNamingService {
-    public CandidateNamingService() {
-        this.pluralizer = new();
+    public CandidateNamingService(IPluralizer pluralizer) {
+        this.pluralizer = pluralizer ?? new HumanizerPluralizer();
         cSharpUtilities = new CSharpUtilities();
     }
 
-    private readonly Pluralizer pluralizer;
+    private readonly IPluralizer pluralizer;
     private readonly CSharpUtilities cSharpUtilities;
 
     /// <summary> disable pluralization </summary>
     public bool NoPluralize { get; }
 
-    public bool RelyOnEfMethodOnly { get; } = false;
+    public bool RelyOnEfMethodOnly { get; } = true;
 
     public IEnumerable<string> FindCandidateNavigationNames(NavigationProperty navigation) {
         var ass = navigation.Association;
+
+        //if (navigation.Entity.Name == "Map") Debugger.Break();
+
         if (ass is FkAssociation fkAssociation) {
             var foreignKey = fkAssociation.ReferentialConstraint;
             if (foreignKey == null) yield break;
@@ -54,8 +61,7 @@ public class CandidateNamingService : ICandidateNamingService {
             }
 
             if (navigation.IsPrincipalEnd) {
-                // typically collections
-                Debug.Assert(navigation.Multiplicity == Multiplicity.Many);
+                // typically collections.  but may be 1-1 relation
                 var principalEndExistingIdentifiers = foreignKey.PrincipalEntity.GetExistingIdentifiers();
                 var principalEndNavigationPropertyCandidateName = foreignKey.IsSelfReferencing()
                     ? string.Format(
@@ -112,7 +118,7 @@ public class CandidateNamingService : ICandidateNamingService {
         return !string.IsNullOrEmpty(candidateName)
             ? candidateName
             : foreignKey.PrincipalEntity
-                .Name; // was ShortName(), which pulls ClrType ShortDisplayName and generally always just returns the flat type name 
+                .StorageNameCleansed; // was ShortName(), which pulls ClrType ShortDisplayName and generally always just returns the flat type name 
     }
 
     /// <summary> Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService </summary>
@@ -123,9 +129,9 @@ public class CandidateNamingService : ICandidateNamingService {
                 .Where(fk => foreignKey.DependentEntity == fk.DependentEntity);
 
         return allForeignKeysBetweenDependentAndPrincipal?.Count() > 1
-            ? foreignKey.DependentEntity.Name
+            ? foreignKey.DependentEntity.StorageNameCleansed
               + dependentEndNavigationPropertyName
-            : foreignKey.DependentEntity.Name;
+            : foreignKey.DependentEntity.StorageNameCleansed;
     }
 
     /// <summary> Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService </summary>
@@ -189,7 +195,7 @@ public class CandidateNamingService : ICandidateNamingService {
 
     internal const string SelfReferencingPrincipalEndNavigationNamePattern = "Inverse{0}";
 
-    private static string NavigationUniquifier(string proposedIdentifier, ICollection<string>? existingIdentifiers) {
+    private static string NavigationUniquifier(string proposedIdentifier, ICollection<string> existingIdentifiers) {
         if (existingIdentifiers?.Contains(proposedIdentifier) != true) {
             return proposedIdentifier;
         }

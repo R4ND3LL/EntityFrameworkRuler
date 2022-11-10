@@ -95,7 +95,8 @@ public sealed class EntityType : NotifyPropertyChanged {
     public List<string> GetExistingIdentifiers() {
         if (existingIdentifiers != null) return existingIdentifiers;
         existingIdentifiers = new();
-        existingIdentifiers.AddRange(this.AllProperties.Select(o => o.Name));
+        existingIdentifiers.AddRange(this.Properties.Select(o => o.DbColumnNameCleansed));
+        existingIdentifiers.AddRange(this.NavigationProperties.Select(o => o.Name));
         return existingIdentifiers;
     }
 

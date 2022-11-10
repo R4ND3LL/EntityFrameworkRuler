@@ -18,14 +18,15 @@
         <PackageIcon>crown128.png</PackageIcon>
     </PropertyGroup>
 
-    <ItemGroup> 
+    <ItemGroup>
+        <PackageReference Include="Humanizer.Core" Version="2.14.1" />
         <PackageReference Include="Microsoft.Build.Locator" Version="1.5.5" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" />
         <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.3.1" />
         <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.3.1" />
         <PackageReference Include="MinVer" Version="4.2.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
 
@@ -38,61 +39,65 @@
     <ItemGroup>
         <None Include="..\..\LICENSE.txt" Pack="true" PackagePath="LICENSE.txt" />
         <None Include="..\Resources\crown128.png">
-          <Pack>True</Pack>
-          <PackagePath></PackagePath>
-          <Link>crown128.png</Link>
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+            <Link>crown128.png</Link>
         </None>
     </ItemGroup>
-    
+
     <ItemGroup>
-      <Compile Remove="nupkg\**" />
+        <Compile Remove="nupkg\**" />
     </ItemGroup>
 
     <ItemGroup>
-      <EmbeddedResource Remove="nupkg\**" />
-      <Compile Remove="Applicator\EntityResources\ChangeTracker.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\ChangeTracker.cs" />
-      <Compile Remove="Applicator\EntityResources\CollectionNavigationBuilder.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\CollectionNavigationBuilder.cs" />
-      <Compile Remove="Applicator\EntityResources\DataBuilder.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\DataBuilder.cs" />
-      <Compile Remove="Applicator\EntityResources\DbContext.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\DbContext.cs" />
-      <Compile Remove="Applicator\EntityResources\DbSet.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\DbSet.cs" />
-      <Compile Remove="Applicator\EntityResources\EntityEntry.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\EntityEntry.cs" />
-      <Compile Remove="Applicator\EntityResources\EntityTypeBuilder.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\EntityTypeBuilder.cs" />
-      <Compile Remove="Applicator\EntityResources\IAsyncEnumerable.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\IAsyncEnumerable.cs" />
-      <Compile Remove="Applicator\EntityResources\IEntityTypeConfiguration.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\IEntityTypeConfiguration.cs" />
-      <Compile Remove="Applicator\EntityResources\IndexBuilder.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\IndexBuilder.cs" />
-      <Compile Remove="Applicator\EntityResources\KeyBuilder.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\KeyBuilder.cs" />
-      <Compile Remove="Applicator\EntityResources\LocalView.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\LocalView.cs" />
-      <Compile Remove="Applicator\EntityResources\MemberIdentity.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\MemberIdentity.cs" />
-      <Compile Remove="Applicator\EntityResources\NavigationBuilder.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\NavigationBuilder.cs" />
-      <Compile Remove="Applicator\EntityResources\OwnedNavigationBuilder.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\OwnedNavigationBuilder.cs" />
-      <Compile Remove="Applicator\EntityResources\OwnershipBuilder.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\OwnershipBuilder.cs" />
-      <Compile Remove="Applicator\EntityResources\PropertyBuilder.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\PropertyBuilder.cs" />
-      <Compile Remove="Applicator\EntityResources\ReferenceNavigationBuilder.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\ReferenceNavigationBuilder.cs" />
-      <Compile Remove="Applicator\EntityResources\TypeIdentity.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\TypeIdentity.cs" />
-      <Compile Remove="Applicator\EntityResources\ValueComparer.cs" />
-      <EmbeddedResource Include="Applicator\EntityResources\ValueComparer.cs" />
+        <EmbeddedResource Remove="nupkg\**" />
+        <Compile Remove="Applicator\EntityResources\ChangeTracker.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\ChangeTracker.cs" />
+        <Compile Remove="Applicator\EntityResources\CollectionNavigationBuilder.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\CollectionNavigationBuilder.cs" />
+        <Compile Remove="Applicator\EntityResources\DataBuilder.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\DataBuilder.cs" />
+        <Compile Remove="Applicator\EntityResources\DbContext.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\DbContext.cs" />
+        <Compile Remove="Applicator\EntityResources\DbSet.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\DbSet.cs" />
+        <Compile Remove="Applicator\EntityResources\EntityEntry.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\EntityEntry.cs" />
+        <Compile Remove="Applicator\EntityResources\EntityTypeBuilder.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\EntityTypeBuilder.cs" />
+        <Compile Remove="Applicator\EntityResources\IAsyncEnumerable.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\IAsyncEnumerable.cs" />
+        <Compile Remove="Applicator\EntityResources\IEntityTypeConfiguration.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\IEntityTypeConfiguration.cs" />
+        <Compile Remove="Applicator\EntityResources\IndexBuilder.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\IndexBuilder.cs" />
+        <Compile Remove="Applicator\EntityResources\KeyBuilder.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\KeyBuilder.cs" />
+        <Compile Remove="Applicator\EntityResources\LocalView.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\LocalView.cs" />
+        <Compile Remove="Applicator\EntityResources\MemberIdentity.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\MemberIdentity.cs" />
+        <Compile Remove="Applicator\EntityResources\NavigationBuilder.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\NavigationBuilder.cs" />
+        <Compile Remove="Applicator\EntityResources\OwnedNavigationBuilder.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\OwnedNavigationBuilder.cs" />
+        <Compile Remove="Applicator\EntityResources\OwnershipBuilder.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\OwnershipBuilder.cs" />
+        <Compile Remove="Applicator\EntityResources\PropertyBuilder.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\PropertyBuilder.cs" />
+        <Compile Remove="Applicator\EntityResources\ReferenceNavigationBuilder.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\ReferenceNavigationBuilder.cs" />
+        <Compile Remove="Applicator\EntityResources\TypeIdentity.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\TypeIdentity.cs" />
+        <Compile Remove="Applicator\EntityResources\ValueComparer.cs" />
+        <EmbeddedResource Include="Applicator\EntityResources\ValueComparer.cs" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="nupkg\**" />
+        <None Remove="nupkg\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Applicator\Services" />
     </ItemGroup>
 </Project>
