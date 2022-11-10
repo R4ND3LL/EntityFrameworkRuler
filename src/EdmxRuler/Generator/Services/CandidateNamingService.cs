@@ -9,6 +9,7 @@ using EdmxRuler.Generator.EdmxModel;
 // ReSharper disable MemberCanBeInternal
 // ReSharper disable once ClassCanBeSealed.Global
 // ReSharper disable once MemberCanBeInternal
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace EdmxRuler.Generator.Services;
 
@@ -21,15 +22,15 @@ public class CandidateNamingService : ICandidateNamingService {
     private readonly IPluralizer pluralizer;
     private readonly CSharpUtilities cSharpUtilities;
 
-    /// <summary> disable pluralization </summary>
-    public bool NoPluralize { get; }
+    /// <summary> disable pluralization.  the anticipated navigation names will not be pluralized. </summary>
+    public bool NoPluralization { get; set; }
 
     public bool RelyOnEfMethodOnly { get; } = true;
 
     public IEnumerable<string> FindCandidateNavigationNames(NavigationProperty navigation) {
         var ass = navigation.Association;
 
-        //if (navigation.Entity.Name == "Map") Debugger.Break();
+        if (navigation.Entity.Name == "WorkPool" && navigation.ToRole.Entity.Name == "Employee") Debugger.Break();
 
         if (ass is FkAssociation fkAssociation) {
             var foreignKey = fkAssociation.ReferentialConstraint;
@@ -71,7 +72,7 @@ public class CandidateNamingService : ICandidateNamingService {
                     : GetPrincipalEndCandidateNavigationPropertyName(foreignKey, dependentEndNavigationPropertyName);
 
                 if (!foreignKey.IsUnique && !foreignKey.IsSelfReferencing()) {
-                    principalEndNavigationPropertyCandidateName = NoPluralize
+                    principalEndNavigationPropertyCandidateName = NoPluralization
                         ? principalEndNavigationPropertyCandidateName
                         : pluralizer.Pluralize(principalEndNavigationPropertyCandidateName);
                 }
@@ -212,6 +213,13 @@ public class CandidateNamingService : ICandidateNamingService {
     }
 }
 
+/// <summary>
+/// Service that decides how to name navigation properties.
+/// Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. 
+/// </summary>
 public interface ICandidateNamingService {
+    /// <summary> disable pluralization.  the anticipated navigation names will not be pluralized. </summary>
+    bool NoPluralization { get; }
+
     IEnumerable<string> FindCandidateNavigationNames(NavigationProperty navigation);
 }

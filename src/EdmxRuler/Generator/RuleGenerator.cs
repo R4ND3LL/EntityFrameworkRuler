@@ -31,7 +31,16 @@ public sealed partial class RuleGenerator : RuleProcessor {
     /// <summary> The EDMX file path </summary>
     public string EdmxFilePath { get; }
 
-    public ICandidateNamingService CandidateNamingService { get; } = new CandidateNamingService(new HumanizerPluralizer());
+    private ICandidateNamingService candidateNamingService;
+
+    /// <summary>
+    /// Service that decides how to name navigation properties.
+    /// Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. 
+    /// </summary>
+    public ICandidateNamingService CandidateNamingService {
+        get => candidateNamingService ??= new CandidateNamingService(new HumanizerPluralizer());
+        set => candidateNamingService = value;
+    }
 
     #endregion
 
