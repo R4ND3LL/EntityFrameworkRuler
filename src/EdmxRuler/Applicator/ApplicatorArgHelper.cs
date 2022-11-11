@@ -6,8 +6,8 @@ using EdmxRuler.Extensions;
 namespace EdmxRuler.Applicator;
 
 public static class ApplicatorArgHelper {
-    internal static bool TryParseArgs(string[] argsArray, out ApplicatorArg applicatorArg) {
-        applicatorArg = new ApplicatorArg();
+    internal static bool TryParseArgs(string[] argsArray, out ApplicatorArgs applicatorArgs) {
+        applicatorArgs = new ApplicatorArgs();
         var args = argsArray.ToList().RemoveSwitchArgs(out var switchArgs);
 
         if (switchArgs.Count > 0) {
@@ -15,7 +15,7 @@ public static class ApplicatorArgHelper {
                 switch (switchArg) {
                     case "adhoc":
                     case "adhocOnly":
-                        applicatorArg.AdhocOnly = true;
+                        applicatorArgs.AdhocOnly = true;
                         break;
                     default:
                         return false; // invalid arg
@@ -25,11 +25,11 @@ public static class ApplicatorArgHelper {
 
         if (args == null || args.Count == 0 || (args.Count == 1 && args[0] == ".")) {
             // auto inspect current folder for both csproj and edmx
-            applicatorArg.ProjectBasePath = Directory.GetCurrentDirectory();
+            applicatorArgs.ProjectBasePath = Directory.GetCurrentDirectory();
             var projectFiles =
-                Directory.GetFiles(applicatorArg.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
+                Directory.GetFiles(applicatorArgs.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
             if (projectFiles.Length != 1) {
-                applicatorArg = null;
+                applicatorArgs = null;
                 return false;
             }
 
@@ -40,21 +40,21 @@ public static class ApplicatorArgHelper {
             args.FirstOrDefault(o => o?.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase) == true);
 
         if (csProjFile != null && File.Exists(csProjFile)) {
-            applicatorArg.ProjectBasePath = new FileInfo(csProjFile).Directory?.FullName;
-            return applicatorArg.ProjectBasePath != null;
+            applicatorArgs.ProjectBasePath = new FileInfo(csProjFile).Directory?.FullName;
+            return applicatorArgs.ProjectBasePath != null;
         }
 
-        applicatorArg.ProjectBasePath = args.FirstOrDefault(o =>
+        applicatorArgs.ProjectBasePath = args.FirstOrDefault(o =>
             o?.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase) == false
             && Directory.Exists(o));
-        if (applicatorArg == null) return false;
+        if (applicatorArgs == null) return false;
 
-        if (!Directory.Exists(applicatorArg.ProjectBasePath)) return false;
+        if (!Directory.Exists(applicatorArgs.ProjectBasePath)) return false;
 
         var projectFiles2 =
-            Directory.GetFiles(applicatorArg.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
+            Directory.GetFiles(applicatorArgs.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
         if (projectFiles2.Length == 0) {
-            applicatorArg = null;
+            applicatorArgs = null;
             return false;
         }
 

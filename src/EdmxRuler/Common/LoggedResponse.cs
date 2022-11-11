@@ -9,7 +9,6 @@ public class LoggedResponse {
     public List<LogMessage> Messages { get; } = new();
     public IEnumerable<string> Errors => Messages.Where(o => o.Type == LogType.Error).Select(o => o.Message);
     public IEnumerable<string> Information => Messages.Where(o => o.Type == LogType.Information).Select(o => o.Message);
-
     public IEnumerable<string> Warnings => Messages.Where(o => o.Type == LogType.Warning).Select(o => o.Message);
 
     internal void LogInformation(string msg) {

@@ -7,7 +7,10 @@
                "Name": [
                   "ProductsNavigation"
                ],
-               "NewName": "Products"
+               "NewName": "Products",
+               "FkName": "FK_Products_Categories",
+               "ToEntity": "Product",
+               "Multiplicity": "*"
             }
          ]
       },
@@ -18,7 +21,10 @@
                "Name": [
                   "OrdersNavigation"
                ],
-               "NewName": "Orders"
+               "NewName": "Orders",
+               "FkName": "FK_Orders_Customers",
+               "ToEntity": "Order",
+               "Multiplicity": "*"
             }
          ]
       },
@@ -29,19 +35,28 @@
                "Name": [
                   "InverseReportsToFk"
                ],
-               "NewName": "Employees1"
+               "NewName": "Employees1",
+               "FkName": "FK_Employees_Employees",
+               "ToEntity": "Employee",
+               "Multiplicity": "*"
             },
             {
                "Name": [
                   "ReportsToFk"
                ],
-               "NewName": "Employee1"
+               "NewName": "Employee1",
+               "FkName": "FK_Employees_Employees",
+               "ToEntity": "Employee",
+               "Multiplicity": "0..1"
             },
             {
                "Name": [
                   "OrdersNavigation"
                ],
-               "NewName": "Orders"
+               "NewName": "Orders",
+               "FkName": "FK_Orders_Employees",
+               "ToEntity": "Order",
+               "Multiplicity": "*"
             }
          ]
       },
@@ -52,25 +67,37 @@
                "Name": [
                   "CustomerNavigation"
                ],
-               "NewName": "Customer"
+               "NewName": "Customer",
+               "FkName": "FK_Orders_Customers",
+               "ToEntity": "Customer",
+               "Multiplicity": "0..1"
             },
             {
                "Name": [
                   "EmployeeNavigation"
                ],
-               "NewName": "Employee"
+               "NewName": "Employee",
+               "FkName": "FK_Orders_Employees",
+               "ToEntity": "Employee",
+               "Multiplicity": "0..1"
             },
             {
                "Name": [
                   "Order_DetailsNavigation"
                ],
-               "NewName": "Order_Details"
+               "NewName": "Order_Details",
+               "FkName": "FK_Order_Details_Orders",
+               "ToEntity": "Order_Detail",
+               "Multiplicity": "*"
             },
             {
                "Name": [
                   "ShipViaFk"
                ],
-               "NewName": "Shipper"
+               "NewName": "Shipper",
+               "FkName": "FK_Orders_Shippers",
+               "ToEntity": "Shipper",
+               "Multiplicity": "0..1"
             }
          ]
       },
@@ -81,13 +108,19 @@
                "Name": [
                   "OrderNavigation"
                ],
-               "NewName": "Order"
+               "NewName": "Order",
+               "FkName": "FK_Order_Details_Orders",
+               "ToEntity": "Order",
+               "Multiplicity": "1"
             },
             {
                "Name": [
                   "ProductNavigation"
                ],
-               "NewName": "Product"
+               "NewName": "Product",
+               "FkName": "FK_Order_Details_Products",
+               "ToEntity": "Product",
+               "Multiplicity": "1"
             }
          ]
       },
@@ -98,19 +131,28 @@
                "Name": [
                   "CategoryNavigation"
                ],
-               "NewName": "Category"
+               "NewName": "Category",
+               "FkName": "FK_Products_Categories",
+               "ToEntity": "Category",
+               "Multiplicity": "0..1"
             },
             {
                "Name": [
                   "Order_Details"
                ],
-               "NewName": "OrderDetailsNav"
+               "NewName": "OrderDetailsNav",
+               "FkName": "FK_Order_Details_Products",
+               "ToEntity": "Order_Detail",
+               "Multiplicity": "*"
             },
             {
                "Name": [
                   "SupplierNavigation"
                ],
-               "NewName": "Supplier"
+               "NewName": "Supplier",
+               "FkName": "FK_Products_Suppliers",
+               "ToEntity": "Supplier",
+               "Multiplicity": "0..1"
             }
          ]
       },
@@ -121,7 +163,10 @@
                "Name": [
                   "TerritoriesNavigation"
                ],
-               "NewName": "Territories"
+               "NewName": "Territories",
+               "FkName": "FK_Territories_Region",
+               "ToEntity": "Territory",
+               "Multiplicity": "*"
             }
          ]
       },
@@ -132,7 +177,10 @@
                "Name": [
                   "OrdersNavigation"
                ],
-               "NewName": "Orders"
+               "NewName": "Orders",
+               "FkName": "FK_Orders_Shippers",
+               "ToEntity": "Order",
+               "Multiplicity": "*"
             }
          ]
       },
@@ -143,7 +191,10 @@
                "Name": [
                   "ProductsNavigation"
                ],
-               "NewName": "Products"
+               "NewName": "Products",
+               "FkName": "FK_Products_Suppliers",
+               "ToEntity": "Product",
+               "Multiplicity": "*"
             }
          ]
       },
@@ -154,7 +205,10 @@
                "Name": [
                   "RegionNavigation"
                ],
-               "NewName": "Region"
+               "NewName": "Region",
+               "FkName": "FK_Territories_Region",
+               "ToEntity": "Region",
+               "Multiplicity": "1"
             }
          ]
       }

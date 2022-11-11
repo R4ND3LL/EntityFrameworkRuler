@@ -18,20 +18,21 @@ internal static class Program {
             switch (option) {
                 case 'g': {
                     // generate rules
-                    if (!GeneratorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var edmxPath,
-                            out var projectBasePath))
+                    if (!GeneratorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var generatorArgs))
                         return await ShowHelpInfo();
 
-                    await Console.Out.WriteLineAsync($" - edmx path: {edmxPath}").ConfigureAwait(false);
-                    await Console.Out.WriteLineAsync($" - project base path: {projectBasePath}").ConfigureAwait(false);
+                    await Console.Out.WriteLineAsync($" - edmx path: {generatorArgs.EdmxFilePath}")
+                        .ConfigureAwait(false);
+                    await Console.Out.WriteLineAsync($" - project base path: {generatorArgs.ProjectBasePath}")
+                        .ConfigureAwait(false);
                     await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
 
                     var start = DateTimeExtensions.GetTime();
-                    var generator = new RuleGenerator(edmxPath);
+                    var generator = new RuleGenerator(generatorArgs);
                     generator.OnLog += MessageLogged;
                     var response = generator.TryGenerateRules();
                     var rules = response.Rules;
-                    await generator.TrySaveRules(rules, projectBasePath);
+                    await generator.TrySaveRules(rules, generatorArgs.ProjectBasePath);
                     var elapsed = DateTimeExtensions.GetTime() - start;
                     var errorCount = response.Errors.Count();
                     if (errorCount == 0) {
@@ -45,13 +46,14 @@ internal static class Program {
                 }
                 case 'a': {
                     // apply rules
-                    if (!ApplicatorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var projectBasePath))
+                    if (!ApplicatorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var applicatorArgs))
                         return await ShowHelpInfo();
 
-                    await Console.Out.WriteLineAsync($" - project base path: {projectBasePath}").ConfigureAwait(false);
+                    await Console.Out.WriteLineAsync($" - project base path: {applicatorArgs.ProjectBasePath}")
+                        .ConfigureAwait(false);
                     await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
                     var start = DateTimeExtensions.GetTime();
-                    var applicator = new RuleApplicator(projectBasePath.ProjectBasePath, projectBasePath.AdhocOnly);
+                    var applicator = new RuleApplicator(applicatorArgs);
                     applicator.OnLog += MessageLogged;
                     var response = await applicator.ApplyRulesInProjectPath();
                     var elapsed = DateTimeExtensions.GetTime() - start;

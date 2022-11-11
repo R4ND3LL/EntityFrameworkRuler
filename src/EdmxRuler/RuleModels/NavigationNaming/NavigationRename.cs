@@ -18,18 +18,33 @@ public sealed class NavigationRename : IEdmxRulePropertyModel {
     /// This way, for example, the user can supply options using the concatenated form like "Fk+Navigation(s)"
     /// as well as the basic pluralized form.
     /// </summary>
-    [DataMember]
+    [DataMember(Order = 1)]
     public HashSet<string> Name { get; set; } = new(2);
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     internal string FirstName => Name?.FirstOrDefault();
 
-    [DataMember]
+    [DataMember(Order = 2)]
     public string NewName { get; set; }
+
+    /// <summary> The foreign key name for this relationship (if any) </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 3)]
+    public string FkName { get; set; }
+
+    /// <summary> The name of the inverse navigation entity </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
+    public string ToEntity { get; set; }
+
+    /// <summary> The multiplicity of this end of the relationship. Valid values include "1", "0..1", "*" </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
+    public string Multiplicity { get; set; }
+
 
     IEnumerable<string> IEdmxRulePropertyModel.GetCurrentNameOptions() =>
         Name?.Where(o => o.HasNonWhiteSpace()).Distinct() ?? Array.Empty<string>();
 
     string IEdmxRulePropertyModel.GetNewName() => NewName;
     string IEdmxRulePropertyModel.GetNewTypeName() => null;
+
+    NavigationMetadata IEdmxRulePropertyModel.GetNavigationMetadata() => new(FkName, Multiplicity.ParseMultiplicity());
 }

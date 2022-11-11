@@ -83,7 +83,7 @@ internal static class StringExtensions {
         return true;
     }
 
-    /// <summary> will return _ in place of invalid chars </summary>
+    /// <summary> will return _ in place of invalid chars such as spaces. </summary>
     internal static string CleanseSymbolName(this string str) {
         if (string.IsNullOrEmpty(str)) return "";
         return new string(CleanseSymbolNameChars(str).ToArray());
@@ -98,6 +98,13 @@ internal static class StringExtensions {
                     yield return '_';
             }
         }
+    }
+
+    /// <summary> will capitalize the first letter of the given string if it is lower. </summary>
+    internal static string CapitalizeFirst(this string str) {
+        if (string.IsNullOrEmpty(str)) return "";
+        if (char.IsLetter(str[0]) && char.IsLower(str[0])) return char.ToUpper(str[0]) + str[1..];
+        return str;
     }
 
     private static bool IsValidInIdentifier(this char c, bool firstChar = true) {

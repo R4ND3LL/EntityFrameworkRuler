@@ -5,64 +5,64 @@
          "SchemaName": "dbo",
          "Tables": [
             {
-               "Columns": [ ],
                "Name": "Categories",
-               "NewName": "Category"
+               "NewName": "Category",
+               "Columns": [ ]
             },
             {
-               "Columns": [ ],
                "Name": "Customers",
-               "NewName": "Customer"
+               "NewName": "Customer",
+               "Columns": [ ]
             },
             {
-               "Columns": [ ],
                "Name": "CustomerDemographics",
-               "NewName": "CustomerDemographic"
+               "NewName": "CustomerDemographic",
+               "Columns": [ ]
             },
             {
+               "Name": "Employees",
+               "NewName": "Employee",
                "Columns": [
                   {
                      "Name": "ReportsTo",
                      "NewName": "ReportsToFk"
                   }
-               ],
-               "Name": "Employees",
-               "NewName": "Employee"
+               ]
             },
             {
+               "Name": "Orders",
+               "NewName": "Order",
                "Columns": [
                   {
                      "Name": "ShipVia",
                      "NewName": "ShipViaFk"
                   }
-               ],
-               "Name": "Orders",
-               "NewName": "Order"
+               ]
             },
             {
-               "Columns": [ ],
                "Name": "Order_Details",
-               "NewName": "Order_Detail"
+               "NewName": "Order_Detail",
+               "Columns": [ ]
             },
             {
-               "Columns": [ ],
                "Name": "Products",
-               "NewName": "Product"
+               "NewName": "Product",
+               "Columns": [ ]
             },
             {
-               "Columns": [ ],
                "Name": "Shippers",
-               "NewName": "Shipper"
+               "NewName": "Shipper",
+               "Columns": [ ]
             },
             {
-               "Columns": [ ],
                "Name": "Suppliers",
-               "NewName": "Supplier"
+               "NewName": "Supplier",
+               "Columns": [ ]
             },
             {
-               "Columns": [ ],
                "Name": "Territories",
-               "NewName": "Territory"
+               "NewName": "Territory",
+               "Columns": [ ]
             }
          ],
          "UseSchemaName": false

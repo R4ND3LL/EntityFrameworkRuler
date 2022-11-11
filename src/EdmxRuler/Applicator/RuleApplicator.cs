@@ -26,7 +26,7 @@ namespace EdmxRuler.Applicator;
 
 public sealed class RuleApplicator : RuleProcessor {
     /// <summary> Create rule applicator for making changes to project files </summary>
-    public RuleApplicator(ApplicatorArg arg) : this(arg.ProjectBasePath, arg.AdhocOnly) { }
+    public RuleApplicator(ApplicatorArgs arg) : this(arg.ProjectBasePath, arg.AdhocOnly) { }
 
     /// <summary> Create rule applicator for making changes to project files </summary>
     /// <param name="projectBasePath">project folder containing rules and target files.</param>
@@ -344,6 +344,7 @@ public sealed class RuleApplicator : RuleProcessor {
                 var canRename = currentNames.Length > 0 && newPropName.HasNonWhiteSpace() &&
                                 currentNames.Any(o => o != newPropName);
                 if (canRename) {
+                    var navMeta = propertyRef.GetNavigationMetadata();
                     PropertyActionResult propertyActionResult = default;
                     int i;
                     var fromNames = currentNames.Where(o => o != newPropName).ToArray();

@@ -12,6 +12,7 @@ using EdmxRuler.RuleModels;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
 using EdmxRuler.RuleModels.PropertyTypeChanging;
+
 // ReSharper disable UnusedMember.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -21,8 +22,13 @@ namespace EdmxRuler.Generator;
 
 /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX. </summary>
 public sealed partial class RuleGenerator : RuleProcessor {
-    public RuleGenerator(string edmxFilePath) {
+    /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
+    public RuleGenerator(GeneratorArgs arg) : this(arg.EdmxFilePath, arg.NoMetadata) { }
+
+    /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
+    public RuleGenerator(string edmxFilePath, bool noMetadata = false) {
         EdmxFilePath = edmxFilePath;
+        NoMetadata = noMetadata;
     }
 
     #region properties
@@ -30,6 +36,11 @@ public sealed partial class RuleGenerator : RuleProcessor {
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary> The EDMX file path </summary>
     public string EdmxFilePath { get; }
+
+    /// <summary>
+    /// If true, generate rule files with no extra metadata about the entity models.  Only generate minimal change information. 
+    /// </summary>
+    public bool NoMetadata { get; }
 
     private ICandidateNamingService candidateNamingService;
 
@@ -195,6 +206,15 @@ public sealed partial class RuleGenerator : RuleProcessor {
                         .Where(o => o != navigation.Name));
 
                 if (navigationRename.Name.Count == 0) continue;
+
+                // fill in other metadata
+                var inverseNav = navigation.InverseNavigation;
+                var inverseEntity = inverseNav?.Entity;
+                navigationRename.FkName = navigation.Association?.Name;
+                navigationRename.Multiplicity = navigation.Multiplicity.ToMultiplicityString();
+                navigationRename.ToEntity =
+                    inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameCleansed;
+
                 tbl.Properties.Add(navigationRename);
                 renamed = true;
             }

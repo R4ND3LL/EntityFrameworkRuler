@@ -48,7 +48,7 @@ public sealed class EntityType : NotifyPropertyChanged {
     public string StorageName => StorageEntity?.Name;
 
     /// <summary> The cleansed storage name (spaces converted to underscore) </summary>
-    public string StorageNameCleansed => StorageName.CleanseSymbolName();
+    public string StorageNameCleansed => StorageName.CleanseSymbolName().CapitalizeFirst();
 
     public IList<NavigationProperty> NavigationProperties { get; } =
         new ObservableCollection<NavigationProperty>();
@@ -347,13 +347,7 @@ public sealed class EndRole : NotifyPropertyChanged {
         ConceptualAssociation = conceptualAssociation;
         ConceptualEnd = conceptualEnd ?? throw new ArgumentNullException(nameof(conceptualEnd));
         Entity = entityType ?? throw new ArgumentNullException(nameof(entityType));
-
-        Multiplicity = conceptualEnd.Multiplicity switch {
-            "0..1" => Multiplicity.ZeroOne,
-            "1" => Multiplicity.One,
-            "*" => Multiplicity.Many,
-            _ => throw new InvalidDataException("Multiplicity unexpected: " + conceptualEnd.Multiplicity)
-        };
+        Multiplicity = conceptualEnd.Multiplicity.ParseMultiplicity();
         entityType.EndRoles.Add(this);
     }
 

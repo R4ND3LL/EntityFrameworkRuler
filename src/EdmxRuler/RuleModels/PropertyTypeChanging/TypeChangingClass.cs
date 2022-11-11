@@ -11,10 +11,10 @@ public sealed class TypeChangingClass : IEdmxRuleClassModel {
         Properties = new List<TypeChangingProperty>();
     }
 
-    [DataMember]
+    [DataMember(Order = 1)]
     public string Name { get; set; }
 
-    [DataMember(EmitDefaultValue = false, IsRequired = false)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 2)]
     public List<TypeChangingProperty> Properties { get; set; }
 
     string IEdmxRuleClassModel.GetOldName() => Name;

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using EdmxRuler.Generator.EdmxModel;
 
 namespace EdmxRuler.RuleModels;
 
@@ -21,4 +22,18 @@ public interface IEdmxRulePropertyModel {
     string GetNewName();
 
     string GetNewTypeName();
+    NavigationMetadata GetNavigationMetadata();
+}
+
+public struct NavigationMetadata {
+    public NavigationMetadata(string fkName, Multiplicity multiplicity) {
+        FkName = fkName;
+        Multiplicity = multiplicity;
+    }
+
+    /// <summary> The foreign key name for this relationship (if any) </summary>
+    public string FkName { get; set; }
+
+    /// <summary> The multiplicity of this end of the relationship. Valid values include "1", "0..1", "*" </summary>
+    public Multiplicity Multiplicity { get; set; }
 }
