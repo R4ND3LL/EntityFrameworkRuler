@@ -13,13 +13,13 @@ using EdmxRuler.Generator.EdmxModel;
 
 namespace EdmxRuler.Generator.Services;
 
-public class CandidateNamingService : ICandidateNamingService {
-    public CandidateNamingService(IPluralizer pluralizer) {
+public class EdmxRulerNamingService : IEdmxRulerNamingService {
+    public EdmxRulerNamingService(IEdmxRulerPluralizer pluralizer) {
         this.pluralizer = pluralizer ?? new HumanizerPluralizer();
         cSharpUtilities = new CSharpUtilities();
     }
 
-    private readonly IPluralizer pluralizer;
+    private readonly IEdmxRulerPluralizer pluralizer;
     private readonly CSharpUtilities cSharpUtilities;
 
     /// <summary> disable pluralization.  the anticipated navigation names will not be pluralized. </summary>
@@ -221,7 +221,7 @@ public class CandidateNamingService : ICandidateNamingService {
 /// Service that decides how to name navigation properties.
 /// Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. 
 /// </summary>
-public interface ICandidateNamingService {
+public interface IEdmxRulerNamingService {
     /// <summary> disable pluralization.  the anticipated navigation names will not be pluralized. </summary>
     bool NoPluralization { get; }
 

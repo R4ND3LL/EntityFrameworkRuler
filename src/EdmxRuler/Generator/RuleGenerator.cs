@@ -42,15 +42,15 @@ public sealed partial class RuleGenerator : RuleProcessor {
     /// </summary>
     public bool NoMetadata { get; }
 
-    private ICandidateNamingService candidateNamingService;
+    private IEdmxRulerNamingService namingService;
 
     /// <summary>
     /// Service that decides how to name navigation properties.
     /// Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. 
     /// </summary>
-    public ICandidateNamingService CandidateNamingService {
-        get => candidateNamingService ??= new CandidateNamingService(new HumanizerPluralizer());
-        set => candidateNamingService = value;
+    public IEdmxRulerNamingService NamingService {
+        get => namingService ??= new EdmxRulerNamingService(new HumanizerPluralizer());
+        set => namingService = value;
     }
 
     #endregion
@@ -202,7 +202,7 @@ public sealed partial class RuleGenerator : RuleProcessor {
                 var navigationRename = new NavigationRename { NewName = navigation.Name };
 
                 navigationRename.Name
-                    .AddRange(CandidateNamingService.FindCandidateNavigationNames(navigation)
+                    .AddRange(NamingService.FindCandidateNavigationNames(navigation)
                         .Where(o => o != navigation.Name));
 
                 if (navigationRename.Name.Count == 0) continue;

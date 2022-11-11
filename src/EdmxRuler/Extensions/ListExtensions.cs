@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
 
@@ -68,6 +69,13 @@ internal static class ListExtensions {
     public static void AddRange<T>(this HashSet<T> c, IEnumerable<T> list) {
         foreach (var o in list) c.Add(o);
     }
+
+#if NETCOREAPP3_1
+    /// <summary> missing in .net 3.1 </summary>
+    public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> items, Func<T, TKey> property) {
+        return items.GroupBy(property).Select(x => x.First());
+    }
+#endif
 
     /// <summary> remove items from the list that are program arg switches, but append those to the outbound switchArgs </summary>
     internal static List<string> RemoveSwitchArgs(this List<string> args, out List<string> switchArgs) {

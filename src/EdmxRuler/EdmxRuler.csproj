@@ -13,9 +13,14 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Title>EDMX Ruler</Title>
         <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
-        <Copyright>Copyright (c) 2022 MARK RANDELL (R4ND3LL)</Copyright>
+        <Authors>Mark Randell</Authors>
+        <Copyright>© 2022 Mark Randell (R4ND3LL). All rights reserved.</Copyright>
         <PackageProjectUrl>https://github.com/R4ND3LL/EdmxRuler</PackageProjectUrl>
+        <PackageTags>Entity Framework Core;entity-framework-core;EF;Data;O/RM;EntityFramework;EntityFrameworkCore;EFCore;EDMX</PackageTags>
         <PackageIcon>crown128.png</PackageIcon>
+        <RepositoryUrl>https://github.com/R4ND3LL/EdmxRuler.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <AssemblyOriginatorKeyFile>G:\!DEV\EdmxRuler\src\EFRuler\key.snk</AssemblyOriginatorKeyFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -34,14 +39,17 @@
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
             <_Parameter1>EdmxRuler.Tests</_Parameter1>
         </AssemblyAttribute>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>EfRuler</_Parameter1>
+        </AssemblyAttribute>
     </ItemGroup>
 
     <ItemGroup>
         <None Include="..\..\LICENSE.txt" Pack="true" PackagePath="LICENSE.txt" />
         <None Include="..\Resources\crown128.png">
+            <Link>crown128.png</Link>
             <Pack>True</Pack>
             <PackagePath></PackagePath>
-            <Link>crown128.png</Link>
         </None>
     </ItemGroup>
 
@@ -95,9 +103,5 @@
 
     <ItemGroup>
         <None Remove="nupkg\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Applicator\Services" />
     </ItemGroup>
 </Project>
