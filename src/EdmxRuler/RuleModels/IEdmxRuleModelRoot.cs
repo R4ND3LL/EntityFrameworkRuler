@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using EdmxRuler.Generator.EdmxModel;
 
+// ReSharper disable MemberCanBePrivate.Global
+
 namespace EdmxRuler.RuleModels;
 
 public interface IEdmxRuleModelRoot {
@@ -26,13 +28,24 @@ public interface IEdmxRulePropertyModel {
 }
 
 public struct NavigationMetadata {
-    public NavigationMetadata(string fkName, Multiplicity multiplicity) {
+    internal NavigationMetadata(string fkName, string toEntity, bool isPrincipal, Multiplicity multiplicity) {
         FkName = fkName;
+        ToEntity = toEntity;
+        IsPrincipal = isPrincipal;
         Multiplicity = multiplicity;
     }
 
     /// <summary> The foreign key name for this relationship (if any) </summary>
     public string FkName { get; set; }
+
+    /// <summary> The name of the inverse navigation entity </summary>
+    public string ToEntity { get; }
+
+    /// <summary> True if this is the principal end of the navigation.  False if this is the dependent end. </summary>
+    public bool IsPrincipal { get; }
+
+    /// <summary> True if this is the dependent end of the navigation.  False if this is the principal end. </summary>
+    public bool IsDependent => !IsPrincipal;
 
     /// <summary> The multiplicity of this end of the relationship. Valid values include "1", "0..1", "*" </summary>
     public Multiplicity Multiplicity { get; set; }

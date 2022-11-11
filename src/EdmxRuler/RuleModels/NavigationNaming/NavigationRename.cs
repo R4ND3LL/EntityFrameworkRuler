@@ -35,10 +35,13 @@ public sealed class NavigationRename : IEdmxRulePropertyModel {
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
     public string ToEntity { get; set; }
 
-    /// <summary> The multiplicity of this end of the relationship. Valid values include "1", "0..1", "*" </summary>
+    /// <summary> True if this is the principal end of the navigation.  False if this is the dependent end. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
-    public string Multiplicity { get; set; }
+    public bool IsPrincipal { get; set; }
 
+    /// <summary> The multiplicity of this end of the relationship. Valid values include "1", "0..1", "*" </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
+    public string Multiplicity { get; set; }
 
     IEnumerable<string> IEdmxRulePropertyModel.GetCurrentNameOptions() =>
         Name?.Where(o => o.HasNonWhiteSpace()).Distinct() ?? Array.Empty<string>();
@@ -46,5 +49,6 @@ public sealed class NavigationRename : IEdmxRulePropertyModel {
     string IEdmxRulePropertyModel.GetNewName() => NewName;
     string IEdmxRulePropertyModel.GetNewTypeName() => null;
 
-    NavigationMetadata IEdmxRulePropertyModel.GetNavigationMetadata() => new(FkName, Multiplicity.ParseMultiplicity());
+    public NavigationMetadata GetNavigationMetadata() =>
+        new(FkName, ToEntity, IsPrincipal, Multiplicity.ParseMultiplicity());
 }

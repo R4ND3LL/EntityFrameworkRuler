@@ -214,7 +214,8 @@ public sealed partial class RuleGenerator : RuleProcessor {
                 navigationRename.Multiplicity = navigation.Multiplicity.ToMultiplicityString();
                 navigationRename.ToEntity =
                     inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameCleansed;
-
+                navigationRename.IsPrincipal = navigation.IsPrincipalEnd;
+                
                 tbl.Properties.Add(navigationRename);
                 renamed = true;
             }

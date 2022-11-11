@@ -62,7 +62,7 @@ public class CandidateNamingService : ICandidateNamingService {
                 }
 
                 if (navigation.IsPrincipalEnd) {
-                    // typically collections.  but may be 1-1 relation
+                    // typically collections.  but may be 1-1 reference
                     var principalEndExistingIdentifiers = foreignKey.PrincipalEntity.GetExistingIdentifiers();
                     var principalEndNavigationPropertyCandidateName = foreignKey.IsSelfReferencing()
                         ? string.Format(

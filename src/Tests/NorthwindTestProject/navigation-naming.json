@@ -10,6 +10,7 @@
                "NewName": "Products",
                "FkName": "FK_Products_Categories",
                "ToEntity": "Product",
+               "IsPrincipal": true,
                "Multiplicity": "*"
             }
          ]
@@ -24,6 +25,7 @@
                "NewName": "Orders",
                "FkName": "FK_Orders_Customers",
                "ToEntity": "Order",
+               "IsPrincipal": true,
                "Multiplicity": "*"
             }
          ]
@@ -38,6 +40,7 @@
                "NewName": "Employees1",
                "FkName": "FK_Employees_Employees",
                "ToEntity": "Employee",
+               "IsPrincipal": true,
                "Multiplicity": "*"
             },
             {
@@ -56,6 +59,7 @@
                "NewName": "Orders",
                "FkName": "FK_Orders_Employees",
                "ToEntity": "Order",
+               "IsPrincipal": true,
                "Multiplicity": "*"
             }
          ]
@@ -88,6 +92,7 @@
                "NewName": "Order_Details",
                "FkName": "FK_Order_Details_Orders",
                "ToEntity": "Order_Detail",
+               "IsPrincipal": true,
                "Multiplicity": "*"
             },
             {
@@ -143,6 +148,7 @@
                "NewName": "OrderDetailsNav",
                "FkName": "FK_Order_Details_Products",
                "ToEntity": "Order_Detail",
+               "IsPrincipal": true,
                "Multiplicity": "*"
             },
             {
@@ -166,6 +172,7 @@
                "NewName": "Territories",
                "FkName": "FK_Territories_Region",
                "ToEntity": "Territory",
+               "IsPrincipal": true,
                "Multiplicity": "*"
             }
          ]
@@ -180,6 +187,7 @@
                "NewName": "Orders",
                "FkName": "FK_Orders_Shippers",
                "ToEntity": "Order",
+               "IsPrincipal": true,
                "Multiplicity": "*"
             }
          ]
@@ -194,6 +202,7 @@
                "NewName": "Products",
                "FkName": "FK_Products_Suppliers",
                "ToEntity": "Product",
+               "IsPrincipal": true,
                "Multiplicity": "*"
             }
          ]
