@@ -14,7 +14,7 @@ namespace EntityFrameworkRuler {
 
             using var serviceProvider = serviceCollection.BuildServiceProvider(validateScopes: true);
             var p = serviceProvider.GetService<IPluralizer>();
-            Assert.IsType<EfPluralizer>(p);
+            Assert.IsType<EfRulerPluralizer>(p);
         }
     }
 }

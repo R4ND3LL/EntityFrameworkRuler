@@ -13,22 +13,20 @@ using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 
 // ReSharper disable MemberCanBePrivate.Global
-
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
-
 // ReSharper disable ClassCanBeSealed.Global
 
 namespace EntityFrameworkRuler.Services;
 
 /// <summary> Naming service override to be used by Ef scaffold process. </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
-public class EfCandidateNamingService : CandidateNamingService {
+public class EfRulerCandidateNamingService : CandidateNamingService {
     private readonly IRuleProvider ruleProvider;
     private PrimitiveNamingRules primitiveNamingRules;
     private NavigationNamingRules navigationRules;
 
     /// <inheritdoc />
-    public EfCandidateNamingService(IRuleProvider ruleProvider) {
+    public EfRulerCandidateNamingService(IRuleProvider ruleProvider) {
         this.ruleProvider = ruleProvider;
 #if DEBUG
         if (!Debugger.IsAttached) Debugger.Launch();
@@ -98,7 +96,7 @@ public class EfCandidateNamingService : CandidateNamingService {
             tableRule?.Columns?.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.PropertyName == originalColumn.Name);
 
         if (columnRule?.NewName.HasNonWhiteSpace() == true) {
-            Log($"Column rule applied: {tableRule.Name} to {tableRule.NewName}");
+            Log($"Column rule applied: {columnRule.Name} to {columnRule.NewName}");
             return columnRule.NewName;
         }
 
@@ -152,7 +150,7 @@ public class EfCandidateNamingService : CandidateNamingService {
 
         var fkName = foreignKey.GetConstraintName();
         var navigation = foreignKey.GetNavigation(!thisIsPrincipal);
-        IReadOnlyEntityType entity = navigation?.DeclaringEntityType;
+        IReadOnlyEntityType entity = navigation?.DeclaringEntityType??foreignKey.DeclaringEntityType;
         if (entity == null) return defaultEfName();
 
         string tableName;

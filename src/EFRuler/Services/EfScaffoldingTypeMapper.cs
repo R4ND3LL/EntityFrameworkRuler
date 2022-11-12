@@ -9,14 +9,14 @@ namespace EntityFrameworkRuler.Services;
 /// EF Type mapper
 /// </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
-public class EfScaffoldingTypeMapper : ScaffoldingTypeMapper, IScaffoldingTypeMapper {
+public class EfRulerScaffoldingTypeMapper : ScaffoldingTypeMapper, IScaffoldingTypeMapper {
     private readonly IRelationalTypeMappingSource typeMappingSource;
 
     /// <summary>
     ///
     /// </summary>
     /// <param name="typeMappingSource"></param>
-    public EfScaffoldingTypeMapper(IRelationalTypeMappingSource typeMappingSource) : base(typeMappingSource) {
+    public EfRulerScaffoldingTypeMapper(IRelationalTypeMappingSource typeMappingSource) : base(typeMappingSource) {
         this.typeMappingSource = typeMappingSource;
     }
 

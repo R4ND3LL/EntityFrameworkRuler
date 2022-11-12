@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace EntityFrameworkRuler.Services {
     /// <summary> Pluralization service override to be used by Ef scaffold process. </summary>
-    public class EfPluralizer : IPluralizer {
+    public class EfRulerPluralizer : IPluralizer {
         private readonly HumanizerPluralizer pluralizer;
 
         /// <summary> Creates a pluralization service to be used by Ef scaffold process. </summary>
-        public EfPluralizer() {
+        public EfRulerPluralizer() {
             pluralizer = new HumanizerPluralizer();
         }
 

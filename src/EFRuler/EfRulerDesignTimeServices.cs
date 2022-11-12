@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using EdmxRuler;
 using EntityFrameworkRuler.Services;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,9 +17,10 @@ namespace EntityFrameworkRuler {
         /// <param name="services">The service collection.</param>
         [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
         public void ConfigureDesignTimeServices(IServiceCollection services) {
-            services.AddSingleton<IPluralizer, EfPluralizer>();
-            services.AddSingleton<IScaffoldingTypeMapper, EfScaffoldingTypeMapper>();
-            services.AddSingleton<ICandidateNamingService, EfCandidateNamingService>();
+            services.AddSingleton<IPluralizer, EfRulerPluralizer>();
+            services.AddSingleton<IScaffoldingTypeMapper, EfRulerScaffoldingTypeMapper>();
+            services.AddSingleton<ICandidateNamingService, EfRulerCandidateNamingService>();
+            services.AddSingleton<IScaffoldingModelFactory, EfRulerRelationalScaffoldingModelFactory>();
             //services.AddSingleton<ICandidateNamingService, CandidateNamingService>();
             services.AddSingleton<EdmxRuler.Common.IRuleProvider, EdmxRuler.Common.DefaultRuleProvider>();
             services.AddRuleApplicator();
