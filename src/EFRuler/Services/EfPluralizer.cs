@@ -11,7 +11,7 @@ namespace EntityFrameworkRuler.Services {
 
         /// <summary> Creates a pluralization service to be used by Ef scaffold process. </summary>
         public EfRulerPluralizer() {
-            pluralizer = new HumanizerPluralizer();
+            pluralizer = new();
         }
 
         /// <summary>

@@ -34,40 +34,40 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
     }
 
     /// <summary> Name that table </summary>
-    public override string GenerateCandidateIdentifier(DatabaseTable originalTable) {
-        if (originalTable == null) throw new ArgumentException("Argument is empty", nameof(originalTable));
+    public override string GenerateCandidateIdentifier(DatabaseTable table) {
+        if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
         primitiveNamingRules ??= ruleProvider?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
 
         var candidateStringBuilder = new StringBuilder();
 
-        var schema = GetSchemaReference(originalTable.Schema);
+        var schema = GetSchemaReference(table.Schema);
 
-        if (schema == null) return base.GenerateCandidateIdentifier(originalTable);
+        if (schema == null) return base.GenerateCandidateIdentifier(table);
 
-        if (schema.UseSchemaName) candidateStringBuilder.Append(GenerateIdentifier(originalTable.Schema));
+        if (schema.UseSchemaName) candidateStringBuilder.Append(GenerateIdentifier(table.Schema));
 
         var tableRule =
-            schema?.Tables.FirstOrDefault(o => o.Name == originalTable.Name) ??
-            schema?.Tables.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.EntityName == originalTable.Name);
+            schema?.Tables.FirstOrDefault(o => o.Name == table.Name) ??
+            schema?.Tables.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.EntityName == table.Name);
 
         if (tableRule?.NewName.HasNonWhiteSpace() == true) {
-            Log($"Table rule applied: {tableRule.Name} to {tableRule.NewName}");
+            DebugLog($"Table rule applied: {tableRule.Name} to {tableRule.NewName}");
             return tableRule.NewName;
         }
 
         string newTableName;
         if (!string.IsNullOrEmpty(schema.TableRegexPattern) && schema.TablePatternReplaceWith != null) {
             if (primitiveNamingRules.PreserveCasingUsingRegex)
-                newTableName = RegexNameReplace(schema.TableRegexPattern, originalTable.Name,
+                newTableName = RegexNameReplace(schema.TableRegexPattern, table.Name,
                     schema.TablePatternReplaceWith);
             else
-                newTableName = GenerateIdentifier(RegexNameReplace(schema.TableRegexPattern, originalTable.Name,
+                newTableName = GenerateIdentifier(RegexNameReplace(schema.TableRegexPattern, table.Name,
                     schema.TablePatternReplaceWith));
         } else
-            newTableName = base.GenerateCandidateIdentifier(originalTable);
+            newTableName = base.GenerateCandidateIdentifier(table);
 
         if (string.IsNullOrWhiteSpace(newTableName)) {
-            candidateStringBuilder.Append(GenerateIdentifier(originalTable.Name));
+            candidateStringBuilder.Append(GenerateIdentifier(table.Name));
 
             return candidateStringBuilder.ToString();
         }
@@ -79,24 +79,24 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
 
     /// <summary> Name that column </summary>
     [SuppressMessage("ReSharper", "InvertIf")]
-    public override string GenerateCandidateIdentifier(DatabaseColumn originalColumn) {
-        if (originalColumn is null) throw new ArgumentNullException(nameof(originalColumn));
+    public override string GenerateCandidateIdentifier(DatabaseColumn column) {
+        if (column is null) throw new ArgumentNullException(nameof(column));
         primitiveNamingRules ??= ruleProvider?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
 
-        var schema = GetSchemaReference(originalColumn.Table.Schema);
+        var schema = GetSchemaReference(column.Table.Schema);
 
         var tableRule =
-            schema?.Tables?.FirstOrDefault(o => o.Name == originalColumn.Table.Name) ??
-            schema?.Tables?.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.EntityName == originalColumn.Table.Name);
+            schema?.Tables?.FirstOrDefault(o => o.Name == column.Table.Name) ??
+            schema?.Tables?.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.EntityName == column.Table.Name);
 
-        if (tableRule == null) return base.GenerateCandidateIdentifier(originalColumn);
+        if (tableRule == null) return base.GenerateCandidateIdentifier(column);
 
         var columnRule =
-            tableRule?.Columns?.FirstOrDefault(o => o.Name == originalColumn.Name) ??
-            tableRule?.Columns?.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.PropertyName == originalColumn.Name);
+            tableRule?.Columns?.FirstOrDefault(o => o.Name == column.Name) ??
+            tableRule?.Columns?.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.PropertyName == column.Name);
 
         if (columnRule?.NewName.HasNonWhiteSpace() == true) {
-            Log($"Column rule applied: {columnRule.Name} to {columnRule.NewName}");
+            DebugLog($"Column rule applied: {columnRule.Name} to {columnRule.NewName}");
             return columnRule.NewName;
         }
 
@@ -104,10 +104,10 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
             var candidateStringBuilder = new StringBuilder();
             string newColumnName;
             if (primitiveNamingRules.PreserveCasingUsingRegex)
-                newColumnName = RegexNameReplace(schema.ColumnRegexPattern, originalColumn.Name,
+                newColumnName = RegexNameReplace(schema.ColumnRegexPattern, column.Name,
                     schema.ColumnPatternReplaceWith);
             else
-                newColumnName = GenerateIdentifier(RegexNameReplace(schema.ColumnRegexPattern, originalColumn.Name,
+                newColumnName = GenerateIdentifier(RegexNameReplace(schema.ColumnRegexPattern, column.Name,
                     schema.ColumnPatternReplaceWith));
 
             if (!string.IsNullOrWhiteSpace(newColumnName)) {
@@ -116,7 +116,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
             }
         }
 
-        return base.GenerateCandidateIdentifier(originalColumn);
+        return base.GenerateCandidateIdentifier(column);
     }
 
     /// <summary> Name that navigation dependent </summary>
@@ -138,7 +138,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
     #region internal members
 
     [Conditional("DEBUG")]
-    internal static void Log(string msg) => Console.WriteLine(msg);
+    internal static void DebugLog(string msg) => Console.WriteLine(msg);
 
     /// <summary> Name that navigation dependent </summary>
     protected virtual string GetCandidateNavigationPropertyName(IReadOnlyForeignKey foreignKey, bool thisIsPrincipal,
@@ -199,7 +199,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
         var rename = navigationRenames[0];
         if (rename.NewName.IsNullOrWhiteSpace()) return efName ?? defaultEfName();
 
-        Log($"Navigation rule applied: {rename.Name} to {rename.NewName}");
+        DebugLog($"Navigation rule applied: {rename.Name} to {rename.NewName}");
         return rename.NewName.Trim();
     }
 

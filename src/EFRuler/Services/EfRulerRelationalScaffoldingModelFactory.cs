@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.Rules.PropertyTypeChanging;
@@ -29,7 +30,6 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
         IPluralizer pluralizer,
         ICSharpUtilities cSharpUtilities,
         IScaffoldingTypeMapper scaffoldingTypeMapper,
-        LoggingDefinitions loggingDefinitions,
         IModelRuntimeInitializer modelRuntimeInitializer,
         IRuleProvider ruleProvider)
         : base(
@@ -38,7 +38,6 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
             pluralizer,
             cSharpUtilities,
             scaffoldingTypeMapper,
-            loggingDefinitions,
             modelRuntimeInitializer) {
         this.ruleProvider = ruleProvider;
     }
@@ -50,35 +49,40 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
 
 
         var tableRule =
-            typeChangingRules?.Classes?.FirstOrDefault(o => o.Name == column.Table.Name) ??
-            typeChangingRules?.Classes?.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.DbName == column.Table.Name);
+            typeChangingRules?.Classes?.FirstOrDefault(o => o.DbName == column.Table.Name || o.Name == column.Table.Name);
 
         if (tableRule == null) return typeScaffoldingInfo;
 
         var columnRule =
-            tableRule?.Properties?.FirstOrDefault(o => o.Name == column.Name) ??
-            tableRule?.Properties?.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.DbName == column.Name);
+            tableRule?.Properties?.FirstOrDefault(o => o.DbName == column.Name || o.Name == column.Name);
 
         if (columnRule?.NewType.HasNonWhiteSpace() == true) {
             try {
                 var clrTypeName = columnRule.NewType;
-                var clrType = Type.GetType(clrTypeName);
-                if (clrType == null) return typeScaffoldingInfo;
+                var clrType = Type.GetType(clrTypeName, false);
+                if (clrType == null) {
+                    var assembly = Assembly.GetEntryAssembly();
+                }
+
+                if (clrType == null) {
+                    EfRulerCandidateNamingService.DebugLog($"Type not found: {columnRule.NewType}");
+                    return typeScaffoldingInfo;
+                }
 
                 // Regenerate the TypeScaffoldingInfo based on our new CLR type.
-                typeScaffoldingInfo = new TypeScaffoldingInfo(
+                typeScaffoldingInfo = new(
                     clrType,
-                    typeScaffoldingInfo.IsInferred,
-                    typeScaffoldingInfo.ScaffoldUnicode,
-                    typeScaffoldingInfo.ScaffoldMaxLength,
-                    typeScaffoldingInfo.ScaffoldFixedLength,
-                    typeScaffoldingInfo.ScaffoldPrecision,
-                    typeScaffoldingInfo.ScaffoldScale);
-                EfRulerCandidateNamingService.Log(
+                    typeScaffoldingInfo?.IsInferred ?? false,
+                    typeScaffoldingInfo?.ScaffoldUnicode,
+                    typeScaffoldingInfo?.ScaffoldMaxLength,
+                    typeScaffoldingInfo?.ScaffoldFixedLength,
+                    typeScaffoldingInfo?.ScaffoldPrecision,
+                    typeScaffoldingInfo?.ScaffoldScale);
+                EfRulerCandidateNamingService.DebugLog(
                     $"Column rule applied: {tableRule.Name}.{columnRule.Name} type set to {columnRule.NewType}");
                 return typeScaffoldingInfo;
             } catch (Exception ex) {
-                EfRulerCandidateNamingService.Log($"Error loading type '{columnRule.NewType}' reference: {ex.Message}");
+                EfRulerCandidateNamingService.DebugLog($"Error loading type '{columnRule.NewType}' reference: {ex.Message}");
             }
         }
 

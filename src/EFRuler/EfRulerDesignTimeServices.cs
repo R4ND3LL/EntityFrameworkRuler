@@ -21,6 +21,7 @@ namespace EntityFrameworkRuler {
             services.AddSingleton<IScaffoldingTypeMapper, EfRulerScaffoldingTypeMapper>();
             services.AddSingleton<ICandidateNamingService, EfRulerCandidateNamingService>();
             services.AddSingleton<IScaffoldingModelFactory, EfRulerRelationalScaffoldingModelFactory>();
+            services.AddSingleton<IReverseEngineerScaffolder, EfRulerReverseEngineerScaffolder>();
             //services.AddSingleton<ICandidateNamingService, CandidateNamingService>();
             services.AddSingleton<EdmxRuler.Common.IRuleProvider, EdmxRuler.Common.DefaultRuleProvider>();
             services.AddRuleApplicator();
