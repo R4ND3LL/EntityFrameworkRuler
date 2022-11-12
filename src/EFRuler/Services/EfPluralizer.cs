@@ -1,5 +1,6 @@
 using EdmxRuler.Generator.Services;
 using Microsoft.EntityFrameworkCore.Design;
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 namespace EntityFrameworkRuler.Services {
     /// <summary> Pluralization service override to be used by Ef scaffold process. </summary>
