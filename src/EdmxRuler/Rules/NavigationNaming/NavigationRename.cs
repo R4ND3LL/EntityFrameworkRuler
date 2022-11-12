@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using EdmxRuler.Extensions;
 
-namespace EdmxRuler.RuleModels.NavigationNaming;
+namespace EdmxRuler.Rules.NavigationNaming;
 
 [DebuggerDisplay("Nav {FirstName} to {NewName} FkName={FkName} IsPrincipal={IsPrincipal}")]
 [DataContract]

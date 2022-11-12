@@ -11,63 +11,7 @@ internal static class Program {
         try {
             if (args.IsNullOrEmpty() || args[0].IsNullOrWhiteSpace()) return await ShowHelpInfo();
 
-            var option = args[0].GetSwitchArgChar();
-            switch (option) {
-                case 'g': {
-                    // generate rules
-                    if (!GeneratorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var generatorArgs))
-                        return await ShowHelpInfo();
-
-                    await Console.Out.WriteLineAsync($" - edmx path: {generatorArgs.EdmxFilePath}")
-                        .ConfigureAwait(false);
-                    await Console.Out.WriteLineAsync($" - project base path: {generatorArgs.ProjectBasePath}")
-                        .ConfigureAwait(false);
-                    await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
-
-                    var start = DateTimeExtensions.GetTime();
-                    var generator = new RuleGenerator(generatorArgs);
-                    generator.OnLog += MessageLogged;
-                    var response = generator.TryGenerateRules();
-                    var rules = response.Rules;
-                    await generator.TrySaveRules(rules, generatorArgs.ProjectBasePath);
-                    var elapsed = DateTimeExtensions.GetTime() - start;
-                    var errorCount = response.Errors.Count();
-                    if (errorCount == 0) {
-                        await Console.Out
-                            .WriteLineAsync($"Successfully generated {rules.Count} rule files in {elapsed}ms")
-                            .ConfigureAwait(false);
-                        return 0;
-                    }
-
-                    return errorCount;
-                }
-                case 'a': {
-                    // apply rules
-                    if (!ApplicatorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var applicatorArgs))
-                        return await ShowHelpInfo();
-
-                    await Console.Out.WriteLineAsync($" - project base path: {applicatorArgs.ProjectBasePath}")
-                        .ConfigureAwait(false);
-                    await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
-                    var start = DateTimeExtensions.GetTime();
-                    var applicator = new RuleApplicator(applicatorArgs);
-                    applicator.OnLog += MessageLogged;
-                    var response = await applicator.ApplyRulesInProjectPath();
-                    var elapsed = DateTimeExtensions.GetTime() - start;
-                    var errorCount = response.GetErrors().Count();
-                    if (errorCount == 0) {
-                        await Console.Out
-                            .WriteLineAsync($"Successfully applied rules in {elapsed}ms")
-                            .ConfigureAwait(false);
-                        return 0;
-                    }
-
-                    return errorCount;
-                }
-
-                default:
-                    return await ShowHelpInfo();
-            }
+            return 1;
         } catch
             (Exception ex) {
             await Console.Out.WriteLineAsync($"Unexpected error: {ex.Message}").ConfigureAwait(false);

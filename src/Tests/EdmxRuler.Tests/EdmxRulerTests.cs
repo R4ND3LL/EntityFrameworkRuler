@@ -7,9 +7,9 @@ using EdmxRuler.Applicator;
 using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator;
-using EdmxRuler.RuleModels.NavigationNaming;
-using EdmxRuler.RuleModels.PrimitiveNaming;
-using EdmxRuler.RuleModels.PropertyTypeChanging;
+using EdmxRuler.Rules.NavigationNaming;
+using EdmxRuler.Rules.PrimitiveNaming;
+using EdmxRuler.Rules.PropertyTypeChanging;
 using Microsoft.CodeAnalysis;
 using Shouldly;
 using Xunit;
@@ -56,12 +56,12 @@ public sealed class EdmxRulerTests {
         enumMappingRules.Classes[1].Properties[0].NewType.ShouldBe("NorthwindModel.UnitsInStockEnum"); // external type
 
         primitiveNamingRules.Schemas.Count.ShouldBe(1);
-        primitiveNamingRules.Schemas[0].Tables.Count.ShouldBe(19);
-        primitiveNamingRules.Schemas[0].Tables[0].Columns.Count.ShouldBe(1);
-        primitiveNamingRules.Schemas[0].Tables[3].Columns.Count.ShouldBe(0);
+        primitiveNamingRules.Schemas[0].Tables.Count.ShouldBe(27);
+        primitiveNamingRules.Schemas[0].Tables[0].Columns.Count.ShouldBe(4);
+        primitiveNamingRules.Schemas[0].Tables[3].Columns.Count.ShouldBe(1);
         primitiveNamingRules.Schemas[0].Tables[4].Columns.Count.ShouldBe(1);
-        primitiveNamingRules.Schemas[0].Tables[0].Columns[0].Name.ShouldBe("UnitPrice");
-        primitiveNamingRules.Schemas[0].Tables[0].Columns[0].NewName.ShouldBe("UnitPriceCustom");
+        primitiveNamingRules.Schemas[0].Tables[0].Columns[0].Name.ShouldBe("ProductId");
+        primitiveNamingRules.Schemas[0].Tables[0].Columns[0].NewName.ShouldBe("ProductID");
         primitiveNamingRules.Schemas[0].Tables.ForEach(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         primitiveNamingRules.Schemas[0].Tables.ForEach(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
         primitiveNamingRules.Schemas[0].Tables.SelectMany(o => o.Columns)
@@ -70,18 +70,19 @@ public sealed class EdmxRulerTests {
             .ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
 
         navigationNamingRules.Namespace.ShouldBe("");
-        navigationNamingRules.Classes.Count.ShouldBe(10);
+        navigationNamingRules.Classes.Count.ShouldBe(9);
         navigationNamingRules.Classes.All(o => o.Properties.Count > 0).ShouldBeTrue();
-        navigationNamingRules.Classes[0].Properties[0].Name.Contains("ProductsNavigation").ShouldBeTrue();
+        navigationNamingRules.Classes[0].Properties[0].Name.Contains("Orders").ShouldBeTrue();
         //navigationNamingRules.Classes[0].Properties[0].Name.Contains("Products").ShouldBeTrue();
-        navigationNamingRules.Classes[0].Properties[0].NewName.ShouldBe("Products");
+        navigationNamingRules.Classes[0].Properties[0].NewName.ShouldBe("OrdersCustom");
         navigationNamingRules.Classes.ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         navigationNamingRules.Classes.SelectMany(o => o.Properties)
             .ForAll(o => o.Name.ForAll(n => n.IsValidSymbolName().ShouldBeTrue()));
         navigationNamingRules.Classes.SelectMany(o => o.Properties)
             .ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
 
-        output.WriteLine($"Rule contents look good");
+        elapsed = DateTimeExtensions.GetTime() - start;
+        output.WriteLine($"Rule contents look good at {elapsed}ms");
 
         var csProj = ResolveNorthwindProject();
         var projBasePath = new FileInfo(csProj).Directory!.FullName;
@@ -93,21 +94,22 @@ public sealed class EdmxRulerTests {
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
-        response.Information.Last()
-            .ShouldStartWith("4 classes renamed, 2 properties renamed across ", Case.Insensitive);
-        output.WriteLine($"Primitive naming rules applied correctly");
+        response.Information.Last().ShouldStartWith("16 classes renamed, 46 properties renamed across 29 files", Case.Insensitive);
+        elapsed = DateTimeExtensions.GetTime() - start;
+        output.WriteLine($"Primitive naming rules applied correctly at {elapsed}ms");
 
         response = await applicator.ApplyRules(navigationNamingRules);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
         var renamed = response.Information.Where(o => o.StartsWith("Renamed")).ToArray();
-        renamed.Length.ShouldBe(15);
+        renamed.Length.ShouldBe(14);
         var couldNotFind = response.Information.Where(o => o.StartsWith("Could not find ")).ToArray();
-        couldNotFind.Length.ShouldBe(1);
-        response.Information.Last().ShouldStartWith("15 properties renamed across ", Case.Insensitive);
+        couldNotFind.Length.ShouldBe(0);
+        response.Information.Last().ShouldStartWith("14 properties renamed across 10 files", Case.Insensitive);
 
-        output.WriteLine($"Navigation naming rules applied correctly");
+        elapsed = DateTimeExtensions.GetTime() - start;
+        output.WriteLine($"Navigation naming rules applied correctly at {elapsed}ms");
 
         response = await applicator.ApplyRules(enumMappingRules);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
@@ -115,7 +117,9 @@ public sealed class EdmxRulerTests {
 
         response.Information.Count(o => o.StartsWith("Update")).ShouldBe(2);
         response.Information.Last().ShouldStartWith("2 property types changed across 2 files", Case.Insensitive);
-        output.WriteLine($"Enum mapping rules applied correctly");
+
+        elapsed = DateTimeExtensions.GetTime() - start;
+        output.WriteLine($"Enum mapping rules applied correctly at {elapsed}ms");
         logReceivedCount.ShouldBeGreaterThan(30);
         elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"Completed in {elapsed}ms.");

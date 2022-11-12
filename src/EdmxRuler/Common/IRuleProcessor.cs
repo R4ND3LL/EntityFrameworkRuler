@@ -7,3 +7,6 @@ public abstract class RuleProcessor {
         OnLog?.Invoke(this, logMessage);
     }
 }
+public interface IRuleProcessor {
+    event LogMessageHandler OnLog;
+}

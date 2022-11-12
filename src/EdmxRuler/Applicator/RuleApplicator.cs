@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 using EdmxRuler.Applicator.CsProjParser;
 using EdmxRuler.Common;
 using EdmxRuler.Extensions;
-using EdmxRuler.RuleModels;
-using EdmxRuler.RuleModels.NavigationNaming;
-using EdmxRuler.RuleModels.PrimitiveNaming;
-using EdmxRuler.RuleModels.PropertyTypeChanging;
+using EdmxRuler.Rules;
+using EdmxRuler.Rules.NavigationNaming;
+using EdmxRuler.Rules.PrimitiveNaming;
+using EdmxRuler.Rules.PropertyTypeChanging;
 using Microsoft.CodeAnalysis;
 using Project = Microsoft.CodeAnalysis.Project;
 
@@ -24,25 +24,38 @@ using Project = Microsoft.CodeAnalysis.Project;
 
 namespace EdmxRuler.Applicator;
 
-public sealed class RuleApplicator : RuleProcessor {
-    /// <summary> Create rule applicator for making changes to project files </summary>
-    public RuleApplicator(ApplicatorArgs arg) : this(arg.ProjectBasePath, arg.AdhocOnly) { }
-
+public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
     /// <summary> Create rule applicator for making changes to project files </summary>
     /// <param name="projectBasePath">project folder containing rules and target files.</param>
     /// <param name="adhocOnly"> Form an adhoc in-memory project out of the target entity model files instead of loading project directly. </param>
-    public RuleApplicator(string projectBasePath, bool adhocOnly = false) {
-        ProjectBasePath = projectBasePath;
-        AdhocOnly = adhocOnly;
+    public RuleApplicator(string projectBasePath, bool adhocOnly = false)
+        : this(new ApplicatorOptions() {
+            ProjectBasePath = projectBasePath,
+            AdhocOnly = adhocOnly
+        }) {
     }
+
+    /// <summary> Create rule applicator for making changes to project files </summary>
+    public RuleApplicator(ApplicatorOptions options) {
+        Options = options;
+    }
+
 
     #region properties
 
-    /// <summary> The target project path. </summary>
-    public string ProjectBasePath { get; }
+    public ApplicatorOptions Options { get; }
+
+    /// <summary> The target project path containing entity models. </summary>
+    public string ProjectBasePath {
+        get => Options.ProjectBasePath;
+        set => Options.ProjectBasePath = value;
+    }
 
     /// <summary> Form an adhoc in-memory project out of the target entity model files instead of loading project directly. </summary>
-    public bool AdhocOnly { get; set; }
+    public bool AdhocOnly {
+        get => Options.AdhocOnly;
+        set => Options.AdhocOnly = value;
+    }
 
     #endregion
 
@@ -63,7 +76,7 @@ public sealed class RuleApplicator : RuleProcessor {
         }
     }
 
-    /// <summary> Apply the given rules to the target project. </summary>   
+    /// <summary> Apply the given rules to the target project. </summary>
     /// <returns> List of errors. </returns>
     public async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(IEnumerable<IEdmxRuleModelRoot> rules) {
         if (rules == null) throw new ArgumentNullException(nameof(rules));
@@ -71,7 +84,7 @@ public sealed class RuleApplicator : RuleProcessor {
         return responses;
     }
 
-    /// <summary> Apply the given rules to the target project. </summary>  
+    /// <summary> Apply the given rules to the target project. </summary>
     private async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRulesInternal(IEnumerable<IEdmxRuleModelRoot> rules) {
         if (rules == null) throw new ArgumentNullException(nameof(rules));
 
@@ -517,7 +530,7 @@ public sealed class RuleApplicator : RuleProcessor {
         var csProj = InspectProject(projectBasePath, response);
 
         if (csProj?.ImplicitUsings.In("enabled", "enable", "true") == true) {
-            // symbol renaming will likely not work correctly. 
+            // symbol renaming will likely not work correctly.
             response?.LogInformation(
                 "WARNING: ImplicitUsings is enabled on this project. Symbol renaming may not fully work due to missing reference information.");
         }

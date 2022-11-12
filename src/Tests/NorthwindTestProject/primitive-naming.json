@@ -1,68 +1,427 @@
 ﻿{
+   "PreserveCasingUsingRegex": false,
    "Schemas": [
       {
          "Namespace": null,
          "SchemaName": "dbo",
          "Tables": [
             {
-               "Name": "Categories",
+               "DbName": "Alphabetical list of products",
+               "Name": "AlphabeticalListOfProduct",
+               "NewName": "Alphabetical_list_of_product",
+               "Columns": [
+                  {
+                     "DbName": "ProductID",
+                     "Name": "ProductId",
+                     "NewName": "ProductID"
+                  },
+                  {
+                     "DbName": "SupplierID",
+                     "Name": "SupplierId",
+                     "NewName": "SupplierID"
+                  },
+                  {
+                     "DbName": "CategoryID",
+                     "Name": "CategoryId",
+                     "NewName": "CategoryID"
+                  },
+                  {
+                     "Name": "UnitPrice",
+                     "NewName": "UnitPriceCustom"
+                  }
+               ]
+            },
+            {
+               "Name": "Category",
                "NewName": "Category",
+               "Columns": [
+                  {
+                     "DbName": "CategoryID",
+                     "Name": "CategoryId",
+                     "NewName": "CategoryID"
+                  }
+               ]
+            },
+            {
+               "DbName": "Category Sales for 1997",
+               "Name": "CategorySalesFor1997",
+               "NewName": "Category_Sales_for_1997",
                "Columns": [ ]
             },
             {
-               "Name": "Customers",
+               "DbName": "Current Product List",
+               "Name": "CurrentProductList",
+               "NewName": "Current_Product_List",
+               "Columns": [
+                  {
+                     "DbName": "ProductID",
+                     "Name": "ProductId",
+                     "NewName": "ProductID"
+                  }
+               ]
+            },
+            {
+               "Name": "Customer",
                "NewName": "Customer",
+               "Columns": [
+                  {
+                     "DbName": "CustomerID",
+                     "Name": "CustomerId",
+                     "NewName": "CustomerID"
+                  }
+               ]
+            },
+            {
+               "DbName": "Customer and Suppliers by City",
+               "Name": "CustomerAndSuppliersByCity",
+               "NewName": "Customer_and_Suppliers_by_City",
                "Columns": [ ]
             },
             {
-               "Name": "CustomerDemographics",
+               "Name": "CustomerDemographic",
                "NewName": "CustomerDemographic",
-               "Columns": [ ]
+               "Columns": [
+                  {
+                     "DbName": "CustomerTypeID",
+                     "Name": "CustomerTypeId",
+                     "NewName": "CustomerTypeID"
+                  }
+               ]
             },
             {
-               "Name": "Employees",
+               "Name": "Employee",
                "NewName": "Employee",
                "Columns": [
                   {
+                     "DbName": "EmployeeID",
+                     "Name": "EmployeeId",
+                     "NewName": "EmployeeID"
+                  },
+                  {
                      "Name": "ReportsTo",
-                     "NewName": "ReportsToFk"
+                     "NewName": "ReportsToCustom"
                   }
                ]
             },
             {
-               "Name": "Orders",
+               "Name": "Invoice",
+               "NewName": "Invoice",
+               "Columns": [
+                  {
+                     "DbName": "CustomerID",
+                     "Name": "CustomerId",
+                     "NewName": "CustomerID"
+                  },
+                  {
+                     "Name": "City",
+                     "NewName": "CityCustom"
+                  },
+                  {
+                     "DbName": "OrderID",
+                     "Name": "OrderId",
+                     "NewName": "OrderID"
+                  },
+                  {
+                     "DbName": "ProductID",
+                     "Name": "ProductId",
+                     "NewName": "ProductID"
+                  },
+                  {
+                     "Name": "Discount",
+                     "NewName": "DiscountCustom"
+                  }
+               ]
+            },
+            {
+               "Name": "Order",
                "NewName": "Order",
                "Columns": [
                   {
+                     "DbName": "OrderID",
+                     "Name": "OrderId",
+                     "NewName": "OrderID"
+                  },
+                  {
+                     "DbName": "CustomerID",
+                     "Name": "CustomerId",
+                     "NewName": "CustomerID"
+                  },
+                  {
+                     "DbName": "EmployeeID",
+                     "Name": "EmployeeId",
+                     "NewName": "EmployeeID"
+                  },
+                  {
+                     "Name": "OrderDate",
+                     "NewName": "OrderDateCustom"
+                  },
+                  {
                      "Name": "ShipVia",
-                     "NewName": "ShipViaFk"
+                     "NewName": "ShipViaCustom"
                   }
                ]
             },
             {
-               "Name": "Order_Details",
+               "DbName": "Order Details",
+               "Name": "OrderDetail",
                "NewName": "Order_Detail",
-               "Columns": [ ]
+               "Columns": [
+                  {
+                     "DbName": "OrderID",
+                     "Name": "OrderId",
+                     "NewName": "OrderID"
+                  },
+                  {
+                     "DbName": "ProductID",
+                     "Name": "ProductId",
+                     "NewName": "ProductID"
+                  }
+               ]
             },
             {
-               "Name": "Products",
+               "DbName": "Order Details Extended",
+               "Name": "OrderDetailsExtended",
+               "NewName": "Order_Details_Extended",
+               "Columns": [
+                  {
+                     "DbName": "OrderID",
+                     "Name": "OrderId",
+                     "NewName": "OrderID"
+                  },
+                  {
+                     "DbName": "ProductID",
+                     "Name": "ProductId",
+                     "NewName": "ProductID"
+                  },
+                  {
+                     "Name": "UnitPrice",
+                     "NewName": "UnitPriceCustom"
+                  },
+                  {
+                     "Name": "Discount",
+                     "NewName": "DiscountCustom"
+                  }
+               ]
+            },
+            {
+               "DbName": "Order Subtotals",
+               "Name": "OrderSubtotal",
+               "NewName": "Order_Subtotal",
+               "Columns": [
+                  {
+                     "DbName": "OrderID",
+                     "Name": "OrderId",
+                     "NewName": "OrderID"
+                  }
+               ]
+            },
+            {
+               "DbName": "Orders Qry",
+               "Name": "OrdersQry",
+               "NewName": "Orders_Qry_Custom",
+               "Columns": [
+                  {
+                     "DbName": "OrderID",
+                     "Name": "OrderId",
+                     "NewName": "OrderID"
+                  },
+                  {
+                     "DbName": "CustomerID",
+                     "Name": "CustomerId",
+                     "NewName": "CustomerID"
+                  },
+                  {
+                     "DbName": "EmployeeID",
+                     "Name": "EmployeeId",
+                     "NewName": "EmployeeID"
+                  }
+               ]
+            },
+            {
+               "Name": "Product",
                "NewName": "Product",
+               "Columns": [
+                  {
+                     "DbName": "ProductID",
+                     "Name": "ProductId",
+                     "NewName": "ProductID"
+                  },
+                  {
+                     "DbName": "SupplierID",
+                     "Name": "SupplierId",
+                     "NewName": "SupplierID"
+                  },
+                  {
+                     "DbName": "CategoryID",
+                     "Name": "CategoryId",
+                     "NewName": "CategoryID"
+                  }
+               ]
+            },
+            {
+               "DbName": "Product Sales for 1997",
+               "Name": "ProductSalesFor1997",
+               "NewName": "Product_Sales_for_1997",
                "Columns": [ ]
             },
             {
-               "Name": "Shippers",
+               "DbName": "Products Above Average Price",
+               "Name": "ProductsAboveAveragePrice",
+               "NewName": "Products_Above_Average_Price",
+               "Columns": [ ]
+            },
+            {
+               "DbName": "Products by Category",
+               "Name": "ProductsByCategory",
+               "NewName": "Products_by_Category",
+               "Columns": [
+                  {
+                     "Name": "CategoryName",
+                     "NewName": "CategoryNameCustom"
+                  },
+                  {
+                     "Name": "UnitsInStock",
+                     "NewName": "UnitsInStockCustom"
+                  }
+               ]
+            },
+            {
+               "DbName": "Region",
+               "Name": "Region",
+               "NewName": "RegionCustom",
+               "Columns": [
+                  {
+                     "DbName": "RegionID",
+                     "Name": "RegionId",
+                     "NewName": "RegionID"
+                  }
+               ]
+            },
+            {
+               "DbName": "Sales by Category",
+               "Name": "SalesByCategory",
+               "NewName": "Sales_by_Category",
+               "Columns": [
+                  {
+                     "DbName": "CategoryID",
+                     "Name": "CategoryId",
+                     "NewName": "CategoryID"
+                  }
+               ]
+            },
+            {
+               "DbName": "Sales Totals by Amount",
+               "Name": "SalesTotalsByAmount",
+               "NewName": "Sales_Totals_by_Amount",
+               "Columns": [
+                  {
+                     "DbName": "OrderID",
+                     "Name": "OrderId",
+                     "NewName": "OrderIDCustom"
+                  },
+                  {
+                     "Name": "CompanyName",
+                     "NewName": "CompanyNameCustom"
+                  },
+                  {
+                     "Name": "ShippedDate",
+                     "NewName": "ShippedDateCustom"
+                  }
+               ]
+            },
+            {
+               "Name": "Shipper",
                "NewName": "Shipper",
-               "Columns": [ ]
+               "Columns": [
+                  {
+                     "DbName": "ShipperID",
+                     "Name": "ShipperId",
+                     "NewName": "ShipperID"
+                  }
+               ]
             },
             {
-               "Name": "Suppliers",
+               "DbName": "Summary of Sales by Quarter",
+               "Name": "SummaryOfSalesByQuarter",
+               "NewName": "Summary_of_Sales_by_Quarter",
+               "Columns": [
+                  {
+                     "DbName": "OrderID",
+                     "Name": "OrderId",
+                     "NewName": "OrderID"
+                  }
+               ]
+            },
+            {
+               "DbName": "Summary of Sales by Year",
+               "Name": "SummaryOfSalesByYear",
+               "NewName": "Summary_of_Sales_by_Year",
+               "Columns": [
+                  {
+                     "DbName": "OrderID",
+                     "Name": "OrderId",
+                     "NewName": "OrderID"
+                  }
+               ]
+            },
+            {
+               "Name": "Supplier",
                "NewName": "Supplier",
-               "Columns": [ ]
+               "Columns": [
+                  {
+                     "DbName": "SupplierID",
+                     "Name": "SupplierId",
+                     "NewName": "SupplierID"
+                  }
+               ]
             },
             {
-               "Name": "Territories",
+               "DbName": "sysdiagrams",
+               "Name": "Sysdiagram",
+               "NewName": "sysdiagram",
+               "Columns": [
+                  {
+                     "DbName": "name",
+                     "Name": "Name",
+                     "NewName": "name"
+                  },
+                  {
+                     "DbName": "principal_id",
+                     "Name": "PrincipalId",
+                     "NewName": "principal_id"
+                  },
+                  {
+                     "DbName": "diagram_id",
+                     "Name": "DiagramId",
+                     "NewName": "diagram_id"
+                  },
+                  {
+                     "DbName": "version",
+                     "Name": "Version",
+                     "NewName": "version"
+                  },
+                  {
+                     "DbName": "definition",
+                     "Name": "Definition",
+                     "NewName": "definition"
+                  }
+               ]
+            },
+            {
+               "Name": "Territory",
                "NewName": "Territory",
-               "Columns": [ ]
+               "Columns": [
+                  {
+                     "DbName": "TerritoryID",
+                     "Name": "TerritoryId",
+                     "NewName": "TerritoryID"
+                  },
+                  {
+                     "DbName": "RegionID",
+                     "Name": "RegionId",
+                     "NewName": "RegionID"
+                  }
+               ]
             }
          ],
          "UseSchemaName": false

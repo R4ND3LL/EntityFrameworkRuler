@@ -26,7 +26,7 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employees> {
 public class OrderConfiguration : IEntityTypeConfiguration<Order> {
     public void Configure(EntityTypeBuilder<Order> builder) {
         builder.ToTable("Orders");
-        builder.Property(o => o.ShipVia).IsRequired();
+        builder.Property(o => o.ShipViaCustom).IsRequired();
         builder.HasOne(o => o.CustomerNavigation).WithMany(o => o.OrdersNavigation);
         builder.HasOne(o => o.EmployeeNavigation).WithMany(o => o.OrdersNavigation);
         builder.HasMany(o => o.Order_DetailsNavigation).WithOne(o => o.OrderNavigation);
@@ -52,8 +52,8 @@ public class Order_DetailConfiguration : IEntityTypeConfiguration<Order_Detail> 
     }
 }
 
-public class RegionConfiguration : IEntityTypeConfiguration<Region> {
-    public void Configure(EntityTypeBuilder<Region> builder) {
+public class RegionConfiguration : IEntityTypeConfiguration<RegionCustom> {
+    public void Configure(EntityTypeBuilder<RegionCustom> builder) {
         builder.ToTable("Regions");
         builder.OwnsMany(o => o.TerritoriesNavigation).HasOne(o => o.Region);
     }

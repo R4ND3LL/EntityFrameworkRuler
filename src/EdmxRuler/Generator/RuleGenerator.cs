@@ -8,10 +8,12 @@ using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator.EdmxModel;
 using EdmxRuler.Generator.Services;
-using EdmxRuler.RuleModels;
-using EdmxRuler.RuleModels.NavigationNaming;
-using EdmxRuler.RuleModels.PrimitiveNaming;
-using EdmxRuler.RuleModels.PropertyTypeChanging;
+using EdmxRuler.Rules;
+using EdmxRuler.Rules.NavigationNaming;
+using EdmxRuler.Rules.PrimitiveNaming;
+using EdmxRuler.Rules.PropertyTypeChanging;
+
+// ReSharper disable UnusedMethodReturnValue.Global
 
 // ReSharper disable UnusedMember.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -21,35 +23,51 @@ using EdmxRuler.RuleModels.PropertyTypeChanging;
 namespace EdmxRuler.Generator;
 
 /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX. </summary>
-public sealed partial class RuleGenerator : RuleProcessor {
+public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
-    public RuleGenerator(GeneratorArgs arg) : this(arg.EdmxFilePath, arg.NoMetadata) { }
+    /// <param name="edmxFilePath"> The EDMX file path </param>
+    /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
+    /// <param name="noMetadata"> If true, generate rule files with no extra metadata about the entity models.  Only generate minimal change information. </param>
+    /// <param name="noPluralize"> A value indicating whether to use the pluralizer. </param>
+    /// <param name="useDatabaseNames"> A value indicating whether to use the database schema names directly. </param>
+    public RuleGenerator(string edmxFilePath, IEdmxRulerNamingService namingService = null, bool noMetadata = false,
+        bool noPluralize = false, bool useDatabaseNames = false)
+        : this(new GeneratorOptions() {
+            EdmxFilePath = edmxFilePath,
+            NoMetadata = noMetadata,
+            NoPluralize = noPluralize,
+            UseDatabaseNames = useDatabaseNames
+        }, null) {
+        this.namingService = namingService;
+    }
 
     /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
-    public RuleGenerator(string edmxFilePath, bool noMetadata = false) {
-        EdmxFilePath = edmxFilePath;
-        NoMetadata = noMetadata;
+    /// <param name="options"> Generator options. </param>
+    /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
+    public RuleGenerator(GeneratorOptions options, IEdmxRulerNamingService namingService) {
+        this.namingService = namingService;
+        Options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
     #region properties
 
+    public GeneratorOptions Options { get; }
+
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary> The EDMX file path </summary>
-    public string EdmxFilePath { get; }
-
-    /// <summary>
-    /// If true, generate rule files with no extra metadata about the entity models.  Only generate minimal change information. 
-    /// </summary>
-    public bool NoMetadata { get; }
+    public string EdmxFilePath {
+        get => Options.EdmxFilePath;
+        set => Options.EdmxFilePath = value;
+    }
 
     private IEdmxRulerNamingService namingService;
 
     /// <summary>
     /// Service that decides how to name navigation properties.
-    /// Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. 
+    /// Similar to EF ICandidateNamingService but this one utilizes the EDMX model only.
     /// </summary>
     public IEdmxRulerNamingService NamingService {
-        get => namingService ??= new EdmxRulerNamingService(new HumanizerPluralizer());
+        get => namingService ??= new EdmxRulerNamingService(Options, null);
         set => namingService = value;
     }
 
@@ -152,10 +170,15 @@ public sealed partial class RuleGenerator : RuleProcessor {
 
             foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
                 // if entity name is different than db, it has to go into output
-                var tbl = new ClassRename();
                 var renamed = false;
-                tbl.Name = entity.StorageNameCleansed ?? entity.Name;
-                tbl.NewName = entity.ConceptualEntity?.Name ?? tbl.Name;
+                // Get the expected EF entity identifier based on options.. just like EF would:
+                var expectedClassName = NamingService.GetExpectedEntityTypeName(entity);
+                var tbl = new ClassRename {
+                    DbName = entity.Name == expectedClassName ? null : entity.StorageName,
+                    Name = expectedClassName,
+                    NewName = entity.Name.CoalesceWhiteSpace(expectedClassName)
+                };
+
                 if (tbl.Name != tbl.NewName) renamed = true;
 
                 Debug.Assert(tbl.Name.IsValidSymbolName());
@@ -163,12 +186,15 @@ public sealed partial class RuleGenerator : RuleProcessor {
 
                 foreach (var property in entity.Properties) {
                     // if property name is different than db, it has to go into output
-                    var storagePropertyName = property.DbColumnNameCleansed;
-                    if (storagePropertyName.IsNullOrWhiteSpace() ||
-                        property.Name == storagePropertyName) continue;
+                    // Get the expected EF property identifier based on options.. just like EF would:
+                    var expectedPropertyName = NamingService.GetExpectedPropertyName(property, expectedClassName);
+                    if (expectedPropertyName.IsNullOrWhiteSpace() ||
+                        property.Name == expectedPropertyName) continue;
                     tbl.Columns ??= new List<PropertyRename>();
                     tbl.Columns.Add(new PropertyRename {
-                        Name = storagePropertyName, NewName = property.Name
+                        DbName = expectedPropertyName == property.DbColumnName ? null : property.DbColumnName,
+                        Name = expectedPropertyName,
+                        NewName = property.Name
                     });
                     Debug.Assert(tbl.Columns[^1].Name.IsValidSymbolName());
                     Debug.Assert(tbl.Columns[^1].NewName.IsValidSymbolName());
@@ -193,13 +219,17 @@ public sealed partial class RuleGenerator : RuleProcessor {
             rule.Namespace ??= ""; //entity.Namespace;
 
             // if entity name is different than db, it has to go into output
-            var tbl = new ClassReference();
             var renamed = false;
-            tbl.Name = entity.Name;
+            var tbl = new ClassReference {
+                DbName = entity.Name == entity.StorageName ? null : entity.StorageName,
+                Name = entity.Name, // expected name is EDMX entity name at this stage, because primitives have been applied
+            };
 
             foreach (var navigation in entity.NavigationProperties) {
                 tbl.Properties ??= new List<NavigationRename>();
-                var navigationRename = new NavigationRename { NewName = navigation.Name };
+                var navigationRename = new NavigationRename {
+                    NewName = navigation.Name
+                };
 
                 navigationRename.Name
                     .AddRange(NamingService.FindCandidateNavigationNames(navigation)
@@ -207,15 +237,17 @@ public sealed partial class RuleGenerator : RuleProcessor {
 
                 if (navigationRename.Name.Count == 0) continue;
 
+                //if (navigationRename.Name.Any(o => o.Contains("Inverse"))) Debugger.Break();
+
                 // fill in other metadata
                 var inverseNav = navigation.InverseNavigation;
                 var inverseEntity = inverseNav?.Entity;
                 navigationRename.FkName = navigation.Association?.Name;
                 navigationRename.Multiplicity = navigation.Multiplicity.ToMultiplicityString();
                 navigationRename.ToEntity =
-                    inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameCleansed;
+                    inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameIdentifier;
                 navigationRename.IsPrincipal = navigation.IsPrincipalEnd;
-                
+
                 tbl.Properties.Add(navigationRename);
                 renamed = true;
             }
@@ -225,7 +257,6 @@ public sealed partial class RuleGenerator : RuleProcessor {
 
         return rule;
     }
-
 
     private PropertyTypeChangingRules GetPropertyTypeChangingRules(EdmxParsed edmx) {
         var rule = new PropertyTypeChangingRules();
@@ -238,16 +269,19 @@ public sealed partial class RuleGenerator : RuleProcessor {
             rule.Namespace ??= ""; //entity.Namespace;
 
             // if entity name is different than db, it has to go into output
-            var tbl = new TypeChangingClass();
             var renamed = false;
-            tbl.Name = entity.Name;
+            var tbl = new TypeChangingClass {
+                DbName = entity.Name == entity.StorageName ? null : entity.StorageName,
+                Name = entity.Name, // expected name is EDMX entity name at this stage (because primitives have been applied)
+            };
 
             foreach (var property in entity.Properties) {
                 // if property name is different than db, it has to go into output
                 if (property?.EnumType == null) continue;
                 tbl.Properties ??= new List<TypeChangingProperty>();
                 tbl.Properties.Add(new TypeChangingProperty {
-                    Name = property.Name,
+                    DbName = property.Name == property.DbColumnName ? null : property.DbColumnName,
+                    Name = property.Name, // expected name is EDMX property name at this stage (because primitives have been applied)
                     NewType = property.EnumType.ExternalTypeName ?? property.EnumType.FullName
                 });
                 renamed = true;
@@ -263,7 +297,7 @@ public sealed partial class RuleGenerator : RuleProcessor {
 }
 
 public sealed class GenerateRulesResponse : LoggedResponse {
-    private List<IEdmxRuleModelRoot> rules = new();
+    private readonly List<IEdmxRuleModelRoot> rules = new();
 
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary> The rules generated from the EDMX via the TryGenerateRules() call </summary>

@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using EdmxRuler.Applicator;
-using EdmxRuler.RuleModels;
-using EdmxRuler.RuleModels.NavigationNaming;
-using EdmxRuler.RuleModels.PrimitiveNaming;
-using EdmxRuler.RuleModels.PropertyTypeChanging;
+using EdmxRuler.Rules;
+using EdmxRuler.Rules.NavigationNaming;
+using EdmxRuler.Rules.PrimitiveNaming;
+using EdmxRuler.Rules.PropertyTypeChanging;
 
 namespace EdmxRuler.Common;
 

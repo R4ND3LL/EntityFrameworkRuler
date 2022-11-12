@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
-namespace EdmxRuler.RuleModels.PrimitiveNaming;
+namespace EdmxRuler.Rules.PrimitiveNaming;
 
 [DebuggerDisplay("Schema {SchemaName}")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1724:", Justification = "Reviewed.")]

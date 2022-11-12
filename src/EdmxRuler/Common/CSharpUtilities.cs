@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
+#pragma warning disable CS8632
+
 namespace EdmxRuler.Common;
 
-public class CSharpUtilities : ICSharpUtilities
-{
-    private static readonly HashSet<string> CSharpKeywords = new()
-    {
+/// <summary>
+/// EF Core standard for entity element naming.
+/// Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal
+/// </summary>
+public class CSharpUtilities : ICSharpUtilities {
+    private static readonly HashSet<string> CSharpKeywords = new() {
         "abstract",
         "as",
         "base",
@@ -125,33 +129,21 @@ public class CSharpUtilities : ICSharpUtilities
         string identifier,
         ICollection<string> existingIdentifiers,
         Func<string, string> singularizePluralizer,
-        Func<string, ICollection<string>, string> uniquifier)
-    {
+        Func<string, ICollection<string>, string> uniquifier) {
         var proposedIdentifier =
             identifier.Length > 1 && identifier[0] == '@'
                 ? "@" + InvalidCharsRegex.Replace(identifier[1..], "_")
                 : InvalidCharsRegex.Replace(identifier, "_");
-        if (string.IsNullOrEmpty(proposedIdentifier))
-        {
-            proposedIdentifier = "_";
-        }
+        if (string.IsNullOrEmpty(proposedIdentifier)) proposedIdentifier = "_";
 
         var firstChar = proposedIdentifier[0];
         if (!char.IsLetter(firstChar)
             && firstChar != '_'
             && firstChar != '@')
-        {
             proposedIdentifier = "_" + proposedIdentifier;
-        }
-        else if (IsCSharpKeyword(proposedIdentifier))
-        {
-            proposedIdentifier = "_" + proposedIdentifier;
-        }
+        else if (IsCSharpKeyword(proposedIdentifier)) proposedIdentifier = "_" + proposedIdentifier;
 
-        if (singularizePluralizer != null)
-        {
-            proposedIdentifier = singularizePluralizer(proposedIdentifier);
-        }
+        if (singularizePluralizer != null) proposedIdentifier = singularizePluralizer(proposedIdentifier);
 
         return uniquifier(proposedIdentifier, existingIdentifiers);
     }
@@ -162,19 +154,12 @@ public class CSharpUtilities : ICSharpUtilities
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual string Uniquifier(
-        string proposedIdentifier,
-        ICollection<string> existingIdentifiers)
-    {
-        if (existingIdentifiers == null)
-        {
-            return proposedIdentifier;
-        }
+    public virtual string Uniquifier(string proposedIdentifier, ICollection<string> existingIdentifiers) {
+        if (existingIdentifiers == null) return proposedIdentifier;
 
         var finalIdentifier = proposedIdentifier;
         var suffix = 1;
-        while (existingIdentifiers.Contains(finalIdentifier))
-        {
+        while (existingIdentifiers.Contains(finalIdentifier)) {
             finalIdentifier = proposedIdentifier + suffix;
             suffix++;
         }
@@ -188,76 +173,46 @@ public class CSharpUtilities : ICSharpUtilities
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public virtual bool IsValidIdentifier(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-        {
-            return false;
-        }
+    public virtual bool IsValidIdentifier(string name) {
+        if (string.IsNullOrEmpty(name)) return false;
 
-        if (!IsIdentifierStartCharacter(name[0]))
-        {
-            return false;
-        }
+        if (!IsIdentifierStartCharacter(name[0])) return false;
 
         var nameLength = name.Length;
         for (var i = 1; i < nameLength; i++)
-        {
             if (!IsIdentifierPartCharacter(name[i]))
-            {
                 return false;
-            }
-        }
 
         return true;
     }
 
-    private static bool IsIdentifierStartCharacter(char ch)
-    {
+    private static bool IsIdentifierStartCharacter(char ch) {
         if (ch < 'a')
-        {
             return ch >= 'A'
                    && (ch <= 'Z'
                        || ch == '_');
-        }
 
-        if (ch <= 'z')
-        {
-            return true;
-        }
+        if (ch <= 'z') return true;
 
         return ch > '\u007F' && IsLetterChar(CharUnicodeInfo.GetUnicodeCategory(ch));
     }
 
-    private static bool IsIdentifierPartCharacter(char ch)
-    {
+    private static bool IsIdentifierPartCharacter(char ch) {
         if (ch < 'a')
-        {
             return ch < 'A'
                 ? ch >= '0'
                   && ch <= '9'
                 : ch <= 'Z'
                   || ch == '_';
-        }
 
-        if (ch <= 'z')
-        {
-            return true;
-        }
+        if (ch <= 'z') return true;
 
-        if (ch <= '\u007F')
-        {
-            return false;
-        }
+        if (ch <= '\u007F') return false;
 
         var cat = CharUnicodeInfo.GetUnicodeCategory(ch);
-        if (IsLetterChar(cat))
-        {
-            return true;
-        }
+        if (IsLetterChar(cat)) return true;
 
-        switch (cat)
-        {
+        switch (cat) {
             case UnicodeCategory.DecimalDigitNumber:
             case UnicodeCategory.ConnectorPunctuation:
             case UnicodeCategory.NonSpacingMark:
@@ -269,10 +224,8 @@ public class CSharpUtilities : ICSharpUtilities
         return false;
     }
 
-    private static bool IsLetterChar(UnicodeCategory cat)
-    {
-        switch (cat)
-        {
+    private static bool IsLetterChar(UnicodeCategory cat) {
+        switch (cat) {
             case UnicodeCategory.UppercaseLetter:
             case UnicodeCategory.LowercaseLetter:
             case UnicodeCategory.TitlecaseLetter:
@@ -286,5 +239,17 @@ public class CSharpUtilities : ICSharpUtilities
     }
 }
 
+/// <summary>
+/// EF Core standard for entity element naming.
+/// Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal
+/// </summary>
 public interface ICSharpUtilities {
+    string GenerateCSharpIdentifier(string identifier, ICollection<string>? existingIdentifiers,
+        Func<string, string>? singularizePluralizer);
+
+    string GenerateCSharpIdentifier(string identifier, ICollection<string>? existingIdentifiers,
+        Func<string, string>? singularizePluralizer, Func<string, ICollection<string>?, string> uniquifier);
+
+    bool IsCSharpKeyword(string identifier);
+    bool IsValidIdentifier(string? name);
 }

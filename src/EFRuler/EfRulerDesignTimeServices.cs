@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Services;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
@@ -12,6 +13,7 @@ namespace EntityFrameworkRuler {
         /// Adds this library's design-time services to the service collection.
         /// </summary>
         /// <param name="services">The service collection.</param>
+        [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
         public void ConfigureDesignTimeServices(IServiceCollection services) {
             services.AddSingleton<IPluralizer, EfPluralizer>();
             services.AddSingleton<ICandidateNamingService, EfCandidateNamingService>();

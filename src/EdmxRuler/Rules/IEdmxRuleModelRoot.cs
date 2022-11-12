@@ -3,7 +3,7 @@ using EdmxRuler.Generator.EdmxModel;
 
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace EdmxRuler.RuleModels;
+namespace EdmxRuler.Rules;
 
 public interface IEdmxRuleModelRoot {
     EdmxRuleModelKind Kind { get; }

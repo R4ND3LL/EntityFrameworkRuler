@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using EdmxRuler.Extensions;
+using EdmxRuler.Generator.Services;
 
 // ReSharper disable InvertIf
 // ReSharper disable MemberCanBeInternal
@@ -45,10 +46,10 @@ public sealed class EntityType : NotifyPropertyChanged {
     public string Name => ConceptualEntity.Name;
 
     /// <summary> The storage name of the entity </summary>
-    public string StorageName => StorageEntity?.Name;
+    public string StorageName => StorageEntity?.Name ?? Name;
 
     /// <summary> The cleansed storage name (spaces converted to underscore) </summary>
-    public string StorageNameCleansed => StorageName.CleanseSymbolName().CapitalizeFirst();
+    public string StorageNameIdentifier => StorageName.GenerateCandidateIdentifier(); //.CapitalizeFirst();
 
     public IList<NavigationProperty> NavigationProperties { get; } =
         new ObservableCollection<NavigationProperty>();
@@ -90,19 +91,63 @@ public sealed class EntityType : NotifyPropertyChanged {
         }
     }
 
-    private List<string> existingIdentifiers;
+    #region naming cache
 
-    public List<string> GetExistingIdentifiers() {
-        if (existingIdentifiers != null) return existingIdentifiers;
-        existingIdentifiers = new();
-        existingIdentifiers.AddRange(this.Properties.Select(o => o.DbColumnNameCleansed));
-        existingIdentifiers.AddRange(this.NavigationProperties.Select(o => o.Name));
-        return existingIdentifiers;
+    /// <summary> internal use only to cache the expected EF Core identifier </summary>
+    private NamingCache<string> expectedEfCoreName;
+
+    internal string GetExpectedEfCoreName(IEdmxRulerNamingService namingService) {
+        return expectedEfCoreName.GetValue(namingService);
     }
+
+    internal string SetExpectedEfCoreName(IEdmxRulerNamingService namingService, string value) {
+        expectedEfCoreName = new(namingService, value);
+        return value;
+    }
+
+    private NamingCache<List<string>> existingIdentifiers;
+
+    private List<string> GetExistingIdentifiersInternal(IEdmxRulerNamingService namingService) {
+        return existingIdentifiers.GetValue(namingService);
+    }
+
+    private List<string> SetExistingIdentifiers(IEdmxRulerNamingService namingService, List<string> value) {
+        existingIdentifiers = new(namingService, value);
+        return value;
+    }
+
+    internal List<string> GetExistingIdentifiers(IEdmxRulerNamingService namingService, NavigationProperty skip) {
+        var identifiers = GetExistingIdentifiersInternal(namingService);
+        if (identifiers != null) return identifiers;
+        identifiers = new();
+        identifiers.AddRange(Properties.Select(o => namingService.GetExpectedPropertyName(o)));
+        identifiers.AddRange(NavigationProperties.Where(o => o != skip).Select(o => o.Name));
+        SetExistingIdentifiers(namingService, identifiers);
+        return identifiers;
+    }
+
+    #endregion
+
 
     public override string ToString() { return $"Entity: {Name}"; }
 }
 
+[DebuggerDisplay("{value}")]
+internal readonly struct NamingCache<T> {
+    public NamingCache(IEdmxRulerNamingService owner, T value) {
+        Owner = owner ?? throw new ArgumentNullException(nameof(owner));
+        this.value = value;
+    }
+
+    public IEdmxRulerNamingService Owner { get; init; }
+    private readonly T value;
+
+    public T GetValue(IEdmxRulerNamingService current) {
+        return ReferenceEquals(current, Owner) ? value : default;
+    }
+}
+
+[DebuggerDisplay("{Name}")]
 public class EntityPropertyBase : NotifyPropertyChanged {
     public EntityPropertyBase(EntityType e, IConceptualProperty conceptualProperty) {
         ConceptualProperty = conceptualProperty;
@@ -141,11 +186,27 @@ public sealed class EntityProperty : EntityPropertyBase {
     public string DbColumnName => Mapping?.ColumnName;
 
     /// <summary> The cleansed storage column name (spaces converted to underscore) </summary>
-    public string DbColumnNameCleansed => DbColumnName.CleanseSymbolName();
+    public string DbColumnNameIdentifier => DbColumnName.GenerateCandidateIdentifier();
 
     public new ConceptualProperty ConceptualProperty => (ConceptualProperty)base.ConceptualProperty;
     public bool IsConceptualKey { get; set; }
     public bool IsStorageKey { get; set; }
+
+    #region naming cache
+
+    /// <summary> internal use only to cache the expected EF Core identifier </summary>
+    private NamingCache<string> expectedEfCoreName;
+
+    internal string GetExpectedEfCoreName(IEdmxRulerNamingService namingService) {
+        return expectedEfCoreName.GetValue(namingService);
+    }
+
+    internal string SetExpectedEfCoreName(IEdmxRulerNamingService namingService, string value) {
+        expectedEfCoreName = new(namingService, value);
+        return value;
+    }
+
+    #endregion
 
     public override string ToString() { return $"Prop: {Name}"; }
 }

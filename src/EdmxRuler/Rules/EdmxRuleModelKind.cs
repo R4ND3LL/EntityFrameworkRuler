@@ -1,4 +1,4 @@
-namespace EdmxRuler.RuleModels;
+namespace EdmxRuler.Rules;
 
 public enum EdmxRuleModelKind : byte {
     PrimitiveNaming = 1,

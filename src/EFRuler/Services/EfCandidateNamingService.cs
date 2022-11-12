@@ -4,8 +4,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using EdmxRuler.Common;
 using EdmxRuler.Extensions;
-using EdmxRuler.RuleModels.NavigationNaming;
-using EdmxRuler.RuleModels.PrimitiveNaming;
+using EdmxRuler.Rules.NavigationNaming;
+using EdmxRuler.Rules.PrimitiveNaming;
 using EntityFrameworkRuler.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -186,32 +186,16 @@ public class EfCandidateNamingService : CandidateNamingService {
         return defaultEfName;
     }
 
-    protected virtual string GenerateIdentifier(string value) {
-        var candidateStringBuilder = new StringBuilder();
-        var previousLetterCharInWordIsLowerCase = false;
-        var isFirstCharacterInWord = true;
+    /// <summary>
+    /// Convert DB element name to entity identifier. This is the EF Core standard.
+    /// Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService.GenerateCandidateIdentifier()
+    /// </summary>
+    protected virtual string GenerateIdentifier(string value) => value.GenerateCandidateIdentifier();
 
-        foreach (var c in value) {
-            var isNotLetterOrDigit = !char.IsLetterOrDigit(c);
-            if (isNotLetterOrDigit
-                || (previousLetterCharInWordIsLowerCase && char.IsUpper(c))) {
-                isFirstCharacterInWord = true;
-                previousLetterCharInWordIsLowerCase = false;
-                if (isNotLetterOrDigit) continue;
-            }
-
-            candidateStringBuilder.Append(
-                isFirstCharacterInWord ? char.ToUpperInvariant(c) : char.ToLowerInvariant(c));
-            isFirstCharacterInWord = false;
-            if (char.IsLower(c)) previousLetterCharInWordIsLowerCase = true;
-        }
-
-        return candidateStringBuilder.ToString();
-    }
-
+    /// <summary> Apply regex replace rule to name. </summary>
     protected virtual string RegexNameReplace(string pattern, string originalName, string replacement,
         int timeout = 100) {
-        string newName = string.Empty;
+        var newName = string.Empty;
 
         try {
             newName = Regex.Replace(originalName, pattern, replacement, RegexOptions.None,
@@ -224,11 +208,13 @@ public class EfCandidateNamingService : CandidateNamingService {
         return newName;
     }
 
+    /// <summary> Return the primitive naming rules SchemaReference object for the given schema name </summary>
     protected virtual SchemaReference GetSchemaReference(string originalSchema)
         => primitiveNamingRules?
             .Schemas
             .FirstOrDefault(x => x.SchemaName == originalSchema);
 
+    /// <summary> Return the navigation naming rules ClassReference object for the given class name </summary>
     protected virtual ClassReference GetClassReference(string tableName)
         => navigationRules?
             .Classes

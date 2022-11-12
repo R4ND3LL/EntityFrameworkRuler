@@ -1,28 +1,14 @@
 ﻿{
    "Classes": [
       {
-         "Name": "Category",
-         "Properties": [
-            {
-               "Name": [
-                  "ProductsNavigation"
-               ],
-               "NewName": "Products",
-               "FkName": "FK_Products_Categories",
-               "ToEntity": "Product",
-               "IsPrincipal": true,
-               "Multiplicity": "*"
-            }
-         ]
-      },
-      {
+         "DbName": "Customers",
          "Name": "Customer",
          "Properties": [
             {
                "Name": [
-                  "OrdersNavigation"
+                  "Orders"
                ],
-               "NewName": "Orders",
+               "NewName": "OrdersCustom",
                "FkName": "FK_Orders_Customers",
                "ToEntity": "Order",
                "IsPrincipal": true,
@@ -31,13 +17,14 @@
          ]
       },
       {
+         "DbName": "Employees",
          "Name": "Employee",
          "Properties": [
             {
                "Name": [
-                  "InverseReportsToFk"
+                  "InverseReportsToNavigation"
                ],
-               "NewName": "Employees1",
+               "NewName": "EmployeesCustom",
                "FkName": "FK_Employees_Employees",
                "ToEntity": "Employee",
                "IsPrincipal": true,
@@ -45,9 +32,9 @@
             },
             {
                "Name": [
-                  "ReportsToFk"
+                  "ReportsToNavigation"
                ],
-               "NewName": "Employee1",
+               "NewName": "EmployeeOneCustom",
                "FkName": "FK_Employees_Employees",
                "ToEntity": "Employee",
                "Multiplicity": "0..1"
@@ -65,6 +52,7 @@
          ]
       },
       {
+         "DbName": "Orders",
          "Name": "Order",
          "Properties": [
             {
@@ -78,18 +66,18 @@
             },
             {
                "Name": [
-                  "EmployeeNavigation"
+                  "Employee"
                ],
-               "NewName": "Employee",
+               "NewName": "CustomEmployee",
                "FkName": "FK_Orders_Employees",
                "ToEntity": "Employee",
                "Multiplicity": "0..1"
             },
             {
                "Name": [
-                  "Order_DetailsNavigation"
+                  "OrderDetails"
                ],
-               "NewName": "Order_Details",
+               "NewName": "OrderDetailsCustom",
                "FkName": "FK_Order_Details_Orders",
                "ToEntity": "Order_Detail",
                "IsPrincipal": true,
@@ -97,9 +85,9 @@
             },
             {
                "Name": [
-                  "ShipViaFk"
+                  "ShipViaNavigation"
                ],
-               "NewName": "Shipper",
+               "NewName": "CustomShipper",
                "FkName": "FK_Orders_Shippers",
                "ToEntity": "Shipper",
                "Multiplicity": "0..1"
@@ -107,22 +95,23 @@
          ]
       },
       {
+         "DbName": "Order Details",
          "Name": "Order_Detail",
          "Properties": [
             {
                "Name": [
-                  "OrderNavigation"
+                  "Order"
                ],
-               "NewName": "Order",
+               "NewName": "OrderCustom",
                "FkName": "FK_Order_Details_Orders",
                "ToEntity": "Order",
                "Multiplicity": "1"
             },
             {
                "Name": [
-                  "ProductNavigation"
+                  "Product"
                ],
-               "NewName": "Product",
+               "NewName": "ProductCustom",
                "FkName": "FK_Order_Details_Products",
                "ToEntity": "Product",
                "Multiplicity": "1"
@@ -130,22 +119,23 @@
          ]
       },
       {
+         "DbName": "Products",
          "Name": "Product",
          "Properties": [
             {
                "Name": [
-                  "CategoryNavigation"
+                  "Category"
                ],
-               "NewName": "Category",
+               "NewName": "CategoryCustom",
                "FkName": "FK_Products_Categories",
                "ToEntity": "Category",
                "Multiplicity": "0..1"
             },
             {
                "Name": [
-                  "Order_Details"
+                  "OrderDetails"
                ],
-               "NewName": "OrderDetailsNav",
+               "NewName": "Order_Details",
                "FkName": "FK_Order_Details_Products",
                "ToEntity": "Order_Detail",
                "IsPrincipal": true,
@@ -163,13 +153,14 @@
          ]
       },
       {
-         "Name": "Region",
+         "DbName": "Region",
+         "Name": "RegionCustom",
          "Properties": [
             {
                "Name": [
-                  "TerritoriesNavigation"
+                  "Territories"
                ],
-               "NewName": "Territories",
+               "NewName": "TerritoriesCustom",
                "FkName": "FK_Territories_Region",
                "ToEntity": "Territory",
                "IsPrincipal": true,
@@ -178,13 +169,14 @@
          ]
       },
       {
+         "DbName": "Shippers",
          "Name": "Shipper",
          "Properties": [
             {
                "Name": [
-                  "OrdersNavigation"
+                  "Orders"
                ],
-               "NewName": "Orders",
+               "NewName": "OrdersCustom",
                "FkName": "FK_Orders_Shippers",
                "ToEntity": "Order",
                "IsPrincipal": true,
@@ -193,13 +185,14 @@
          ]
       },
       {
+         "DbName": "Suppliers",
          "Name": "Supplier",
          "Properties": [
             {
                "Name": [
-                  "ProductsNavigation"
+                  "Products"
                ],
-               "NewName": "Products",
+               "NewName": "ProductsCustom",
                "FkName": "FK_Products_Suppliers",
                "ToEntity": "Product",
                "IsPrincipal": true,
@@ -208,15 +201,16 @@
          ]
       },
       {
+         "DbName": "Territories",
          "Name": "Territory",
          "Properties": [
             {
                "Name": [
-                  "RegionNavigation"
+                  "Region"
                ],
-               "NewName": "Region",
+               "NewName": "RegionCustom",
                "FkName": "FK_Territories_Region",
-               "ToEntity": "Region",
+               "ToEntity": "RegionCustom",
                "Multiplicity": "1"
             }
          ]

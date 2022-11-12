@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using EdmxRuler.RuleModels.NavigationNaming;
-using EdmxRuler.RuleModels.PrimitiveNaming;
+using EdmxRuler.Rules.NavigationNaming;
+using EdmxRuler.Rules.PrimitiveNaming;
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -40,27 +40,27 @@ internal static class ListExtensions {
         return false;
     }
 
-    internal static NavigationNamingRules ToPropertyRules(this PrimitiveNamingRules primitiveNamingRules) {
-        var rules = new NavigationNamingRules();
-        foreach (var schema in primitiveNamingRules.Schemas) {
-            var r = new NavigationNamingRules();
-            foreach (var classRename in schema.Tables) {
-                var c = new ClassReference {
-                    Name = classRename.NewName.CoalesceWhiteSpace(classRename.Name)
-                };
-                r.Classes.Add(c);
-                foreach (var propertyRename in classRename.Columns) {
-                    var p = new NavigationRename {
-                        NewName = propertyRename.NewName
-                    };
-                    p.Name.Add(propertyRename.Name);
-                    c.Properties.Add(p);
-                }
-            }
-        }
-
-        return rules;
-    }
+    // internal static NavigationNamingRules ToPropertyRules(this PrimitiveNamingRules primitiveNamingRules) {
+    //     var rules = new NavigationNamingRules();
+    //     foreach (var schema in primitiveNamingRules.Schemas) {
+    //         var r = new NavigationNamingRules();
+    //         foreach (var classRename in schema.Tables) {
+    //             var c = new ClassReference {
+    //                 Name = classRename.NewName.CoalesceWhiteSpace(classRename.Name)
+    //             };
+    //             r.Classes.Add(c);
+    //             foreach (var propertyRename in classRename.Columns) {
+    //                 var p = new NavigationRename {
+    //                     NewName = propertyRename.NewName
+    //                 };
+    //                 p.Name.Add(propertyRename.Name);
+    //                 c.Properties.Add(p);
+    //             }
+    //         }
+    //     }
+    //
+    //     return rules;
+    // }
 
     public static void ForAll<T>(this IEnumerable<T> sequence, Action<T> action) {
         foreach (var item in sequence) action(item);
@@ -76,6 +76,15 @@ internal static class ListExtensions {
         return items.GroupBy(property).Select(x => x.First());
     }
 #endif
+    public static TValue GetOrAddNew<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key) where TValue : new() {
+        return GetOrAddNew<TKey, TValue>(source, key, _ => new TValue());
+    }
+
+    public static TValue GetOrAddNew<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key, Func<TKey, TValue> valueFactory) {
+        if (source.TryGetValue(key, out var value)) return value;
+        source.Add(key, value = valueFactory(key));
+        return value;
+    }
 
     /// <summary> remove items from the list that are program arg switches, but append those to the outbound switchArgs </summary>
     internal static List<string> RemoveSwitchArgs(this List<string> args, out List<string> switchArgs) {

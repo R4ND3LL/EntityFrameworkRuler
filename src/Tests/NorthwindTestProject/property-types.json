@@ -1,20 +1,23 @@
 ﻿{
    "Classes": [
       {
-         "Name": "Order",
+         "DbName": "Order Details",
+         "Name": "Order_Detail",
          "Properties": [
             {
-               "Name": "Freight",
-               "NewType": "NorthwindTestProject.Models.FreightEnum"
+               "Name": "Quantity",
+               "NewType": "NorthwindModel.QuantityEnum"
             }
          ]
       },
       {
-         "Name": "Product",
+         "DbName": "Products by Category",
+         "Name": "Products_by_Category",
          "Properties": [
             {
-               "Name": "ReorderLevel",
-               "NewType": "Common.OrderLevelEnum"
+               "DbName": "UnitsInStock",
+               "Name": "UnitsInStockCustom",
+               "NewType": "NorthwindModel.UnitsInStockEnum"
             }
          ]
       }

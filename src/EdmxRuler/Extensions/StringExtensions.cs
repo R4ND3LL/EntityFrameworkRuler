@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace EdmxRuler.Extensions;
 
@@ -83,8 +84,13 @@ internal static class StringExtensions {
         return true;
     }
 
-    /// <summary> will return _ in place of invalid chars such as spaces. </summary>
-    internal static string CleanseSymbolName(this string str) {
+    /// <summary>
+    /// Will return _ in place of invalid chars such as spaces.
+    /// EF6 standard policy in dealing with spaces is to just convert to underscore.
+    /// EF Core will eliminate the character and ensure next valid char is capitalized.
+    /// For EF Core usage, use GenerateCandidateIdentifier() instead.
+    /// </summary>
+    internal static string GenerateLegacyCandidateIdentifier(this string str) {
         if (string.IsNullOrEmpty(str)) return "";
         return new string(CleanseSymbolNameChars(str).ToArray());
 
@@ -98,6 +104,31 @@ internal static class StringExtensions {
                     yield return '_';
             }
         }
+    }
+
+    /// <summary>
+    /// Convert DB element name to entity identifier. This is the EF Core standard.
+    /// Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService.GenerateCandidateIdentifier()
+    /// </summary>
+    public static string GenerateCandidateIdentifier(this string originalIdentifier) {
+        var candidateStringBuilder = new StringBuilder();
+        var previousLetterCharInWordIsLowerCase = false;
+        var isFirstCharacterInWord = true;
+        foreach (var c in originalIdentifier) {
+            var isNotLetterOrDigit = !char.IsLetterOrDigit(c);
+            if (isNotLetterOrDigit
+                || (previousLetterCharInWordIsLowerCase && char.IsUpper(c))) {
+                isFirstCharacterInWord = true;
+                previousLetterCharInWordIsLowerCase = false;
+                if (isNotLetterOrDigit) continue;
+            }
+
+            candidateStringBuilder.Append(isFirstCharacterInWord ? char.ToUpperInvariant(c) : char.ToLowerInvariant(c));
+            isFirstCharacterInWord = false;
+            if (char.IsLower(c)) previousLetterCharInWordIsLowerCase = true;
+        }
+
+        return candidateStringBuilder.ToString();
     }
 
     /// <summary> will capitalize the first letter of the given string if it is lower. </summary>

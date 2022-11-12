@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
-namespace EdmxRuler.RuleModels.PrimitiveNaming;
+namespace EdmxRuler.Rules.PrimitiveNaming;
 
 /// <summary>
 /// Renaming rules for primitive properties (database columns) as well as the classes themselves (tables).

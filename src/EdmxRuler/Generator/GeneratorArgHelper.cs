@@ -6,8 +6,11 @@ using EdmxRuler.Extensions;
 namespace EdmxRuler.Generator;
 
 public static class GeneratorArgHelper {
-    internal static bool TryParseArgs(string[] argsArray, out GeneratorArgs generatorArgs) {
-        generatorArgs = new GeneratorArgs();
+    internal static GeneratorOptions GetDefaultOptions() =>
+        TryParseArgs(Array.Empty<string>(), out var o) ? o : o ?? new GeneratorOptions();
+
+    internal static bool TryParseArgs(string[] argsArray, out GeneratorOptions generatorOptions) {
+        generatorOptions = new GeneratorOptions();
 
         var args = argsArray.ToList().RemoveSwitchArgs(out var switchArgs);
 
@@ -17,7 +20,7 @@ public static class GeneratorArgHelper {
                 switch (switchArg) {
                     case "nometa":
                     case "nometadata":
-                        generatorArgs.NoMetadata = true;
+                        generatorOptions.NoMetadata = true;
                         break;
                     default:
                         return false; // invalid arg
@@ -28,24 +31,24 @@ public static class GeneratorArgHelper {
 
         if (args.IsNullOrEmpty() || (args.Count == 1 && args[0] == ".")) {
             // auto inspect current folder for both csproj and edmx
-            generatorArgs.ProjectBasePath = Directory.GetCurrentDirectory();
+            generatorOptions.ProjectBasePath = Directory.GetCurrentDirectory();
             var projectFiles =
-                Directory.GetFiles(generatorArgs.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
+                Directory.GetFiles(generatorOptions.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
             if (projectFiles.Length != 1) {
-                generatorArgs.ProjectBasePath = null;
+                generatorOptions.ProjectBasePath = null;
                 return false;
             }
 
-            var edmxFiles = Directory.GetFiles(generatorArgs.ProjectBasePath, "*.edmx");
+            var edmxFiles = Directory.GetFiles(generatorOptions.ProjectBasePath, "*.edmx");
             if (edmxFiles.Length != 1) return false;
 
-            generatorArgs.EdmxFilePath = edmxFiles[0];
+            generatorOptions.EdmxFilePath = edmxFiles[0];
             return true;
         }
 
-        generatorArgs.EdmxFilePath =
+        generatorOptions.EdmxFilePath =
             args.FirstOrDefault(o => o?.EndsWith(".edmx", StringComparison.OrdinalIgnoreCase) == true);
-        if (generatorArgs.EdmxFilePath == null)
+        if (generatorOptions.EdmxFilePath == null)
             // inspect arg paths for edmx
             foreach (var arg in args) {
                 if (arg.IsNullOrWhiteSpace() || !Directory.Exists(arg)) continue;
@@ -55,30 +58,30 @@ public static class GeneratorArgHelper {
 
                 if (edmxFiles.Length > 1) return false;
 
-                generatorArgs.EdmxFilePath = edmxFiles[0];
+                generatorOptions.EdmxFilePath = edmxFiles[0];
                 break;
             }
 
-        if (generatorArgs.EdmxFilePath.IsNullOrEmpty() || !File.Exists(generatorArgs.EdmxFilePath)) return false;
+        if (generatorOptions.EdmxFilePath.IsNullOrEmpty() || !File.Exists(generatorOptions.EdmxFilePath)) return false;
 
-        generatorArgs.ProjectBasePath =
+        generatorOptions.ProjectBasePath =
             args.FirstOrDefault(o => o?.EndsWith(".edmx", StringComparison.OrdinalIgnoreCase) == false);
-        if (generatorArgs.ProjectBasePath.IsNullOrWhiteSpace() || generatorArgs.ProjectBasePath == ".")
-            generatorArgs.ProjectBasePath = Directory.GetCurrentDirectory();
+        if (generatorOptions.ProjectBasePath.IsNullOrWhiteSpace() || generatorOptions.ProjectBasePath == ".")
+            generatorOptions.ProjectBasePath = Directory.GetCurrentDirectory();
 
-        if (!Directory.Exists(generatorArgs.ProjectBasePath)) {
-            if (File.Exists(generatorArgs.ProjectBasePath)) {
-                generatorArgs.ProjectBasePath = new FileInfo(generatorArgs.ProjectBasePath).Directory?.FullName;
-                if (generatorArgs.ProjectBasePath == null || !Directory.Exists(generatorArgs.ProjectBasePath))
+        if (!Directory.Exists(generatorOptions.ProjectBasePath)) {
+            if (File.Exists(generatorOptions.ProjectBasePath)) {
+                generatorOptions.ProjectBasePath = new FileInfo(generatorOptions.ProjectBasePath).Directory?.FullName;
+                if (generatorOptions.ProjectBasePath == null || !Directory.Exists(generatorOptions.ProjectBasePath))
                     return false;
             } else
                 return false;
         }
 
         var projectFiles2 =
-            Directory.GetFiles(generatorArgs.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
+            Directory.GetFiles(generatorOptions.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
         if (projectFiles2.Length == 0) {
-            generatorArgs.ProjectBasePath = null;
+            generatorOptions.ProjectBasePath = null;
             return false;
         }
 
