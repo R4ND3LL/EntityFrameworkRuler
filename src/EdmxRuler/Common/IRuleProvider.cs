@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,12 @@ public interface IRuleProvider {
 }
 
 public class DefaultRuleProvider : IRuleProvider {
+    private readonly IServiceProvider serviceProvider;
+
+    public DefaultRuleProvider(IServiceProvider serviceProvider) {
+        this.serviceProvider = serviceProvider;
+    }
+
     private LoadRulesResponse response;
 
     public PrimitiveNamingRules GetPrimitiveNamingRules() {

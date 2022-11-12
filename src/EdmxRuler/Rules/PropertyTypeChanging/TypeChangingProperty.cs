@@ -7,19 +7,19 @@ namespace EdmxRuler.Rules.PropertyTypeChanging;
 [DebuggerDisplay("Prop {Name} type {NewType}")]
 [DataContract]
 public sealed class TypeChangingProperty : IEdmxRulePropertyModel {
-    /// <summary> The raw database name of the column. </summary>
+    /// <summary> The raw database name of the column.  Optional. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 1)]
     public string DbName { get; set; }
 
-    /// <summary> The expected EF generated name for the property. </summary>
-    [DataMember(Order = 1)]
+    /// <summary> The expected EF generated name for the property.  Required. </summary>
+    [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
     public string Name { get; set; }
 
     /// <summary> The new type to give the property. </summary>
     [DataMember(Order = 2)]
     public string NewType { get; set; }
 
-    IEnumerable<string> IEdmxRulePropertyModel.GetCurrentNameOptions() => new[] { Name };
+    IEnumerable<string> IEdmxRulePropertyModel.GetCurrentNameOptions() => new[] { Name, DbName };
     string IEdmxRulePropertyModel.GetNewName() => Name;
     string IEdmxRulePropertyModel.GetNewTypeName() => NewType;
     NavigationMetadata IEdmxRulePropertyModel.GetNavigationMetadata() => default;

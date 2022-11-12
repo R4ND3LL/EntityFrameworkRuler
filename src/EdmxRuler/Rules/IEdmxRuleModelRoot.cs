@@ -17,13 +17,16 @@ public interface IEdmxRuleClassModel {
 }
 
 public interface IEdmxRulePropertyModel {
-    /// <summary> Get name(s) to look for when making changes </summary>
+    /// <summary> Get name(s) to look for when making changes.  Assume Roslyn stage, after EF model generation. </summary>
     IEnumerable<string> GetCurrentNameOptions();
 
-    /// <summary> Get new name in event of name change.  Can return null if not changing name. </summary>
+    /// <summary> Get new name in event of name change.  Can return null if not changing.  Assume Roslyn stage, after EF model generation. </summary>
     string GetNewName();
 
+    /// <summary> Get new type in event of type change.  Can return null if not changing.  Assume Roslyn stage, after EF model generation. </summary>
     string GetNewTypeName();
+
+    /// <summary> Get extra metadata about this navigation, if in fact it is a navigation. </summary>
     NavigationMetadata GetNavigationMetadata();
 }
 

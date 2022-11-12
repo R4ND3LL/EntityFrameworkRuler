@@ -100,7 +100,7 @@ public abstract class NotifyPropertyChanged : INotifyPropertyChanged {
 
     protected void RaisePropertyChanged(string propertyName) {
         var propertyChanged = PropertyChanged;
-        propertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        propertyChanged?.Invoke(this, new(propertyName));
     }
 
     protected void RaisePropertyChanged() {

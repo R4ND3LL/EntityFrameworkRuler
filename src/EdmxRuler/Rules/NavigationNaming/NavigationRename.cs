@@ -18,7 +18,7 @@ public sealed class NavigationRename : IEdmxRulePropertyModel {
     /// This way, for example, the user can supply options using the concatenated form like "Fk+Navigation(s)"
     /// as well as the basic pluralized form.
     /// </summary>
-    [DataMember(Order = 1)]
+    [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
     public HashSet<string> Name { get; set; } = new(2);
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]

@@ -65,7 +65,7 @@ internal static class RoslynExtensions {
         bool renameInComments = false,
         bool renameFile = false) {
         if (string.IsNullOrEmpty(className) || string.IsNullOrEmpty(newClassName) ||
-            className == newClassName) return new ClassActionResult { Project = project };
+            className == newClassName) return new() { Project = project };
 
         var classes = await FindClassesByName(project, namespaceName, className);
         foreach (var classSymbol in classes) {
@@ -73,14 +73,14 @@ internal static class RoslynExtensions {
             // rename all references to the property
             if (classSymbol.Name == newClassName) {
                 // name already matches target.
-                return new ClassActionResult { Project = project, ClassSymbol = classSymbol };
+                return new() { Project = project, ClassSymbol = classSymbol };
             }
 
             var start = DateTimeExtensions.GetTime();
             var newSolution = await Renamer.RenameSymbolAsync(
                 project.Solution,
                 classSymbol,
-                new SymbolRenameOptions(renameOverloads, renameInStrings, renameInComments, renameFile),
+                new(renameOverloads, renameInStrings, renameInComments, renameFile),
                 newClassName);
 #if DEBUG
             RenameClassAsyncTime += DateTimeExtensions.GetTime() - start;
@@ -91,10 +91,10 @@ internal static class RoslynExtensions {
             var fullName = $"{ns}.{newClassName}";
             var newSymbol = await FindClassByName(project, fullName);
             Debug.Assert(fullName != null);
-            return new ClassActionResult { Project = project, ClassSymbol = newSymbol };
+            return new() { Project = project, ClassSymbol = newSymbol };
         }
 
-        return new ClassActionResult { Project = project };
+        return new() { Project = project };
     }
 
     public static async Task<bool> ClassExists(this Project project, string namespaceName, string className) {
@@ -123,33 +123,33 @@ internal static class RoslynExtensions {
 
 
         var (_, propSyntax) = await LocateProperty(classSymbol, oldPropertyName);
-        if (propSyntax == null) return new PropertyActionResult { Project = project };
+        if (propSyntax == null) return new() { Project = project };
 
         if (oldPropertyName == newPropertyName) {
             // name already matches target.
-            return new PropertyActionResult { Project = project, PropertySyntax = propSyntax };
+            return new() { Project = project, PropertySyntax = propSyntax };
         }
 
         // rename all references to the property
         var document = project.GetDocument(propSyntax.SyntaxTree);
         if (document == null) {
-            // this indicates that given classSymbol does not match the project. 
-            throw new Exception($"Class {classSymbol.GetFullName()} document could not be found");
+            // this indicates that given classSymbol does not match the project.
+            throw new($"Class {classSymbol.GetFullName()} document could not be found");
         }
 
         var model = await document.GetSemanticModelAsync();
-        var propSymbol = model?.GetDeclaredSymbol(propSyntax) ?? throw new Exception("Property symbol not found");
+        var propSymbol = model?.GetDeclaredSymbol(propSyntax) ?? throw new("Property symbol not found");
 
         if (propSymbol.Name == newPropertyName) {
             // name already matches target.
-            return new PropertyActionResult { Project = project, PropertySyntax = propSyntax };
+            return new() { Project = project, PropertySyntax = propSyntax };
         }
 
         var start = DateTimeExtensions.GetTime();
         var newSolution = await Renamer.RenameSymbolAsync(
             project.Solution,
             propSymbol,
-            new SymbolRenameOptions(renameOverloads, renameInStrings, renameInComments, renameFile),
+            new(renameOverloads, renameInStrings, renameInComments, renameFile),
             newPropertyName);
 #if DEBUG
         RenamePropertyAsyncTime += DateTimeExtensions.GetTime() - start;
@@ -160,7 +160,7 @@ internal static class RoslynExtensions {
         // project = newSolution.Projects.Single(o => o.Id == project.Id);
         // var newClassSymbol = await CurrentFrom(classSymbol, project);
         Debug.Assert(newDocument != null, nameof(newDocument) + " != null");
-        return new PropertyActionResult { Project = newDocument.Project, PropertySyntax = propSyntax };
+        return new() { Project = newDocument.Project, PropertySyntax = propSyntax };
     }
 
     public static async Task<PropertyActionResult> ChangePropertyTypeAsync(this Project project,
@@ -172,7 +172,7 @@ internal static class RoslynExtensions {
         if (newTypeName.IsNullOrWhiteSpace()) throw new ArgumentNullException(nameof(newTypeName));
 
         var (_, propSyntax) = await LocateProperty(classSymbol, propertyName);
-        if (propSyntax == null) return new PropertyActionResult { Project = project };
+        if (propSyntax == null) return new() { Project = project };
 
         // change type
         var currentTypeText = propSyntax.Type?.ToString()?.Trim();
@@ -199,7 +199,7 @@ internal static class RoslynExtensions {
         // ChangePropertyTypeAsyncTime += DateTimeExtensions.GetTime() - start;
         //
         // var newClassSymbol = await CurrentFrom(classSymbol, project);
-        return new PropertyActionResult { Project = newDocument.Project, PropertySyntax = propSyntax };
+        return new() { Project = newDocument.Project, PropertySyntax = propSyntax };
     }
 
     public static async Task<bool> PropertyExists(this Project project, string fullClassName, string propertyName,
@@ -425,7 +425,7 @@ internal static class RoslynExtensions {
     }
 
     private static VisualStudioInstance MSBuildLocatorRegisterDefaults() {
-        // override default behavior using using reflection to get the VS instances list and register the LATEST version of VS  
+        // override default behavior using using reflection to get the VS instances list and register the LATEST version of VS
         try {
             var instances = MSBuildLocator.QueryVisualStudioInstances(VisualStudioInstanceQueryOptions.Default)
                 .OrderByDescending(o => o.Version).ToArray();

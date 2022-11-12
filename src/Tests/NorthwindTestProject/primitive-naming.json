@@ -6,23 +6,23 @@
          "SchemaName": "dbo",
          "Tables": [
             {
-               "DbName": "Alphabetical list of products",
-               "Name": "AlphabeticalListOfProduct",
+               "Name": "Alphabetical list of products",
+               "EntityName": "AlphabeticalListOfProduct",
                "NewName": "Alphabetical_list_of_product",
                "Columns": [
                   {
-                     "DbName": "ProductID",
-                     "Name": "ProductId",
+                     "Name": "ProductID",
+                     "PropertyName": "ProductId",
                      "NewName": "ProductID"
                   },
                   {
-                     "DbName": "SupplierID",
-                     "Name": "SupplierId",
+                     "Name": "SupplierID",
+                     "PropertyName": "SupplierId",
                      "NewName": "SupplierID"
                   },
                   {
-                     "DbName": "CategoryID",
-                     "Name": "CategoryId",
+                     "Name": "CategoryID",
+                     "PropertyName": "CategoryId",
                      "NewName": "CategoryID"
                   },
                   {
@@ -32,69 +32,73 @@
                ]
             },
             {
-               "Name": "Category",
+               "Name": "Categories",
+               "EntityName": "Category",
                "NewName": "Category",
                "Columns": [
                   {
-                     "DbName": "CategoryID",
-                     "Name": "CategoryId",
+                     "Name": "CategoryID",
+                     "PropertyName": "CategoryId",
                      "NewName": "CategoryID"
                   }
                ]
             },
             {
-               "DbName": "Category Sales for 1997",
-               "Name": "CategorySalesFor1997",
+               "Name": "Category Sales for 1997",
+               "EntityName": "CategorySalesFor1997",
                "NewName": "Category_Sales_for_1997",
                "Columns": [ ]
             },
             {
-               "DbName": "Current Product List",
-               "Name": "CurrentProductList",
+               "Name": "Current Product List",
+               "EntityName": "CurrentProductList",
                "NewName": "Current_Product_List",
                "Columns": [
                   {
-                     "DbName": "ProductID",
-                     "Name": "ProductId",
+                     "Name": "ProductID",
+                     "PropertyName": "ProductId",
                      "NewName": "ProductID"
                   }
                ]
             },
             {
-               "Name": "Customer",
+               "Name": "Customers",
+               "EntityName": "Customer",
                "NewName": "Customer",
                "Columns": [
                   {
-                     "DbName": "CustomerID",
-                     "Name": "CustomerId",
+                     "Name": "CustomerID",
+                     "PropertyName": "CustomerId",
                      "NewName": "CustomerID"
                   }
                ]
             },
             {
-               "DbName": "Customer and Suppliers by City",
-               "Name": "CustomerAndSuppliersByCity",
+               "Name": "Customer and Suppliers by City",
+               "EntityName": "CustomerAndSuppliersByCity",
                "NewName": "Customer_and_Suppliers_by_City",
                "Columns": [ ]
             },
             {
-               "Name": "CustomerDemographic",
+               "Name": "CustomerDemographics",
+               "EntityName": "CustomerDemographic",
                "NewName": "CustomerDemographic",
                "Columns": [
                   {
-                     "DbName": "CustomerTypeID",
-                     "Name": "CustomerTypeId",
+                     "Name": "CustomerTypeID",
+                     "PropertyName": "CustomerTypeId",
                      "NewName": "CustomerTypeID"
                   }
                ]
             },
             {
-               "Name": "Employee",
+               "Name": "Employees",
+               "EntityName": "Employee",
                "NewName": "Employee",
                "Columns": [
                   {
-                     "DbName": "EmployeeID",
-                     "Name": "EmployeeId",
+                     "Name": "EmployeeID",
+                     "PropertyName": "EmployeeId",
                      "NewName": "EmployeeID"
                   },
                   {
@@ -104,12 +108,13 @@
                ]
             },
             {
-               "Name": "Invoice",
+               "Name": "Invoices",
+               "EntityName": "Invoice",
                "NewName": "Invoice",
                "Columns": [
                   {
-                     "DbName": "CustomerID",
-                     "Name": "CustomerId",
+                     "Name": "CustomerID",
+                     "PropertyName": "CustomerId",
                      "NewName": "CustomerID"
                   },
                   {
@@ -117,13 +122,13 @@
                      "NewName": "CityCustom"
                   },
                   {
-                     "DbName": "OrderID",
-                     "Name": "OrderId",
+                     "Name": "OrderID",
+                     "PropertyName": "OrderId",
                      "NewName": "OrderID"
                   },
                   {
-                     "DbName": "ProductID",
-                     "Name": "ProductId",
+                     "Name": "ProductID",
+                     "PropertyName": "ProductId",
                      "NewName": "ProductID"
                   },
                   {
@@ -133,22 +138,23 @@
                ]
             },
             {
-               "Name": "Order",
+               "Name": "Orders",
+               "EntityName": "Order",
                "NewName": "Order",
                "Columns": [
                   {
-                     "DbName": "OrderID",
-                     "Name": "OrderId",
+                     "Name": "OrderID",
+                     "PropertyName": "OrderId",
                      "NewName": "OrderID"
                   },
                   {
-                     "DbName": "CustomerID",
-                     "Name": "CustomerId",
+                     "Name": "CustomerID",
+                     "PropertyName": "CustomerId",
                      "NewName": "CustomerID"
                   },
                   {
-                     "DbName": "EmployeeID",
-                     "Name": "EmployeeId",
+                     "Name": "EmployeeID",
+                     "PropertyName": "EmployeeId",
                      "NewName": "EmployeeID"
                   },
                   {
@@ -162,35 +168,35 @@
                ]
             },
             {
-               "DbName": "Order Details",
-               "Name": "OrderDetail",
+               "Name": "Order Details",
+               "EntityName": "OrderDetail",
                "NewName": "Order_Detail",
                "Columns": [
                   {
-                     "DbName": "OrderID",
-                     "Name": "OrderId",
+                     "Name": "OrderID",
+                     "PropertyName": "OrderId",
                      "NewName": "OrderID"
                   },
                   {
-                     "DbName": "ProductID",
-                     "Name": "ProductId",
+                     "Name": "ProductID",
+                     "PropertyName": "ProductId",
                      "NewName": "ProductID"
                   }
                ]
             },
             {
-               "DbName": "Order Details Extended",
-               "Name": "OrderDetailsExtended",
+               "Name": "Order Details Extended",
+               "EntityName": "OrderDetailsExtended",
                "NewName": "Order_Details_Extended",
                "Columns": [
                   {
-                     "DbName": "OrderID",
-                     "Name": "OrderId",
+                     "Name": "OrderID",
+                     "PropertyName": "OrderId",
                      "NewName": "OrderID"
                   },
                   {
-                     "DbName": "ProductID",
-                     "Name": "ProductId",
+                     "Name": "ProductID",
+                     "PropertyName": "ProductId",
                      "NewName": "ProductID"
                   },
                   {
@@ -204,75 +210,76 @@
                ]
             },
             {
-               "DbName": "Order Subtotals",
-               "Name": "OrderSubtotal",
+               "Name": "Order Subtotals",
+               "EntityName": "OrderSubtotal",
                "NewName": "Order_Subtotal",
                "Columns": [
                   {
-                     "DbName": "OrderID",
-                     "Name": "OrderId",
+                     "Name": "OrderID",
+                     "PropertyName": "OrderId",
                      "NewName": "OrderID"
                   }
                ]
             },
             {
-               "DbName": "Orders Qry",
-               "Name": "OrdersQry",
+               "Name": "Orders Qry",
+               "EntityName": "OrdersQry",
                "NewName": "Orders_Qry_Custom",
                "Columns": [
                   {
-                     "DbName": "OrderID",
-                     "Name": "OrderId",
+                     "Name": "OrderID",
+                     "PropertyName": "OrderId",
                      "NewName": "OrderID"
                   },
                   {
-                     "DbName": "CustomerID",
-                     "Name": "CustomerId",
+                     "Name": "CustomerID",
+                     "PropertyName": "CustomerId",
                      "NewName": "CustomerID"
                   },
                   {
-                     "DbName": "EmployeeID",
-                     "Name": "EmployeeId",
+                     "Name": "EmployeeID",
+                     "PropertyName": "EmployeeId",
                      "NewName": "EmployeeID"
                   }
                ]
             },
             {
-               "Name": "Product",
+               "Name": "Products",
+               "EntityName": "Product",
                "NewName": "Product",
                "Columns": [
                   {
-                     "DbName": "ProductID",
-                     "Name": "ProductId",
+                     "Name": "ProductID",
+                     "PropertyName": "ProductId",
                      "NewName": "ProductID"
                   },
                   {
-                     "DbName": "SupplierID",
-                     "Name": "SupplierId",
+                     "Name": "SupplierID",
+                     "PropertyName": "SupplierId",
                      "NewName": "SupplierID"
                   },
                   {
-                     "DbName": "CategoryID",
-                     "Name": "CategoryId",
+                     "Name": "CategoryID",
+                     "PropertyName": "CategoryId",
                      "NewName": "CategoryID"
                   }
                ]
             },
             {
-               "DbName": "Product Sales for 1997",
-               "Name": "ProductSalesFor1997",
+               "Name": "Product Sales for 1997",
+               "EntityName": "ProductSalesFor1997",
                "NewName": "Product_Sales_for_1997",
                "Columns": [ ]
             },
             {
-               "DbName": "Products Above Average Price",
-               "Name": "ProductsAboveAveragePrice",
+               "Name": "Products Above Average Price",
+               "EntityName": "ProductsAboveAveragePrice",
                "NewName": "Products_Above_Average_Price",
                "Columns": [ ]
             },
             {
-               "DbName": "Products by Category",
-               "Name": "ProductsByCategory",
+               "Name": "Products by Category",
+               "EntityName": "ProductsByCategory",
                "NewName": "Products_by_Category",
                "Columns": [
                   {
@@ -286,37 +293,36 @@
                ]
             },
             {
-               "DbName": "Region",
                "Name": "Region",
                "NewName": "RegionCustom",
                "Columns": [
                   {
-                     "DbName": "RegionID",
-                     "Name": "RegionId",
+                     "Name": "RegionID",
+                     "PropertyName": "RegionId",
                      "NewName": "RegionID"
                   }
                ]
             },
             {
-               "DbName": "Sales by Category",
-               "Name": "SalesByCategory",
+               "Name": "Sales by Category",
+               "EntityName": "SalesByCategory",
                "NewName": "Sales_by_Category",
                "Columns": [
                   {
-                     "DbName": "CategoryID",
-                     "Name": "CategoryId",
+                     "Name": "CategoryID",
+                     "PropertyName": "CategoryId",
                      "NewName": "CategoryID"
                   }
                ]
             },
             {
-               "DbName": "Sales Totals by Amount",
-               "Name": "SalesTotalsByAmount",
+               "Name": "Sales Totals by Amount",
+               "EntityName": "SalesTotalsByAmount",
                "NewName": "Sales_Totals_by_Amount",
                "Columns": [
                   {
-                     "DbName": "OrderID",
-                     "Name": "OrderId",
+                     "Name": "OrderID",
+                     "PropertyName": "OrderId",
                      "NewName": "OrderIDCustom"
                   },
                   {
@@ -330,95 +336,98 @@
                ]
             },
             {
-               "Name": "Shipper",
+               "Name": "Shippers",
+               "EntityName": "Shipper",
                "NewName": "Shipper",
                "Columns": [
                   {
-                     "DbName": "ShipperID",
-                     "Name": "ShipperId",
+                     "Name": "ShipperID",
+                     "PropertyName": "ShipperId",
                      "NewName": "ShipperID"
                   }
                ]
             },
             {
-               "DbName": "Summary of Sales by Quarter",
-               "Name": "SummaryOfSalesByQuarter",
+               "Name": "Summary of Sales by Quarter",
+               "EntityName": "SummaryOfSalesByQuarter",
                "NewName": "Summary_of_Sales_by_Quarter",
                "Columns": [
                   {
-                     "DbName": "OrderID",
-                     "Name": "OrderId",
+                     "Name": "OrderID",
+                     "PropertyName": "OrderId",
                      "NewName": "OrderID"
                   }
                ]
             },
             {
-               "DbName": "Summary of Sales by Year",
-               "Name": "SummaryOfSalesByYear",
+               "Name": "Summary of Sales by Year",
+               "EntityName": "SummaryOfSalesByYear",
                "NewName": "Summary_of_Sales_by_Year",
                "Columns": [
                   {
-                     "DbName": "OrderID",
-                     "Name": "OrderId",
+                     "Name": "OrderID",
+                     "PropertyName": "OrderId",
                      "NewName": "OrderID"
                   }
                ]
             },
             {
-               "Name": "Supplier",
+               "Name": "Suppliers",
+               "EntityName": "Supplier",
                "NewName": "Supplier",
                "Columns": [
                   {
-                     "DbName": "SupplierID",
-                     "Name": "SupplierId",
+                     "Name": "SupplierID",
+                     "PropertyName": "SupplierId",
                      "NewName": "SupplierID"
                   }
                ]
             },
             {
-               "DbName": "sysdiagrams",
-               "Name": "Sysdiagram",
+               "Name": "sysdiagrams",
+               "EntityName": "Sysdiagram",
                "NewName": "sysdiagram",
                "Columns": [
                   {
-                     "DbName": "name",
-                     "Name": "Name",
+                     "Name": "name",
+                     "PropertyName": "Name",
                      "NewName": "name"
                   },
                   {
-                     "DbName": "principal_id",
-                     "Name": "PrincipalId",
+                     "Name": "principal_id",
+                     "PropertyName": "PrincipalId",
                      "NewName": "principal_id"
                   },
                   {
-                     "DbName": "diagram_id",
-                     "Name": "DiagramId",
+                     "Name": "diagram_id",
+                     "PropertyName": "DiagramId",
                      "NewName": "diagram_id"
                   },
                   {
-                     "DbName": "version",
-                     "Name": "Version",
+                     "Name": "version",
+                     "PropertyName": "Version",
                      "NewName": "version"
                   },
                   {
-                     "DbName": "definition",
-                     "Name": "Definition",
+                     "Name": "definition",
+                     "PropertyName": "Definition",
                      "NewName": "definition"
                   }
                ]
             },
             {
-               "Name": "Territory",
+               "Name": "Territories",
+               "EntityName": "Territory",
                "NewName": "Territory",
                "Columns": [
                   {
-                     "DbName": "TerritoryID",
-                     "Name": "TerritoryId",
+                     "Name": "TerritoryID",
+                     "PropertyName": "TerritoryId",
                      "NewName": "TerritoryID"
                   },
                   {
-                     "DbName": "RegionID",
-                     "Name": "RegionId",
+                     "Name": "RegionID",
+                     "PropertyName": "RegionId",
                      "NewName": "RegionID"
                   }
                ]

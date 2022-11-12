@@ -92,7 +92,7 @@ internal static class StringExtensions {
     /// </summary>
     internal static string GenerateLegacyCandidateIdentifier(this string str) {
         if (string.IsNullOrEmpty(str)) return "";
-        return new string(CleanseSymbolNameChars(str).ToArray());
+        return new(CleanseSymbolNameChars(str).ToArray());
 
         static IEnumerable<char> CleanseSymbolNameChars(string str) {
             if (string.IsNullOrEmpty(str)) yield break;

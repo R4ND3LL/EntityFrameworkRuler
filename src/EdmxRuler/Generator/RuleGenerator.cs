@@ -32,7 +32,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     /// <param name="useDatabaseNames"> A value indicating whether to use the database schema names directly. </param>
     public RuleGenerator(string edmxFilePath, IEdmxRulerNamingService namingService = null, bool noMetadata = false,
         bool noPluralize = false, bool useDatabaseNames = false)
-        : this(new GeneratorOptions() {
+        : this(new() {
             EdmxFilePath = edmxFilePath,
             NoMetadata = noMetadata,
             NoPluralize = noPluralize,
@@ -123,7 +123,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                 return response;
             }
 
-            fileNameOptions ??= new RuleFileNameOptions();
+            fileNameOptions ??= new();
             await TryWriteRules<PrimitiveNamingRules>(fileNameOptions.PrimitiveNamingFile);
             await TryWriteRules<NavigationNamingRules>(fileNameOptions.NavigationNamingFile);
             await TryWriteRules<PropertyTypeChangingRules>(fileNameOptions.PropertyTypeChangingFile);
@@ -134,7 +134,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                 try {
                     if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
                     T rulesRoot = rules?.OfType<T>().FirstOrDefault() ??
-                                  throw new Exception("Rule model null");
+                                  throw new("Rule model null");
                     await WriteRules<T>(rulesRoot, fileName);
                     response.LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");
                 } catch (Exception ex) {
@@ -156,7 +156,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     #region Main rule gen methods
 
     private PrimitiveNamingRules GetPrimitiveNamingRules(EdmxParsed edmx) {
-        if (edmx?.Entities.IsNullOrEmpty() != false) return new PrimitiveNamingRules();
+        if (edmx?.Entities.IsNullOrEmpty() != false) return new();
 
         var root = new PrimitiveNamingRules();
 
@@ -173,15 +173,15 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                 var renamed = false;
                 // Get the expected EF entity identifier based on options.. just like EF would:
                 var expectedClassName = NamingService.GetExpectedEntityTypeName(entity);
-                var tbl = new ClassRename {
-                    DbName = entity.Name == expectedClassName ? null : entity.StorageName,
-                    Name = expectedClassName,
-                    NewName = entity.Name.CoalesceWhiteSpace(expectedClassName)
+                var tbl = new TableRename {
+                    Name = entity.StorageName,
+                    EntityName = entity.StorageName == expectedClassName ? null : expectedClassName,
+                    NewName = entity.Name.CoalesceWhiteSpace(expectedClassName, entity.StorageName)
                 };
 
                 if (tbl.Name != tbl.NewName) renamed = true;
 
-                Debug.Assert(tbl.Name.IsValidSymbolName());
+                Debug.Assert(tbl.EntityName == null || tbl.EntityName.IsValidSymbolName());
                 Debug.Assert(tbl.NewName.IsValidSymbolName());
 
                 foreach (var property in entity.Properties) {
@@ -190,13 +190,13 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                     var expectedPropertyName = NamingService.GetExpectedPropertyName(property, expectedClassName);
                     if (expectedPropertyName.IsNullOrWhiteSpace() ||
                         property.Name == expectedPropertyName) continue;
-                    tbl.Columns ??= new List<PropertyRename>();
-                    tbl.Columns.Add(new PropertyRename {
-                        DbName = expectedPropertyName == property.DbColumnName ? null : property.DbColumnName,
-                        Name = expectedPropertyName,
+                    tbl.Columns ??= new();
+                    tbl.Columns.Add(new() {
+                        Name = property.DbColumnName,
+                        PropertyName = expectedPropertyName == property.DbColumnName ? null : expectedPropertyName,
                         NewName = property.Name
                     });
-                    Debug.Assert(tbl.Columns[^1].Name.IsValidSymbolName());
+                    Debug.Assert(tbl.Columns[^1].PropertyName == null || tbl.Columns[^1].PropertyName.IsValidSymbolName());
                     Debug.Assert(tbl.Columns[^1].NewName.IsValidSymbolName());
                     renamed = true;
                 }
@@ -210,9 +210,9 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
 
     private NavigationNamingRules GetNavigationNamingRules(EdmxParsed edmx) {
         var rule = new NavigationNamingRules();
-        rule.Classes ??= new List<ClassReference>();
+        rule.Classes ??= new();
 
-        if (edmx?.Entities.IsNullOrEmpty() != false) return new NavigationNamingRules();
+        if (edmx?.Entities.IsNullOrEmpty() != false) return new();
 
         foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
             // omit the namespace. it often does not match the Reverse Engineered value
@@ -226,7 +226,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             };
 
             foreach (var navigation in entity.NavigationProperties) {
-                tbl.Properties ??= new List<NavigationRename>();
+                tbl.Properties ??= new();
                 var navigationRename = new NavigationRename {
                     NewName = navigation.Name
                 };
@@ -260,7 +260,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
 
     private PropertyTypeChangingRules GetPropertyTypeChangingRules(EdmxParsed edmx) {
         var rule = new PropertyTypeChangingRules();
-        rule.Classes ??= new List<TypeChangingClass>();
+        rule.Classes ??= new();
 
         if (edmx?.Entities.IsNullOrEmpty() != false) return rule;
 
@@ -278,8 +278,8 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             foreach (var property in entity.Properties) {
                 // if property name is different than db, it has to go into output
                 if (property?.EnumType == null) continue;
-                tbl.Properties ??= new List<TypeChangingProperty>();
-                tbl.Properties.Add(new TypeChangingProperty {
+                tbl.Properties ??= new();
+                tbl.Properties.Add(new() {
                     DbName = property.Name == property.DbColumnName ? null : property.DbColumnName,
                     Name = property.Name, // expected name is EDMX property name at this stage (because primitives have been applied)
                     NewType = property.EnumType.ExternalTypeName ?? property.EnumType.FullName

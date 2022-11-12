@@ -7,12 +7,12 @@ namespace EdmxRuler.Rules.PropertyTypeChanging;
 [DebuggerDisplay("Class {Name}")]
 [DataContract]
 public sealed class TypeChangingClass : IEdmxRuleClassModel {
-    /// <summary> The raw database name of the table. </summary>
+    /// <summary> The raw database name of the table.  Optional. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 1)]
     public string DbName { get; set; }
 
-    /// <summary> The expected EF generated name for the entity. </summary>
-    [DataMember(Order = 2)]
+    /// <summary> The expected EF generated name for the entity.  Required. </summary>
+    [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 2)]
     public string Name { get; set; }
 
     /// <summary> The property rules to apply to this entity. </summary>

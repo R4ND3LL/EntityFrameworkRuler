@@ -1,5 +1,7 @@
+using EdmxRuler.Common;
 using EdmxRuler.Generator.Services;
 using Microsoft.EntityFrameworkCore.Design;
+
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 namespace EntityFrameworkRuler.Services {

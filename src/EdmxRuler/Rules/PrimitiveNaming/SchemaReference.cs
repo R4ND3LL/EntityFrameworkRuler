@@ -9,7 +9,7 @@ namespace EdmxRuler.Rules.PrimitiveNaming;
 [DataContract]
 public sealed class SchemaReference {
     public SchemaReference() {
-        Tables = new List<ClassRename>();
+        Tables = new();
     }
 
     [DataMember]
@@ -19,7 +19,7 @@ public sealed class SchemaReference {
     public string SchemaName { get; set; }
 
     [DataMember(EmitDefaultValue = false, IsRequired = false)]
-    public List<ClassRename> Tables { get; set; }
+    public List<TableRename> Tables { get; set; }
 
     [DataMember(EmitDefaultValue = false, IsRequired = false)]
     public string TableRegexPattern { get; set; }

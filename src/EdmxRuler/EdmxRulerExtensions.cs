@@ -16,7 +16,7 @@ public static class EdmxRulerExtensions {
             .AddSingleton<IEdmxRulerNamingService, EdmxRulerNamingService>()
             .AddSingleton<IEdmxRulerPluralizer, HumanizerPluralizer>()
             .AddSingleton<IRuleGenerator, RuleGenerator>()
-            .CoerceServiceCollection();
+            .CoerceGeneratorServiceCollection();
 
     /// <summary> Add RuleApplicator services </summary>
     public static T AddRuleApplicator<T>(this T serviceCollection, ApplicatorOptions applicatorOptions = null)
@@ -24,9 +24,14 @@ public static class EdmxRulerExtensions {
         (T)serviceCollection
             .AddSingleton(applicatorOptions ?? ApplicatorArgHelper.GetDefaultOptions())
             .AddSingleton<IRuleApplicator, RuleApplicator>()
-            .CoerceServiceCollection();
+            .CoerceApplicatorServiceCollection();
 
-    private static T CoerceServiceCollection<T>(this T serviceCollection) where T : IServiceCollection {
+    private static T CoerceGeneratorServiceCollection<T>(this T serviceCollection) where T : IServiceCollection {
+        // possible location of reflection based service wiring on the target project ?
+        return serviceCollection;
+    }
+
+    private static T CoerceApplicatorServiceCollection<T>(this T serviceCollection) where T : IServiceCollection {
         // possible location of reflection based service wiring on the target project ?
         return serviceCollection;
     }

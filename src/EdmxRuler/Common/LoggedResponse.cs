@@ -44,9 +44,9 @@ public enum LogType {
 }
 
 public struct LogMessage {
-    internal static LogMessage Information(string message) => new LogMessage(LogType.Information, message);
-    internal static LogMessage Warning(string message) => new LogMessage(LogType.Warning, message);
-    internal static LogMessage Error(string message) => new LogMessage(LogType.Error, message);
+    internal static LogMessage Information(string message) => new(LogType.Information, message);
+    internal static LogMessage Warning(string message) => new(LogType.Warning, message);
+    internal static LogMessage Error(string message) => new(LogType.Error, message);
 
     // ReSharper disable once MemberCanBePrivate.Global
     public LogMessage(LogType type, string message) {

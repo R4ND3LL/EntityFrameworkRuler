@@ -18,7 +18,7 @@ public class EdmxRulerNamingService : IEdmxRulerNamingService {
     public EdmxRulerNamingService(GeneratorOptions options = null, IEdmxRulerPluralizer pluralizer = null) {
         this.options = options ?? new GeneratorOptions();
         this.pluralizer = pluralizer ?? new HumanizerPluralizer();
-        cSharpUtilities = new CSharpUtilities();
+        cSharpUtilities = new();
         tableNamer = new CSharpUniqueNamer<EntityType>(
             this.options.UseDatabaseNames
                 ? (t => t.Name)
@@ -27,7 +27,7 @@ public class EdmxRulerNamingService : IEdmxRulerNamingService {
             this.options.NoPluralize
                 ? null
                 : this.pluralizer.Singularize);
-        columnNamers = new Dictionary<EntityType, CSharpUniqueNamer<EntityProperty>>();
+        columnNamers = new();
     }
 
     private readonly GeneratorOptions options;
@@ -141,12 +141,12 @@ public class EdmxRulerNamingService : IEdmxRulerNamingService {
 
         CSharpUniqueNamer<EntityProperty> Factory(EntityType _) {
             if (options.UseDatabaseNames)
-                return new CSharpUniqueNamer<EntityProperty>(
+                return new(
                     c => c.DbColumnName,
                     usedNames,
                     cSharpUtilities,
                     singularizePluralizer: null);
-            return new CSharpUniqueNamer<EntityProperty>(
+            return new(
                 GenerateCandidateIdentifier,
                 usedNames,
                 cSharpUtilities,

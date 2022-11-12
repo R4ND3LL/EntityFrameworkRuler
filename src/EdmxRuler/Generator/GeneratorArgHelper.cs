@@ -10,7 +10,7 @@ public static class GeneratorArgHelper {
         TryParseArgs(Array.Empty<string>(), out var o) ? o : o ?? new GeneratorOptions();
 
     internal static bool TryParseArgs(string[] argsArray, out GeneratorOptions generatorOptions) {
-        generatorOptions = new GeneratorOptions();
+        generatorOptions = new();
 
         var args = argsArray.ToList().RemoveSwitchArgs(out var switchArgs);
 

@@ -77,7 +77,7 @@ internal static class ListExtensions {
     }
 #endif
     public static TValue GetOrAddNew<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key) where TValue : new() {
-        return GetOrAddNew<TKey, TValue>(source, key, _ => new TValue());
+        return GetOrAddNew<TKey, TValue>(source, key, _ => new());
     }
 
     public static TValue GetOrAddNew<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key, Func<TKey, TValue> valueFactory) {
@@ -88,7 +88,7 @@ internal static class ListExtensions {
 
     /// <summary> remove items from the list that are program arg switches, but append those to the outbound switchArgs </summary>
     internal static List<string> RemoveSwitchArgs(this List<string> args, out List<string> switchArgs) {
-        switchArgs = new List<string>();
+        switchArgs = new();
         for (var i = args.Count - 1; i >= 0; i--) {
             var arg = args[i];
             var switchArg = arg.GetSwitchArg();

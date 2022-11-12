@@ -10,7 +10,7 @@ public static class ApplicatorArgHelper {
         TryParseArgs(Array.Empty<string>(), out var o) ? o : o ?? new ApplicatorOptions();
 
     internal static bool TryParseArgs(string[] argsArray, out ApplicatorOptions applicatorOptions) {
-        applicatorOptions = new ApplicatorOptions();
+        applicatorOptions = new();
         var args = argsArray.ToList().RemoveSwitchArgs(out var switchArgs);
 
         if (switchArgs.Count > 0) {

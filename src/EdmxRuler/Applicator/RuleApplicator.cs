@@ -29,7 +29,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
     /// <param name="projectBasePath">project folder containing rules and target files.</param>
     /// <param name="adhocOnly"> Form an adhoc in-memory project out of the target entity model files instead of loading project directly. </param>
     public RuleApplicator(string projectBasePath, bool adhocOnly = false)
-        : this(new ApplicatorOptions() {
+        : this(new() {
             ProjectBasePath = projectBasePath,
             AdhocOnly = adhocOnly
         }) {
@@ -95,7 +95,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
             try {
                 if (rule == null) continue;
 
-                response = new ApplyRulesResponse(rule);
+                response = new(rule);
                 response.OnLog += ResponseOnLog;
                 try {
                     switch (rule) {
@@ -120,7 +120,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
                 responses.Add(response);
             } catch (Exception ex) {
                 Console.WriteLine(ex);
-                response ??= new ApplyRulesResponse(rule);
+                response ??= new(rule);
                 response.LogError($"Error processing {rule}: {ex.Message}");
                 responses.Add(response);
             }
@@ -143,7 +143,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
             var fullProjectPath = Directory.GetFiles(ProjectBasePath, "*.csproj").FirstOrDefault();
             if (fullProjectPath == null) throw new ArgumentException("csproj not found", nameof(ProjectBasePath));
 
-            fileNameOptions ??= new RuleFileNameOptions();
+            fileNameOptions ??= new();
 
             var jsonFiles = new[] {
                     fileNameOptions.PrimitiveNamingFile, fileNameOptions.NavigationNamingFile,
@@ -289,7 +289,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
 
         if (classRules == null) return; // nothing to do
 
-        state ??= new RoslynProjectState(this);
+        state ??= new(this);
         await state.TryLoadProjectOrFallbackOnce(ProjectBasePath, contextFolder, modelsFolder, response);
         if (state.Project == null || !state.Project.Documents.Any()) return;
 
@@ -623,7 +623,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
             loggedResponse.LogError($"Unable to read csproj: {ex.Message}");
         }
 
-        return new CsProject();
+        return new();
     }
 
     internal sealed class RoslynProjectState {

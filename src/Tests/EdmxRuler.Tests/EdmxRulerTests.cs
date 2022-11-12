@@ -60,12 +60,12 @@ public sealed class EdmxRulerTests {
         primitiveNamingRules.Schemas[0].Tables[0].Columns.Count.ShouldBe(4);
         primitiveNamingRules.Schemas[0].Tables[3].Columns.Count.ShouldBe(1);
         primitiveNamingRules.Schemas[0].Tables[4].Columns.Count.ShouldBe(1);
-        primitiveNamingRules.Schemas[0].Tables[0].Columns[0].Name.ShouldBe("ProductId");
+        primitiveNamingRules.Schemas[0].Tables[0].Columns[0].PropertyName.ShouldBe("ProductId");
         primitiveNamingRules.Schemas[0].Tables[0].Columns[0].NewName.ShouldBe("ProductID");
-        primitiveNamingRules.Schemas[0].Tables.ForEach(o => o.Name.IsValidSymbolName().ShouldBeTrue());
+        primitiveNamingRules.Schemas[0].Tables.ForEach(o => (o.EntityName == null || o.EntityName.IsValidSymbolName()).ShouldBeTrue());
         primitiveNamingRules.Schemas[0].Tables.ForEach(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
         primitiveNamingRules.Schemas[0].Tables.SelectMany(o => o.Columns)
-            .ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
+            .ForAll(o => (o.PropertyName == null || o.PropertyName.IsValidSymbolName()).ShouldBeTrue());
         primitiveNamingRules.Schemas[0].Tables.SelectMany(o => o.Columns)
             .ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
 

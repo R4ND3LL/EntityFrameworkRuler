@@ -17,7 +17,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
     }
 
     private EdmxParser(string fileInstancePath) {
-        State = new EdmxParsed(fileInstancePath);
+        State = new(fileInstancePath);
         if (!File.Exists(fileInstancePath)) throw new InvalidDataException($"Could not find file {fileInstancePath}");
 
         var edmxModel = EdmxSerializer.Deserialize(File.ReadAllText(fileInstancePath));
@@ -107,7 +107,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
                         entity.StorageKey.Add(property);
                 }
 
-                // link up enums: 
+                // link up enums:
                 var typeNameParts = property.TypeName.SplitNamespaceAndName();
                 EnumType enumType;
                 if (typeNameParts.namespaceName.HasNonWhiteSpace()) {
@@ -125,7 +125,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
                 }
             }
 
-            // link navigations to association elements 
+            // link navigations to association elements
             foreach (var conceptualProperty in conceptualEntityType.NavigationProperties) {
                 var property = new NavigationProperty(entity, conceptualProperty);
                 entity.NavigationProperties.Add(property);
@@ -153,7 +153,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
 
         // with all entities loaded, perform association linking
         foreach (var entity in Entities)
-        foreach (var navigation in entity.NavigationProperties) { 
+        foreach (var navigation in entity.NavigationProperties) {
             if (navigation.Association != null) continue; // wired up from the opposite end!
             var ass = navigation.ConceptualAssociation;
             if (ass == null) continue;
@@ -181,7 +181,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
             }
 #if DEBUGPARSER
             if (navigation.Association == null && Debugger.IsAttached)
-                Debugger.Break(); // invalid association. May be design time only?  
+                Debugger.Break(); // invalid association. May be design time only?
 #endif
         }
 #if DEBUGPARSER
@@ -242,7 +242,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
                 o.Relationship == navigation.Relationship && o != navigation);
         if (inverseNavigation == null || navigation == inverseNavigation) return;
         var a = new FkAssociation(ass, endRoles, navigation, inverseNavigation,
-            new ReferentialConstraint(constraint, pProps, dProps)
+            new(constraint, pProps, dProps)
         );
         if (navigation.Association != a) throw new InvalidConstraintException("Association not wired to navigation");
     }
