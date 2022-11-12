@@ -1,19 +1,15 @@
-﻿namespace NorthwindTestProject.Models;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-public partial class Shipper {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage",
-        "CA2214:DoNotCallOverridableMethodsInConstructors")]
-    public Shipper() {
-        OrdersNavigation = new HashSet<Order>();
-    }
+namespace NorthwindTestProject.Models;
 
-    public int ShipperID { get; set; }
+public partial class Shipper
+{
+    public int ShipperId { get; set; }
+
     public string CompanyName { get; set; }
+
     public string Phone { get; set; }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-    public virtual ICollection<Order> OrdersNavigation { get; set; }
+    public virtual ICollection<Order> Orders { get; } = new List<Order>();
 }

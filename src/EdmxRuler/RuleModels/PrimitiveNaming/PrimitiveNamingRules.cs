@@ -12,8 +12,12 @@ namespace EdmxRuler.RuleModels.PrimitiveNaming;
 /// </summary>
 [DataContract]
 public sealed class PrimitiveNamingRules : IEdmxRuleModelRoot {
-    [DataMember]
+    [DataMember(Order = 1)]
+    public bool PreserveCasingUsingRegex { get; set; }
+
+    [DataMember(Order = 2)]
     public List<SchemaReference> Schemas { get; set; } = new();
+
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     public EdmxRuleModelKind Kind => EdmxRuleModelKind.PrimitiveNaming;

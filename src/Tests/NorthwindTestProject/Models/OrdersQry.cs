@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NorthwindTestProject.Models;
 
-public partial class Order
+public partial class OrdersQry
 {
     public int OrderId { get; set; }
 
@@ -33,11 +33,15 @@ public partial class Order
 
     public string ShipCountry { get; set; }
 
-    public virtual Customer Customer { get; set; }
+    public string CompanyName { get; set; }
 
-    public virtual Employee Employee { get; set; }
+    public string Address { get; set; }
 
-    public virtual ICollection<OrderDetail> OrderDetails { get; } = new List<OrderDetail>();
+    public string City { get; set; }
 
-    public virtual Shipper ShipViaNavigation { get; set; }
+    public string Region { get; set; }
+
+    public string PostalCode { get; set; }
+
+    public string Country { get; set; }
 }

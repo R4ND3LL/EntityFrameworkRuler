@@ -15,6 +15,8 @@ namespace EntityFrameworkRuler {
         public void ConfigureDesignTimeServices(IServiceCollection services) {
             services.AddSingleton<IPluralizer, EfPluralizer>();
             services.AddSingleton<ICandidateNamingService, EfCandidateNamingService>();
+            //services.AddSingleton<ICandidateNamingService, CandidateNamingService>();
+            services.AddSingleton<EdmxRuler.Common.IRuleProvider, EdmxRuler.Common.DefaultRuleProvider>();
         }
     }
 }

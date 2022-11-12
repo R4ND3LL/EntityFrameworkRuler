@@ -15,13 +15,12 @@ namespace EntityFrameworkRuler.Services;
 /// <summary> Naming service override to be used by Ef scaffold process. </summary>
 public class EfCandidateNamingService : CandidateNamingService {
     private readonly PrimitiveNamingRules primitiveNamingRules;
-    private readonly bool preserveCasingUsingRegex;
     private readonly NavigationNamingRules navigationRules;
 
     public EfCandidateNamingService(IRuleProvider ruleProvider) {
         if (!Debugger.IsAttached) Debugger.Launch();
-        primitiveNamingRules = ruleProvider.GetPrimitiveNamingRules();
-        navigationRules = ruleProvider.GetNavigationNamingRules();
+        primitiveNamingRules = ruleProvider?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
+        navigationRules = ruleProvider?.GetNavigationNamingRules() ?? new NavigationNamingRules();
         //this.preserveCasingUsingRegex = preserveCasingUsingRegex;
     }
 
@@ -42,7 +41,7 @@ public class EfCandidateNamingService : CandidateNamingService {
         if (schema.Tables != null && schema.Tables.Any(t => t.Name == originalTable.Name))
             newTableName = schema.Tables.SingleOrDefault(t => t.Name == originalTable.Name)?.NewName;
         else if (!string.IsNullOrEmpty(schema.TableRegexPattern) && schema.TablePatternReplaceWith != null) {
-            if (preserveCasingUsingRegex)
+            if (primitiveNamingRules.PreserveCasingUsingRegex)
                 newTableName = RegexNameReplace(schema.TableRegexPattern, originalTable.Name,
                     schema.TablePatternReplaceWith);
             else
@@ -64,6 +63,46 @@ public class EfCandidateNamingService : CandidateNamingService {
 
     /// <summary> Name that column </summary>
     public override string GenerateCandidateIdentifier(DatabaseColumn originalColumn) {
+        if (originalColumn is null) throw new ArgumentNullException(nameof(originalColumn));
+
+        var candidateStringBuilder = new StringBuilder();
+
+        var schema = GetSchema(originalColumn.Table.Schema);
+
+        if (schema == null || schema.Tables == null) return base.GenerateCandidateIdentifier(originalColumn);
+
+        var renamers = schema.Tables
+            .Where(t => t.Name == originalColumn.Table.Name && t.Columns != null)
+            .Select(t => t)
+            .ToList();
+
+        if (renamers.Count > 0) {
+            var column = renamers
+                .SelectMany(c => c.Columns.Where(n => n.Name == originalColumn.Name))
+                .FirstOrDefault();
+
+            if (column != null) {
+                candidateStringBuilder.Append(column.NewName);
+                return candidateStringBuilder.ToString();
+            }
+        }
+
+        var newColumnName = string.Empty;
+
+        if (!string.IsNullOrEmpty(schema.ColumnRegexPattern) && schema.ColumnPatternReplaceWith != null) {
+            if (primitiveNamingRules.PreserveCasingUsingRegex)
+                newColumnName = RegexNameReplace(schema.ColumnRegexPattern, originalColumn.Name,
+                    schema.ColumnPatternReplaceWith);
+            else
+                newColumnName = GenerateIdentifier(RegexNameReplace(schema.ColumnRegexPattern, originalColumn.Name,
+                    schema.ColumnPatternReplaceWith));
+
+            if (!string.IsNullOrWhiteSpace(newColumnName)) {
+                candidateStringBuilder.Append(newColumnName);
+                return candidateStringBuilder.ToString();
+            }
+        }
+
         return base.GenerateCandidateIdentifier(originalColumn);
     }
 
