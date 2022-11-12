@@ -1,24 +1,34 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.RegularExpressions;
 using EdmxRuler.Common;
+using EdmxRuler.Extensions;
 using EdmxRuler.RuleModels.NavigationNaming;
 using EdmxRuler.RuleModels.PrimitiveNaming;
+using EntityFrameworkRuler.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
+
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 // ReSharper disable ClassCanBeSealed.Global
 
 namespace EntityFrameworkRuler.Services;
 
 /// <summary> Naming service override to be used by Ef scaffold process. </summary>
+[SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class EfCandidateNamingService : CandidateNamingService {
     private readonly PrimitiveNamingRules primitiveNamingRules;
     private readonly NavigationNamingRules navigationRules;
 
+    /// <inheritdoc />
     public EfCandidateNamingService(IRuleProvider ruleProvider) {
+#if DEBUG
         if (!Debugger.IsAttached) Debugger.Launch();
+#endif
         primitiveNamingRules = ruleProvider?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
         navigationRules = ruleProvider?.GetNavigationNamingRules() ?? new NavigationNamingRules();
         //this.preserveCasingUsingRegex = preserveCasingUsingRegex;
@@ -30,7 +40,7 @@ public class EfCandidateNamingService : CandidateNamingService {
 
         var candidateStringBuilder = new StringBuilder();
 
-        var schema = GetSchema(originalTable.Schema);
+        var schema = GetSchemaReference(originalTable.Schema);
 
         if (schema == null) return base.GenerateCandidateIdentifier(originalTable);
 
@@ -67,7 +77,7 @@ public class EfCandidateNamingService : CandidateNamingService {
 
         var candidateStringBuilder = new StringBuilder();
 
-        var schema = GetSchema(originalColumn.Table.Schema);
+        var schema = GetSchemaReference(originalColumn.Table.Schema);
 
         if (schema == null || schema.Tables == null) return base.GenerateCandidateIdentifier(originalColumn);
 
@@ -107,19 +117,76 @@ public class EfCandidateNamingService : CandidateNamingService {
     }
 
     /// <summary> Name that navigation dependent </summary>
-    public override string GetDependentEndCandidateNavigationPropertyName(IForeignKey foreignKey) {
-        return base.GetDependentEndCandidateNavigationPropertyName(foreignKey);
+    public override string GetDependentEndCandidateNavigationPropertyName(IReadOnlyForeignKey foreignKey) {
+        if (foreignKey is null) throw new ArgumentNullException(nameof(foreignKey));
+
+        var defaultEfName = base.GetDependentEndCandidateNavigationPropertyName(foreignKey);
+        return GetCandidateNavigationPropertyName(foreignKey, false, defaultEfName);
     }
 
     /// <summary> Name that navigation principal </summary>
-    public override string GetPrincipalEndCandidateNavigationPropertyName(IForeignKey foreignKey,
+    public override string GetPrincipalEndCandidateNavigationPropertyName(IReadOnlyForeignKey foreignKey,
         string dependentEndNavigationPropertyName) {
-        return base.GetPrincipalEndCandidateNavigationPropertyName(foreignKey, dependentEndNavigationPropertyName);
+        if (foreignKey is null) throw new ArgumentNullException(nameof(foreignKey));
+        var defaultEfName = base.GetPrincipalEndCandidateNavigationPropertyName(foreignKey, dependentEndNavigationPropertyName);
+        return GetCandidateNavigationPropertyName(foreignKey, true, defaultEfName);
     }
+
 
     #region internal members
 
-    private static string GenerateIdentifier(string value) {
+    /// <summary> Name that navigation dependent </summary>
+    protected virtual string GetCandidateNavigationPropertyName(IReadOnlyForeignKey foreignKey, bool thisIsPrincipal,
+        string defaultEfName) {
+        if (foreignKey is null) throw new ArgumentNullException(nameof(foreignKey));
+        if (defaultEfName.IsNullOrEmpty()) throw new ArgumentNullException(nameof(defaultEfName));
+
+        var fkName = foreignKey.GetConstraintName();
+        var navigation = foreignKey.GetNavigation(!thisIsPrincipal);
+        var entity = navigation?.DeclaringEntityType;
+
+        if (entity == null) return defaultEfName;
+
+        var classRef = GetClassReference(entity.Name);
+
+        if (classRef == null || classRef.Properties.IsNullOrEmpty())
+            return defaultEfName;
+        var navigationRenames = classRef.Properties
+            .Where(t => t.FkName == fkName)
+            .ToList();
+
+        if (navigationRenames.Count == 0) {
+            // Maybe FkName is not defined?  if not, try to locate by expected target name instead
+            var someFkNamesEmpty = classRef.Properties.Any(o => o.FkName.IsNullOrWhiteSpace());
+            if (!someFkNamesEmpty) {
+                // Fk names ARE defined, this property is just not found. Use default.
+                return defaultEfName;
+            }
+
+            navigationRenames = classRef.Properties.Where(o => o.Name?.Count > 0 && o.Name.Contains(defaultEfName))
+                .ToList();
+            if (navigationRenames.Count == 0) return defaultEfName;
+        }
+
+        // we have candidate matches (by fk name or expected target name). we may need to narrow further.
+        if (navigationRenames.Count > 1) {
+            if (foreignKey.IsManyToMany()) {
+                // many-to-many relationships always set IsPrincipal=true for both ends in the rule file.
+                navigationRenames = navigationRenames.Where(o => o.IsPrincipal).ToList();
+            } else {
+                // filter for this end only
+                navigationRenames = navigationRenames.Where(o => o.IsPrincipal == thisIsPrincipal).ToList();
+            }
+        }
+
+        if (navigationRenames.Count != 1) return defaultEfName;
+
+        var rename = navigationRenames[0];
+        if (rename.NewName.HasNonWhiteSpace()) return rename.NewName.Trim();
+        return defaultEfName;
+    }
+
+    protected virtual string GenerateIdentifier(string value) {
         var candidateStringBuilder = new StringBuilder();
         var previousLetterCharInWordIsLowerCase = false;
         var isFirstCharacterInWord = true;
@@ -142,7 +209,8 @@ public class EfCandidateNamingService : CandidateNamingService {
         return candidateStringBuilder.ToString();
     }
 
-    private static string RegexNameReplace(string pattern, string originalName, string replacement, int timeout = 100) {
+    protected virtual string RegexNameReplace(string pattern, string originalName, string replacement,
+        int timeout = 100) {
         string newName = string.Empty;
 
         try {
@@ -156,10 +224,15 @@ public class EfCandidateNamingService : CandidateNamingService {
         return newName;
     }
 
-    private SchemaReference GetSchema(string originalSchema)
+    protected virtual SchemaReference GetSchemaReference(string originalSchema)
         => primitiveNamingRules?
             .Schemas
             .FirstOrDefault(x => x.SchemaName == originalSchema);
+
+    protected virtual ClassReference GetClassReference(string tableName)
+        => navigationRules?
+            .Classes
+            .FirstOrDefault(x => x.Name == tableName);
 
     #endregion
 }

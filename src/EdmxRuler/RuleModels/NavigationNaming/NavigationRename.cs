@@ -9,7 +9,7 @@ using EdmxRuler.Extensions;
 
 namespace EdmxRuler.RuleModels.NavigationNaming;
 
-[DebuggerDisplay("Nav {FirstName} to {NewName}")]
+[DebuggerDisplay("Nav {FirstName} to {NewName} FkName={FkName} IsPrincipal={IsPrincipal}")]
 [DataContract]
 public sealed class NavigationRename : IEdmxRulePropertyModel {
     /// <summary>

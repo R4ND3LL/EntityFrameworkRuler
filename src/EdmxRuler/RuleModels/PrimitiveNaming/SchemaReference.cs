@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 
 namespace EdmxRuler.RuleModels.PrimitiveNaming;
 
-[DebuggerDisplay("Schema {Name}")]
+[DebuggerDisplay("Schema {SchemaName}")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1724:", Justification = "Reviewed.")]
 [DataContract]
 public sealed class SchemaReference {

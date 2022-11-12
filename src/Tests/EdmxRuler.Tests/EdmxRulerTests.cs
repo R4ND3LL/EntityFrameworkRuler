@@ -45,23 +45,23 @@ public sealed class EdmxRulerTests {
         enumMappingRules.Classes.ForEach(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         enumMappingRules.Classes.SelectMany(o => o.Properties).ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         enumMappingRules.Classes.Count.ShouldBe(2);
-        enumMappingRules.Classes[0].Name.ShouldBe("Order");
-        enumMappingRules.Classes[1].Name.ShouldBe("Product");
+        enumMappingRules.Classes[0].Name.ShouldBe("Order_Detail");
+        enumMappingRules.Classes[1].Name.ShouldBe("Products_by_Category");
         enumMappingRules.Classes[0].Properties.Count.ShouldBe(1);
         enumMappingRules.Classes[1].Properties.Count.ShouldBe(1);
-        enumMappingRules.Classes[0].Properties[0].Name.ShouldBe("Freight");
+        enumMappingRules.Classes[0].Properties[0].Name.ShouldBe("Quantity");
         enumMappingRules.Classes[0].Properties[0].NewType
-            .ShouldBe("NorthwindTestProject.Models.FreightEnum"); // internal type
-        enumMappingRules.Classes[1].Properties[0].Name.ShouldBe("ReorderLevel");
-        enumMappingRules.Classes[1].Properties[0].NewType.ShouldBe("Common.OrderLevelEnum"); // external type
+            .ShouldBe("NorthwindModel.QuantityEnum"); // internal type
+        enumMappingRules.Classes[1].Properties[0].Name.ShouldBe("UnitsInStockCustom");
+        enumMappingRules.Classes[1].Properties[0].NewType.ShouldBe("NorthwindModel.UnitsInStockEnum"); // external type
 
         primitiveNamingRules.Schemas.Count.ShouldBe(1);
-        primitiveNamingRules.Schemas[0].Tables.Count.ShouldBe(10);
-        primitiveNamingRules.Schemas[0].Tables[0].Columns.Count.ShouldBe(0);
-        primitiveNamingRules.Schemas[0].Tables[3].Columns.Count.ShouldBe(1);
+        primitiveNamingRules.Schemas[0].Tables.Count.ShouldBe(19);
+        primitiveNamingRules.Schemas[0].Tables[0].Columns.Count.ShouldBe(1);
+        primitiveNamingRules.Schemas[0].Tables[3].Columns.Count.ShouldBe(0);
         primitiveNamingRules.Schemas[0].Tables[4].Columns.Count.ShouldBe(1);
-        primitiveNamingRules.Schemas[0].Tables[3].Columns[0].Name.ShouldBe("ReportsTo");
-        primitiveNamingRules.Schemas[0].Tables[3].Columns[0].NewName.ShouldBe("ReportsToFk");
+        primitiveNamingRules.Schemas[0].Tables[0].Columns[0].Name.ShouldBe("UnitPrice");
+        primitiveNamingRules.Schemas[0].Tables[0].Columns[0].NewName.ShouldBe("UnitPriceCustom");
         primitiveNamingRules.Schemas[0].Tables.ForEach(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         primitiveNamingRules.Schemas[0].Tables.ForEach(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
         primitiveNamingRules.Schemas[0].Tables.SelectMany(o => o.Columns)
@@ -72,8 +72,8 @@ public sealed class EdmxRulerTests {
         navigationNamingRules.Namespace.ShouldBe("");
         navigationNamingRules.Classes.Count.ShouldBe(10);
         navigationNamingRules.Classes.All(o => o.Properties.Count > 0).ShouldBeTrue();
-        navigationNamingRules.Classes[0].Properties[0].Name.Contains("ProductsCategoryIDNavigations").ShouldBeTrue();
-        navigationNamingRules.Classes[0].Properties[0].Name.Contains("Products").ShouldBeTrue();
+        navigationNamingRules.Classes[0].Properties[0].Name.Contains("ProductsNavigation").ShouldBeTrue();
+        //navigationNamingRules.Classes[0].Properties[0].Name.Contains("Products").ShouldBeTrue();
         navigationNamingRules.Classes[0].Properties[0].NewName.ShouldBe("Products");
         navigationNamingRules.Classes.ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         navigationNamingRules.Classes.SelectMany(o => o.Properties)
@@ -176,10 +176,10 @@ public sealed class EdmxRulerTests {
 
     private static string ResolveNorthwindEdmxPath() {
         var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-        while (dir != null && dir.Name != "src") dir = dir.Parent;
+        while (dir != null && dir.Name != "Tests") dir = dir.Parent;
 
         dir.ShouldNotBeNull();
-        var path = Path.Combine(dir.FullName, "Resources\\Northwind.edmx");
+        var path = Path.Combine(dir.FullName, "NorthwindTestEdmx\\Northwind.edmx");
         File.Exists(path).ShouldBeTrue();
         return path;
     }

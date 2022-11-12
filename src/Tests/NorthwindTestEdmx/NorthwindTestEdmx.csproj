@@ -1,0 +1,195 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{DD988CF1-D41C-4A9B-9224-8F3CB087CC1F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>NorthwindTestProject</RootNamespace>
+    <AssemblyName>NorthwindTestEdmx</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Alphabetical_list_of_product.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Category.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Category_Sales_for_1997.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Current_Product_List.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Customer.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="CustomerDemographic.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Customer_and_Suppliers_by_City.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Employee.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Invoice.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="NorthwindEntities.Context.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>NorthwindEntities.Context.tt</DependentUpon>
+    </Compile>
+    <Compile Include="NorthwindEntities.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Northwind.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Northwind.edmx</DependentUpon>
+    </Compile>
+    <Compile Include="Order.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Orders_Qry_Custom.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Order_Detail.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Order_Details_Extended.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Order_Subtotal.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Product.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Products_Above_Average_Price.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Products_by_Category.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Product_Sales_for_1997.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QuantityEnum.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RegionCustom.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Sales_by_Category.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Sales_Totals_by_Amount.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Shipper.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Summary_of_Sales_by_Quarter.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Summary_of_Sales_by_Year.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Supplier.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="sysdiagram.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Territory.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="UnitsInStockEnum.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <EntityDeploy Include="Northwind.edmx">
+      <Generator>EntityModelCodeGenerator</Generator>
+      <LastGenOutput>Northwind.Designer.cs</LastGenOutput>
+    </EntityDeploy>
+    <None Include="Northwind.edmx.diagram">
+      <DependentUpon>Northwind.edmx</DependentUpon>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="NorthwindEntities.Context.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>Northwind.edmx</DependentUpon>
+      <LastGenOutput>NorthwindEntities.Context.cs</LastGenOutput>
+    </Content>
+    <Content Include="NorthwindEntities.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>Northwind.edmx</DependentUpon>
+      <LastGenOutput>NorthwindEntities.cs</LastGenOutput>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="EntityFramework">
+      <Version>6.1.3</Version>
+    </PackageReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
