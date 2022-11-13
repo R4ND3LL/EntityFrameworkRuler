@@ -291,7 +291,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
 
         state ??= new(this);
         await state.TryLoadProjectOrFallbackOnce(ProjectBasePath, contextFolder, modelsFolder, response);
-        if (state.Project == null || !state.Project.Documents.Any()) return;
+        if (state.Project?.Documents.Any() != true) return;
 
         var propRenameCount = 0;
         var classRenameCount = 0;
@@ -602,7 +602,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
         return null;
     }
 
-    private static CsProject InspectProject(string projectBasePath, LoggedResponse loggedResponse) {
+    internal static CsProject InspectProject(string projectBasePath, LoggedResponse loggedResponse) {
         try {
             var dir = new DirectoryInfo(projectBasePath);
             var csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
@@ -612,15 +612,16 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
                 CsProject csProj;
                 try {
                     csProj = CsProjSerializer.Deserialize(text);
+                    csProj.FilePath = csProjFile.FullName;
                 } catch (Exception ex) {
-                    loggedResponse.LogError($"Unable to parse csproj: {ex.Message}");
+                    loggedResponse?.LogError($"Unable to parse csproj: {ex.Message}");
                     continue;
                 }
 
                 return csProj;
             }
         } catch (Exception ex) {
-            loggedResponse.LogError($"Unable to read csproj: {ex.Message}");
+            loggedResponse?.LogError($"Unable to read csproj: {ex.Message}");
         }
 
         return new();

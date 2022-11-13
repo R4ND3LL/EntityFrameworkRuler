@@ -15,11 +15,11 @@ public static class PathExtensions {
     }
     public static string FindSolutionParentPath(this string projectBasePath) {
         var di = new DirectoryInfo(projectBasePath);
-        while (di != null && di.GetFiles("*.sln", SearchOption.TopDirectoryOnly).Length == 0) {
+        while (di?.GetFiles("*.sln", SearchOption.TopDirectoryOnly).Length == 0) {
             di = di.Parent;
         }
 
-        if (di == null || !di.Exists) return projectBasePath;
+        if (di?.Exists != true) return projectBasePath;
         return di.FullName;
     }
 }

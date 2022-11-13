@@ -15,6 +15,10 @@ internal static class CsProjSerializer {
                                  propertyGroup.Element("ImplicitUsings")?.Value;
             if (implicitUsings.HasNonWhiteSpace()) csProj.ImplicitUsings = implicitUsings;
 
+            var assemblyName = propertyGroup.Attribute("AssemblyName")?.Value ??
+                               propertyGroup.Element("AssemblyName")?.Value;
+            if (assemblyName.HasNonWhiteSpace()) csProj.AssemblyName = assemblyName;
+
             var targetFramework = propertyGroup.Attribute("TargetFramework")?.Value ??
                                   propertyGroup.Element("TargetFramework")?.Value;
             if (targetFramework.HasNonWhiteSpace()) csProj.TargetFramework = targetFramework;

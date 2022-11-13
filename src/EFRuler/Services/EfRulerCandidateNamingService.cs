@@ -8,6 +8,7 @@ using EdmxRuler.Rules.NavigationNaming;
 using EdmxRuler.Rules.PrimitiveNaming;
 using EntityFrameworkRuler.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
@@ -21,13 +22,15 @@ namespace EntityFrameworkRuler.Services;
 /// <summary> Naming service override to be used by Ef scaffold process. </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class EfRulerCandidateNamingService : CandidateNamingService {
-    private readonly IRuleProvider ruleProvider;
+    private readonly IRuleLoader ruleLoader;
+    private readonly IOperationReporter reporter;
     private PrimitiveNamingRules primitiveNamingRules;
     private NavigationNamingRules navigationRules;
 
     /// <inheritdoc />
-    public EfRulerCandidateNamingService(IRuleProvider ruleProvider) {
-        this.ruleProvider = ruleProvider;
+    public EfRulerCandidateNamingService(IRuleLoader ruleLoader, IOperationReporter reporter) {
+        this.ruleLoader = ruleLoader;
+        this.reporter = reporter;
 #if DEBUG
         if (!Debugger.IsAttached) Debugger.Launch();
 #endif
@@ -36,7 +39,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
     /// <summary> Name that table </summary>
     public override string GenerateCandidateIdentifier(DatabaseTable table) {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
-        primitiveNamingRules ??= ruleProvider?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
+        primitiveNamingRules ??= ruleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
 
         var candidateStringBuilder = new StringBuilder();
 
@@ -51,7 +54,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
             schema?.Tables.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.EntityName == table.Name);
 
         if (tableRule?.NewName.HasNonWhiteSpace() == true) {
-            DebugLog($"Table rule applied: {tableRule.Name} to {tableRule.NewName}");
+            WriteVerbose($"Table rule applied: {tableRule.Name} to {tableRule.NewName}");
             return tableRule.NewName;
         }
 
@@ -81,7 +84,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
     [SuppressMessage("ReSharper", "InvertIf")]
     public override string GenerateCandidateIdentifier(DatabaseColumn column) {
         if (column is null) throw new ArgumentNullException(nameof(column));
-        primitiveNamingRules ??= ruleProvider?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
+        primitiveNamingRules ??= ruleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
 
         var schema = GetSchemaReference(column.Table.Schema);
 
@@ -96,7 +99,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
             tableRule?.Columns?.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.PropertyName == column.Name);
 
         if (columnRule?.NewName.HasNonWhiteSpace() == true) {
-            DebugLog($"Column rule applied: {columnRule.Name} to {columnRule.NewName}");
+            WriteVerbose($"Column rule applied: {columnRule.Name} to {columnRule.NewName}");
             return columnRule.NewName;
         }
 
@@ -137,6 +140,16 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
 
     #region internal members
 
+    internal void WriteWarning(string msg) {
+        reporter?.WriteWarning(msg);
+        DebugLog(msg);
+    }
+
+    internal void WriteVerbose(string msg) {
+        reporter?.WriteVerbose(msg);
+        DebugLog(msg);
+    }
+
     [Conditional("DEBUG")]
     internal static void DebugLog(string msg) => Console.WriteLine(msg);
 
@@ -145,12 +158,12 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
         Func<string> defaultEfName) {
         if (foreignKey is null) throw new ArgumentNullException(nameof(foreignKey));
         if (defaultEfName == null) throw new ArgumentNullException(nameof(defaultEfName));
-        navigationRules ??= ruleProvider?.GetNavigationNamingRules() ?? new NavigationNamingRules();
+        navigationRules ??= ruleLoader?.GetNavigationNamingRules() ?? new NavigationNamingRules();
         //if (defaultEfName.IsNullOrEmpty()) defaultEfName = "_";
 
         var fkName = foreignKey.GetConstraintName();
         var navigation = foreignKey.GetNavigation(!thisIsPrincipal);
-        IReadOnlyEntityType entity = navigation?.DeclaringEntityType??foreignKey.DeclaringEntityType;
+        IReadOnlyEntityType entity = navigation?.DeclaringEntityType ?? foreignKey.DeclaringEntityType;
         if (entity == null) return defaultEfName();
 
         string tableName;
@@ -162,7 +175,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
 
         var classRef = GetClassReference(entity.Name, tableName);
 
-        if (classRef == null || classRef.Properties.IsNullOrEmpty())
+        if (classRef?.Properties.IsNullOrEmpty() != false)
             return defaultEfName();
         var navigationRenames = classRef.Properties
             .Where(t => t.FkName == fkName)
@@ -199,7 +212,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
         var rename = navigationRenames[0];
         if (rename.NewName.IsNullOrWhiteSpace()) return efName ?? defaultEfName();
 
-        DebugLog($"Navigation rule applied: {rename.Name} to {rename.NewName}");
+        WriteVerbose($"Navigation rule applied: {rename.Name} to {rename.NewName}");
         return rename.NewName.Trim();
     }
 

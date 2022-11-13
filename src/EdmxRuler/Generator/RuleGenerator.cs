@@ -181,7 +181,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
 
                 if (tbl.Name != tbl.NewName) renamed = true;
 
-                Debug.Assert(tbl.EntityName == null || tbl.EntityName.IsValidSymbolName());
+                Debug.Assert(tbl.EntityName?.IsValidSymbolName() != false);
                 Debug.Assert(tbl.NewName.IsValidSymbolName());
 
                 foreach (var property in entity.Properties) {

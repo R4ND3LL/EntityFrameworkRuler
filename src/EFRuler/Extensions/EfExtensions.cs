@@ -82,7 +82,7 @@ internal static class EfExtensions {
         var annotations = propertyType.GetAnnotations();
         const string key2 = "ValueGenerationStrategy";
         var isIdentity = annotations.Where(o => o.Name.EndsWith(key2))
-            .Any(o => o.Value != null && (o.Value.ToString()?.ToLower().Contains("identity") == true));
+            .Any(o => o.Value?.ToString()?.ToLower().Contains("identity") == true);
         return isIdentity;
     }
 
@@ -91,7 +91,7 @@ internal static class EfExtensions {
         var annotations = propertyType.GetAnnotations();
         const string key2 = "ValueGenerationStrategy";
         var isIdentity = annotations.Where(o => o.Name.EndsWith(key2))
-            .Any(o => o.Value != null && (o.Value.ToString()?.ToLower().Contains("computed") == true));
+            .Any(o => o.Value?.ToString()?.ToLower().Contains("computed") == true);
         return isIdentity;
     }
 

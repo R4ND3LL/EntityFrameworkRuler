@@ -1,4 +1,4 @@
-﻿/* 
+﻿/*
  Licensed under the Apache License, Version 2.0
 
  http://www.apache.org/licenses/LICENSE-2.0
@@ -6,7 +6,9 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Xml.Serialization;
+using EdmxRuler.Extensions;
 
 namespace EdmxRuler.Applicator.CsProjParser {
     [DebuggerDisplay(
@@ -48,6 +50,9 @@ namespace EdmxRuler.Applicator.CsProjParser {
         [XmlAttribute(AttributeName = "Sdk")]
         public string Sdk { get; set; }
 
+        [XmlElement(ElementName = "AssemblyName")]
+        public string AssemblyName { get; set; }
+
         [XmlAttribute(AttributeName = "TargetFrameworks")]
         public string TargetFrameworks { get; set; }
 
@@ -65,5 +70,36 @@ namespace EdmxRuler.Applicator.CsProjParser {
 
         [XmlElement(ElementName = "Reference")]
         public List<CsProjReference> References { get; set; } = new();
+
+        [XmlIgnore]
+        public string FilePath { get; set; }
+
+        public string GetAssemblyName() {
+            if (AssemblyName.HasNonWhiteSpace() || FilePath.IsNullOrWhiteSpace()) return AssemblyName;
+            var fileInfo = new FileInfo(FilePath);
+            var name = fileInfo.Name;
+            if (Path.HasExtension(name)) name = Path.GetFileNameWithoutExtension(name);
+            return name;
+        }
+
+        public static string[] FindEdmxFilesNearProject(string projectBasePath) {
+            return FindEdmxFilesUnderPath(FindSolutionParentPath(projectBasePath));
+        }
+
+        public static string[] FindEdmxFilesUnderPath(string solutionBasePath) {
+            return Directory.GetFiles(solutionBasePath, "*.edmx", SearchOption.AllDirectories);
+        }
+
+        public string FindSolutionParentPath() {
+            if (FilePath.IsNullOrWhiteSpace()) return null;
+            var fileInfo = new FileInfo(FilePath);
+            return fileInfo.Directory?.FullName == null ? null : FindSolutionParentPath(fileInfo.Directory.FullName);
+        }
+
+        public static string FindSolutionParentPath(string projectBasePath) {
+            var di = new DirectoryInfo(projectBasePath);
+            while (di?.GetFiles("*.sln", SearchOption.TopDirectoryOnly).Length == 0) di = di.Parent;
+            return di?.Exists != true ? projectBasePath : di.FullName;
+        }
     }
 }
