@@ -2,8 +2,8 @@
    "PreserveCasingUsingRegex": false,
    "Schemas": [
       {
-         "Namespace": null,
          "SchemaName": "dbo",
+         "Namespace": null,
          "Tables": [
             {
                "Name": "Alphabetical list of products",
@@ -432,8 +432,7 @@
                   }
                ]
             }
-         ],
-         "UseSchemaName": false
+         ]
       }
    ]
 }

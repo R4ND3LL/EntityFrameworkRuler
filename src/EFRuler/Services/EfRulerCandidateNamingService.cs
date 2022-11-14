@@ -174,7 +174,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
         var rename = classRef.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
         if (rename?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
 
-        WriteVerbose($"Navigation rule applied: {rename.Name} to {rename.NewName}");
+        WriteVerbose($"Navigation rule applied: {rename.Name.FirstOrDefault() ?? fkName} to {rename.NewName}");
         return rename.NewName.Trim();
     }
 

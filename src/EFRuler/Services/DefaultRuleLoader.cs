@@ -59,7 +59,11 @@ public class DefaultRuleLoader : IRuleLoader {
 
         var projectDir = GetProjectDir();
         SolutionPath = projectDir?.FindSolutionParentPath();
-        TargetAssemblies?.Clear();
+        if (TargetAssemblies?.Count > 0) {
+            if (TargetAssemblies.IsReadOnly) TargetAssemblies = new List<Assembly>();
+            else TargetAssemblies.Clear();
+        }
+
         if (projectDir.IsNullOrWhiteSpace()) return this;
         if (Directory.GetCurrentDirectory() != projectDir) {
             // ensure the rules are reloaded if they are accessed again

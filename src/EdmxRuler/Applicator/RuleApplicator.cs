@@ -609,10 +609,9 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
             var dir = new DirectoryInfo(projectBasePath);
             var csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
             foreach (var csProjFile in csProjFiles) {
-                //var csProjModel = EdmxSerializer.Deserialize(File.ReadAllText(csProjFile.FullName));
-                var text = File.ReadAllText(csProjFile.FullName);
                 CsProject csProj;
                 try {
+                    var text = File.ReadAllText(csProjFile.FullName);
                     csProj = CsProjSerializer.Deserialize(text);
                     csProj.FilePath = csProjFile.FullName;
                 } catch (Exception ex) {

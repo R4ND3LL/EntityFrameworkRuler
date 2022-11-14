@@ -1,4 +1,5 @@
-﻿using EdmxRuler.Extensions;
+﻿using System.Diagnostics.CodeAnalysis;
+using EdmxRuler.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -11,6 +12,7 @@ namespace EntityFrameworkRuler.Extensions;
 /// Responsible for making the Entity Framework Metadata more
 /// accessible for code generation.
 /// </summary>
+[SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 internal static class EfExtensions {
     /// <summary>
     /// This method returns the underlying CLR type of the o-space type corresponding to the supplied <paramref name="typeUsage"/>

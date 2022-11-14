@@ -1,4 +1,5 @@
 ﻿{
+   "Namespace": "",
    "Classes": [
       {
          "DbName": "Order Details",
@@ -21,6 +22,5 @@
             }
          ]
       }
-   ],
-   "Namespace": ""
+   ]
 }
