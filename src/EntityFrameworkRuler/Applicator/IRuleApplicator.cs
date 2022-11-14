@@ -9,7 +9,7 @@ using EntityFrameworkRuler.Rules.PrimitiveNaming;
 namespace EntityFrameworkRuler.Applicator;
 
 public interface IRuleApplicator : IRuleLoader {
-    ApplicatorOptions Options { get; }
+    new ApplicatorOptions Options { get; }
 
     /// <summary> Load all rule files from the project base path and apply to the enclosed project. </summary>
     /// <param name="fileNameOptions"> optional rule file naming options </param>
@@ -35,9 +35,4 @@ public interface IRuleApplicator : IRuleLoader {
     /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <returns></returns>
     Task<ApplyRulesResponse> ApplyRules(PrimitiveNamingRules primitiveNamingRules, string contextFolder = null, string modelsFolder = null);
-
-    /// <summary> Load all rule files from the project base path and apply to the enclosed project. </summary>
-    /// <param name="fileNameOptions"> optional rule file naming options </param>
-    /// <returns> Response with loaded rules and list of errors. </returns>
-    Task<LoadRulesResponse> LoadRulesInProjectPath(RuleFileNameOptions fileNameOptions = null);
 }

@@ -125,16 +125,14 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
 
     internal void WriteWarning(string msg) {
         reporter?.WriteWarning(msg);
-        DebugLog(msg);
+        DesignTimeRuleLoader.DebugLog(msg);
     }
 
     internal void WriteVerbose(string msg) {
         reporter?.WriteVerbose(msg);
-        DebugLog(msg);
+        DesignTimeRuleLoader.DebugLog(msg);
     }
 
-    [Conditional("DEBUG")]
-    internal static void DebugLog(string msg) => Console.WriteLine(msg);
 
     /// <summary> Name that navigation dependent </summary>
     protected virtual string GetCandidateNavigationPropertyName(IReadOnlyForeignKey foreignKey, bool thisIsPrincipal,

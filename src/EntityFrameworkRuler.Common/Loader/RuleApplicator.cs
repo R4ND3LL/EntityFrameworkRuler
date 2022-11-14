@@ -14,7 +14,7 @@ namespace EntityFrameworkRuler.Loader;
 public class RuleLoader : RuleProcessor, IRuleLoader {
     /// <summary> Create rule Loader for making changes to project files </summary>
     /// <param name="projectBasePath">project folder containing rules and target files.</param>
-    public RuleLoader(string projectBasePath )
+    public RuleLoader(string projectBasePath)
         : this(new LoaderOptions() {
             ProjectBasePath = projectBasePath
         }) {
@@ -23,12 +23,13 @@ public class RuleLoader : RuleProcessor, IRuleLoader {
     /// <summary> Create rule Loader for making changes to project files </summary>
     [ActivatorUtilitiesConstructor]
     public RuleLoader(LoaderOptions options) {
-        Options = options;
+        Options = options ?? new LoaderOptions() { ProjectBasePath = Directory.GetCurrentDirectory() };
     }
 
 
     #region properties
 
+    /// <inheritdoc />
     public LoaderOptions Options { get; }
 
     /// <summary> The target project path containing entity models. </summary>
@@ -36,7 +37,6 @@ public class RuleLoader : RuleProcessor, IRuleLoader {
         get => Options.ProjectBasePath;
         set => Options.ProjectBasePath = value;
     }
-
 
     #endregion
 
@@ -103,11 +103,9 @@ public class RuleLoader : RuleProcessor, IRuleLoader {
         loggedResponse.LogError($"Unable to open {jsonFile.Name}");
         return null;
     }
-
-
 }
 
+/// <summary> Response for load rules operation </summary>
 public sealed class LoadRulesResponse : LoggedResponse {
     public List<IEdmxRuleModelRoot> Rules { get; } = new();
 }
-

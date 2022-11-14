@@ -27,17 +27,17 @@ public static class PathExtensions {
     }
 
     public static string FindSolutionParentPath(this string projectBasePath) {
-        if (projectBasePath.IsNullOrWhiteSpace()) return projectBasePath;
+        if (projectBasePath.IsNullOrWhiteSpace()) return null;
         var di = new DirectoryInfo(projectBasePath);
         while (di?.GetFiles("*.sln", SearchOption.TopDirectoryOnly).Length == 0) di = di.Parent;
-        return di?.Exists != true ? projectBasePath : di.FullName;
+        return di?.Exists != true ? null : di.FullName;
     }
 
     public static string FindProjectParentPath(this string projectSubPath) {
-        if (projectSubPath.IsNullOrWhiteSpace()) return projectSubPath;
+        if (projectSubPath.IsNullOrWhiteSpace()) return null;
         var di = new DirectoryInfo(projectSubPath);
         while (di?.GetFiles("*.csproj", SearchOption.TopDirectoryOnly).Length == 0) di = di.Parent;
-        return di?.Exists != true ? projectSubPath : di.FullName;
+        return di?.Exists != true ? null : di.FullName;
     }
 
     public static FileInfo[] ResolveCsProjFiles(this string projectBasePath) => ResolveCsProjFiles(ref projectBasePath);

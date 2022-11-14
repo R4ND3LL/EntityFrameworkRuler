@@ -16,8 +16,12 @@ namespace EntityFrameworkRuler.Design {
 #if DEBUG
             if (Debugger.IsAttached) return;
             var entryAssembly = Assembly.GetEntryAssembly();
-            var entryName = entryAssembly?.GetName().Name;
-            if (entryName.In("ef", "dotnet-ef")) Debugger.Launch();
+            var entryName = entryAssembly?.GetName();
+            if (entryName?.Name.In("ef", "dotnet-ef") == true) {
+                DesignTimeRuleLoader.DebugLog($"Detected EF v{entryName.Version}");
+                Debugger.Launch();
+            }
+
 #endif
         }
 

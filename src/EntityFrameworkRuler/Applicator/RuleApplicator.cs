@@ -34,6 +34,7 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
 
     /// <summary> Create rule applicator for making changes to project files </summary>
     [ActivatorUtilitiesConstructor]
+    // ReSharper disable once SuggestBaseTypeForParameterInConstructor
     public RuleApplicator(ApplicatorOptions options) : base(options) { }
 
 

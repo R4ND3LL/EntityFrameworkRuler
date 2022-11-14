@@ -156,16 +156,16 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
 
     internal void WriteWarning(string msg) {
         reporter?.WriteWarning(msg);
-        EfRulerCandidateNamingService.DebugLog(msg);
+        DesignTimeRuleLoader.DebugLog(msg);
     }
 
     internal void WriteInformation(string msg) {
         reporter?.WriteInformation(msg);
-        EfRulerCandidateNamingService.DebugLog(msg);
+        DesignTimeRuleLoader.DebugLog(msg);
     }
 
     internal void WriteVerbose(string msg) {
         reporter?.WriteVerbose(msg);
-        EfRulerCandidateNamingService.DebugLog(msg);
+        DesignTimeRuleLoader.DebugLog(msg);
     }
 }
