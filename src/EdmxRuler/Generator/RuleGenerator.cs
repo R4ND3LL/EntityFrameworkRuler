@@ -12,6 +12,7 @@ using EdmxRuler.Rules;
 using EdmxRuler.Rules.NavigationNaming;
 using EdmxRuler.Rules.PrimitiveNaming;
 using EdmxRuler.Rules.PropertyTypeChanging;
+using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable UnusedMethodReturnValue.Global
 
@@ -44,6 +45,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
     /// <param name="options"> Generator options. </param>
     /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
+    [ActivatorUtilitiesConstructor]
     public RuleGenerator(GeneratorOptions options, IEdmxRulerNamingService namingService) {
         this.namingService = namingService;
         Options = options ?? throw new ArgumentNullException(nameof(options));

@@ -6,6 +6,7 @@ using System.Linq;
 using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator.EdmxModel;
+using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable MemberCanBeInternal
 // ReSharper disable once ClassCanBeSealed.Global
@@ -15,6 +16,7 @@ using EdmxRuler.Generator.EdmxModel;
 namespace EdmxRuler.Generator.Services;
 
 public class EdmxRulerNamingService : IEdmxRulerNamingService {
+    [ActivatorUtilitiesConstructor]
     public EdmxRulerNamingService(GeneratorOptions options = null, IEdmxRulerPluralizer pluralizer = null) {
         this.options = options ?? new GeneratorOptions();
         this.pluralizer = pluralizer ?? new HumanizerPluralizer();

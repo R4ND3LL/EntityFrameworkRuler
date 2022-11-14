@@ -12,28 +12,32 @@ public sealed class SchemaReference {
         Tables = new();
     }
 
-    [DataMember]
-    public bool UseSchemaName { get; set; }
-
-    [DataMember(EmitDefaultValue = false, IsRequired = false)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 1)]
     public string SchemaName { get; set; }
 
-    [DataMember(EmitDefaultValue = false, IsRequired = false)]
-    public List<TableRename> Tables { get; set; }
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 2)]
+    public bool UseSchemaName { get; set; }
 
-    [DataMember(EmitDefaultValue = false, IsRequired = false)]
+    /// <summary> If true, generate entity models for simple many-to-many junctions rather than suppressing them automatically.  Default is false. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 3)]
+    public bool UseManyToManyEntity { get; set; }
+
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
     public string TableRegexPattern { get; set; }
 
-    [DataMember(EmitDefaultValue = false, IsRequired = false)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
     public string TablePatternReplaceWith { get; set; }
 
-    [DataMember(EmitDefaultValue = false, IsRequired = false)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     public string ColumnRegexPattern { get; set; }
 
-    [DataMember(EmitDefaultValue = false, IsRequired = false)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 7)]
     public string ColumnPatternReplaceWith { get; set; }
 
-    /// <summary> Optional namespace used when identifying classes.  Setting this will help to positively identify ambiguously names classes. </summary>
-    [DataMember(EmitDefaultValue = true, IsRequired = false)]
+    /// <summary> Optional namespace used when identifying classes.  Setting this will help to positively identify ambiguously named classes. </summary>
+    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 8)]
     public string Namespace { get; set; }
+
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 9)]
+    public List<TableRename> Tables { get; set; }
 }

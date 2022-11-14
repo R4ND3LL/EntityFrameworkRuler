@@ -20,7 +20,8 @@
         <PackageIcon>crown128.png</PackageIcon>
         <RepositoryUrl>https://github.com/R4ND3LL/EdmxRuler.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
-        <AssemblyOriginatorKeyFile>G:\!DEV\EdmxRuler\src\EFRuler\key.snk</AssemblyOriginatorKeyFile>
+        <Product>EDMX Ruler</Product>
+        <NeutralLanguage>en-US</NeutralLanguage> 
     </PropertyGroup>
 
     <ItemGroup>

@@ -15,6 +15,7 @@ using EdmxRuler.Rules.NavigationNaming;
 using EdmxRuler.Rules.PrimitiveNaming;
 using EdmxRuler.Rules.PropertyTypeChanging;
 using Microsoft.CodeAnalysis;
+using Microsoft.Extensions.DependencyInjection;
 using Project = Microsoft.CodeAnalysis.Project;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -36,6 +37,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
     }
 
     /// <summary> Create rule applicator for making changes to project files </summary>
+    [ActivatorUtilitiesConstructor]
     public RuleApplicator(ApplicatorOptions options) {
         Options = options;
     }

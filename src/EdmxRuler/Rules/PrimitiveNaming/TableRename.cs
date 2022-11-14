@@ -28,6 +28,10 @@ public sealed class TableRename : IEdmxRuleClassModel {
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
     public List<ColumnRename> Columns { get; set; } = new();
 
+    /// <summary> Optional flag to suppress this table in the scaffolding process. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
+    public bool NotMapped { get; set; }
+
     string IEdmxRuleClassModel.GetOldName() => EntityName.CoalesceWhiteSpace(Name);
     string IEdmxRuleClassModel.GetNewName() => NewName.CoalesceWhiteSpace(EntityName);
     IEnumerable<IEdmxRulePropertyModel> IEdmxRuleClassModel.GetProperties() => Columns;

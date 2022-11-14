@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using EdmxRuler.Common;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding;
@@ -13,7 +12,10 @@ using ICSharpUtilities = Microsoft.EntityFrameworkCore.Scaffolding.Internal.ICSh
 
 namespace EntityFrameworkRuler.Services;
 
-/// <inheritdoc />
+/// <summary>
+/// The purpose of this override is simply to provide the scaffolding context info to IRuleLoader, so that necessary
+/// resources are available to the other scaffolding components in this library.
+/// </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class EfRulerReverseEngineerScaffolder : ReverseEngineerScaffolder {
     private readonly IRuleLoader ruleLoader;
@@ -34,14 +36,12 @@ public class EfRulerReverseEngineerScaffolder : ReverseEngineerScaffolder {
         connectionStringResolver,
         reporter) {
         this.ruleLoader = ruleLoader;
-#if DEBUG
-        if (!Debugger.IsAttached) Debugger.Launch();
-#endif
     }
 
+    /// <inheritdoc />
     public override ScaffoldedModel ScaffoldModel(string connectionString, DatabaseModelFactoryOptions databaseOptions,
         ModelReverseEngineerOptions modelOptions, ModelCodeGenerationOptions codeOptions) {
-        this.ruleLoader.SetCodeGenerationOptions(codeOptions);
+        ruleLoader.SetCodeGenerationOptions(codeOptions).SetReverseEngineerOptions(modelOptions);
         var m = base.ScaffoldModel(connectionString, databaseOptions, modelOptions, codeOptions);
         return m;
     }

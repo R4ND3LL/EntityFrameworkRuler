@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.Rules.NavigationNaming;
 using EdmxRuler.Rules.PrimitiveNaming;
@@ -19,7 +19,8 @@ using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 
 namespace EntityFrameworkRuler.Services;
 
-/// <summary> Naming service override to be used by Ef scaffold process. </summary>
+/// <summary> Naming service override to be used by Ef scaffold process.
+/// This will apply custom table, column, and navigation names. </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class EfRulerCandidateNamingService : CandidateNamingService {
     private readonly IRuleLoader ruleLoader;
@@ -31,9 +32,6 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
     public EfRulerCandidateNamingService(IRuleLoader ruleLoader, IOperationReporter reporter) {
         this.ruleLoader = ruleLoader;
         this.reporter = reporter;
-#if DEBUG
-        if (!Debugger.IsAttached) Debugger.Launch();
-#endif
     }
 
     /// <summary> Name that table </summary>
@@ -41,22 +39,17 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
         primitiveNamingRules ??= ruleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
 
-        var candidateStringBuilder = new StringBuilder();
 
-        var schema = GetSchemaReference(table.Schema);
-
-        if (schema == null) return base.GenerateCandidateIdentifier(table);
-
-        if (schema.UseSchemaName) candidateStringBuilder.Append(GenerateIdentifier(table.Schema));
-
-        var tableRule =
-            schema?.Tables.FirstOrDefault(o => o.Name == table.Name) ??
-            schema?.Tables.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.EntityName == table.Name);
+        if (!primitiveNamingRules.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule))
+            return base.GenerateCandidateIdentifier(table);
 
         if (tableRule?.NewName.HasNonWhiteSpace() == true) {
             WriteVerbose($"Table rule applied: {tableRule.Name} to {tableRule.NewName}");
             return tableRule.NewName;
         }
+
+        var candidateStringBuilder = new StringBuilder();
+        if (schema.UseSchemaName) candidateStringBuilder.Append(GenerateIdentifier(table.Schema));
 
         string newTableName;
         if (!string.IsNullOrEmpty(schema.TableRegexPattern) && schema.TablePatternReplaceWith != null) {
@@ -86,17 +79,10 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
         if (column is null) throw new ArgumentNullException(nameof(column));
         primitiveNamingRules ??= ruleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
 
-        var schema = GetSchemaReference(column.Table.Schema);
-
-        var tableRule =
-            schema?.Tables?.FirstOrDefault(o => o.Name == column.Table.Name) ??
-            schema?.Tables?.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.EntityName == column.Table.Name);
-
-        if (tableRule == null) return base.GenerateCandidateIdentifier(column);
-
-        var columnRule =
-            tableRule?.Columns?.FirstOrDefault(o => o.Name == column.Name) ??
-            tableRule?.Columns?.FirstOrDefault(o => o.Name.IsNullOrWhiteSpace() && o.PropertyName == column.Name);
+        if (!primitiveNamingRules.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, out var schema, out var tableRule))
+            return base.GenerateCandidateIdentifier(column);
+        if (!tableRule.TryResolveRuleFor(column?.Name, out var columnRule))
+            return base.GenerateCandidateIdentifier(column);
 
         if (columnRule?.NewName.HasNonWhiteSpace() == true) {
             WriteVerbose($"Column rule applied: {columnRule.Name} to {columnRule.NewName}");
@@ -163,7 +149,9 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
 
         var fkName = foreignKey.GetConstraintName();
         var navigation = foreignKey.GetNavigation(!thisIsPrincipal);
-        IReadOnlyEntityType entity = navigation?.DeclaringEntityType ?? foreignKey.DeclaringEntityType;
+        var entity = navigation?.DeclaringEntityType ?? foreignKey.DeclaringEntityType;
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+        // ReSharper disable once HeuristicUnreachableCode
         if (entity == null) return defaultEfName();
 
         string tableName;
@@ -173,44 +161,18 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
             tableName = null;
         }
 
-        var classRef = GetClassReference(entity.Name, tableName);
-
-        if (classRef?.Properties.IsNullOrEmpty() != false)
-            return defaultEfName();
-        var navigationRenames = classRef.Properties
-            .Where(t => t.FkName == fkName)
-            .ToList();
-
-        string efName = null;
-        if (navigationRenames.Count == 0) {
-            // Maybe FkName is not defined?  if not, try to locate by expected target name instead
-            var someFkNamesEmpty = classRef.Properties.Any(o => o.FkName.IsNullOrWhiteSpace());
-            if (!someFkNamesEmpty) {
-                // Fk names ARE defined, this property is just not found. Use default.
-                return defaultEfName();
-            }
-
-            efName = defaultEfName();
-            navigationRenames = classRef.Properties.Where(o => o.Name?.Count > 0 && o.Name.Contains(efName))
-                .ToList();
-            if (navigationRenames.Count == 0) return efName ?? defaultEfName();
+        string schemaName;
+        try {
+            schemaName = entity.GetSchema();
+        } catch {
+            schemaName = null;
         }
 
-        // we have candidate matches (by fk name or expected target name). we may need to narrow further.
-        if (navigationRenames.Count > 1) {
-            if (foreignKey.IsManyToMany()) {
-                // many-to-many relationships always set IsPrincipal=true for both ends in the rule file.
-                navigationRenames = navigationRenames.Where(o => o.IsPrincipal).ToList();
-            } else {
-                // filter for this end only
-                navigationRenames = navigationRenames.Where(o => o.IsPrincipal == thisIsPrincipal).ToList();
-            }
-        }
+        var classRef = navigationRules.TryResolveClassRuleFor(entity.Name, schemaName, tableName);
+        if (classRef?.Properties.IsNullOrEmpty() != false) return defaultEfName();
 
-        if (navigationRenames.Count != 1) return efName ?? defaultEfName();
-
-        var rename = navigationRenames[0];
-        if (rename.NewName.IsNullOrWhiteSpace()) return efName ?? defaultEfName();
+        var rename = classRef.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
+        if (rename?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
 
         WriteVerbose($"Navigation rule applied: {rename.Name} to {rename.NewName}");
         return rename.NewName.Trim();
@@ -220,7 +182,13 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
     /// Convert DB element name to entity identifier. This is the EF Core standard.
     /// Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService.GenerateCandidateIdentifier()
     /// </summary>
-    protected virtual string GenerateIdentifier(string value) => value.GenerateCandidateIdentifier();
+    protected virtual string GenerateIdentifier(string value) {
+#if NET6
+        return value.GenerateCandidateIdentifier(); // use the EF Ruler emulation of the GenerateCandidateIdentifier
+#elif NET7
+        return base.GenerateCandidateIdentifier(value); // use the actual EF process
+#endif
+    }
 
     /// <summary> Apply regex replace rule to name. </summary>
     protected virtual string RegexNameReplace(string pattern, string originalName, string replacement,
@@ -237,15 +205,6 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
 
         return newName;
     }
-
-    /// <summary> Return the primitive naming rules SchemaReference object for the given schema name </summary>
-    protected virtual SchemaReference GetSchemaReference(string originalSchema)
-        => primitiveNamingRules?.Schemas.FirstOrDefault(x => x.SchemaName == originalSchema);
-
-    /// <summary> Return the navigation naming rules ClassReference object for the given class name </summary>
-    protected virtual ClassReference GetClassReference(string entityName, string tableName)
-        => navigationRules?.Classes.FirstOrDefault(x => x.Name == entityName) ??
-           navigationRules?.Classes.FirstOrDefault(x => x.DbName == tableName);
 
     #endregion
 }

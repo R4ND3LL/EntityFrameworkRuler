@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿#if false
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 // ReSharper disable ClassCanBeSealed.Global
@@ -32,3 +33,4 @@ public class EfRulerScaffoldingTypeMapper : ScaffoldingTypeMapper, IScaffoldingT
         return efDefault;
     }
 }
+#endif

@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using EdmxRuler.Applicator;
-using EdmxRuler.Applicator.CsProjParser;
 using EdmxRuler.Extensions;
 using EdmxRuler.Rules;
 using EdmxRuler.Rules.NavigationNaming;
@@ -11,6 +10,7 @@ using Microsoft.EntityFrameworkCore.Scaffolding;
 namespace EntityFrameworkRuler.Services;
 
 /// <inheritdoc />
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 public class DefaultRuleLoader : IRuleLoader {
     private readonly IServiceProvider serviceProvider;
 
@@ -18,9 +18,21 @@ public class DefaultRuleLoader : IRuleLoader {
     public DefaultRuleLoader(IServiceProvider serviceProvider) { this.serviceProvider = serviceProvider; }
 
     private LoadRulesResponse response;
+
+    /// <inheritdoc />
     public ModelCodeGenerationOptions CodeGenOptions { get; private set; }
+
+    /// <inheritdoc />
+    public ModelReverseEngineerOptions ReverseEngineerOptions { get; private set; }
+
+    /// <inheritdoc />
+    public string SolutionPath { get; private set; }
+
+
     private IList<Assembly> targetAssemblies;
 
+
+    /// <inheritdoc />
     public IList<Assembly> TargetAssemblies {
         get => targetAssemblies ?? Array.Empty<Assembly>();
         private set => targetAssemblies = value;
@@ -43,46 +55,56 @@ public class DefaultRuleLoader : IRuleLoader {
 
     /// <inheritdoc />
     public IRuleLoader SetCodeGenerationOptions(ModelCodeGenerationOptions options) {
-        this.CodeGenOptions = options;
-        if (Directory.GetCurrentDirectory() != options.ProjectDir) {
+        CodeGenOptions = options;
+
+        var projectDir = GetProjectDir();
+        SolutionPath = projectDir?.FindSolutionParentPath();
+        TargetAssemblies?.Clear();
+        if (projectDir.IsNullOrWhiteSpace()) return this;
+        if (Directory.GetCurrentDirectory() != projectDir) {
             // ensure the rules are reloaded if they are accessed again
             response = null;
         }
 
-        var dir = new DirectoryInfo(options.ProjectDir);
-        if (dir.Exists) {
-            try {
-                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        var dir = new DirectoryInfo(projectDir);
+        if (!dir.Exists) return this;
+        try {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-                var csProj = RuleApplicator.InspectProject(options.ProjectDir, null);
-                var assemblyName = csProj.GetAssemblyName().CoalesceWhiteSpace(options.RootNamespace);
+            var csProj = RuleApplicator.InspectProject(projectDir, null);
+            var assemblyName = csProj.GetAssemblyName().CoalesceWhiteSpace(options.RootNamespace);
 
-                var targetAssembliesQuery = assemblies.Where(o => !o.IsDynamic);
+            var targetAssembliesQuery = assemblies.Where(o => !o.IsDynamic);
 
-                // if assembly name is available, filter by it. otherwise, filter by the folder:
-                if (assemblyName.IsNullOrWhiteSpace())
-                    targetAssembliesQuery = targetAssembliesQuery.Where(o => o.Location.StartsWith(options.ProjectDir));
-                else
-                    targetAssembliesQuery = targetAssembliesQuery.Where(o => o.GetName().Name == assemblyName);
+            // if assembly name is available, filter by it. otherwise, filter by the folder:
+            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+            if (assemblyName.IsNullOrWhiteSpace())
+                targetAssembliesQuery = targetAssembliesQuery.Where(o => o.Location.StartsWith(projectDir));
+            else
+                targetAssembliesQuery = targetAssembliesQuery.Where(o => o.GetName().Name == assemblyName);
 
-                TargetAssemblies = targetAssembliesQuery.ToList();
+            TargetAssemblies = targetAssembliesQuery.ToList();
 
-                if (TargetAssemblies.Count > 0) {
-                    // also add direct references that are under the sln folder
-                    var slnPath = csProj.FindSolutionParentPath();
-                    if (slnPath.HasNonWhiteSpace()) {
-                        foreach (var targetAssembly in TargetAssemblies) {
-                            var ans = targetAssembly.GetReferencedAssemblies();
-                            foreach (var an in ans) {
-                            }
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                Console.WriteLine($"Assembly inspection failed: {ex.Message}");
-            }
+            // if (TargetAssemblies.Count > 0) {
+            //     // also add direct references that are under the sln folder as locations to load property types from
+            //     if (SolutionPath.HasNonWhiteSpace()) {
+            //         foreach (var targetAssembly in TargetAssemblies) {
+            //             var ans = targetAssembly.GetReferencedAssemblies();
+            //             foreach (var an in ans) {
+            //             }
+            //         }
+            //     }
+            // }
+        } catch (Exception ex) {
+            Console.WriteLine($"Assembly inspection failed: {ex.Message}");
         }
 
+        return this;
+    }
+
+    /// <inheritdoc />
+    public IRuleLoader SetReverseEngineerOptions(ModelReverseEngineerOptions options) {
+        ReverseEngineerOptions = options;
         return this;
     }
 
@@ -90,7 +112,7 @@ public class DefaultRuleLoader : IRuleLoader {
     /// <summary> Internal load method for all rules </summary>
     protected virtual List<IEdmxRuleModelRoot> GetRules() {
         LoadRulesResponse Fetch() {
-            var projectFolder = CodeGenOptions?.ProjectDir ?? Directory.GetCurrentDirectory();
+            var projectFolder = GetProjectDir();
             if (projectFolder.IsNullOrWhiteSpace() || !Directory.Exists(projectFolder)) return null;
             var applicator = new RuleApplicator(projectFolder);
             var loadRulesResponse = applicator.LoadRulesInProjectPath().GetAwaiter().GetResult();
@@ -99,5 +121,14 @@ public class DefaultRuleLoader : IRuleLoader {
 
         response ??= Fetch();
         return response.Rules;
+    }
+
+    /// <summary> Get the project folder where the EF context model is being built </summary>
+    protected virtual string GetProjectDir() {
+#if NET6
+        return CodeGenOptions?.ContextDir?.FindProjectParentPath() ?? Directory.GetCurrentDirectory();
+#elif NET7
+        return CodeGenOptions?.ProjectDir ?? CodeGenOptions?.ContextDir?.FindProjectParentPath() ?? Directory.GetCurrentDirectory();
+#endif
     }
 }

@@ -1,4 +1,3 @@
-using EdmxRuler.Common;
 using EdmxRuler.Generator.Services;
 using Microsoft.EntityFrameworkCore.Design;
 

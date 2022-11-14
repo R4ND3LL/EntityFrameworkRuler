@@ -1,12 +1,14 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
-using EdmxRuler.Common;
 using EdmxRuler.Extensions;
+using EdmxRuler.Rules.PrimitiveNaming;
 using EdmxRuler.Rules.PropertyTypeChanging;
+using EntityFrameworkRuler.Extensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using ICSharpUtilities = Microsoft.EntityFrameworkCore.Scaffolding.Internal.ICSharpUtilities;
@@ -17,12 +19,16 @@ using ICSharpUtilities = Microsoft.EntityFrameworkCore.Scaffolding.Internal.ICSh
 
 namespace EntityFrameworkRuler.Services;
 
-/// <inheritdoc />
+/// <summary>
+/// This override will apply custom property type mapping to the generated entities.
+/// It is also possible to remove columns at this level.
+/// </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingModelFactory {
     private readonly IOperationReporter reporter;
     private readonly IRuleLoader ruleLoader;
     private PropertyTypeChangingRules typeChangingRules;
+    private PrimitiveNamingRules primitiveNamingRules;
 
     /// <inheritdoc />
     public EfRulerRelationalScaffoldingModelFactory(
@@ -31,15 +37,17 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
         IPluralizer pluralizer,
         ICSharpUtilities cSharpUtilities,
         IScaffoldingTypeMapper scaffoldingTypeMapper,
+#if NET6
+        LoggingDefinitions loggingDefinitions,
+#endif
         IModelRuntimeInitializer modelRuntimeInitializer,
         IRuleLoader ruleLoader)
-        : base(
-            reporter,
-            candidateNamingService,
-            pluralizer,
-            cSharpUtilities,
-            scaffoldingTypeMapper,
+#if NET6
+        : base(reporter, candidateNamingService, pluralizer, cSharpUtilities, scaffoldingTypeMapper, loggingDefinitions,
             modelRuntimeInitializer) {
+#elif NET7
+        : base(reporter, candidateNamingService, pluralizer, cSharpUtilities, scaffoldingTypeMapper, modelRuntimeInitializer) {
+#endif
         this.reporter = reporter;
         this.ruleLoader = ruleLoader;
     }
@@ -50,91 +58,110 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
         typeChangingRules ??= ruleLoader?.GetPropertyTypeChangingRules() ?? new();
 
 
-        var tableRule =
-            typeChangingRules?.Classes?.FirstOrDefault(o => o.DbName == column.Table.Name || o.Name == column.Table.Name);
+        if (!TryResolveRuleFor(column, out var tableRule, out var columnRule)) return typeScaffoldingInfo;
+        if (columnRule?.NewType.HasNonWhiteSpace() != true) return typeScaffoldingInfo;
 
-        if (tableRule == null) return typeScaffoldingInfo;
+        try {
+            var clrTypeName = columnRule.NewType;
+            var clrType = ruleLoader?.TryResolveType(clrTypeName, typeScaffoldingInfo?.ClrType);
 
-        var columnRule =
-            tableRule?.Properties?.FirstOrDefault(o => o.DbName == column.Name || o.Name == column.Name);
-
-        if (columnRule?.NewType.HasNonWhiteSpace() == true) {
-            try {
-                var clrTypeName = columnRule.NewType;
-                var clrTypeNamespaceAndName = columnRule.NewType.SplitNamespaceAndName();
-                var candidateNames = new List<string> { clrTypeName };
-
-                if (ruleLoader?.CodeGenOptions != null) {
-                    // look for the type with a couple of different namespace variations
-                    if (clrTypeNamespaceAndName.namespaceName != ruleLoader.CodeGenOptions.ModelNamespace &&
-                        ruleLoader.CodeGenOptions.ModelNamespace.HasNonWhiteSpace())
-                        candidateNames.Add($"{ruleLoader.CodeGenOptions.ModelNamespace}.{clrTypeNamespaceAndName.name}");
-
-                    if (clrTypeNamespaceAndName.namespaceName != ruleLoader.CodeGenOptions.RootNamespace &&
-                        ruleLoader.CodeGenOptions.RootNamespace.HasNonWhiteSpace())
-                        candidateNames.Add($"{ruleLoader.CodeGenOptions.RootNamespace}.{clrTypeNamespaceAndName.name}");
-                }
-
-                // search just the basic name:
-                if (clrTypeNamespaceAndName.namespaceName.HasNonWhiteSpace())
-                    candidateNames.Add(clrTypeNamespaceAndName.name);
-
-                Type clrType = null;
-                foreach (var candidateName in candidateNames) {
-                    clrType = Type.GetType(candidateName, false);
-                    if (clrType != null) continue;
-                    if (ruleLoader?.TargetAssemblies?.Count > 0)
-                        foreach (var targetAssembly in ruleLoader.TargetAssemblies) {
-                            clrType = targetAssembly.GetType(candidateName, false);
-                            if (clrType != null) break;
-                        }
-
-                    if (clrType != null) break;
-                }
-
-                if (clrType == null) {
-                    // try a full assembly scan without the namespace, but filter for enum types only with matching name
-                    if (ruleLoader?.TargetAssemblies?.Count > 0)
-                        foreach (var targetAssembly in ruleLoader.TargetAssemblies) {
-                            var allTypes = targetAssembly.GetTypes();
-                            var someTypes = allTypes.Where(o => o.IsEnum && o.Name == clrTypeNamespaceAndName.name).ToList();
-                            if (someTypes.Count > 0) {
-                                // check  the underlying type
-                                if (someTypes.Any(o => o.UnderlyingSystemType == typeScaffoldingInfo?.ClrType))
-                                    someTypes = someTypes.Where(o => o.UnderlyingSystemType == typeScaffoldingInfo?.ClrType).ToList();
-                            }
-
-                            clrType = someTypes.FirstOrDefault();
-                            if (clrType != null) break;
-                        }
-                }
-
-                if (clrType == null) {
-                    WriteWarning($"Type not found: {columnRule.NewType}");
-                    return typeScaffoldingInfo;
-                }
-
-                // Regenerate the TypeScaffoldingInfo based on our new CLR type.
-                typeScaffoldingInfo = new(
-                    clrType,
-                    typeScaffoldingInfo?.IsInferred ?? false,
-                    typeScaffoldingInfo?.ScaffoldUnicode,
-                    typeScaffoldingInfo?.ScaffoldMaxLength,
-                    typeScaffoldingInfo?.ScaffoldFixedLength,
-                    typeScaffoldingInfo?.ScaffoldPrecision,
-                    typeScaffoldingInfo?.ScaffoldScale);
-                WriteVerbose($"Column rule applied: {tableRule.Name}.{columnRule.Name} type set to {columnRule.NewType}");
+            if (clrType == null) {
+                WriteWarning($"Type not found: {columnRule.NewType}");
                 return typeScaffoldingInfo;
-            } catch (Exception ex) {
-                WriteWarning($"Error loading type '{columnRule.NewType}' reference: {ex.Message}");
             }
+
+            // Regenerate the TypeScaffoldingInfo based on our new CLR type.
+            typeScaffoldingInfo = typeScaffoldingInfo.WithType(clrType);
+            WriteVerbose($"Column rule applied: {tableRule.Name}.{columnRule.Name} type set to {columnRule.NewType}");
+            return typeScaffoldingInfo;
+        } catch (Exception ex) {
+            WriteWarning($"Error loading type '{columnRule.NewType}' reference: {ex.Message}");
         }
 
         return typeScaffoldingInfo;
     }
 
+
+    /// <summary> Get the type changing rule for this column </summary>
+    protected virtual bool TryResolveRuleFor(DatabaseColumn column, out TypeChangingClass tableRule, out TypeChangingProperty columnRule) {
+        return typeChangingRules.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, column?.Name, out tableRule, out columnRule);
+    }
+
+    /// <inheritdoc />
+    protected override EntityTypeBuilder VisitTable(ModelBuilder modelBuilder, DatabaseTable table) {
+        // ReSharper disable once AssignNullToNotNullAttribute
+        if (table is null) return base.VisitTable(modelBuilder, table);
+
+        primitiveNamingRules ??= ruleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
+
+        if (!primitiveNamingRules.TryResolveRuleFor(table.Schema, table.Name, out var schemaRule, out var tableRule))
+            return base.VisitTable(modelBuilder, table);
+
+        var excludedColumns = new List<DatabaseColumn>();
+        if (tableRule?.Columns?.Count > 0)
+            foreach (var column in tableRule.Columns.Where(o => o.NotMapped)) {
+                var columnToRemove = table.Columns.FirstOrDefault(c => c.Name.Equals(column.Name, StringComparison.OrdinalIgnoreCase));
+                if (columnToRemove == null) continue;
+                excludedColumns.Add(columnToRemove);
+                table.Columns.Remove(columnToRemove);
+            }
+
+        if (excludedColumns.Count == 0) return base.VisitTable(modelBuilder, table);
+
+        var indexesToBeRemoved = new List<DatabaseIndex>();
+        foreach (var index in table.Indexes)
+        foreach (var column in index.Columns)
+            if (excludedColumns.Contains(column))
+                indexesToBeRemoved.Add(index);
+
+        foreach (var index in indexesToBeRemoved) table.Indexes.Remove(index);
+
+        return base.VisitTable(modelBuilder, table);
+    }
+
+#if NET6
+    /// <inheritdoc />
+    protected override ModelBuilder VisitForeignKeys(ModelBuilder modelBuilder, IList<DatabaseForeignKey> foreignKeys) {
+        ArgumentNullException.ThrowIfNull(foreignKeys);
+
+        ArgumentNullException.ThrowIfNull(modelBuilder);
+
+        var schemaNames = foreignKeys.Select(o => o.Table?.Schema).Where(o => o.HasNonWhiteSpace()).Distinct().ToArray();
+
+        var schemas = schemaNames.Select(o => primitiveNamingRules?.TryResolveRuleFor(o))
+            .Where(o => o?.UseManyToManyEntity == true).ToArray();
+
+        if (schemas.IsNullOrEmpty()) return base.VisitForeignKeys(modelBuilder, foreignKeys);
+
+        foreach (var grp in foreignKeys.GroupBy(o => o.Table?.Schema)) {
+            var schema = grp.Key;
+            var schemaForeignKeys = grp.ToArray();
+            var schemaReference = schemas.FirstOrDefault(o => o.SchemaName == schema);
+            if (schemaReference == null) {
+                modelBuilder = base.VisitForeignKeys(modelBuilder, schemaForeignKeys);
+                continue;
+            }
+
+            // force simple ManyToMany junctions to be generated as entities
+            WriteInformation($"{schema} Simple ManyToMany junctions are being forced to generate entities for schema {schema}");
+            foreach (var fk in schemaForeignKeys) VisitForeignKey(modelBuilder, fk);
+
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            foreach (var foreignKey in entityType.GetForeignKeys())
+                AddNavigationProperties(foreignKey);
+        }
+
+        return modelBuilder;
+    }
+#endif
+
     internal void WriteWarning(string msg) {
         reporter?.WriteWarning(msg);
+        EfRulerCandidateNamingService.DebugLog(msg);
+    }
+
+    internal void WriteInformation(string msg) {
+        reporter?.WriteInformation(msg);
         EfRulerCandidateNamingService.DebugLog(msg);
     }
 

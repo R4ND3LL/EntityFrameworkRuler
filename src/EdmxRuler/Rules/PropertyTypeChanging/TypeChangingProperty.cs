@@ -12,11 +12,11 @@ public sealed class TypeChangingProperty : IEdmxRulePropertyModel {
     public string DbName { get; set; }
 
     /// <summary> The expected EF generated name for the property.  Required. </summary>
-    [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
+    [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 2)]
     public string Name { get; set; }
 
     /// <summary> The new type to give the property. </summary>
-    [DataMember(Order = 2)]
+    [DataMember(Order = 3)]
     public string NewType { get; set; }
 
     IEnumerable<string> IEdmxRulePropertyModel.GetCurrentNameOptions() => new[] { Name, DbName };

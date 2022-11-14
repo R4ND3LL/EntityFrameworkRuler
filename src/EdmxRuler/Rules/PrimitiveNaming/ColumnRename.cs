@@ -23,6 +23,10 @@ public sealed class ColumnRename : IEdmxRulePropertyModel {
     [DataMember(Order = 3)]
     public string NewName { get; set; }
 
+    /// <summary> Optional flag to suppress this column in the scaffolding process. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
+    public bool NotMapped { get; set; }
+
     IEnumerable<string> IEdmxRulePropertyModel.GetCurrentNameOptions() => new[] { PropertyName, Name };
     string IEdmxRulePropertyModel.GetNewName() => NewName;
     string IEdmxRulePropertyModel.GetNewTypeName() => null;

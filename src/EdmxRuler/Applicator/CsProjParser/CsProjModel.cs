@@ -81,25 +81,10 @@ namespace EdmxRuler.Applicator.CsProjParser {
             if (Path.HasExtension(name)) name = Path.GetFileNameWithoutExtension(name);
             return name;
         }
-
-        public static string[] FindEdmxFilesNearProject(string projectBasePath) {
-            return FindEdmxFilesUnderPath(FindSolutionParentPath(projectBasePath));
-        }
-
-        public static string[] FindEdmxFilesUnderPath(string solutionBasePath) {
-            return Directory.GetFiles(solutionBasePath, "*.edmx", SearchOption.AllDirectories);
-        }
-
         public string FindSolutionParentPath() {
             if (FilePath.IsNullOrWhiteSpace()) return null;
             var fileInfo = new FileInfo(FilePath);
-            return fileInfo.Directory?.FullName == null ? null : FindSolutionParentPath(fileInfo.Directory.FullName);
-        }
-
-        public static string FindSolutionParentPath(string projectBasePath) {
-            var di = new DirectoryInfo(projectBasePath);
-            while (di?.GetFiles("*.sln", SearchOption.TopDirectoryOnly).Length == 0) di = di.Parent;
-            return di?.Exists != true ? projectBasePath : di.FullName;
+            return fileInfo.Directory?.FullName?.FindSolutionParentPath();
         }
     }
 }

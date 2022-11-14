@@ -10,13 +10,14 @@ namespace EdmxRuler.Rules.NavigationNaming;
 [DataContract]
 public sealed class NavigationNamingRules : IEdmxRuleModelRoot {
     /// <summary> Optional namespace used when identifying classes.  Setting this will help to positively identify ambiguously names classes. </summary>
-    [DataMember(EmitDefaultValue = true, IsRequired = false)]
+    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 1)]
     public string Namespace { get; set; }
 
-    [DataMember(EmitDefaultValue = false, IsRequired = false)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 2)]
     public List<ClassReference> Classes { get; set; } = new();
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     public EdmxRuleModelKind Kind => EdmxRuleModelKind.NavigationNaming;
-    IEnumerable<IEdmxRuleClassModel> IEdmxRuleModelRoot. GetClasses() => Classes;
+
+    IEnumerable<IEdmxRuleClassModel> IEdmxRuleModelRoot.GetClasses() => Classes;
 }

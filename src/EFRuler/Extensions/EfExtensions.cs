@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace EntityFrameworkRuler.Extensions;
@@ -360,5 +361,17 @@ internal static class EfExtensions {
         }
 
         return default;
+    }
+
+    public static TypeScaffoldingInfo WithType(this TypeScaffoldingInfo typeScaffoldingInfo, Type clrType) {
+        if (clrType == null) throw new ArgumentNullException(nameof(clrType));
+        return new(
+            clrType,
+            typeScaffoldingInfo?.IsInferred ?? false,
+            typeScaffoldingInfo?.ScaffoldUnicode,
+            typeScaffoldingInfo?.ScaffoldMaxLength,
+            typeScaffoldingInfo?.ScaffoldFixedLength,
+            typeScaffoldingInfo?.ScaffoldPrecision,
+            typeScaffoldingInfo?.ScaffoldScale);
     }
 }
