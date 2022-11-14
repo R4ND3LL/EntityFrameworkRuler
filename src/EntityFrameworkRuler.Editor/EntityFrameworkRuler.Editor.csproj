@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net6.0-windows</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <PackAsTool>true</PackAsTool>
+        <!-- <ToolCommandName> is an optional element that specifies the command that will invoke the tool after it's installed. If this element isn't provided, the command name for the tool is the project file name without the .csproj extension. -->
+        <ToolCommandName>efruleeditor</ToolCommandName>
+        <PackageOutputPath>./nupkg</PackageOutputPath>
+        <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
+        <RootNamespace>EntityFrameworkRuler.Editor</RootNamespace>
+        <PackageId>EntityFrameworkRuler</PackageId>
+    </PropertyGroup>
+
+</Project>

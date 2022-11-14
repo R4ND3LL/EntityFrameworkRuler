@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdmxRuler", "EdmxRuler\EdmxRuler.csproj", "{6CBE2220-E5D7-45C8-AD88-12E19E86DA23}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler", "EntityFrameworkRuler\EntityFrameworkRuler.csproj", "{6CBE2220-E5D7-45C8-AD88-12E19E86DA23}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{7606EBB2-02F1-44C7-97EE-C80BFE02957D}"
 	ProjectSection(SolutionItems) = preProject
@@ -15,15 +15,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{6ECD160C-8259-42EB-9A24-CA07AA56CB25}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdmxRuler.Tests", "Tests\EdmxRuler.Tests\EdmxRuler.Tests.csproj", "{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Tests", "Tests\EntityFrameworkRuler.Tests\EntityFrameworkRuler.Tests.csproj", "{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NorthwindTestProject", "Tests\NorthwindTestProject\NorthwindTestProject.csproj", "{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler", "EfRuler\EntityFrameworkRuler.csproj", "{513C1B89-ADDA-4829-AFAF-1E9C3AD8833F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Design", "EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj", "{513C1B89-ADDA-4829-AFAF-1E9C3AD8833F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Test", "Tests\EfRuler.Test\EntityFrameworkRuler.Test.csproj", "{EA2CB34B-80D9-4038-8904-4D65F7F56936}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Design.Tests", "Tests\EntityFrameworkRuler.Design.Tests\EntityFrameworkRuler.Design.Tests.csproj", "{EA2CB34B-80D9-4038-8904-4D65F7F56936}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwindTestEdmx", "Tests\NorthwindTestEdmx\NorthwindTestEdmx.csproj", "{DD988CF1-D41C-4A9B-9224-8F3CB087CC1F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFrameworkRuler.Common", "EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj", "{A4BA3A4A-AB05-4E92-9B40-E7BD5B7247E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFrameworkRuler.Editor", "EntityFrameworkRuler.Editor\EntityFrameworkRuler.Editor.csproj", "{D79D6EF9-E5A2-4B00-B7B0-DA3049C6AA56}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,9 +56,15 @@ Global
 		{EA2CB34B-80D9-4038-8904-4D65F7F56936}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EA2CB34B-80D9-4038-8904-4D65F7F56936}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DD988CF1-D41C-4A9B-9224-8F3CB087CC1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DD988CF1-D41C-4A9B-9224-8F3CB087CC1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD988CF1-D41C-4A9B-9224-8F3CB087CC1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DD988CF1-D41C-4A9B-9224-8F3CB087CC1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4BA3A4A-AB05-4E92-9B40-E7BD5B7247E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4BA3A4A-AB05-4E92-9B40-E7BD5B7247E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4BA3A4A-AB05-4E92-9B40-E7BD5B7247E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4BA3A4A-AB05-4E92-9B40-E7BD5B7247E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D79D6EF9-E5A2-4B00-B7B0-DA3049C6AA56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D79D6EF9-E5A2-4B00-B7B0-DA3049C6AA56}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D79D6EF9-E5A2-4B00-B7B0-DA3049C6AA56}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D79D6EF9-E5A2-4B00-B7B0-DA3049C6AA56}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

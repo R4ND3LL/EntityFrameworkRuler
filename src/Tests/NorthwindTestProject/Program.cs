@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.Design;
 
-[assembly: DesignTimeServicesReference("EntityFrameworkRuler.EfRulerDesignTimeServices, EfRuler")]
+[assembly: DesignTimeServicesReference("EntityFrameworkRuler.Design.EfRulerDesignTimeServices, EntityFrameworkRuler.Design")]
 // ReSharper disable CollectionNeverUpdated.Local
 // ReSharper disable SuggestVarOrType_SimpleTypes
 // ReSharper disable PossibleNullReferenceException

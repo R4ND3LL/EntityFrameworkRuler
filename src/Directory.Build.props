@@ -1,7 +1,19 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
+        <Title>Entity Framework Ruler</Title>
+        <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
+        <Product>Entity Framework Ruler</Product>
+        <Copyright>© 2022 Mark Randell (R4ND3LL). All rights reserved.</Copyright>
         <Authors>Mark Randell</Authors>
-        <LangVersion>10</LangVersion>
+        <PackageProjectUrl>https://github.com/R4ND3LL/EdmxRuler</PackageProjectUrl>
+        <PackageTags>Entity Framework Core;entity-framework-core;EF;Data;O/RM;EntityFramework;EntityFrameworkCore;EFCore;EDMX</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/R4ND3LL/EdmxRuler.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <Product>Entity Framework Ruler</Product>
+        <NeutralLanguage>en-US</NeutralLanguage>
+        <Nullable>disable</Nullable>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
     <ItemGroup>
     </ItemGroup>

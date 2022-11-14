@@ -9,11 +9,6 @@
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
-<#@ import namespace="Microsoft.EntityFrameworkCore" #>
-<#@ import namespace="Microsoft.EntityFrameworkCore.Design" #>
-<#@ import namespace="Microsoft.EntityFrameworkCore.Infrastructure" #>
-<#@ import namespace="Microsoft.EntityFrameworkCore.Scaffolding" #>
-<#@ import namespace="Microsoft.Extensions.DependencyInjection" #>
 <#
     if (!ProductInfo.GetVersion().StartsWith("7.0"))
     {

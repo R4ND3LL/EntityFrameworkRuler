@@ -2,8 +2,6 @@
 
 namespace NorthwindTestProject;
 
-using System;
-
 public enum QuantityEnum : short {
     One = 1,
     Two = 2,
