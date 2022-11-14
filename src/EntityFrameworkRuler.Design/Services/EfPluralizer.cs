@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 
@@ -5,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Design.Internal;
 
 namespace EntityFrameworkRuler.Design.Services {
     /// <summary> Pluralization service override to be used by Ef scaffold process. </summary>
+    [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
     public class EfRulerPluralizer : IPluralizer {
         private readonly HumanizerPluralizer pluralizer;
 
