@@ -139,10 +139,13 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
         response.OnLog += ResponseOnLog;
         var rules = response.Rules;
         try {
-            if (ProjectBasePath == null || !Directory.Exists(ProjectBasePath))
-                throw new ArgumentException(nameof(ProjectBasePath));
+            if (ProjectBasePath == null) throw new ArgumentException(nameof(ProjectBasePath));
 
-            var fullProjectPath = Directory.GetFiles(ProjectBasePath, "*.csproj").FirstOrDefault();
+            var projectBasePath = ProjectBasePath;
+            var csProjFiles = PathExtensions.ResolveCsProjFiles(ref projectBasePath);
+            if (csProjFiles.IsNullOrEmpty()) throw new ArgumentException(nameof(ProjectBasePath));
+
+            var fullProjectPath = csProjFiles.FirstOrDefault();
             if (fullProjectPath == null) throw new ArgumentException("csproj not found", nameof(ProjectBasePath));
 
             fileNameOptions ??= new();
@@ -161,7 +164,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
             foreach (var jsonFile in jsonFiles)
                 try {
                     if (jsonFile.IsNullOrWhiteSpace()) continue;
-                    var fullPath = Path.Combine(ProjectBasePath, jsonFile);
+                    var fullPath = Path.Combine(projectBasePath, jsonFile);
                     var fileInfo = new FileInfo(fullPath);
                     if (!fileInfo.Exists) continue;
 
@@ -478,11 +481,11 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
         return;
     }
 
-    private async Task<Project> TryLoadProjectOrFallback(string projectBasePath, string contextFolder,
-        string modelsFolder, ApplyRulesResponse response) {
+    private async Task<Project> TryLoadProjectOrFallback(string projectBasePath, string contextFolder, string modelsFolder,
+        ApplyRulesResponse response) {
+        if (projectBasePath.IsNullOrEmpty()) return null;
         try {
-            var dir = new DirectoryInfo(projectBasePath);
-            var csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
+            var csProjFiles = PathExtensions.ResolveCsProjFiles(ref projectBasePath);
 
             Project project;
             if (!AdhocOnly) {
@@ -503,6 +506,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
             return null;
         }
     }
+
 
     /// <summary>
     /// If existing project file fails to load, we can fallback to creating an adhoc workspace with an in memory project.
@@ -606,21 +610,21 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
 
     internal static CsProject InspectProject(string projectBasePath, LoggedResponse loggedResponse) {
         try {
-            var dir = new DirectoryInfo(projectBasePath);
-            var csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
-            foreach (var csProjFile in csProjFiles) {
-                CsProject csProj;
-                try {
-                    var text = File.ReadAllText(csProjFile.FullName);
-                    csProj = CsProjSerializer.Deserialize(text);
-                    csProj.FilePath = csProjFile.FullName;
-                } catch (Exception ex) {
-                    loggedResponse?.LogError($"Unable to parse csproj: {ex.Message}");
-                    continue;
-                }
+            var csProjFiles = PathExtensions.ResolveCsProjFiles(ref projectBasePath);
+            if (!csProjFiles.IsNullOrEmpty())
+                foreach (var csProjFile in csProjFiles) {
+                    CsProject csProj;
+                    try {
+                        var text = File.ReadAllText(csProjFile.FullName);
+                        csProj = CsProjSerializer.Deserialize(text);
+                        csProj.FilePath = csProjFile.FullName;
+                    } catch (Exception ex) {
+                        loggedResponse?.LogError($"Unable to parse csproj: {ex.Message}");
+                        continue;
+                    }
 
-                return csProj;
-            }
+                    return csProj;
+                }
         } catch (Exception ex) {
             loggedResponse?.LogError($"Unable to read csproj: {ex.Message}");
         }

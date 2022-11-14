@@ -94,7 +94,7 @@ public sealed class EdmxRulerTests {
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
-        response.Information.Last().ShouldStartWith("16 classes renamed, 46 properties renamed across 29 files", Case.Insensitive);
+        response.Information.Last().ShouldStartWith("16 classes renamed, 46 properties renamed across 2", Case.Insensitive);
         elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"Primitive naming rules applied correctly at {elapsed}ms");
 
@@ -134,37 +134,39 @@ public sealed class EdmxRulerTests {
     }
 
     [Fact]
-    public async Task TypeFinder() {
-        string projectBasePath = ResolveNorthwindProject();
+    public async Task ShouldLoadProjectUsingRoslynAndFindTypes() {
+        var projectBasePath = ResolveNorthwindProject();
         var state = new RuleApplicator.RoslynProjectState(new RuleApplicator(projectBasePath));
         var response = new ApplyRulesResponse(null);
         await state.TryLoadProjectOrFallbackOnce(projectBasePath, null, null, response);
         var project = state.Project;
         project.ShouldNotBeNull();
         //var ns = "NorthwindTestProject.Models";
-        var result = await Microsoft.CodeAnalysis.FindSymbols.SymbolFinder.FindDeclarationsAsync(project, "Products",
+        var result = await Microsoft.CodeAnalysis.FindSymbols.SymbolFinder.FindDeclarationsAsync(project, "Product",
             false,
             SymbolFilter.Type, CancellationToken.None);
         var results = result.Where(o => o.Kind == SymbolKind.NamedType)
             .OfType<ITypeSymbol>().Where(o => o.TypeKind == TypeKind.Class && !o.IsAnonymousType && !o.IsValueType)
             .ToList();
         results.Count.ShouldBe(1);
-        var r = results[0];
-        var syntaxReferences = r.DeclaringSyntaxReferences;
-        foreach (var syntaxReference in syntaxReferences) {
-            var root = await syntaxReference.SyntaxTree.GetRootAsync();
-        }
 
         var compilation = await project.GetCompilationAsync();
-
-        var type = compilation.GetTypeByMetadataName("NorthwindTestProject.Models.Products");
+        compilation.ShouldNotBeNull();
+        var type = compilation.GetTypeByMetadataName("NorthwindTestProject.Models.Product");
         var syntaxReferences2 = type?.DeclaringSyntaxReferences;
         syntaxReferences2.ShouldNotBeNull();
-        foreach (var syntaxReference in syntaxReferences2) {
-            var syntaxNode = syntaxReference.GetSyntax();
-            var d = syntaxNode.DescendantNodesAndSelf().ToArray();
-            var root = await syntaxReference.SyntaxTree.GetRootAsync();
-        }
+    }
+
+    [Fact]
+    public async Task ShouldLoadRules() {
+        var start = DateTimeExtensions.GetTime();
+        var ruleApplicator = new RuleApplicator(ResolveNorthwindProject());
+        var rules = await ruleApplicator.LoadRulesInProjectPath();
+        rules.ShouldNotBeNull();
+        rules.Rules.ShouldNotBeNull();
+        rules.Rules.Count.ShouldBeGreaterThan(0);
+        var elapsed = DateTimeExtensions.GetTime() - start;
+        output.WriteLine($"Loaded {rules.Rules.Count} in {elapsed}ms.");
     }
 
     // [Fact]
