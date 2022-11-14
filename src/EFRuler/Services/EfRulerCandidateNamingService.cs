@@ -145,11 +145,9 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
         if (foreignKey is null) throw new ArgumentNullException(nameof(foreignKey));
         if (defaultEfName == null) throw new ArgumentNullException(nameof(defaultEfName));
         navigationRules ??= ruleLoader?.GetNavigationNamingRules() ?? new NavigationNamingRules();
-        //if (defaultEfName.IsNullOrEmpty()) defaultEfName = "_";
 
         var fkName = foreignKey.GetConstraintName();
-        var navigation = foreignKey.GetNavigation(!thisIsPrincipal);
-        var entity = navigation?.DeclaringEntityType ?? foreignKey.DeclaringEntityType;
+        var entity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         // ReSharper disable once HeuristicUnreachableCode
         if (entity == null) return defaultEfName();
@@ -174,7 +172,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
         var rename = classRef.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
         if (rename?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
 
-        WriteVerbose($"Navigation rule applied: {rename.Name.FirstOrDefault() ?? fkName} to {rename.NewName}");
+        WriteVerbose($"Navigation rule applied: {entity.Name}.{defaultEfName} to {rename.NewName}");
         return rename.NewName.Trim();
     }
 
