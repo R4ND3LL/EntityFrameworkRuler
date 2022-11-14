@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using EdmxRuler.Generator.EdmxModel;
 
 namespace EdmxRuler.Extensions;

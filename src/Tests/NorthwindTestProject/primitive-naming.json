@@ -181,6 +181,10 @@
                      "Name": "ProductID",
                      "PropertyName": "ProductId",
                      "NewName": "ProductID"
+                  },
+                  {
+                     "Name": "Quantity",
+                     "NewType": "NorthwindModel.QuantityEnum"
                   }
                ]
             },
@@ -288,7 +292,8 @@
                   },
                   {
                      "Name": "UnitsInStock",
-                     "NewName": "UnitsInStockCustom"
+                     "NewName": "UnitsInStockCustom",
+                     "NewType": "NorthwindModel.UnitsInStockEnum"
                   }
                ]
             },

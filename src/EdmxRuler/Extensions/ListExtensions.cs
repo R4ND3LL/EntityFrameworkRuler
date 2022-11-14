@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using EdmxRuler.Rules.NavigationNaming;
-using EdmxRuler.Rules.PrimitiveNaming;
 
 // ReSharper disable MemberCanBePrivate.Global
 

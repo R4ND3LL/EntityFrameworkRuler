@@ -16,7 +16,7 @@ public sealed class PrimitiveNamingRules : IEdmxRuleModelRoot {
     public bool PreserveCasingUsingRegex { get; set; }
 
     [DataMember(Order = 2)]
-    public List<SchemaReference> Schemas { get; set; } = new();
+    public List<SchemaRule> Schemas { get; set; } = new();
 
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]

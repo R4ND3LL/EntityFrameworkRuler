@@ -7,7 +7,7 @@ namespace EdmxRuler.Rules.PrimitiveNaming;
 
 [DebuggerDisplay("Table {Name} to {NewName}")]
 [DataContract]
-public sealed class TableRename : IEdmxRuleClassModel {
+public sealed class TableRule : IEdmxRuleClassModel {
     /// <summary> The raw database name of the table.  Used to locate the property during scaffolding phase.  Required. </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
     public string Name { get; set; }
@@ -26,7 +26,7 @@ public sealed class TableRename : IEdmxRuleClassModel {
 
     /// <summary> The property rules to apply to this entity. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
-    public List<ColumnRename> Columns { get; set; } = new();
+    public List<ColumnRule> Columns { get; set; } = new();
 
     /// <summary> Optional flag to suppress this table in the scaffolding process. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]

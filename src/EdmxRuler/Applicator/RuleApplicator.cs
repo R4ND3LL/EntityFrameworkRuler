@@ -13,7 +13,6 @@ using EdmxRuler.Extensions;
 using EdmxRuler.Rules;
 using EdmxRuler.Rules.NavigationNaming;
 using EdmxRuler.Rules.PrimitiveNaming;
-using EdmxRuler.Rules.PropertyTypeChanging;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Project = Microsoft.CodeAnalysis.Project;
@@ -108,10 +107,6 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
                             await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace,
                                 response, state: state);
                             break;
-                        case PropertyTypeChangingRules propertyTypeChangingRules:
-                            await ApplyRulesCore(propertyTypeChangingRules.Classes,
-                                propertyTypeChangingRules.Namespace, response, state: state);
-                            break;
                         default:
                             continue;
                     }
@@ -150,10 +145,7 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
 
             fileNameOptions ??= new();
 
-            var jsonFiles = new[] {
-                    fileNameOptions.PrimitiveNamingFile, fileNameOptions.NavigationNamingFile,
-                    fileNameOptions.PropertyTypeChangingFile
-                }
+            var jsonFiles = new[] { fileNameOptions.PrimitiveNamingFile, fileNameOptions.NavigationNamingFile }
                 .Where(o => o.HasNonWhiteSpace())
                 .Select(o => o.Trim())
                 .ToArray();
@@ -174,10 +166,6 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
                     } else if (jsonFile == fileNameOptions.NavigationNamingFile) {
                         if (await TryReadRules<NavigationNamingRules>(fileInfo, response) is { } propertyRenamingRoot)
                             rules.Add(propertyRenamingRoot);
-                    } else if (jsonFile == fileNameOptions.PropertyTypeChangingFile) {
-                        if (await TryReadRules<PropertyTypeChangingRules>(fileInfo, response) is
-                            { } propertyTypeChangingRules)
-                            rules.Add(propertyTypeChangingRules);
                     }
                 } catch (Exception ex) {
                     Console.WriteLine(ex);
@@ -219,26 +207,6 @@ public sealed class RuleApplicator : RuleProcessor, IRuleApplicator {
         }
 
         return response;
-    }
-
-    /// <summary> Apply the given rules to the target project. </summary>
-    /// <param name="propertyTypeChangingRules"> The rules to apply. </param>
-    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <returns></returns>
-    public async Task<ApplyRulesResponse> ApplyRules(PropertyTypeChangingRules propertyTypeChangingRules,
-        string contextFolder = null,
-        string modelsFolder = null) {
-        var response = new ApplyRulesResponse(propertyTypeChangingRules);
-        response.OnLog += ResponseOnLog;
-        try {
-            await ApplyRulesCore(propertyTypeChangingRules.Classes, propertyTypeChangingRules.Namespace, response,
-                contextFolder: contextFolder,
-                modelsFolder: modelsFolder);
-            return response;
-        } finally {
-            response.OnLog -= ResponseOnLog;
-        }
     }
 
     /// <summary> Apply the given rules to the target project. </summary>

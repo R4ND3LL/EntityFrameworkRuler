@@ -6,9 +6,7 @@ using EdmxRuler.Applicator;
 using EdmxRuler.Common;
 using EdmxRuler.Extensions;
 using EdmxRuler.Generator;
-using EdmxRuler.Generator.Services;
 using Microsoft.Extensions.DependencyInjection;
-using WealthTrader.Application.Common.Extensions;
 
 namespace EdmxRuler;
 

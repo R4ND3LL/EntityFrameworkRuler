@@ -11,7 +11,6 @@ using EdmxRuler.Generator.Services;
 using EdmxRuler.Rules;
 using EdmxRuler.Rules.NavigationNaming;
 using EdmxRuler.Rules.PrimitiveNaming;
-using EdmxRuler.Rules.PropertyTypeChanging;
 using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable UnusedMethodReturnValue.Global
@@ -91,7 +90,6 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
 
             GenerateAndAdd(GetPrimitiveNamingRules);
             GenerateAndAdd(GetNavigationNamingRules);
-            GenerateAndAdd(GetPropertyTypeChangingRules);
             return response;
         } finally {
             response.OnLog -= ResponseOnLog;
@@ -128,7 +126,6 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             fileNameOptions ??= new();
             await TryWriteRules<PrimitiveNamingRules>(fileNameOptions.PrimitiveNamingFile);
             await TryWriteRules<NavigationNamingRules>(fileNameOptions.NavigationNamingFile);
-            await TryWriteRules<PropertyTypeChangingRules>(fileNameOptions.PropertyTypeChangingFile);
             return response;
 
 
@@ -165,7 +162,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
         foreach (var grp in edmx.Entities.GroupBy(o => o.DbSchema)) {
             if (grp.Key.IsNullOrWhiteSpace()) continue;
 
-            var schemaRule = new SchemaReference();
+            var schemaRule = new SchemaRule();
             root.Schemas.Add(schemaRule);
             schemaRule.SchemaName = grp.Key;
             schemaRule.UseSchemaName = false; // will append schema name to entity name
@@ -175,7 +172,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                 var renamed = false;
                 // Get the expected EF entity identifier based on options.. just like EF would:
                 var expectedClassName = NamingService.GetExpectedEntityTypeName(entity);
-                var tbl = new TableRename {
+                var tbl = new TableRule {
                     Name = entity.StorageName,
                     EntityName = entity.StorageName == expectedClassName ? null : expectedClassName,
                     NewName = entity.Name.CoalesceWhiteSpace(expectedClassName, entity.StorageName)
@@ -191,15 +188,16 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                     // Get the expected EF property identifier based on options.. just like EF would:
                     var expectedPropertyName = NamingService.GetExpectedPropertyName(property, expectedClassName);
                     if (expectedPropertyName.IsNullOrWhiteSpace() ||
-                        property.Name == expectedPropertyName) continue;
+                        (property.Name == expectedPropertyName && property.EnumType == null)) continue;
                     tbl.Columns ??= new();
                     tbl.Columns.Add(new() {
                         Name = property.DbColumnName,
                         PropertyName = expectedPropertyName == property.DbColumnName ? null : expectedPropertyName,
-                        NewName = property.Name
+                        NewName = property.Name == expectedPropertyName ? null : property.Name,
+                        NewType = property.EnumType?.ExternalTypeName ?? property.EnumType?.FullName
                     });
                     Debug.Assert(tbl.Columns[^1].PropertyName == null || tbl.Columns[^1].PropertyName.IsValidSymbolName());
-                    Debug.Assert(tbl.Columns[^1].NewName.IsValidSymbolName());
+                    Debug.Assert(tbl.Columns[^1].NewName == null || tbl.Columns[^1].NewName.IsValidSymbolName());
                     renamed = true;
                 }
 
@@ -260,41 +258,6 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
         return rule;
     }
 
-    private PropertyTypeChangingRules GetPropertyTypeChangingRules(EdmxParsed edmx) {
-        var rule = new PropertyTypeChangingRules();
-        rule.Classes ??= new();
-
-        if (edmx?.Entities.IsNullOrEmpty() != false) return rule;
-
-        foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
-            // omit the namespace. it often does not match the Reverse Engineered value
-            rule.Namespace ??= ""; //entity.Namespace;
-
-            // if entity name is different than db, it has to go into output
-            var renamed = false;
-            var tbl = new TypeChangingClass {
-                DbName = entity.Name == entity.StorageName ? null : entity.StorageName,
-                Name = entity.Name, // expected name is EDMX entity name at this stage (because primitives have been applied)
-            };
-
-            foreach (var property in entity.Properties) {
-                // if property name is different than db, it has to go into output
-                if (property?.EnumType == null) continue;
-                tbl.Properties ??= new();
-                tbl.Properties.Add(new() {
-                    DbName = property.Name == property.DbColumnName ? null : property.DbColumnName,
-                    Name = property.Name, // expected name is EDMX property name at this stage (because primitives have been applied)
-                    NewType = property.EnumType.ExternalTypeName ?? property.EnumType.FullName
-                });
-                renamed = true;
-            }
-
-            if (renamed) rule.Classes.Add(tbl);
-        }
-
-        return rule;
-    }
-
     #endregion
 }
 
@@ -304,9 +267,6 @@ public sealed class GenerateRulesResponse : LoggedResponse {
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary> The rules generated from the EDMX via the TryGenerateRules() call </summary>
     public IReadOnlyCollection<IEdmxRuleModelRoot> Rules => rules;
-
-    public PropertyTypeChangingRules PropertyTypeChangingRules =>
-        rules.OfType<PropertyTypeChangingRules>().SingleOrDefault();
 
     public PrimitiveNamingRules PrimitiveNamingRules => rules.OfType<PrimitiveNamingRules>().SingleOrDefault();
     public NavigationNamingRules NavigationNamingRules => rules.OfType<NavigationNamingRules>().SingleOrDefault();

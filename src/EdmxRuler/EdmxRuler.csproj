@@ -54,6 +54,12 @@
             <Pack>True</Pack>
             <PackagePath></PackagePath>
         </None>
+        <Compile Remove="Rules\PropertyTypeChanging\PropertyTypeChangingRules.cs" />
+        <None Include="Rules\PropertyTypeChanging\PropertyTypeChangingRules.cs" />
+        <Compile Remove="Rules\PropertyTypeChanging\TypeChangingClass.cs" />
+        <None Include="Rules\PropertyTypeChanging\TypeChangingClass.cs" />
+        <Compile Remove="Rules\PropertyTypeChanging\TypeChangingProperty.cs" />
+        <None Include="Rules\PropertyTypeChanging\TypeChangingProperty.cs" />
     </ItemGroup>
 
     <ItemGroup>

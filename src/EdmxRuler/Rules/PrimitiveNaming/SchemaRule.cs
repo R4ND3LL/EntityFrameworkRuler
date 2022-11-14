@@ -7,8 +7,8 @@ namespace EdmxRuler.Rules.PrimitiveNaming;
 [DebuggerDisplay("Schema {SchemaName}")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1724:", Justification = "Reviewed.")]
 [DataContract]
-public sealed class SchemaReference {
-    public SchemaReference() {
+public sealed class SchemaRule {
+    public SchemaRule() {
         Tables = new();
     }
 
@@ -39,5 +39,5 @@ public sealed class SchemaReference {
     public string Namespace { get; set; }
 
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 9)]
-    public List<TableRename> Tables { get; set; }
+    public List<TableRule> Tables { get; set; }
 }

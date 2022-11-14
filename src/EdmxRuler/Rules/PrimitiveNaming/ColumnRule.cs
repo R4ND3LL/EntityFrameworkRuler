@@ -6,7 +6,7 @@ namespace EdmxRuler.Rules.PrimitiveNaming;
 
 [DebuggerDisplay("Col {Name} to {NewName}")]
 [DataContract]
-public sealed class ColumnRename : IEdmxRulePropertyModel {
+public sealed class ColumnRule : IEdmxRulePropertyModel {
     /// <summary> The raw database name of the column.  Used to locate the property during scaffolding phase.  Required. </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
     public string Name { get; set; }
@@ -19,12 +19,16 @@ public sealed class ColumnRename : IEdmxRulePropertyModel {
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 2)]
     public string PropertyName { get; set; }
 
-    /// <summary> The new name to give the property. </summary>
-    [DataMember(Order = 3)]
+    /// <summary> The new name to give the property. Optional. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 3)]
     public string NewName { get; set; }
 
-    /// <summary> Optional flag to suppress this column in the scaffolding process. </summary>
+    /// <summary> The new type to give the property. Optional. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
+    public string NewType { get; set; }
+
+    /// <summary> Optional flag to suppress this column in the scaffolding process. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
     public bool NotMapped { get; set; }
 
     IEnumerable<string> IEdmxRulePropertyModel.GetCurrentNameOptions() => new[] { PropertyName, Name };

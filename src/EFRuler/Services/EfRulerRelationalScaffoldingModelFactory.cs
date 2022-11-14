@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EdmxRuler.Extensions;
 using EdmxRuler.Rules.PrimitiveNaming;
-using EdmxRuler.Rules.PropertyTypeChanging;
 using EntityFrameworkRuler.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -27,7 +26,6 @@ namespace EntityFrameworkRuler.Services;
 public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingModelFactory {
     private readonly IOperationReporter reporter;
     private readonly IRuleLoader ruleLoader;
-    private PropertyTypeChangingRules typeChangingRules;
     private PrimitiveNamingRules primitiveNamingRules;
 
     /// <inheritdoc />
@@ -55,10 +53,10 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
     /// <inheritdoc />
     protected override TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseColumn column) {
         var typeScaffoldingInfo = base.GetTypeScaffoldingInfo(column);
-        typeChangingRules ??= ruleLoader?.GetPropertyTypeChangingRules() ?? new();
+        primitiveNamingRules ??= ruleLoader?.GetPrimitiveNamingRules() ?? new();
 
 
-        if (!TryResolveRuleFor(column, out var tableRule, out var columnRule)) return typeScaffoldingInfo;
+        if (!TryResolveRuleFor(column, out _, out var tableRule, out var columnRule)) return typeScaffoldingInfo;
         if (columnRule?.NewType.HasNonWhiteSpace() != true) return typeScaffoldingInfo;
 
         try {
@@ -72,7 +70,7 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
 
             // Regenerate the TypeScaffoldingInfo based on our new CLR type.
             typeScaffoldingInfo = typeScaffoldingInfo.WithType(clrType);
-            WriteVerbose($"Column rule applied: {tableRule.Name}.{columnRule.Name} type set to {columnRule.NewType}");
+            WriteVerbose($"Column rule applied: {tableRule.Name}.{columnRule.PropertyName} type set to {columnRule.NewType}");
             return typeScaffoldingInfo;
         } catch (Exception ex) {
             WriteWarning($"Error loading type '{columnRule.NewType}' reference: {ex.Message}");
@@ -83,8 +81,10 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
 
 
     /// <summary> Get the type changing rule for this column </summary>
-    protected virtual bool TryResolveRuleFor(DatabaseColumn column, out TypeChangingClass tableRule, out TypeChangingProperty columnRule) {
-        return typeChangingRules.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, column?.Name, out tableRule, out columnRule);
+    protected virtual bool TryResolveRuleFor(DatabaseColumn column, out SchemaRule schemaRule, out TableRule tableRule,
+        out ColumnRule columnRule) {
+        return primitiveNamingRules.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, column?.Name,
+            out schemaRule, out tableRule, out columnRule);
     }
 
     /// <inheritdoc />

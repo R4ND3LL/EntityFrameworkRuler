@@ -1,5 +1,4 @@
-﻿using System.IO;
-using EdmxRuler.Applicator;
+﻿using EdmxRuler.Applicator;
 using EdmxRuler.Generator;
 using EdmxRuler.Generator.Services;
 using Microsoft.Extensions.DependencyInjection;

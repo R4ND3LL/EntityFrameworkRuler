@@ -13,7 +13,4 @@ public sealed class RuleFileNameOptions {
     [DataMember]
     public string NavigationNamingFile { get; set; } = "navigation-naming.json";
 
-    /// <summary> property type mapping rule file. </summary>
-    [DataMember]
-    public string PropertyTypeChangingFile { get; set; } = "property-types.json";
 }

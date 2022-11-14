@@ -1,7 +1,6 @@
 using System.Reflection;
 using EdmxRuler.Rules.NavigationNaming;
 using EdmxRuler.Rules.PrimitiveNaming;
-using EdmxRuler.Rules.PropertyTypeChanging;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 
 namespace EntityFrameworkRuler.Services;
@@ -11,8 +10,8 @@ public interface IRuleLoader {
     /// <summary> Load the respective rule info </summary>
     PrimitiveNamingRules GetPrimitiveNamingRules();
 
-    /// <summary> Load the respective rule info </summary>
-    PropertyTypeChangingRules GetPropertyTypeChangingRules();
+    // /// <summary> Load the respective rule info </summary>
+    // PropertyTypeChangingRules GetPropertyTypeChangingRules();
 
     /// <summary> Load the respective rule info </summary>
     NavigationNamingRules GetNavigationNamingRules();

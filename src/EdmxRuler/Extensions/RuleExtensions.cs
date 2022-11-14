@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using EdmxRuler.Rules.NavigationNaming;
 using EdmxRuler.Rules.PrimitiveNaming;
-using EdmxRuler.Rules.PropertyTypeChanging;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable MemberCanBeInternal
@@ -14,17 +13,17 @@ namespace EdmxRuler.Extensions;
 public static class RuleExtensions {
     /// <summary> Get the primitive schema rule for the given target schema. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static bool TryResolveRuleFor(this PrimitiveNamingRules rules, string schema, out SchemaReference schemaRule) =>
+    public static bool TryResolveRuleFor(this PrimitiveNamingRules rules, string schema, out SchemaRule schemaRule) =>
         TryResolveRuleFor(rules?.Schemas, schema, out schemaRule);
 
     /// <summary> Get the primitive schema rule for the given target schema. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static SchemaReference TryResolveRuleFor(this PrimitiveNamingRules rules, string schema) =>
+    public static SchemaRule TryResolveRuleFor(this PrimitiveNamingRules rules, string schema) =>
         TryResolveRuleFor(rules?.Schemas, schema, out var schemaRule) ? schemaRule : null;
 
     /// <summary> Get the primitive schema rule for the given target schema. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static bool TryResolveRuleFor(this IList<SchemaReference> rules, string schema, out SchemaReference schemaRule) {
+    public static bool TryResolveRuleFor(this IList<SchemaRule> rules, string schema, out SchemaRule schemaRule) {
         schemaRule = null;
         if (rules == null || rules.Count == 0 || schema.IsNullOrWhiteSpace()) return false;
 
@@ -42,12 +41,12 @@ public static class RuleExtensions {
 
     /// <summary> Get the primitive table rule for the given target table. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static TableRename TryResolveRuleFor(this SchemaReference rules, string table)
+    public static TableRule TryResolveRuleFor(this SchemaRule rules, string table)
         => TryResolveRuleFor(rules, table, out var tableRule) ? tableRule : null;
 
     /// <summary> Get the primitive table rule for the given target table. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static bool TryResolveRuleFor(this SchemaReference rules, string table, out TableRename tableRule) {
+    public static bool TryResolveRuleFor(this SchemaRule rules, string table, out TableRule tableRule) {
         tableRule = null;
         if (rules?.Tables == null || rules.Tables.Count == 0 || table.IsNullOrWhiteSpace()) return false;
 
@@ -60,12 +59,12 @@ public static class RuleExtensions {
 
     /// <summary> Get the primitive column rule for the given target column. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static ColumnRename TryResolveRuleFor(this TableRename rules, string column)
+    public static ColumnRule TryResolveRuleFor(this TableRule rules, string column)
         => TryResolveRuleFor(rules, column, out var columnRule) ? columnRule : null;
 
     /// <summary> Get the primitive column rule for the given target column. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static bool TryResolveRuleFor(this TableRename rules, string column, out ColumnRename columnRule) {
+    public static bool TryResolveRuleFor(this TableRule rules, string column, out ColumnRule columnRule) {
         columnRule = null;
         if (rules?.Columns == null || rules.Columns.Count == 0 || column.IsNullOrWhiteSpace()) return false;
 
@@ -81,8 +80,8 @@ public static class RuleExtensions {
     public static bool TryResolveRuleFor(this PrimitiveNamingRules rules,
         string schema,
         string table,
-        out SchemaReference schemaRule,
-        out TableRename tableRule) {
+        out SchemaRule schemaRule,
+        out TableRule tableRule) {
         tableRule = null;
         if (!rules.TryResolveRuleFor(schema, out schemaRule)) return false;
         if (!schemaRule.TryResolveRuleFor(table, out tableRule)) return false;
@@ -94,46 +93,14 @@ public static class RuleExtensions {
     public static bool TryResolveRuleFor(this PrimitiveNamingRules rules,
         string schema,
         string table, string column,
-        out SchemaReference schemaRule,
-        out TableRename tableRule,
-        out ColumnRename columnRule) {
+        out SchemaRule schemaRule,
+        out TableRule tableRule,
+        out ColumnRule columnRule) {
         tableRule = null;
         columnRule = null;
         if (!rules.TryResolveRuleFor(schema, out schemaRule)) return false;
         if (!schemaRule.TryResolveRuleFor(table, out tableRule)) return false;
         if (!tableRule.TryResolveRuleFor(column, out columnRule)) return false;
-        return columnRule != null;
-    }
-
-    /// <summary> Get the type changing rule for this column. Used during scaffolding phase. </summary>
-    [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static bool TryResolveRuleFor(this PropertyTypeChangingRules rules,
-        string schema,
-        string table,
-        string column,
-        out TypeChangingClass tableRule,
-        out TypeChangingProperty columnRule) {
-        if (rules?.Classes == null || rules.Classes.Count == 0 || table.IsNullOrWhiteSpace() || column.IsNullOrWhiteSpace()) {
-            tableRule = null;
-            columnRule = null;
-            return false;
-        }
-
-        IEnumerable<TypeChangingClass> tables = rules.Classes;
-        // use optional schema filter
-        if (schema.HasNonWhiteSpace())
-            tables = tables.Where(o => o.DbSchema.IsNullOrEmpty() ||
-                                       string.Equals(o.DbSchema, schema, StringComparison.OrdinalIgnoreCase));
-
-        tableRule = tables.FirstOrDefault(o => o.DbName == table) ??
-                    tables.FirstOrDefault(o => o.Name == table);
-
-        if (tableRule == null || tableRule.Properties.IsNullOrEmpty()) {
-            columnRule = null;
-            return false;
-        }
-
-        columnRule = tableRule.Properties.FirstOrDefault(o => o.DbName == column || o.Name == column);
         return columnRule != null;
     }
 

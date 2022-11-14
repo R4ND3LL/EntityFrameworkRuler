@@ -4,7 +4,6 @@ using EdmxRuler.Extensions;
 using EdmxRuler.Rules;
 using EdmxRuler.Rules.NavigationNaming;
 using EdmxRuler.Rules.PrimitiveNaming;
-using EdmxRuler.Rules.PropertyTypeChanging;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 
 namespace EntityFrameworkRuler.Services;
@@ -43,10 +42,10 @@ public class DefaultRuleLoader : IRuleLoader {
         return GetRules().OfType<PrimitiveNamingRules>().FirstOrDefault();
     }
 
-    /// <inheritdoc />
-    public PropertyTypeChangingRules GetPropertyTypeChangingRules() {
-        return GetRules().OfType<PropertyTypeChangingRules>().FirstOrDefault();
-    }
+    // /// <inheritdoc />
+    // public PropertyTypeChangingRules GetPropertyTypeChangingRules() {
+    //     return GetRules().OfType<PropertyTypeChangingRules>().FirstOrDefault();
+    // }
 
     /// <inheritdoc />
     public NavigationNamingRules GetNavigationNamingRules() {

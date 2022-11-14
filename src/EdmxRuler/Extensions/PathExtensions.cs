@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -40,6 +41,7 @@ public static class PathExtensions {
     }
 
     public static FileInfo[] ResolveCsProjFiles(this string projectBasePath) => ResolveCsProjFiles(ref projectBasePath);
+
     public static FileInfo[] ResolveCsProjFiles(ref string projectBasePath) {
         FileInfo[] csProjFiles;
         if (projectBasePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
@@ -47,7 +49,9 @@ public static class PathExtensions {
             projectBasePath = csProjFiles[0].Directory?.FullName;
         } else {
             var dir = new DirectoryInfo(projectBasePath!);
-            csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
+            csProjFiles = dir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly)
+                .OrderByDescending(o => o.Name?.Length ?? 0)
+                .ToArray();
         }
 
         return csProjFiles;
