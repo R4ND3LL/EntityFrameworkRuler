@@ -8,7 +8,7 @@
         <PackageProjectUrl>https://github.com/R4ND3LL/EdmxRuler</PackageProjectUrl>
         <PackageTags>Entity Framework Core;entity-framework-core;EF;Data;O/RM;EntityFramework;EntityFrameworkCore;EFCore;EDMX</PackageTags>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <RepositoryUrl>https://github.com/R4ND3LL/EdmxRuler.git</RepositoryUrl>
+        <RepositoryUrl>https://github.com/R4ND3LL/EntityFrameworkRuler.git</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <Product>Entity Framework Ruler</Product>
         <NeutralLanguage>en-US</NeutralLanguage>
