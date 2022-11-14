@@ -1,5 +1,8 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using EdmxRuler;
+using EdmxRuler.Extensions;
 using EntityFrameworkRuler.Services;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Scaffolding;
@@ -11,9 +14,17 @@ namespace EntityFrameworkRuler {
     /// Used to the configure design-time services for this library.
     /// </summary>
     public sealed class EfRulerDesignTimeServices : IDesignTimeServices {
-        /// <summary>
-        /// Adds this library's design-time services to the service collection.
-        /// </summary>
+        /// <summary> Creates EfRulerDesignTimeServices </summary>
+        public EfRulerDesignTimeServices() {
+#if DEBUG
+            if (Debugger.IsAttached) return;
+            var entryAssembly = Assembly.GetEntryAssembly();
+            var entryName = entryAssembly?.GetName().Name;
+            if (entryName.In("ef", "dotnet-ef")) Debugger.Launch();
+#endif
+        }
+
+        /// <summary> Adds this library's design-time services to the service collection. </summary>
         /// <param name="services">The service collection.</param>
         [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
         public void ConfigureDesignTimeServices(IServiceCollection services) {
