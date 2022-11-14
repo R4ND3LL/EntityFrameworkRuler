@@ -31,8 +31,8 @@ namespace EntityFrameworkRuler.Design {
             services.AddSingleton<IScaffoldingModelFactory, EfRulerRelationalScaffoldingModelFactory>();
             services.AddSingleton<IReverseEngineerScaffolder, EfRulerReverseEngineerScaffolder>();
             //services.AddSingleton<ICandidateNamingService, CandidateNamingService>();
-            services.AddSingleton<IRuleLoader, DefaultRuleLoader>();
-            services.AddRuleApplicator();
+            services.AddSingleton<IDesignTimeRuleLoader, DesignTimeRuleLoader>();
+            services.AddRuleLoader();
         }
     }
 }

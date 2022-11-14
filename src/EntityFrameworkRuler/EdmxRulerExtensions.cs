@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFrameworkRuler;
 
-public static class EdmxRulerExtensions {
+public static class EntityFrameworkRulerExtensions {
     /// <summary> Add RuleGenerator services </summary>
     public static T AddRuleGenerator<T>(this T serviceCollection, GeneratorOptions generatorOptions = null) where T : IServiceCollection =>
         (T)serviceCollection

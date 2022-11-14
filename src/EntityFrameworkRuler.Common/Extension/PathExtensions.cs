@@ -1,5 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using EntityFrameworkRuler.Applicator.CsProjParser;
+using EntityFrameworkRuler.Common;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -53,5 +55,29 @@ public static class PathExtensions {
         }
 
         return csProjFiles;
+    }
+
+    internal static CsProject InspectProject(this string projectBasePath, LoggedResponse loggedResponse=null) {
+        try {
+            var csProjFiles = ResolveCsProjFiles(ref projectBasePath);
+            if (!csProjFiles.IsNullOrEmpty())
+                foreach (var csProjFile in csProjFiles) {
+                    CsProject csProj;
+                    try {
+                        var text = File.ReadAllText(csProjFile.FullName);
+                        csProj = CsProjSerializer.Deserialize(text);
+                        csProj.FilePath = csProjFile.FullName;
+                    } catch (Exception ex) {
+                        loggedResponse?.LogError($"Unable to parse csproj: {ex.Message}");
+                        continue;
+                    }
+
+                    return csProj;
+                }
+        } catch (Exception ex) {
+            loggedResponse?.LogError($"Unable to read csproj: {ex.Message}");
+        }
+
+        return new();
     }
 }

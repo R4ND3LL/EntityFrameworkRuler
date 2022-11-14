@@ -35,7 +35,7 @@ public class EfRulerDesignTimeServicesTests {
         Assert.IsType<EfRulerCandidateNamingService>(serviceProvider.GetService<ICandidateNamingService>());
         Assert.IsType<EfRulerRelationalScaffoldingModelFactory>(serviceProvider.GetService<IScaffoldingModelFactory>());
         Assert.IsType<EfRulerReverseEngineerScaffolder>(serviceProvider.GetService<IReverseEngineerScaffolder>());
-        Assert.IsType<DefaultRuleLoader>(serviceProvider.GetService<IRuleLoader>());
+        Assert.IsType<DesignTimeRuleLoader>(serviceProvider.GetService<IDesignTimeRuleLoader>());
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class EfRulerDesignTimeServicesTests {
         var p = serviceProvider.GetService<IPluralizer>();
         Assert.IsType<EfRulerPluralizer>(p);
         Assert.IsType<EfRulerReverseEngineerScaffolder>(serviceProvider.GetService<IReverseEngineerScaffolder>());
-        Assert.IsType<DefaultRuleLoader>(serviceProvider.GetService<IRuleLoader>());
+        Assert.IsType<DesignTimeRuleLoader>(serviceProvider.GetService<IDesignTimeRuleLoader>());
 
         var actualIScaffoldingModelFactory = serviceProvider.GetService<IScaffoldingModelFactory>();
         actualIScaffoldingModelFactory.ShouldBe(scaffoldingModelFactory);

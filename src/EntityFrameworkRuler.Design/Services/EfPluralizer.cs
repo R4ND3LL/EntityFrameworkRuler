@@ -1,5 +1,5 @@
-using EntityFrameworkRuler.Generator.Services;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Design.Internal;
 
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 

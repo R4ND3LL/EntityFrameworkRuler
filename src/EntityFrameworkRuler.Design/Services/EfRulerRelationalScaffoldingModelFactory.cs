@@ -24,7 +24,7 @@ namespace EntityFrameworkRuler.Design.Services;
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingModelFactory {
     private readonly IOperationReporter reporter;
-    private readonly IRuleLoader ruleLoader;
+    private readonly IDesignTimeRuleLoader designTimeRuleLoader;
     private PrimitiveNamingRules primitiveNamingRules;
 
     /// <inheritdoc />
@@ -38,7 +38,7 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
         LoggingDefinitions loggingDefinitions,
 #endif
         IModelRuntimeInitializer modelRuntimeInitializer,
-        IRuleLoader ruleLoader)
+        IDesignTimeRuleLoader designTimeRuleLoader)
 #if NET6
         : base(reporter, candidateNamingService, pluralizer, cSharpUtilities, scaffoldingTypeMapper, loggingDefinitions,
             modelRuntimeInitializer) {
@@ -46,13 +46,13 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
         : base(reporter, candidateNamingService, pluralizer, cSharpUtilities, scaffoldingTypeMapper, modelRuntimeInitializer) {
 #endif
         this.reporter = reporter;
-        this.ruleLoader = ruleLoader;
+        this.designTimeRuleLoader = designTimeRuleLoader;
     }
 
     /// <inheritdoc />
     protected override TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseColumn column) {
         var typeScaffoldingInfo = base.GetTypeScaffoldingInfo(column);
-        primitiveNamingRules ??= ruleLoader?.GetPrimitiveNamingRules() ?? new();
+        primitiveNamingRules ??= designTimeRuleLoader?.GetPrimitiveNamingRules() ?? new();
 
 
         if (!TryResolveRuleFor(column, out _, out var tableRule, out var columnRule)) return typeScaffoldingInfo;
@@ -60,7 +60,7 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
 
         try {
             var clrTypeName = columnRule.NewType;
-            var clrType = ruleLoader?.TryResolveType(clrTypeName, typeScaffoldingInfo?.ClrType);
+            var clrType = designTimeRuleLoader?.TryResolveType(clrTypeName, typeScaffoldingInfo?.ClrType);
 
             if (clrType == null) {
                 WriteWarning($"Type not found: {columnRule.NewType}");
@@ -91,7 +91,7 @@ public class EfRulerRelationalScaffoldingModelFactory : RelationalScaffoldingMod
         // ReSharper disable once AssignNullToNotNullAttribute
         if (table is null) return base.VisitTable(modelBuilder, table);
 
-        primitiveNamingRules ??= ruleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
+        primitiveNamingRules ??= designTimeRuleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
 
         if (!primitiveNamingRules.TryResolveRuleFor(table.Schema, table.Name, out var schemaRule, out var tableRule))
             return base.VisitTable(modelBuilder, table);

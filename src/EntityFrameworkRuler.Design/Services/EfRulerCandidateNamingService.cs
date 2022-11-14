@@ -20,21 +20,21 @@ namespace EntityFrameworkRuler.Design.Services;
 /// This will apply custom table, column, and navigation names. </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class EfRulerCandidateNamingService : CandidateNamingService {
-    private readonly IRuleLoader ruleLoader;
+    private readonly IDesignTimeRuleLoader designTimeRuleLoader;
     private readonly IOperationReporter reporter;
     private PrimitiveNamingRules primitiveNamingRules;
     private NavigationNamingRules navigationRules;
 
     /// <inheritdoc />
-    public EfRulerCandidateNamingService(IRuleLoader ruleLoader, IOperationReporter reporter) {
-        this.ruleLoader = ruleLoader;
+    public EfRulerCandidateNamingService(IDesignTimeRuleLoader designTimeRuleLoader, IOperationReporter reporter) {
+        this.designTimeRuleLoader = designTimeRuleLoader;
         this.reporter = reporter;
     }
 
     /// <summary> Name that table </summary>
     public override string GenerateCandidateIdentifier(DatabaseTable table) {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
-        primitiveNamingRules ??= ruleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
+        primitiveNamingRules ??= designTimeRuleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
 
 
         if (!primitiveNamingRules.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule))
@@ -74,7 +74,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
     [SuppressMessage("ReSharper", "InvertIf")]
     public override string GenerateCandidateIdentifier(DatabaseColumn column) {
         if (column is null) throw new ArgumentNullException(nameof(column));
-        primitiveNamingRules ??= ruleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
+        primitiveNamingRules ??= designTimeRuleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
 
         if (!primitiveNamingRules.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, out var schema, out var tableRule))
             return base.GenerateCandidateIdentifier(column);
@@ -141,7 +141,7 @@ public class EfRulerCandidateNamingService : CandidateNamingService {
         Func<string> defaultEfName) {
         if (foreignKey is null) throw new ArgumentNullException(nameof(foreignKey));
         if (defaultEfName == null) throw new ArgumentNullException(nameof(defaultEfName));
-        navigationRules ??= ruleLoader?.GetNavigationNamingRules() ?? new NavigationNamingRules();
+        navigationRules ??= designTimeRuleLoader?.GetNavigationNamingRules() ?? new NavigationNamingRules();
 
         var fkName = foreignKey.GetConstraintName();
         var entity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;

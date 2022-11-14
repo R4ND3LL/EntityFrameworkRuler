@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using EntityFrameworkRuler.Applicator;
+using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
 using EntityFrameworkRuler.Rules.NavigationNaming;
 using EntityFrameworkRuler.Rules.PrimitiveNaming;
@@ -9,11 +9,11 @@ namespace EntityFrameworkRuler.Design.Services;
 
 /// <inheritdoc />
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
-public class DefaultRuleLoader : IRuleLoader {
+public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     private readonly IServiceProvider serviceProvider;
 
     /// <summary> Creates the rule loader </summary>
-    public DefaultRuleLoader(IServiceProvider serviceProvider) { this.serviceProvider = serviceProvider; }
+    public DesignTimeRuleLoader(IServiceProvider serviceProvider) { this.serviceProvider = serviceProvider; }
 
     private LoadRulesResponse response;
 
@@ -52,7 +52,7 @@ public class DefaultRuleLoader : IRuleLoader {
     }
 
     /// <inheritdoc />
-    public IRuleLoader SetCodeGenerationOptions(ModelCodeGenerationOptions options) {
+    public IDesignTimeRuleLoader SetCodeGenerationOptions(ModelCodeGenerationOptions options) {
         CodeGenOptions = options;
 
         var projectDir = GetProjectDir();
@@ -73,7 +73,7 @@ public class DefaultRuleLoader : IRuleLoader {
         try {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-            var csProj = RuleApplicator.InspectProject(projectDir, null);
+            var csProj = projectDir.InspectProject();
             var assemblyName = csProj.GetAssemblyName().CoalesceWhiteSpace(options.RootNamespace);
 
             var targetAssembliesQuery = assemblies.Where(o => !o.IsDynamic);
@@ -105,7 +105,7 @@ public class DefaultRuleLoader : IRuleLoader {
     }
 
     /// <inheritdoc />
-    public IRuleLoader SetReverseEngineerOptions(ModelReverseEngineerOptions options) {
+    public IDesignTimeRuleLoader SetReverseEngineerOptions(ModelReverseEngineerOptions options) {
         ReverseEngineerOptions = options;
         return this;
     }
@@ -116,7 +116,7 @@ public class DefaultRuleLoader : IRuleLoader {
         LoadRulesResponse Fetch() {
             var projectFolder = GetProjectDir();
             if (projectFolder.IsNullOrWhiteSpace() || !Directory.Exists(projectFolder)) return null;
-            var applicator = new RuleApplicator(projectFolder);
+            var applicator = new RuleLoader(projectFolder);
             var loadRulesResponse = applicator.LoadRulesInProjectPath().GetAwaiter().GetResult();
             return loadRulesResponse;
         }

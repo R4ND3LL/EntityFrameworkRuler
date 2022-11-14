@@ -17,7 +17,7 @@ namespace EntityFrameworkRuler.Design.Services;
 /// </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class EfRulerReverseEngineerScaffolder : ReverseEngineerScaffolder {
-    private readonly IRuleLoader ruleLoader;
+    private readonly IDesignTimeRuleLoader designTimeRuleLoader;
 
     /// <inheritdoc />
     public EfRulerReverseEngineerScaffolder(IDatabaseModelFactory databaseModelFactory,
@@ -27,20 +27,20 @@ public class EfRulerReverseEngineerScaffolder : ReverseEngineerScaffolder {
         ICSharpHelper cSharpHelper,
         IDesignTimeConnectionStringResolver connectionStringResolver,
         IOperationReporter reporter,
-        IRuleLoader ruleLoader) : base(databaseModelFactory,
+        IDesignTimeRuleLoader designTimeRuleLoader) : base(databaseModelFactory,
         scaffoldingModelFactory,
         modelCodeGeneratorSelector,
         cSharpUtilities,
         cSharpHelper,
         connectionStringResolver,
         reporter) {
-        this.ruleLoader = ruleLoader;
+        this.designTimeRuleLoader = designTimeRuleLoader;
     }
 
     /// <inheritdoc />
     public override ScaffoldedModel ScaffoldModel(string connectionString, DatabaseModelFactoryOptions databaseOptions,
         ModelReverseEngineerOptions modelOptions, ModelCodeGenerationOptions codeOptions) {
-        ruleLoader.SetCodeGenerationOptions(codeOptions).SetReverseEngineerOptions(modelOptions);
+        designTimeRuleLoader.SetCodeGenerationOptions(codeOptions).SetReverseEngineerOptions(modelOptions);
         var m = base.ScaffoldModel(connectionString, databaseOptions, modelOptions, codeOptions);
         return m;
     }

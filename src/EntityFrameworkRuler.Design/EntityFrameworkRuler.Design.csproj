@@ -10,9 +10,15 @@
         <DevelopmentDependency>true</DevelopmentDependency>
         <RootNamespace>EntityFrameworkRuler.Design</RootNamespace>
         <PackageId>EntityFrameworkRuler.Design</PackageId>
+        <PackageIcon>crown128.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="..\Resources\crown128.png">
+          <Pack>True</Pack>
+          <PackagePath></PackagePath>
+          <Link>crown128.png</Link>
+        </None>
         <None Include="build\**\*">
             <Pack>True</Pack>
             <PackagePath>build</PackagePath>
@@ -41,15 +47,15 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\EntityFrameworkRuler\EntityFrameworkRuler.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
         <Compile Remove="nupkg\**" />
     </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource Remove="nupkg\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj" />
     </ItemGroup>
 
 </Project>
