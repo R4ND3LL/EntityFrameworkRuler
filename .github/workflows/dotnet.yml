@@ -22,9 +22,20 @@ jobs:
         dotnet-version: 7.0.x
     - name: Restore dependencies
       run: dotnet restore src
-    - name: Build
+    - name: Test Build
       run: dotnet build src --configuration Debug --no-restore
     - name: Test Design
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --verbosity normal
     - name: Test CLI
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Tests --no-build --verbosity normal
+    - name: Create NuGet package
+      run: dotnet pack --configuration Release --no-restore src
+    - name: Publish CLI package to NuGet
+      run: dotnet nuget push /src/EntityFrameworkRuler/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN -s https://api.nuget.org/v3/index.json      
+    - name: Publish Design package to NuGet
+      run: dotnet nuget push /src/EntityFrameworkRuler.Design/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN -s https://api.nuget.org/v3/index.json      
+    - name: Publish Editor package to NuGet
+      run: dotnet nuget push /src/EntityFrameworkRuler.Editor/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN -s https://api.nuget.org/v3/index.json      
+      env:
+        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
+        

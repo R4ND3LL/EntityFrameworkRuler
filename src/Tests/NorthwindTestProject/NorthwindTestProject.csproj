@@ -5,6 +5,7 @@
         <Nullable>disable</Nullable>
         <UseWindowsForms>false</UseWindowsForms>
         <ImplicitUsings>disable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup> 
