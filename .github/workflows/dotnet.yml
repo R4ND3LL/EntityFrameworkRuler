@@ -19,8 +19,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 7.0.x
-        source-url: https://nuget.pkg.github.com/R4ND3LL/index.json        
+        dotnet-version: 7.0.x      
     - name: Restore dependencies
       run: dotnet restore src
     - name: Test Build
@@ -34,9 +33,9 @@ jobs:
     - name: Publish CLI package to NuGet
       env:
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
-      run: dotnet nuget push -s https://api.nuget.org/v3/index.json ./src/EntityFrameworkRuler/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN  --skip-duplicate      
+      run: dotnet nuget push --source https://api.nuget.org/v3/index.json ./src/EntityFrameworkRuler/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN  --skip-duplicate      
     - name: Publish Design package to NuGet
-      run: dotnet nuget push -s https://api.nuget.org/v3/index.json ./src/EntityFrameworkRuler.Design/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN --skip-duplicate      
+      run: dotnet nuget push --source https://api.nuget.org/v3/index.json ./src/EntityFrameworkRuler.Design/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN --skip-duplicate      
     - name: Publish Editor package to NuGet
-      run: dotnet nuget push -s https://api.nuget.org/v3/index.json ./src/EntityFrameworkRuler.Editor/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN --skip-duplicate      
+      run: dotnet nuget push --source https://api.nuget.org/v3/index.json ./src/EntityFrameworkRuler.Editor/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN --skip-duplicate      
         
