@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace EntityFrameworkRuler.Extension;
 
+/// <summary> Json serialization helpers </summary>
 public static class JsonSerializerExtensions {
     /// <summary> Read the json file or return new instance on failure </summary>
     /// <param name="filePath">json file path to load</param>

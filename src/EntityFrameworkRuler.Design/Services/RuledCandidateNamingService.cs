@@ -123,11 +123,6 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
     #region internal members
 
-    internal void WriteWarning(string msg) {
-        reporter?.WriteWarning(msg);
-        DesignTimeRuleLoader.DebugLog(msg);
-    }
-
     internal void WriteVerbose(string msg) {
         reporter?.WriteVerbose(msg);
         DesignTimeRuleLoader.DebugLog(msg);

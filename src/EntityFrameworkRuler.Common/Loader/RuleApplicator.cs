@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFrameworkRuler.Loader;
 
+/// <summary> EF Rule loader </summary>
 public class RuleLoader : RuleProcessor, IRuleLoader {
     /// <summary> Create rule Loader for making changes to project files </summary>
     /// <param name="projectBasePath">project folder containing rules and target files.</param>

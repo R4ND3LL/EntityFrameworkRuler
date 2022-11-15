@@ -9,23 +9,29 @@ using EntityFrameworkRuler.Common;
 
 namespace EntityFrameworkRuler.Extension;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class PathExtensions {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static Task<string[]> FindEdmxFilesNearProjectAsync(this string projectBasePath) {
         return FindEdmxFilesUnderPathAsync(FindSolutionParentPath(projectBasePath));
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static string[] FindEdmxFilesNearProject(this string projectBasePath) {
         return FindEdmxFilesUnderPath(FindSolutionParentPath(projectBasePath));
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static Task<string[]> FindEdmxFilesUnderPathAsync(this string solutionBasePath) {
         return Task.Factory.StartNew(() => Directory.GetFiles(solutionBasePath, "*.edmx", SearchOption.AllDirectories));
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static string[] FindEdmxFilesUnderPath(this string solutionBasePath) {
         return Directory.GetFiles(solutionBasePath, "*.edmx", SearchOption.AllDirectories);
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static string FindSolutionParentPath(this string projectBasePath) {
         if (projectBasePath.IsNullOrWhiteSpace()) return null;
         var di = new DirectoryInfo(projectBasePath);
@@ -33,6 +39,7 @@ public static class PathExtensions {
         return di?.Exists != true ? null : di.FullName;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static string FindProjectParentPath(this string projectSubPath) {
         if (projectSubPath.IsNullOrWhiteSpace()) return null;
         var di = new DirectoryInfo(projectSubPath);
@@ -40,8 +47,10 @@ public static class PathExtensions {
         return di?.Exists != true ? null : di.FullName;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static FileInfo[] ResolveCsProjFiles(this string projectBasePath) => ResolveCsProjFiles(ref projectBasePath);
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static FileInfo[] ResolveCsProjFiles(ref string projectBasePath) {
         FileInfo[] csProjFiles;
         if (projectBasePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
@@ -57,7 +66,8 @@ public static class PathExtensions {
         return csProjFiles;
     }
 
-    internal static CsProject InspectProject(this string projectBasePath, LoggedResponse loggedResponse=null) {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    internal static CsProject InspectProject(this string projectBasePath, LoggedResponse loggedResponse = null) {
         try {
             var csProjFiles = ResolveCsProjFiles(ref projectBasePath);
             if (!csProjFiles.IsNullOrEmpty())

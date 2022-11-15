@@ -2,10 +2,13 @@
 
 namespace EntityFrameworkRuler.Extension;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class TypeExtensions {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static Type UnwrapNullableType(this Type type)
         => Nullable.GetUnderlyingType(type) ?? type;
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static Multiplicity ParseMultiplicity(this string s) {
         return s switch {
             "0..1" => Multiplicity.ZeroOne,
@@ -15,6 +18,7 @@ public static class TypeExtensions {
         };
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static string ToMultiplicityString(this Multiplicity m) {
         return m switch {
             Multiplicity.Unknown => string.Empty,

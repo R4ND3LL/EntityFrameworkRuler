@@ -21,7 +21,22 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     public DesignTimeRuleLoader(IServiceProvider serviceProvider, IOperationReporter reporter) {
         this.serviceProvider = serviceProvider;
         this.reporter = reporter;
+        var reporterAssembly = reporter.GetType().Assembly;
+        var assemblyName = reporterAssembly?.GetName();
+        EfVersion = assemblyName?.Version;
+        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+        if (EfVersion != null) reporter?.WriteInformation($"Rule loader detected EF v{assemblyName.Version}");
+        else reporter?.WriteInformation("Rule loader could not detect the EF version");
     }
+
+    /// <summary> The detected entity framework version.  </summary>
+    public Version? EfVersion { get; set; }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected bool IsEf6 => EfVersion?.Major == 6;
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected bool IsEf7 => EfVersion?.Major == 7;
 
     private LoadRulesResponse response;
 
@@ -89,7 +104,9 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
                 targetAssembliesQuery = targetAssembliesQuery.Where(o => o.GetName().Name == assemblyName);
 
             TargetAssemblies = targetAssembliesQuery.ToList();
-
+            if (TargetAssemblies.Count > 0) {
+                reporter?.WriteInformation($"Rule loader resolved target assembly: {TargetAssemblies[0].GetName().Name}");
+            }
             // if (TargetAssemblies.Count > 0) {
             //     // also add direct references that are under the sln folder as locations to load property types from
             //     if (SolutionPath.HasNonWhiteSpace()) {
@@ -119,7 +136,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         LoadRulesResponse Fetch() {
             var projectFolder = GetProjectDir();
             if (projectFolder.IsNullOrWhiteSpace() || !Directory.Exists(projectFolder)) {
-                WriteWarning("Current project directory could not be determined for rule loading.");
+                reporter?.WriteWarning("Current project directory could not be determined for rule loading.");
                 return null;
             }
 
@@ -127,7 +144,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             loader.OnLog += LoaderOnLog;
             var loadRulesResponse = loader.LoadRulesInProjectPath().GetAwaiter().GetResult();
             loader.OnLog -= LoaderOnLog;
-            WriteInformation($"EF Ruler loaded {loadRulesResponse.Rules?.Count ?? 0} rule file(s).");
+            reporter?.WriteInformation($"EF Ruler loaded {loadRulesResponse.Rules?.Count ?? 0} rule file(s).");
             return loadRulesResponse;
         }
 
@@ -138,41 +155,31 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     private void LoaderOnLog(object sender, LogMessage msg) {
         switch (msg.Type) {
             case LogType.Warning:
-                WriteWarning(msg.Message);
+                reporter?.WriteWarning(msg.Message);
                 break;
             case LogType.Error:
-                WriteError(msg.Message);
+                reporter?.WriteError(msg.Message);
                 break;
             case LogType.Information:
             default:
-                WriteInformation(msg.Message);
+                WriteVerbose(msg.Message);
                 break;
         }
     }
 
     /// <summary> Get the project folder where the EF context model is being built </summary>
     protected virtual string GetProjectDir() {
-#if NET6
-        return CodeGenOptions?.ContextDir?.FindProjectParentPath() ?? Directory.GetCurrentDirectory();
-#elif NET7
-        return CodeGenOptions?.ProjectDir ?? CodeGenOptions?.ContextDir?.FindProjectParentPath() ?? Directory.GetCurrentDirectory();
-#endif
+        // use reflecting to access ProjectDir property, which was added in EF 7.
+        // otherwise, binding errors may occur against EF 6.
+        if (CodeGenOptions == null) return Directory.GetCurrentDirectory();
+        string folder = null;
+        var prop = CodeGenOptions.GetType().GetProperty("ProjectDir");
+        if (prop != null) folder = prop.GetValue(CodeGenOptions) as string;
+        if (folder.IsNullOrWhiteSpace() && CodeGenOptions.ContextDir.HasNonWhiteSpace() && Path.IsPathRooted(CodeGenOptions.ContextDir))
+            folder = CodeGenOptions.ContextDir.FindProjectParentPath();
+        return folder.IsNullOrWhiteSpace() ? Directory.GetCurrentDirectory() : folder;
     }
 
-    internal void WriteError(string msg) {
-        reporter?.WriteError(msg);
-        DebugLog(msg);
-    }
-
-    internal void WriteWarning(string msg) {
-        reporter?.WriteWarning(msg);
-        DebugLog(msg);
-    }
-
-    internal void WriteInformation(string msg) {
-        reporter?.WriteInformation(msg);
-        DebugLog(msg);
-    }
 
     internal void WriteVerbose(string msg) {
         reporter?.WriteVerbose(msg);

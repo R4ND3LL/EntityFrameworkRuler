@@ -7,7 +7,7 @@ using EntityFrameworkRuler.Rules.PrimitiveNaming;
 // ReSharper disable MemberCanBeInternal
 
 namespace EntityFrameworkRuler.Extension;
-
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class RuleExtensions {
     /// <summary> Get the primitive schema rule for the given target schema. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]

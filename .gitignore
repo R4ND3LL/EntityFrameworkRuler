@@ -350,3 +350,19 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+/src/Tests/NorthwindTestProject/Models/Alphabetical_list_of_product.cs
+/src/Tests/NorthwindTestProject/Models/Category_Sales_for_1997.cs
+/src/Tests/NorthwindTestProject/Models/Current_Product_List.cs
+/src/Tests/NorthwindTestProject/Models/Customer_and_Suppliers_by_City.cs
+/src/Tests/NorthwindTestProject/Models/Order_Detail.cs
+/src/Tests/NorthwindTestProject/Models/Order_Details_Extended.cs
+/src/Tests/NorthwindTestProject/Models/Order_Subtotal.cs
+/src/Tests/NorthwindTestProject/Models/Orders_Qry_Custom.cs
+/src/Tests/NorthwindTestProject/Models/Product_Sales_for_1997.cs
+/src/Tests/NorthwindTestProject/Models/Products_Above_Average_Price.cs
+/src/Tests/NorthwindTestProject/Models/Products_by_Category.cs
+/src/Tests/NorthwindTestProject/Models/RegionCustom.cs
+/src/Tests/NorthwindTestProject/Models/Sales_by_Category.cs
+/src/Tests/NorthwindTestProject/Models/Sales_Totals_by_Amount.cs
+/src/Tests/NorthwindTestProject/Models/Summary_of_Sales_by_Quarter.cs
+/src/Tests/NorthwindTestProject/Models/Summary_of_Sales_by_Year.cs

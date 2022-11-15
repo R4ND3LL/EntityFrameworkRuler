@@ -41,7 +41,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         try {
             proxy = serviceProvider.CreateClassProxy<RelationalScaffoldingModelFactory>(this);
         } catch (Exception ex) {
-            WriteError($"Error creating proxy of RelationalScaffoldingModelFactory: {ex.Message}");
+            reporter?.WriteError($"Error creating proxy of RelationalScaffoldingModelFactory: {ex.Message}");
             throw;
         }
 
@@ -52,9 +52,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         addNavigationPropertiesMethod = t.GetMethod<IMutableForeignKey>("AddNavigationProperties");
 
         if (visitForeignKeyMethod == null)
-            WriteWarning("Method not found: RelationalScaffoldingModelFactory.VisitForeignKey()");
+            reporter?.WriteWarning("Method not found: RelationalScaffoldingModelFactory.VisitForeignKey()");
         if (addNavigationPropertiesMethod == null)
-            WriteWarning("Method not found: RelationalScaffoldingModelFactory.AddNavigationProperties()");
+            reporter?.WriteWarning("Method not found: RelationalScaffoldingModelFactory.AddNavigationProperties()");
     }
 
     /// <inheritdoc />
@@ -76,7 +76,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var clrType = designTimeRuleLoader?.TryResolveType(clrTypeName, typeScaffoldingInfo?.ClrType);
 
             if (clrType == null) {
-                WriteWarning($"Type not found: {columnRule.NewType}");
+                reporter?.WriteWarning($"Type not found: {columnRule.NewType}");
                 return typeScaffoldingInfo;
             }
 
@@ -85,7 +85,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             WriteVerbose($"Column rule applied: {tableRule.Name}.{columnRule.PropertyName} type set to {columnRule.NewType}");
             return typeScaffoldingInfo;
         } catch (Exception ex) {
-            WriteWarning($"Error loading type '{columnRule.NewType}' reference: {ex.Message}");
+            reporter?.WriteWarning($"Error loading type '{columnRule.NewType}' reference: {ex.Message}");
         }
 
         return typeScaffoldingInfo;
@@ -157,7 +157,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
 
             // force simple ManyToMany junctions to be generated as entities
-            WriteInformation($"{schema} Simple ManyToMany junctions are being forced to generate entities for schema {schema}");
+            reporter?.WriteInformation($"{schema} Simple ManyToMany junctions are being forced to generate entities for schema {schema}");
             foreach (var fk in schemaForeignKeys)
                 visitForeignKeyMethod!.Invoke(proxy, new object[] { modelBuilder, fk });
 
@@ -169,20 +169,6 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         return modelBuilder;
     }
 
-    internal void WriteError(string msg) {
-        reporter?.WriteError(msg);
-        DesignTimeRuleLoader.DebugLog(msg);
-    }
-
-    internal void WriteWarning(string msg) {
-        reporter?.WriteWarning(msg);
-        DesignTimeRuleLoader.DebugLog(msg);
-    }
-
-    internal void WriteInformation(string msg) {
-        reporter?.WriteInformation(msg);
-        DesignTimeRuleLoader.DebugLog(msg);
-    }
 
     internal void WriteVerbose(string msg) {
         reporter?.WriteVerbose(msg);
