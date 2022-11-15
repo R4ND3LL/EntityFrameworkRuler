@@ -11,6 +11,7 @@
         <PackageIcon>crown128.png</PackageIcon>
         <RootNamespace>EntityFrameworkRuler</RootNamespace>
         <PackageId>EntityFrameworkRuler</PackageId>
+        <PackageReadmeFile>EntityFrameworkRuler.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -104,5 +105,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="..\..\docs\EntityFrameworkRuler.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 </Project>

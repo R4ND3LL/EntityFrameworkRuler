@@ -9,6 +9,7 @@
         <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
         <PackageId>EntityFrameworkRuler.Common</PackageId>
         <TargetFrameworks>netstandard2.1;net6.0</TargetFrameworks>
+        <PackageReadmeFile>Common.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -33,5 +34,9 @@
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
             <_Parameter1>EntityFrameworkRuler.Design</_Parameter1>
         </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\docs\Common.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 </Project>

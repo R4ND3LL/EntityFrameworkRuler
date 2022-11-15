@@ -1,10 +1,4 @@
-# Entity Framework Ruler
-
-![Build status](https://github.com/R4ND3LL/EntityFrameworkRuler/actions/workflows/dotnet.yml/badge.svg)
-[![CLI](http://img.shields.io/nuget/v/EntityFrameworkRuler.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler/)
-[![Design](http://img.shields.io/nuget/v/EntityFrameworkRuler.Design.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Design/)
-[![Editor](http://img.shields.io/nuget/v/EntityFrameworkRuler.Editor.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Editor/)
-[![Common](http://img.shields.io/nuget/v/EntityFrameworkRuler.Common.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Common/)
+# Entity Framework Ruler - Editor
 
 Automate the customization of the EF Core Reverse Engineered model. Supported changes include:
 - Class renaming
@@ -49,7 +43,7 @@ There are 2 ways to use the [CLI tool](https://www.nuget.org/packages/EntityFram
    ```
 See the [NuGet page](https://www.nuget.org/packages/EntityFrameworkRuler/) for details.
 
-# CLI Usage:
+## CLI Usage:
 ### To generate rules from an EDMX, run the following:
    ```
    > efruler -g <edmxFilePath> <efCoreProjectBasePath>

@@ -10,6 +10,7 @@
         <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
         <RootNamespace>EntityFrameworkRuler.Editor</RootNamespace>
         <PackageId>EntityFrameworkRuler.Editor</PackageId>
+        <PackageReadmeFile>Editor.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,5 +18,8 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="..\..\docs\Editor.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 </Project>
