@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -184,7 +185,7 @@ public sealed class EdmxRulerTests {
         while (dir != null && dir.Name != "Tests") dir = dir.Parent;
 
         dir.ShouldNotBeNull();
-        var path = Path.Combine(dir.FullName, "NorthwindTestEdmx\\Northwind.edmx");
+        var path = Path.Combine(dir.FullName, $"NorthwindTestEdmx{Path.DirectorySeparatorChar}Northwind.edmx");
         File.Exists(path).ShouldBeTrue();
         return path;
     }
@@ -194,7 +195,7 @@ public sealed class EdmxRulerTests {
         while (dir != null && dir.Name != "Tests") dir = dir.Parent;
 
         dir.ShouldNotBeNull();
-        var path = Path.Combine(dir.FullName, "NorthwindTestProject\\NorthwindTestProject.csproj");
+        var path = Path.Combine(dir.FullName, $"NorthwindTestProject{Path.DirectorySeparatorChar}NorthwindTestProject.csproj");
         File.Exists(path).ShouldBeTrue();
         return path;
     }
