@@ -16,6 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
@@ -35,13 +38,13 @@ jobs:
         echo ${{ steps.version.outputs.version }}
         
     - name: Test Build
-      run: dotnet build src --configuration Debug --no-restore /p:AssemblyVersion=${{ steps.version.outputs.version }} /p:Version=${{ steps.version.outputs.version }}
+      run: dotnet build src --configuration Debug --no-restore 
     - name: Test Design
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --verbosity normal
     - name: Test CLI
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Tests --no-build --verbosity normal
     - name: Release Build
-      run: dotnet build src --configuration Release --no-restore /p:AssemblyVersion=${{ steps.version.outputs.version }} /p:Version=${{ steps.version.outputs.version }}
+      run: dotnet build src --configuration Release --no-restore 
     - name: Create NuGet package
       run: dotnet pack --configuration Release --no-build --no-restore src
     - name: Publish CLI package to NuGet
