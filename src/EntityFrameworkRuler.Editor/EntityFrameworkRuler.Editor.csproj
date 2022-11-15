@@ -4,6 +4,7 @@
         <OutputType>WinExe</OutputType>
         <TargetFramework>net6.0-windows</TargetFramework>
         <UseWPF>true</UseWPF>
+        <EnableWindowsTargeting>True</EnableWindowsTargeting>
         <ImplicitUsings>enable</ImplicitUsings>
         <PackageOutputPath>./nupkg</PackageOutputPath>
         <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
