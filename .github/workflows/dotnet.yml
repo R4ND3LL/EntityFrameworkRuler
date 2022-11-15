@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        fetch-depth: 0
+        fetch-depth: 60
         
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
@@ -25,18 +25,6 @@ jobs:
         dotnet-version: 7.0.x      
     - name: Restore dependencies
       run: dotnet restore src
-      
-    - name: Calculate Version
-      uses: thefringeninja/action-minver@2.0.0-preview1
-      id: version
-      with:
-        tag-prefix: v
-        default-pre-release-phase: alpha      
-
-    - name: Print Version
-      run: |
-        echo ${{ steps.version.outputs.version }}
-        
     - name: Test Build
       run: dotnet build src --configuration Debug --no-restore 
     - name: Test Design
