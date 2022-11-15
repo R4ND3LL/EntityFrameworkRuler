@@ -31,11 +31,11 @@ jobs:
     - name: Create NuGet package
       run: dotnet pack --configuration Release --no-restore src
     - name: Publish CLI package to NuGet
-      run: dotnet nuget push /src/EntityFrameworkRuler/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN -s https://api.nuget.org/v3/index.json      
+      run: dotnet nuget push ./src/EntityFrameworkRuler/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN -s https://api.nuget.org/v3/index.json      
     - name: Publish Design package to NuGet
-      run: dotnet nuget push /src/EntityFrameworkRuler.Design/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN -s https://api.nuget.org/v3/index.json      
+      run: dotnet nuget push ./src/EntityFrameworkRuler.Design/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN -s https://api.nuget.org/v3/index.json      
     - name: Publish Editor package to NuGet
-      run: dotnet nuget push /src/EntityFrameworkRuler.Editor/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN -s https://api.nuget.org/v3/index.json      
+      run: dotnet nuget push ./src/EntityFrameworkRuler.Editor/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN -s https://api.nuget.org/v3/index.json      
       env:
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
         
