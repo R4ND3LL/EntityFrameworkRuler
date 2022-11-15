@@ -4,7 +4,7 @@
         <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Description>Adds design-time rule-based structuring of the EF Core Reverse Engineering model</Description>
-        <PackageProjectUrl>https://github.com/R4ND3LL/EdmxRuler</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/R4ND3LL/EntityFrameworkRuler</PackageProjectUrl>
         <PackageOutputPath>./nupkg</PackageOutputPath>
         <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
         <DevelopmentDependency>true</DevelopmentDependency>

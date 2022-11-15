@@ -26,7 +26,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     /// <param name="noMetadata"> If true, generate rule files with no extra metadata about the entity models.  Only generate minimal change information. </param>
     /// <param name="noPluralize"> A value indicating whether to use the pluralizer. </param>
     /// <param name="useDatabaseNames"> A value indicating whether to use the database schema names directly. </param>
-    public RuleGenerator(string edmxFilePath, IEdmxRulerNamingService namingService = null, bool noMetadata = false,
+    public RuleGenerator(string edmxFilePath, IRulerNamingService namingService = null, bool noMetadata = false,
         bool noPluralize = false, bool useDatabaseNames = false)
         : this(new() {
             EdmxFilePath = edmxFilePath,
@@ -41,7 +41,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     /// <param name="options"> Generator options. </param>
     /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
     [ActivatorUtilitiesConstructor]
-    public RuleGenerator(GeneratorOptions options, IEdmxRulerNamingService namingService) {
+    public RuleGenerator(GeneratorOptions options, IRulerNamingService namingService) {
         this.namingService = namingService;
         Options = options ?? throw new ArgumentNullException(nameof(options));
     }
@@ -57,14 +57,14 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
         set => Options.EdmxFilePath = value;
     }
 
-    private IEdmxRulerNamingService namingService;
+    private IRulerNamingService namingService;
 
     /// <summary>
     /// Service that decides how to name navigation properties.
     /// Similar to EF ICandidateNamingService but this one utilizes the EDMX model only.
     /// </summary>
-    public IEdmxRulerNamingService NamingService {
-        get => namingService ??= new EdmxRulerNamingService(Options, null);
+    public IRulerNamingService NamingService {
+        get => namingService ??= new RulerNamingService(Options, null);
         set => namingService = value;
     }
 

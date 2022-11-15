@@ -13,7 +13,7 @@ public interface IRuleGenerator : IRuleProcessor {
     /// Service that decides how to name navigation properties.
     /// Similar to EF ICandidateNamingService but this one utilizes the EDMX model only.
     /// </summary>
-    IEdmxRulerNamingService NamingService { get; set; }
+    IRulerNamingService NamingService { get; set; }
 
     /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
     /// Errors are monitored and added to local Errors collection. </summary>

@@ -12,8 +12,8 @@ public static class EntityFrameworkRulerExtensions {
     public static T AddRuleGenerator<T>(this T serviceCollection, GeneratorOptions generatorOptions = null) where T : IServiceCollection =>
         (T)serviceCollection
             .AddSingleton(generatorOptions ?? GeneratorArgHelper.GetDefaultOptions())
-            .AddSingleton<IEdmxRulerNamingService, EdmxRulerNamingService>()
-            .AddSingleton<IEdmxRulerPluralizer, HumanizerPluralizer>()
+            .AddSingleton<IRulerNamingService, RulerNamingService>()
+            .AddSingleton<IRulerPluralizer, HumanizerPluralizer>()
             .AddSingleton<IRuleGenerator, RuleGenerator>()
             .CoerceGeneratorServiceCollection();
 

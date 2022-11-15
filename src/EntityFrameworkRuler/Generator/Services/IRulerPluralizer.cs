@@ -6,7 +6,7 @@
 /// <remarks>
 ///     See <see href="https://aka.ms/efcore-docs-design-time-services">EF Core design-time services</see> for more information and examples.
 /// </remarks>
-public interface IEdmxRulerPluralizer {
+public interface IRulerPluralizer {
     /// <summary>
     ///     Gets the plural version of the given identifier. Returns the same
     ///     identifier if it is already pluralized.

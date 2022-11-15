@@ -13,9 +13,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFrameworkRuler.Generator.Services;
 
-public class EdmxRulerNamingService : IEdmxRulerNamingService {
+public class RulerNamingService : IRulerNamingService {
     [ActivatorUtilitiesConstructor]
-    public EdmxRulerNamingService(GeneratorOptions options = null, IEdmxRulerPluralizer pluralizer = null) {
+    public RulerNamingService(GeneratorOptions options = null, IRulerPluralizer pluralizer = null) {
         this.options = options ?? new GeneratorOptions();
         this.pluralizer = pluralizer ?? new HumanizerPluralizer();
         cSharpUtilities = new();
@@ -31,7 +31,7 @@ public class EdmxRulerNamingService : IEdmxRulerNamingService {
     }
 
     private readonly GeneratorOptions options;
-    private readonly IEdmxRulerPluralizer pluralizer;
+    private readonly IRulerPluralizer pluralizer;
     private readonly CSharpUtilities cSharpUtilities;
     private readonly CSharpUniqueNamer<EntityType> tableNamer;
     private readonly Dictionary<EntityType, CSharpUniqueNamer<EntityProperty>> columnNamers;

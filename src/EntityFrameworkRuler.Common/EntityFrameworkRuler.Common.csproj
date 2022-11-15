@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>EntityFrameworkRuler</RootNamespace>
         <Description>Adds rule-based structuring of the EF Core Reverse Engineering model</Description>
-        <PackageProjectUrl>https://github.com/R4ND3LL/EdmxRuler</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/R4ND3LL/EntityFrameworkRuler</PackageProjectUrl>
         <PackageOutputPath>./nupkg</PackageOutputPath>
         <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
         <PackageId>EntityFrameworkRuler.Common</PackageId>

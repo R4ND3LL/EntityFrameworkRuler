@@ -120,17 +120,17 @@ internal static class Program {
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion
             .ToString();
-        await Console.Out.WriteLineAsync($"EdmxRuler v{versionString}");
+        await Console.Out.WriteLineAsync($"Entity Framework Ruler  v{versionString}");
         await Console.Out.WriteLineAsync("-----------------------");
 
         await Console.Out.WriteLineAsync("\nRule Generation Usage:");
-        await Console.Out.WriteLineAsync("  EdmxRuler -g <edmxfilepath> <efCoreProjectBasePath>");
-        await Console.Out.WriteLineAsync("  EdmxRuler -g <pathContainingEdmxAndCsProj>");
-        await Console.Out.WriteLineAsync("  EdmxRuler -g . (assuming current directory contains edmx and csproj)");
+        await Console.Out.WriteLineAsync("  efruler -g <edmxfilepath> <efCoreProjectBasePath>");
+        await Console.Out.WriteLineAsync("  efruler -g <pathContainingEdmxAndCsProj>");
+        await Console.Out.WriteLineAsync("  efruler -g . (assuming current directory contains edmx and csproj)");
 
         await Console.Out.WriteLineAsync("\nRule Applicator Usage:");
-        await Console.Out.WriteLineAsync("  EdmxRuler -a <pathContainingRulesAndCsProj>");
-        await Console.Out.WriteLineAsync("  EdmxRuler -a . (assuming current directory contains edmx and csproj)");
+        await Console.Out.WriteLineAsync("  efruler -a <pathContainingRulesAndCsProj>");
+        await Console.Out.WriteLineAsync("  efruler -a . (assuming current directory contains edmx and csproj)");
 
         return 1;
     }

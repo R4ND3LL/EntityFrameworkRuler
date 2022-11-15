@@ -93,27 +93,27 @@ public sealed class EntityType : NotifyPropertyChanged {
     /// <summary> internal use only to cache the expected EF Core identifier </summary>
     private NamingCache<string> expectedEfCoreName;
 
-    internal string GetExpectedEfCoreName(IEdmxRulerNamingService namingService) {
+    internal string GetExpectedEfCoreName(IRulerNamingService namingService) {
         return expectedEfCoreName.GetValue(namingService);
     }
 
-    internal string SetExpectedEfCoreName(IEdmxRulerNamingService namingService, string value) {
+    internal string SetExpectedEfCoreName(IRulerNamingService namingService, string value) {
         expectedEfCoreName = new(namingService, value);
         return value;
     }
 
     private NamingCache<List<string>> existingIdentifiers;
 
-    private List<string> GetExistingIdentifiersInternal(IEdmxRulerNamingService namingService) {
+    private List<string> GetExistingIdentifiersInternal(IRulerNamingService namingService) {
         return existingIdentifiers.GetValue(namingService);
     }
 
-    private List<string> SetExistingIdentifiers(IEdmxRulerNamingService namingService, List<string> value) {
+    private List<string> SetExistingIdentifiers(IRulerNamingService namingService, List<string> value) {
         existingIdentifiers = new(namingService, value);
         return value;
     }
 
-    internal List<string> GetExistingIdentifiers(IEdmxRulerNamingService namingService, NavigationProperty skip) {
+    internal List<string> GetExistingIdentifiers(IRulerNamingService namingService, NavigationProperty skip) {
         var identifiers = GetExistingIdentifiersInternal(namingService);
         if (identifiers != null) return identifiers;
         identifiers = new();
@@ -131,15 +131,15 @@ public sealed class EntityType : NotifyPropertyChanged {
 
 [DebuggerDisplay("{value}")]
 internal readonly struct NamingCache<T> {
-    public NamingCache(IEdmxRulerNamingService owner, T value) {
+    public NamingCache(IRulerNamingService owner, T value) {
         Owner = owner ?? throw new ArgumentNullException(nameof(owner));
         this.value = value;
     }
 
-    public IEdmxRulerNamingService Owner { get; init; }
+    public IRulerNamingService Owner { get; init; }
     private readonly T value;
 
-    public T GetValue(IEdmxRulerNamingService current) {
+    public T GetValue(IRulerNamingService current) {
         return ReferenceEquals(current, Owner) ? value : default;
     }
 }
@@ -194,11 +194,11 @@ public sealed class EntityProperty : EntityPropertyBase {
     /// <summary> internal use only to cache the expected EF Core identifier </summary>
     private NamingCache<string> expectedEfCoreName;
 
-    internal string GetExpectedEfCoreName(IEdmxRulerNamingService namingService) {
+    internal string GetExpectedEfCoreName(IRulerNamingService namingService) {
         return expectedEfCoreName.GetValue(namingService);
     }
 
-    internal string SetExpectedEfCoreName(IEdmxRulerNamingService namingService, string value) {
+    internal string SetExpectedEfCoreName(IRulerNamingService namingService, string value) {
         expectedEfCoreName = new(namingService, value);
         return value;
     }

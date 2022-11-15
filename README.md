@@ -10,7 +10,7 @@ The approach is simple:
 
 You only need to generate the rules from the EDMX once.  From then on, applying the customization rules is a single, easy step executed after Reverse Engineering the model (from the database).
 
-### ** This project is a work in progress! Report feedback on the Issues page: https://github.com/R4ND3LL/EdmxRuler/issues
+### ** This project is a work in progress! Report feedback on the Issues page: https://github.com/R4ND3LL/EntityFrameworkRuler/issues
 
 ## EDMX Customizations Supported
 - Class renaming
@@ -21,13 +21,13 @@ You only need to generate the rules from the EDMX once.  From then on, applying 
 There are 2 ways to use this tool:
 1. CLI:
    ```
-   > dotnet tool install --global EdmxRuler
+   > dotnet tool install --global EntityFrameworkRuler 
    ```
 2. Nuget package:
    ```
-   > nuget install EdmxRuler
+   > nuget install EntityFrameworkRuler
    ```
-See https://www.nuget.org/packages/EdmxRuler/ for details.
+See https://www.nuget.org/packages/EntityFrameworkRuler/ for details.
 #### Coming soon: EF Power Tools built-in support.
 
 ## CLI Usage:
@@ -51,11 +51,11 @@ For details on reverse engineering, go to: https://learn.microsoft.com/en-us/ef/
 ## API Usage
 ### To generate rules from an EDMX, use the following class:
 ```
-EdmxRuler.Generator.RuleGenerator
+EntityFrameworkRuler.Generator.RuleGenerator
 ```
 ### To Apply rules to an EF Core model, use the following class:
 ```
-EdmxRuler.Applicator.RuleApplicator
+EntityFrameworkRuler.Applicator.RuleApplicator
 ```
 ## Examples
 
