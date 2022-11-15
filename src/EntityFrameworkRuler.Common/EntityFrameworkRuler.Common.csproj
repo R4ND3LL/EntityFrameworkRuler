@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>EntityFrameworkRuler</RootNamespace>
         <Description>Adds rule-based structuring of the EF Core Reverse Engineering model</Description>
@@ -9,6 +8,7 @@
         <PackageOutputPath>./nupkg</PackageOutputPath>
         <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
         <PackageId>EntityFrameworkRuler.Common</PackageId>
+        <TargetFrameworks>netstandard2.1;net6.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,6 +17,10 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+    </ItemGroup>
+    
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+        <PackageReference Include="System.Text.Json" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>

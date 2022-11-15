@@ -1,34 +1,53 @@
+# Entity Framework Ruler
 
-# EDMX Ruler
-Add EDMX support to EF Core, enabling a smooth upgrade from Entity Framework to EF Core.
+![Build status](https://github.com/R4ND3LL/EntityFrameworkRuler/actions/workflows/dotnet.yml/badge.svg)
+[![CLI](http://img.shields.io/nuget/v/EntityFrameworkRuler.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler/)
+[![Design](http://img.shields.io/nuget/v/EntityFrameworkRuler.Design.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Design/)
+[![Editor](http://img.shields.io/nuget/v/EntityFrameworkRuler.Editor.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Editor/)
+[![Common](http://img.shields.io/nuget/v/EntityFrameworkRuler.Common.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Common/)
 
-The approach is simple:
-1)	Analyze the EDMX for all customizations and generate a set of rule files.
-2)	Discard the EDMX (optional of course).
-3)	Proceed with EF Core database-first Reverse Engineering (scaffolding) steps to generate the entity model.
-4)	Apply the customization rules to restore the original EF structure.
-
-You only need to generate the rules from the EDMX once.  From then on, applying the customization rules is a single, easy step executed after Reverse Engineering the model (from the database).
-
-### ** This project is a work in progress! Report feedback on the Issues page: https://github.com/R4ND3LL/EntityFrameworkRuler/issues
-
-## EDMX Customizations Supported
+Automate the customization of the EF Core Reverse Engineered model. Supported changes include:
 - Class renaming
 - Property renaming (including both primitives and navigations)
-- Property type changes such as in enum usage
+- Type changing (useful for enum mapping)
+- Skipping non-mapped columns.
+- Forcing inclusion of simple many-to-many entities into the model.
 
-## Installation
-There are 2 ways to use this tool:
-1. CLI:
+EF Ruler applies customizations from a rule document stored in the project folder.  Rules can be fully generated from an EDMX (from old Entity Framework) such that the scaffolding output will align with the old EF6 EDMX-based model.
+
+>"EF Ruler provides a smooth upgrade path from EF6 to EF Core by ensuring that the Reverse Engineered model maps perfectly from the old EDMX structure."
+
+### Upgrading from EF6 couldn't be simpler:
+1)	The the [CLI tool](https://www.nuget.org/packages/EntityFrameworkRuler/) to analyze the EDMX for all customizations and generate the rules.
+2)	Discard the EDMX (optional of course).
+3)	Reference [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project and run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command.
+
+Done.  
+
+## Applying the Model Customizations:
+There are two options for applying the rules to a DB context model:
+1) Simply reference [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.  Proceed with CLI scaffolding (as mentioned above).  [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) is a Design-Time reference package, meaning EF Core can use it during the scaffolding process to customize the generated model, but the assembly will NOT appear in the project build output.  It can't get more automated than this.
+2) Use the [CLI tool](https://www.nuget.org/packages/EntityFrameworkRuler/) to apply changes to an already generated EF Core model.  This approach uses [Roslyn](https://learn.microsoft.com/en-us/visualstudio/code-quality/roslyn-analyzers-overview) to apply code changes.  The code analysis is reliable, but for very large models this option can take a minute. 
+
+## Road Map:
+- EF Power Tools built-in support.
+- Editor library to manage the rules and edit the EF Core model structure with a UI.
+
+This project us under development!  Check back often, and leave comments [here](https://github.com/R4ND3LL/EntityFrameworkRuler/issues).
+
+
+## Installation of the [CLI tool](https://www.nuget.org/packages/EntityFrameworkRuler/):
+There are 2 ways to use the [CLI tool](https://www.nuget.org/packages/EntityFrameworkRuler/):
+1. Command line:
    ```
    > dotnet tool install --global EntityFrameworkRuler 
    ```
-2. Nuget package:
+2. API:
    ```
-   > nuget install EntityFrameworkRuler
+   > dotnet add package EntityFrameworkRuler   
+   PM> NuGet\Install-Package EntityFrameworkRuler
    ```
-See https://www.nuget.org/packages/EntityFrameworkRuler/ for details.
-#### Coming soon: EF Power Tools built-in support.
+See the [NuGet page](https://www.nuget.org/packages/EntityFrameworkRuler/) for details.
 
 ## CLI Usage:
 ### To generate rules from an EDMX, run the following:
@@ -41,7 +60,7 @@ See https://www.nuget.org/packages/EntityFrameworkRuler/ for details.
    ```
 Structure rules will be extracted from the EDMX and saved in the EF Core project folder.
 
-### To Apply rules to an EF Core model:
+### To Apply rules to an _already generated_ EF Core model:
    ```
    > efruler -a <efCoreProjectBasePath>
    ```
@@ -76,7 +95,6 @@ var response = await applicator.ApplyRulesInProjectPath();
 var applicator = new RuleApplicator(projectBasePath);  
 var loadResponse = await applicator.LoadRulesInProjectPath();  
 var navRules = loadResponse.Rules.OfType<NavigationNamingRules>().First();
-var enumRules = loadResponse.Rules.OfType<EnumMappingRules>().First();  
 var applyResponse = await applicator.ApplyRules(enumRules);
 ```
 
@@ -86,9 +104,8 @@ var generator = new RuleGenerator(edmxPath);
 var rules = generator.TryGenerateRules();  
 await generator.TrySaveRules(projectBasePath,  
     new RuleFileNameOptions() {  
-        PrimitiveNamingFile = null, // null will skip this file
-        NavigationNamingFile = "NavRenaming.json",   
-        PropertyTypeChangingFile = "MyEnumMap.json"  
+        PrimitiveRulesFile = null, // null will skip this file
+        NavigationRulesFile = "NavRules.json" 
   }  
 );
 ```

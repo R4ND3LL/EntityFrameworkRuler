@@ -3,7 +3,7 @@
     <PropertyGroup>
         <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
-        <Description>Adds design-time rule-based structuring of the EF Core Reverse Engineering model</Description>
+        <Description>Adds rule-based structuring of the EF Core Reverse Engineering model during the scaffold process.</Description>
         <PackageProjectUrl>https://github.com/R4ND3LL/EntityFrameworkRuler</PackageProjectUrl>
         <PackageOutputPath>./nupkg</PackageOutputPath>
         <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -36,14 +36,19 @@
     <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
         <DefineConstants>NET6</DefineConstants>
     </PropertyGroup>
-    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0" />
-    </ItemGroup>
-
     <PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
         <DefineConstants>NET7</DefineConstants>
     </PropertyGroup>
-    <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' And '$(Configuration)'=='Debug'">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net7.0' And '$(Configuration)'=='Debug'">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(Configuration)'=='Release'">
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0" />
     </ItemGroup>
 

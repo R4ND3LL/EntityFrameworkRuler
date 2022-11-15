@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using EntityFrameworkRuler.Design.Extensions;
@@ -24,11 +25,17 @@ public class RuledCandidateNamingService : CandidateNamingService {
     private readonly IOperationReporter reporter;
     private PrimitiveNamingRules primitiveNamingRules;
     private NavigationNamingRules navigationRules;
+    private readonly MethodInfo generateCandidateIdentifierMethod;
 
     /// <inheritdoc />
     public RuledCandidateNamingService(IDesignTimeRuleLoader designTimeRuleLoader, IOperationReporter reporter) {
         this.designTimeRuleLoader = designTimeRuleLoader;
         this.reporter = reporter;
+
+        // public virtual string GenerateCandidateIdentifier(string originalIdentifier)
+        generateCandidateIdentifierMethod = typeof(CandidateNamingService).GetMethod<string>("GenerateCandidateIdentifier");
+        if (generateCandidateIdentifierMethod == null)
+            reporter?.WriteWarning("Method not found: CandidateNamingService.GenerateCandidateIdentifier(string)");
     }
 
     /// <summary> Name that table </summary>
@@ -171,11 +178,13 @@ public class RuledCandidateNamingService : CandidateNamingService {
     /// Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService.GenerateCandidateIdentifier()
     /// </summary>
     protected virtual string GenerateIdentifier(string value) {
-#if NET6
-        return value.GenerateCandidateIdentifier(); // use the EF Ruler emulation of the GenerateCandidateIdentifier
-#elif NET7
-        return base.GenerateCandidateIdentifier(value); // use the actual EF process
-#endif
+        if (generateCandidateIdentifierMethod != null) {
+            // use the actual EF process
+            return (string)generateCandidateIdentifierMethod.Invoke(this, new object[] { value });
+        }
+
+        // use the EF Ruler emulation of the GenerateCandidateIdentifier
+        return value.GenerateCandidateIdentifier();
     }
 
     /// <summary> Apply regex replace rule to name. </summary>
