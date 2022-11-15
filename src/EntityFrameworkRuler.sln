@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionIt
 		..\.gitignore = ..\.gitignore
 		Directory.Build.props = Directory.Build.props
 		..\README.md = ..\README.md
+		..\.github\workflows\dotnet.yml = ..\.github\workflows\dotnet.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{6ECD160C-8259-42EB-9A24-CA07AA56CB25}"

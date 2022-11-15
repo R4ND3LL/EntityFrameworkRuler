@@ -127,6 +127,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             loader.OnLog += LoaderOnLog;
             var loadRulesResponse = loader.LoadRulesInProjectPath().GetAwaiter().GetResult();
             loader.OnLog -= LoaderOnLog;
+            WriteInformation($"EF Ruler loaded {loadRulesResponse.Rules?.Count ?? 0} rule file(s).");
             return loadRulesResponse;
         }
 
