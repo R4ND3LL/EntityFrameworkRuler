@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore.Design.Internal;
 namespace EntityFrameworkRuler.Design.Services {
     /// <summary> Pluralization service override to be used by Ef scaffold process. </summary>
     [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
-    public class EfRulerPluralizer : IPluralizer {
+    public class RuledPluralizer : IPluralizer {
         private readonly HumanizerPluralizer pluralizer;
 
         /// <summary> Creates a pluralization service to be used by Ef scaffold process. </summary>
-        public EfRulerPluralizer() {
+        public RuledPluralizer() {
             pluralizer = new();
         }
 

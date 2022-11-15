@@ -1,4 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Design.Services;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -8,16 +10,32 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
+using Castle.DynamicProxy;
+using EntityFrameworkRuler.Design.Extensions;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 
 namespace EntityFrameworkRuler.Design.Tests;
 
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
-public class EfRulerDesignTimeServicesTests {
+public class RuledDesignTimeServicesTests {
     [Fact]
     public void ConfigureDesignTimeServices_works() {
+        var serviceCollection = GetDefaultServiceCollection();
+
+        using var serviceProvider = serviceCollection.BuildServiceProvider(validateScopes: true);
+        var p = serviceProvider.GetService<IPluralizer>();
+        Assert.IsType<RuledPluralizer>(p);
+        Assert.IsType<RuledCandidateNamingService>(serviceProvider.GetService<ICandidateNamingService>());
+        Assert.IsType<RuledRelationalScaffoldingModelFactory>(serviceProvider.GetService<IScaffoldingModelFactory>());
+        Assert.IsType<RuledReverseEngineerScaffolder>(serviceProvider.GetService<IReverseEngineerScaffolder>());
+        Assert.IsType<DesignTimeRuleLoader>(serviceProvider.GetService<IDesignTimeRuleLoader>());
+    }
+
+    private static ServiceCollection GetDefaultServiceCollection() {
         var serviceCollection = new ServiceCollection();
 
-        new EfRulerDesignTimeServices().ConfigureDesignTimeServices(serviceCollection);
+        new RuledDesignTimeServices().ConfigureDesignTimeServices(serviceCollection);
         serviceCollection.AddEntityFrameworkDesignTimeServices();
 
         serviceCollection.AddSingleton(new Moq.Mock<IRelationalTypeMappingSource>().Object);
@@ -28,31 +46,12 @@ public class EfRulerDesignTimeServicesTests {
         serviceCollection.AddSingleton(new Moq.Mock<Microsoft.EntityFrameworkCore.Diagnostics.LoggingDefinitions>().Object);
         serviceCollection.AddSingleton(new Moq.Mock<IProviderConfigurationCodeGenerator>().Object);
         serviceCollection.AddSingleton(new Moq.Mock<IAnnotationCodeGenerator>().Object);
-
-        using var serviceProvider = serviceCollection.BuildServiceProvider(validateScopes: true);
-        var p = serviceProvider.GetService<IPluralizer>();
-        Assert.IsType<EfRulerPluralizer>(p);
-        Assert.IsType<EfRulerCandidateNamingService>(serviceProvider.GetService<ICandidateNamingService>());
-        Assert.IsType<EfRulerRelationalScaffoldingModelFactory>(serviceProvider.GetService<IScaffoldingModelFactory>());
-        Assert.IsType<EfRulerReverseEngineerScaffolder>(serviceProvider.GetService<IReverseEngineerScaffolder>());
-        Assert.IsType<DesignTimeRuleLoader>(serviceProvider.GetService<IDesignTimeRuleLoader>());
+        return serviceCollection;
     }
 
     [Fact]
     public void ConfigureDesignTimeServices_works_with_override() {
-        var serviceCollection = new ServiceCollection();
-
-        new EfRulerDesignTimeServices().ConfigureDesignTimeServices(serviceCollection);
-        serviceCollection.AddEntityFrameworkDesignTimeServices();
-
-        serviceCollection.AddSingleton(new Moq.Mock<IRelationalTypeMappingSource>().Object);
-        serviceCollection.AddSingleton(new Moq.Mock<IModelRuntimeInitializer>().Object);
-        serviceCollection.AddSingleton(new Moq.Mock<IDatabaseModelFactory>().Object);
-        serviceCollection.AddSingleton(new Moq.Mock<ITypeMappingSource>().Object);
-        // for net6:
-        serviceCollection.AddSingleton(new Moq.Mock<Microsoft.EntityFrameworkCore.Diagnostics.LoggingDefinitions>().Object);
-        serviceCollection.AddSingleton(new Moq.Mock<IProviderConfigurationCodeGenerator>().Object);
-        serviceCollection.AddSingleton(new Moq.Mock<IAnnotationCodeGenerator>().Object);
+        var serviceCollection = GetDefaultServiceCollection();
 
         // another custom override
         var scaffoldingModelFactory = new Moq.Mock<IScaffoldingModelFactory>().Object;
@@ -62,8 +61,8 @@ public class EfRulerDesignTimeServicesTests {
 
         using var serviceProvider = serviceCollection.BuildServiceProvider(validateScopes: true);
         var p = serviceProvider.GetService<IPluralizer>();
-        Assert.IsType<EfRulerPluralizer>(p);
-        Assert.IsType<EfRulerReverseEngineerScaffolder>(serviceProvider.GetService<IReverseEngineerScaffolder>());
+        Assert.IsType<RuledPluralizer>(p);
+        Assert.IsType<RuledReverseEngineerScaffolder>(serviceProvider.GetService<IReverseEngineerScaffolder>());
         Assert.IsType<DesignTimeRuleLoader>(serviceProvider.GetService<IDesignTimeRuleLoader>());
 
         var actualIScaffoldingModelFactory = serviceProvider.GetService<IScaffoldingModelFactory>();
@@ -71,5 +70,44 @@ public class EfRulerDesignTimeServicesTests {
 
         var actualICandidateNamingService = serviceProvider.GetService<ICandidateNamingService>();
         actualICandidateNamingService.ShouldBe(candidateNamingService);
+    }
+
+    [Fact]
+    public void ScaffoldingModelFactoryProxyWorks() {
+        var serviceCollection = GetDefaultServiceCollection();
+        serviceCollection.AddSingleton<IScaffoldingModelFactory, ScaffoldingModelFactoryTestInterceptor>();
+        using var serviceProvider = serviceCollection.BuildServiceProvider(validateScopes: true);
+        var mf = serviceProvider.GetRequiredService<IScaffoldingModelFactory>();
+        mf.ShouldBeOfType<ScaffoldingModelFactoryTestInterceptor>();
+        var intercepted = (ScaffoldingModelFactoryTestInterceptor)mf;
+        var proxyObject = intercepted.Initialize();
+        proxyObject.ShouldNotBeNull();
+        mf.Create(null, null);
+        intercepted.InterceptedCallCount.ShouldBeGreaterThan(0);
+    }
+}
+
+public class ScaffoldingModelFactoryTestInterceptor : IScaffoldingModelFactory, IInterceptor {
+    private readonly IServiceProvider serviceProvider;
+    private RelationalScaffoldingModelFactory proxy;
+
+    public ScaffoldingModelFactoryTestInterceptor(IServiceProvider serviceProvider) {
+        this.serviceProvider = serviceProvider;
+    }
+
+    public RelationalScaffoldingModelFactory Initialize() {
+        return proxy ??= serviceProvider.CreateClassProxy<RelationalScaffoldingModelFactory>(this);
+    }
+
+    public IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions options) {
+        proxy ??= Initialize();
+        return proxy!.Create(databaseModel, options);
+    }
+
+    public List<IInvocation> Invocations = new();
+    public int InterceptedCallCount => Invocations.Count;
+
+    void IInterceptor.Intercept(IInvocation invocation) {
+        Invocations.Add(invocation);
     }
 }

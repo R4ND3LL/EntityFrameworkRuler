@@ -242,12 +242,17 @@ public class CSharpUtilities : ICSharpUtilities {
 /// Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal
 /// </summary>
 public interface ICSharpUtilities {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     string GenerateCSharpIdentifier(string identifier, ICollection<string>? existingIdentifiers,
         Func<string, string>? singularizePluralizer);
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     string GenerateCSharpIdentifier(string identifier, ICollection<string>? existingIdentifiers,
         Func<string, string>? singularizePluralizer, Func<string, ICollection<string>?, string> uniquifier);
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     bool IsCSharpKeyword(string identifier);
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     bool IsValidIdentifier(string? name);
 }

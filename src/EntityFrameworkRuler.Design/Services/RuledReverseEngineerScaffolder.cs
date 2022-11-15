@@ -16,11 +16,11 @@ namespace EntityFrameworkRuler.Design.Services;
 /// resources are available to the other scaffolding components in this library.
 /// </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
-public class EfRulerReverseEngineerScaffolder : ReverseEngineerScaffolder {
+public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
 
     /// <inheritdoc />
-    public EfRulerReverseEngineerScaffolder(IDatabaseModelFactory databaseModelFactory,
+    public RuledReverseEngineerScaffolder(IDatabaseModelFactory databaseModelFactory,
         IScaffoldingModelFactory scaffoldingModelFactory,
         IModelCodeGeneratorSelector modelCodeGeneratorSelector,
         ICSharpUtilities cSharpUtilities,

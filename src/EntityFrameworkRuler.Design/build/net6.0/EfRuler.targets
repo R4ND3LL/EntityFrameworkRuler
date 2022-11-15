@@ -31,11 +31,11 @@
           Inputs="$(MSBuildAllProjects)"
           Outputs="$(EfRulerFile)">
     <ItemGroup>
-      <EfRulerDesignTimeServices Include="Microsoft.EntityFrameworkCore.Design.DesignTimeServicesReferenceAttribute">
-        <_Parameter1>EntityFrameworkRuler.Design.EfRulerDesignTimeServices, EntityFrameworkRuler.Design</_Parameter1>
-      </EfRulerDesignTimeServices>
+      <RuledDesignTimeServices Include="Microsoft.EntityFrameworkCore.Design.DesignTimeServicesReferenceAttribute">
+        <_Parameter1>EntityFrameworkRuler.Design.RuledDesignTimeServices, EntityFrameworkRuler.Design</_Parameter1>
+      </RuledDesignTimeServices>
     </ItemGroup>
-    <WriteCodeFragment AssemblyAttributes="@(EfRulerDesignTimeServices)"
+    <WriteCodeFragment AssemblyAttributes="@(RuledDesignTimeServices)"
                        Language="$(Language)"
                        OutputFile="$(EfRulerFile)">
       <Output TaskParameter="OutputFile" ItemName="$(CodeFragmentItemGroup)" />

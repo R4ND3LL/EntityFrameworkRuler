@@ -31,8 +31,8 @@ internal static class StringExtensions {
     public static bool HasNonWhiteSpace(this string str) { return !string.IsNullOrWhiteSpace(str); }
 
     /// <summary>
-    /// Concatenates the members of a constructed System.Collections.Generic.IEnumerable
-    /// <T> collection of type System.String, using the specified separator between each member.
+    /// Concatenates the members of a constructed System.Collections.Generic.IEnumerable&lt;T&gt;
+    /// collection of type System.String, using the specified separator between each member.
     /// </summary>
     [DebuggerStepThrough]
     public static string Join(this IEnumerable<string> strs, string separator = ", ") {

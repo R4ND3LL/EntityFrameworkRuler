@@ -19,14 +19,14 @@ namespace EntityFrameworkRuler.Design.Services;
 /// <summary> Naming service override to be used by Ef scaffold process.
 /// This will apply custom table, column, and navigation names. </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
-public class EfRulerCandidateNamingService : CandidateNamingService {
+public class RuledCandidateNamingService : CandidateNamingService {
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
     private readonly IOperationReporter reporter;
     private PrimitiveNamingRules primitiveNamingRules;
     private NavigationNamingRules navigationRules;
 
     /// <inheritdoc />
-    public EfRulerCandidateNamingService(IDesignTimeRuleLoader designTimeRuleLoader, IOperationReporter reporter) {
+    public RuledCandidateNamingService(IDesignTimeRuleLoader designTimeRuleLoader, IOperationReporter reporter) {
         this.designTimeRuleLoader = designTimeRuleLoader;
         this.reporter = reporter;
     }

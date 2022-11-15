@@ -10,9 +10,9 @@ namespace EntityFrameworkRuler.Design {
     /// <summary>
     /// Used to the configure design-time services for this library.
     /// </summary>
-    public sealed class EfRulerDesignTimeServices : IDesignTimeServices {
-        /// <summary> Creates EfRulerDesignTimeServices </summary>
-        public EfRulerDesignTimeServices() {
+    public sealed class RuledDesignTimeServices : IDesignTimeServices {
+        /// <summary> Creates RuledDesignTimeServices </summary>
+        public RuledDesignTimeServices() {
 #if DEBUG
             if (Debugger.IsAttached) return;
             var entryAssembly = Assembly.GetEntryAssembly();
@@ -29,11 +29,11 @@ namespace EntityFrameworkRuler.Design {
         /// <param name="services">The service collection.</param>
         [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
         public void ConfigureDesignTimeServices(IServiceCollection services) {
-            services.AddSingleton<IPluralizer, EfRulerPluralizer>();
+            services.AddSingleton<IPluralizer, RuledPluralizer>();
             //services.AddSingleton<IScaffoldingTypeMapper, EfRulerScaffoldingTypeMapper>();
-            services.AddSingleton<ICandidateNamingService, EfRulerCandidateNamingService>();
-            services.AddSingleton<IScaffoldingModelFactory, EfRulerRelationalScaffoldingModelFactory>();
-            services.AddSingleton<IReverseEngineerScaffolder, EfRulerReverseEngineerScaffolder>();
+            services.AddSingleton<ICandidateNamingService, RuledCandidateNamingService>();
+            services.AddSingleton<IScaffoldingModelFactory, RuledRelationalScaffoldingModelFactory>();
+            services.AddSingleton<IReverseEngineerScaffolder, RuledReverseEngineerScaffolder>();
             //services.AddSingleton<ICandidateNamingService, CandidateNamingService>();
             services.AddSingleton<IDesignTimeRuleLoader, DesignTimeRuleLoader>();
             services.AddRuleLoader();
