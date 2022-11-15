@@ -22,14 +22,26 @@ jobs:
         dotnet-version: 7.0.x      
     - name: Restore dependencies
       run: dotnet restore src
+      
+    - name: Calculate Version
+      uses: thefringeninja/action-minver@2.0.0-preview1
+      id: version
+      with:
+        tag-prefix: v
+        default-pre-release-phase: alpha      
+
+    - name: Print Version
+      run: |
+        echo ${{ steps.version.outputs.version }}
+        
     - name: Test Build
-      run: dotnet build src --configuration Debug --no-restore
+      run: dotnet build src --configuration Debug --no-restore /p:AssemblyVersion=${{ steps.version.outputs.version }} /p:Version=${{ steps.version.outputs.version }}
     - name: Test Design
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --verbosity normal
     - name: Test CLI
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Tests --no-build --verbosity normal
     - name: Release Build
-      run: dotnet build src --configuration Release --no-restore
+      run: dotnet build src --configuration Release --no-restore /p:AssemblyVersion=${{ steps.version.outputs.version }} /p:Version=${{ steps.version.outputs.version }}
     - name: Create NuGet package
       run: dotnet pack --configuration Release --no-build --no-restore src
     - name: Publish CLI package to NuGet
