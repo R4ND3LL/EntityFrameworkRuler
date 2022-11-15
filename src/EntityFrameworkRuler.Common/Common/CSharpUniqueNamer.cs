@@ -26,7 +26,7 @@ public class CSharpUniqueNamer<T> : CSharpNamer<T>
     public CSharpUniqueNamer(
         Func<T, string> nameGetter,
         ICSharpUtilities cSharpUtilities,
-        Func<string, string>? singularizePluralizer)
+        Func<string, string> singularizePluralizer)
         : this(nameGetter, null, cSharpUtilities, singularizePluralizer) {
     }
 
@@ -36,8 +36,8 @@ public class CSharpUniqueNamer<T> : CSharpNamer<T>
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public CSharpUniqueNamer(Func<T, string> nameGetter, IEnumerable<string>? usedNames, ICSharpUtilities cSharpUtilities,
-        Func<string, string>? singularizePluralizer)
+    public CSharpUniqueNamer(Func<T, string> nameGetter, IEnumerable<string> usedNames, ICSharpUtilities cSharpUtilities,
+        Func<string, string> singularizePluralizer)
         : base(nameGetter, cSharpUtilities, singularizePluralizer) {
         if (usedNames == null) return;
         foreach (var name in usedNames)

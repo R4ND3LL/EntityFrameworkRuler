@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        fetch-depth: 60
+        fetch-depth: 0
         
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
@@ -31,6 +31,27 @@ jobs:
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --verbosity normal
     - name: Test CLI
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Tests --no-build --verbosity normal
+      
+    - name: Remove EntityFrameworkRuler.Common/nupkg
+      uses: JesseTG/rm@v1.0.3
+      with:
+        path: ./src/EntityFrameworkRuler.Common/nupkg
+        
+    - name: Remove EntityFrameworkRuler/nupkg
+      uses: JesseTG/rm@v1.0.3
+      with:
+        path: ./src/EntityFrameworkRuler/nupkg
+        
+    - name: Remove EntityFrameworkRuler.Design/nupkg
+      uses: JesseTG/rm@v1.0.3
+      with:
+        path: ./src/EntityFrameworkRuler.Design/nupkg
+        
+    - name: Remove EntityFrameworkRuler.Editor/nupkg
+      uses: JesseTG/rm@v1.0.3
+      with:
+        path: ./src/EntityFrameworkRuler.Editor/nupkg
+        
     - name: Release Build
       run: dotnet build src --configuration Release --no-restore 
     - name: Create NuGet package

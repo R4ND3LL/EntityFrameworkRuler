@@ -30,7 +30,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     }
 
     /// <summary> The detected entity framework version.  </summary>
-    public Version? EfVersion { get; set; }
+    public Version EfVersion { get; set; }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected bool IsEf6 => EfVersion?.Major == 6;
