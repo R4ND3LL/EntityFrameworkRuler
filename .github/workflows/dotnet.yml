@@ -24,5 +24,7 @@ jobs:
       run: dotnet restore src
     - name: Build
       run: dotnet build src --configuration Release --no-restore
-    - name: Test
-      run: dotnet test src --no-build --verbosity normal
+    - name: Test Design
+      run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --verbosity normal
+    - name: Test CLI
+      run: dotnet test ./src/Tests/EntityFrameworkRuler.Tests --no-build --verbosity normal
