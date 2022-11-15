@@ -18,7 +18,7 @@ public interface IRuleApplicator : IRuleLoader {
 
     /// <summary> Apply the given rules to the target project. </summary>
     /// <returns> List of errors. </returns>
-    Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(IEnumerable<IEdmxRuleModelRoot> rules);
+    Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(IEnumerable<IRuleModelRoot> rules);
 
     /// <summary> Apply the given rules to the target project. </summary>
     /// <param name="navigationNamingRules"> The rules to apply. </param>

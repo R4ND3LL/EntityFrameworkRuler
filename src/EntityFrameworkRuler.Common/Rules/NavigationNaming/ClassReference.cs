@@ -3,9 +3,10 @@ using System.Runtime.Serialization;
 
 namespace EntityFrameworkRuler.Rules.NavigationNaming;
 
+/// <inheritdoc />
 [DebuggerDisplay("Class {Name}")]
 [DataContract]
-public sealed class ClassReference : IEdmxRuleClassModel {
+public sealed class ClassReference : IClassRule {
     /// <summary>
     /// The database schema name that the entity table is derived from.  Used to aid in resolution of this rule instance during the scaffolding phase.
     /// Optional.
@@ -28,7 +29,7 @@ public sealed class ClassReference : IEdmxRuleClassModel {
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
     public List<NavigationRename> Properties { get; set; } = new();
 
-    string IEdmxRuleClassModel.GetOldName() => Name.CoalesceWhiteSpace(DbName);
-    string IEdmxRuleClassModel.GetNewName() => Name;
-    IEnumerable<IEdmxRulePropertyModel> IEdmxRuleClassModel.GetProperties() => Properties;
+    string IClassRule.GetOldName() => Name.CoalesceWhiteSpace(DbName);
+    string IClassRule.GetNewName() => Name;
+    IEnumerable<IPropertyRule> IClassRule.GetProperties() => Properties;
 }

@@ -91,7 +91,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             response.OnLog -= ResponseOnLog;
         }
 
-        void GenerateAndAdd<T>(Func<EdmxParsed, T> gen) where T : class, IEdmxRuleModelRoot {
+        void GenerateAndAdd<T>(Func<EdmxParsed, T> gen) where T : class, IRuleModelRoot {
             try {
                 var rulesRoot = gen(response.EdmxParsed);
                 response.Add(rulesRoot);
@@ -108,7 +108,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     /// <param name="fileNameOptions"> Custom naming options for the rule files.  Optional. This parameter can be used to skip writing a rule file by setting that rule file to null. </param>
     /// <returns> True if completed with no errors.  When false, see Errors collection for details. </returns>
     /// <exception cref="Exception"></exception>
-    public async Task<SaveRulesResponse> TrySaveRules(IEnumerable<IEdmxRuleModelRoot> rules, string projectBasePath,
+    public async Task<SaveRulesResponse> TrySaveRules(IEnumerable<IRuleModelRoot> rules, string projectBasePath,
         RuleFileNameOptions fileNameOptions = null) {
         var response = new SaveRulesResponse();
         response.OnLog += ResponseOnLog;
@@ -125,7 +125,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             return response;
 
 
-            async Task TryWriteRules<T>(string fileName) where T : class, IEdmxRuleModelRoot {
+            async Task TryWriteRules<T>(string fileName) where T : class, IRuleModelRoot {
                 try {
                     if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
                     T rulesRoot = rules?.OfType<T>().FirstOrDefault() ??
@@ -138,7 +138,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             }
 
             Task WriteRules<T>(T rulesRoot, string filename)
-                where T : class, IEdmxRuleModelRoot {
+                where T : class, IRuleModelRoot {
                 var path = Path.Combine(dir.FullName, filename);
                 return rulesRoot.ToJson<T>(path);
             }
@@ -258,11 +258,11 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
 }
 
 public sealed class GenerateRulesResponse : LoggedResponse {
-    private readonly List<IEdmxRuleModelRoot> rules = new();
+    private readonly List<IRuleModelRoot> rules = new();
 
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary> The rules generated from the EDMX via the TryGenerateRules() call </summary>
-    public IReadOnlyCollection<IEdmxRuleModelRoot> Rules => rules;
+    public IReadOnlyCollection<IRuleModelRoot> Rules => rules;
 
     public PrimitiveNamingRules PrimitiveNamingRules => rules.OfType<PrimitiveNamingRules>().SingleOrDefault();
     public NavigationNamingRules NavigationNamingRules => rules.OfType<NavigationNamingRules>().SingleOrDefault();
@@ -270,7 +270,7 @@ public sealed class GenerateRulesResponse : LoggedResponse {
     /// <summary> The correlated EDMX model that is read from the EDMX file during the TryGenerateRules() call </summary>
     public EdmxParsed EdmxParsed { get; internal set; }
 
-    internal void Add<T>(T rulesRoot) where T : class, IEdmxRuleModelRoot {
+    internal void Add<T>(T rulesRoot) where T : class, IRuleModelRoot {
         rules.Add(rulesRoot);
     }
 }

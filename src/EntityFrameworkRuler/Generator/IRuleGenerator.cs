@@ -25,6 +25,6 @@ public interface IRuleGenerator : IRuleProcessor {
     /// <param name="fileNameOptions"> Custom naming options for the rule files.  Optional. This parameter can be used to skip writing a rule file by setting that rule file to null. </param>
     /// <returns> True if completed with no errors.  When false, see Errors collection for details. </returns>
     /// <exception cref="Exception"></exception>
-    Task<SaveRulesResponse> TrySaveRules(IEnumerable<IEdmxRuleModelRoot> rules, string projectBasePath,
+    Task<SaveRulesResponse> TrySaveRules(IEnumerable<IRuleModelRoot> rules, string projectBasePath,
         RuleFileNameOptions fileNameOptions = null);
 }

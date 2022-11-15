@@ -108,5 +108,6 @@ public class RuleLoader : RuleProcessor, IRuleLoader {
 
 /// <summary> Response for load rules operation </summary>
 public sealed class LoadRulesResponse : LoggedResponse {
-    public List<IEdmxRuleModelRoot> Rules { get; } = new();
+    /// <summary> The loaded rules </summary>
+    public List<IRuleModelRoot> Rules { get; } = new();
 }

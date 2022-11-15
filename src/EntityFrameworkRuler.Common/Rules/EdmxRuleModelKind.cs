@@ -1,7 +1,7 @@
 namespace EntityFrameworkRuler.Rules;
 
 /// <summary> Kind of rule file </summary>
-public enum EdmxRuleModelKind : byte {
+public enum RuleModelKind : byte {
     /// <summary> Primitive rules </summary>
     PrimitiveNaming = 1,
 

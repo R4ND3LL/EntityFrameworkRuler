@@ -6,9 +6,10 @@ using System.Xml.Serialization;
 
 namespace EntityFrameworkRuler.Rules.NavigationNaming;
 
+/// <inheritdoc />
 [DebuggerDisplay("Nav {FirstName} to {NewName} FkName={FkName} IsPrincipal={IsPrincipal}")]
 [DataContract]
-public sealed class NavigationRename : IEdmxRulePropertyModel {
+public sealed class NavigationRename : IPropertyRule {
     /// <summary>
     /// Gets or sets the name alternatives to look for when identifying this property.
     /// Used in navigation renaming since prediction of the reverse engineered name can be difficult.
@@ -21,6 +22,7 @@ public sealed class NavigationRename : IEdmxRulePropertyModel {
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     internal string FirstName => Name?.FirstOrDefault();
 
+    /// <summary> New name of property. Optional </summary>
     [DataMember(Order = 2)]
     public string NewName { get; set; }
 
@@ -40,19 +42,25 @@ public sealed class NavigationRename : IEdmxRulePropertyModel {
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     public string Multiplicity { get; set; }
 
-    IEnumerable<string> IEdmxRulePropertyModel.GetCurrentNameOptions() =>
+    IEnumerable<string> IPropertyRule.GetCurrentNameOptions() =>
         Name?.Where(o => o.HasNonWhiteSpace()).Distinct() ?? Array.Empty<string>();
 
-    string IEdmxRulePropertyModel.GetNewName() => NewName;
-    string IEdmxRulePropertyModel.GetNewTypeName() => null;
+    string IPropertyRule.GetNewName() => NewName;
+    string IPropertyRule.GetNewTypeName() => null;
 
+    /// <inheritdoc />
     public NavigationMetadata GetNavigationMetadata() =>
         new(FkName, ToEntity, IsPrincipal, Multiplicity.ParseMultiplicity());
 }
 
+/// <summary> Multiplicity, or expected count, on a navigation end. </summary>
 public enum Multiplicity {
+    /// <summary> Unknown </summary>
     Unknown = 0,
+    /// <summary> ZeroOne </summary>
     ZeroOne,
+    /// <summary> One </summary>
     One,
+    /// <summary> Many </summary>
     Many
 }

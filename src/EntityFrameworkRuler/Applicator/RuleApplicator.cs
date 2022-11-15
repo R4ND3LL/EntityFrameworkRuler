@@ -69,14 +69,14 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
 
     /// <summary> Apply the given rules to the target project. </summary>
     /// <returns> List of errors. </returns>
-    public async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(IEnumerable<IEdmxRuleModelRoot> rules) {
+    public async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(IEnumerable<IRuleModelRoot> rules) {
         if (rules == null) throw new ArgumentNullException(nameof(rules));
         var responses = await ApplyRulesInternal(rules);
         return responses;
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
-    private async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRulesInternal(IEnumerable<IEdmxRuleModelRoot> rules) {
+    private async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRulesInternal(IEnumerable<IRuleModelRoot> rules) {
         if (rules == null) throw new ArgumentNullException(nameof(rules));
 
         var state = new RoslynProjectState(this);
@@ -179,7 +179,7 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
     /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <param name="state"> Roslyn project state. Internal use only. </param>
     /// <returns></returns>
-    private async Task ApplyRulesCore(IEnumerable<IEdmxRuleClassModel> classRules,
+    private async Task ApplyRulesCore(IEnumerable<IClassRule> classRules,
         string namespaceName,
         ApplyRulesResponse response,
         string contextFolder = null, string modelsFolder = null, RoslynProjectState state = null) {
@@ -576,11 +576,11 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
 }
 
 public sealed class ApplyRulesResponse : LoggedResponse {
-    internal ApplyRulesResponse(IEdmxRuleModelRoot ruleModelRoot) {
+    internal ApplyRulesResponse(IRuleModelRoot ruleModelRoot) {
         Rule = ruleModelRoot;
     }
 
-    public IEdmxRuleModelRoot Rule { get; internal set; }
+    public IRuleModelRoot Rule { get; internal set; }
 }
 
 [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]

@@ -10,16 +10,19 @@ namespace EntityFrameworkRuler.Rules.PrimitiveNaming;
 /// Navigations are not referenced in this file.
 /// </summary>
 [DataContract]
-public sealed class PrimitiveNamingRules : IEdmxRuleModelRoot {
+public sealed class PrimitiveNamingRules : IRuleModelRoot {
+    /// <summary> Preserve casing using regex </summary>
     [DataMember(Order = 1)]
     public bool PreserveCasingUsingRegex { get; set; }
 
+    /// <summary> Schema rules </summary>
     [DataMember(Order = 2)]
     public List<SchemaRule> Schemas { get; set; } = new();
 
 
+    /// <inheritdoc />
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
-    public EdmxRuleModelKind Kind => EdmxRuleModelKind.PrimitiveNaming;
+    public RuleModelKind Kind => RuleModelKind.PrimitiveNaming;
 
-    IEnumerable<IEdmxRuleClassModel> IEdmxRuleModelRoot.GetClasses() => Schemas.SelectMany(o => o.Tables);
+    IEnumerable<IClassRule> IRuleModelRoot.GetClasses() => Schemas.SelectMany(o => o.Tables);
 }

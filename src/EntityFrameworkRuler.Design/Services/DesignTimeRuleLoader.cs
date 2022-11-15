@@ -132,7 +132,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
 
     /// <summary> Internal load method for all rules </summary>
-    protected virtual List<IEdmxRuleModelRoot> GetRules() {
+    protected virtual List<IRuleModelRoot> GetRules() {
         LoadRulesResponse Fetch() {
             var projectFolder = GetProjectDir();
             if (projectFolder.IsNullOrWhiteSpace() || !Directory.Exists(projectFolder)) {

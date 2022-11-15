@@ -3,9 +3,10 @@ using System.Runtime.Serialization;
 
 namespace EntityFrameworkRuler.Rules.PrimitiveNaming;
 
+/// <inheritdoc />
 [DebuggerDisplay("Table {Name} to {NewName}")]
 [DataContract]
-public sealed class TableRule : IEdmxRuleClassModel {
+public sealed class TableRule : IClassRule {
     /// <summary> The raw database name of the table.  Used to locate the property during scaffolding phase.  Required. </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
     public string Name { get; set; }
@@ -30,7 +31,7 @@ public sealed class TableRule : IEdmxRuleClassModel {
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     public bool NotMapped { get; set; }
 
-    string IEdmxRuleClassModel.GetOldName() => EntityName.CoalesceWhiteSpace(Name);
-    string IEdmxRuleClassModel.GetNewName() => NewName.CoalesceWhiteSpace(EntityName);
-    IEnumerable<IEdmxRulePropertyModel> IEdmxRuleClassModel.GetProperties() => Columns;
+    string IClassRule.GetOldName() => EntityName.CoalesceWhiteSpace(Name);
+    string IClassRule.GetNewName() => NewName.CoalesceWhiteSpace(EntityName);
+    IEnumerable<IPropertyRule> IClassRule.GetProperties() => Columns;
 }

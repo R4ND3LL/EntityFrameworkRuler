@@ -87,7 +87,9 @@ public class RuledDesignTimeServicesTests {
     }
 }
 
-public class ScaffoldingModelFactoryTestInterceptor : IScaffoldingModelFactory, IInterceptor {
+[SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
+[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+public sealed class ScaffoldingModelFactoryTestInterceptor : IScaffoldingModelFactory, IInterceptor {
     private readonly IServiceProvider serviceProvider;
     private RelationalScaffoldingModelFactory proxy;
 
@@ -95,7 +97,7 @@ public class ScaffoldingModelFactoryTestInterceptor : IScaffoldingModelFactory, 
         this.serviceProvider = serviceProvider;
     }
 
-    public RelationalScaffoldingModelFactory Initialize() {
+    internal RelationalScaffoldingModelFactory Initialize() {
         return proxy ??= serviceProvider.CreateClassProxy<RelationalScaffoldingModelFactory>(this);
     }
 
@@ -104,7 +106,7 @@ public class ScaffoldingModelFactoryTestInterceptor : IScaffoldingModelFactory, 
         return proxy!.Create(databaseModel, options);
     }
 
-    public List<IInvocation> Invocations = new();
+    public readonly List<IInvocation> Invocations = new();
     public int InterceptedCallCount => Invocations.Count;
 
     void IInterceptor.Intercept(IInvocation invocation) {

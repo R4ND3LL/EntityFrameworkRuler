@@ -4,18 +4,29 @@ using EntityFrameworkRuler.Rules.NavigationNaming;
 
 namespace EntityFrameworkRuler.Rules;
 
-public interface IEdmxRuleModelRoot {
-    EdmxRuleModelKind Kind { get; }
-    IEnumerable<IEdmxRuleClassModel> GetClasses();
+/// <summary> Root node of the rule model </summary>
+public interface IRuleModelRoot {
+    /// <summary> Get rule model kind </summary>
+    RuleModelKind Kind { get; }
+
+    /// <summary> Get class rules </summary>
+    IEnumerable<IClassRule> GetClasses();
 }
 
-public interface IEdmxRuleClassModel {
+/// <summary> Rule for a class/table </summary>
+public interface IClassRule {
+    /// <summary> Get old name </summary>
     string GetOldName();
+
+    /// <summary> Get new name </summary>
     string GetNewName();
-    IEnumerable<IEdmxRulePropertyModel> GetProperties();
+
+    /// <summary> Get property rules </summary>
+    IEnumerable<IPropertyRule> GetProperties();
 }
 
-public interface IEdmxRulePropertyModel {
+/// <summary> Rule for a property/column </summary>
+public interface IPropertyRule {
     /// <summary> Get name(s) to look for when making changes.  Assume Roslyn stage, after EF model generation. </summary>
     IEnumerable<string> GetCurrentNameOptions();
 
@@ -29,6 +40,7 @@ public interface IEdmxRulePropertyModel {
     NavigationMetadata GetNavigationMetadata();
 }
 
+/// <summary> Extra information about the navigation property </summary>
 public struct NavigationMetadata {
     internal NavigationMetadata(string fkName, string toEntity, bool isPrincipal, Multiplicity multiplicity) {
         FkName = fkName;
