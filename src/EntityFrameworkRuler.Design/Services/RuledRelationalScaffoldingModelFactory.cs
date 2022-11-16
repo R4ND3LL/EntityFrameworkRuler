@@ -144,11 +144,20 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     indexesToBeRemoved.Add(index);
 
             foreach (var index in indexesToBeRemoved) table.Indexes.Remove(index);
+
+            var fksToBeRemoved = new List<DatabaseForeignKey>();
+            foreach (var foreignKey in table.ForeignKeys)
+            foreach (var column in foreignKey.Columns)
+                if (excludedColumns.Contains(column))
+                    fksToBeRemoved.Add(foreignKey);
+
+            foreach (var index in fksToBeRemoved) table.ForeignKeys.Remove(index);
         }
 
         if (table.Columns.Count == 0 && getEntityTypeNameMethod != null) {
             // remove the entire table
             table.Indexes.Clear();
+            table.ForeignKeys.Clear();
             var entityTypeName = GetEntityTypeName(table);
             modelBuilder.Model.RemoveEntityType(entityTypeName);
             reporter?.WriteInformation($"RULED: Table {table.Name} omitted.");
