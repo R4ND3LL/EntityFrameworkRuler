@@ -46,23 +46,14 @@ public sealed class EdmxRulerTests {
         enumMappingRules.Count.ShouldBe(2);
         enumMappingRules.ForEach(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         enumMappingRules.ForAll(o => (o.PropertyName == null || o.PropertyName.IsValidSymbolName()).ShouldBeTrue());
-        // enumMappingRules.Classes[0].Name.ShouldBe("Order_Detail");
-        // enumMappingRules.Classes[1].Name.ShouldBe("Products_by_Category");
-        // enumMappingRules.Classes[0].Properties.Count.ShouldBe(1);
-        // enumMappingRules.Classes[1].Properties.Count.ShouldBe(1);
-        // enumMappingRules.Classes[0].Properties[0].PropertyName.ShouldBe("Quantity");
-        // enumMappingRules.Classes[0].Properties[0].NewType
-        //     .ShouldBe("NorthwindModel.QuantityEnum"); // internal type
-        // enumMappingRules.Classes[1].Properties[0].PropertyName.ShouldBe("UnitsInStockCustom");
-        // enumMappingRules.Classes[1].Properties[0].NewType.ShouldBe("NorthwindModel.UnitsInStockEnum"); // external type
 
         primitiveNamingRules.Schemas.Count.ShouldBe(1);
         primitiveNamingRules.Schemas[0].Tables.Count.ShouldBe(27);
-        primitiveNamingRules.Schemas[0].Tables[0].Columns.Count.ShouldBe(4);
-        primitiveNamingRules.Schemas[0].Tables[3].Columns.Count.ShouldBe(1);
-        primitiveNamingRules.Schemas[0].Tables[4].Columns.Count.ShouldBe(1);
-        primitiveNamingRules.Schemas[0].Tables[0].Columns[0].PropertyName.ShouldBe("ProductId");
-        primitiveNamingRules.Schemas[0].Tables[0].Columns[0].NewName.ShouldBe("ProductID");
+        var prod = primitiveNamingRules.Schemas[0].Tables.FirstOrDefault(o => o.Name == "Products");
+        prod.ShouldNotBeNull();
+        prod.Columns.Count.ShouldBe(10);
+        prod.Columns[0].PropertyName.ShouldBe("ProductId");
+        prod.Columns[0].NewName.ShouldBe("ProductID");
         primitiveNamingRules.Schemas[0].Tables.ForEach(o => (o.EntityName?.IsValidSymbolName() != false).ShouldBeTrue());
         primitiveNamingRules.Schemas[0].Tables.ForEach(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
         primitiveNamingRules.Schemas[0].Tables.SelectMany(o => o.Columns)
@@ -74,7 +65,6 @@ public sealed class EdmxRulerTests {
         navigationNamingRules.Classes.Count.ShouldBe(9);
         navigationNamingRules.Classes.All(o => o.Properties.Count > 0).ShouldBeTrue();
         navigationNamingRules.Classes[0].Properties[0].Name.Contains("Orders").ShouldBeTrue();
-        //navigationNamingRules.Classes[0].Properties[0].Name.Contains("Products").ShouldBeTrue();
         navigationNamingRules.Classes[0].Properties[0].NewName.ShouldBe("OrdersCustom");
         navigationNamingRules.Classes.ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         navigationNamingRules.Classes.SelectMany(o => o.Properties)
@@ -111,12 +101,6 @@ public sealed class EdmxRulerTests {
 
         elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"Navigation naming rules applied correctly at {elapsed}ms");
-
-        //response = await applicator.ApplyRules(enumMappingRules);
-        // response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
-        // if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
-        // response.Information.Count(o => o.StartsWith("Update")).ShouldBe(2);
-        // response.Information.Last().ShouldStartWith("2 property types changed across 2 files", Case.Insensitive);
 
         elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"Enum mapping rules applied correctly at {elapsed}ms");
