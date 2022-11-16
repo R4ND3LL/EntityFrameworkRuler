@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Design.Services;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Scaffolding;
@@ -18,10 +19,9 @@ namespace EntityFrameworkRuler.Design {
             var entryAssembly = Assembly.GetEntryAssembly();
             var entryName = entryAssembly?.GetName();
             if (entryName?.Name.In("ef", "dotnet-ef") == true) {
-                DesignTimeRuleLoader.DebugLog($"Detected EF Tools v{entryName.Version}");
+                EfExtensions.DebugLog($"EF Ruler detected EF Tools v{entryName.Version}");
                 Debugger.Launch();
             }
-
 #endif
         }
 

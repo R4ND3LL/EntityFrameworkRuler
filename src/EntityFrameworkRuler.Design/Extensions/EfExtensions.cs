@@ -384,5 +384,5 @@ internal static class EfExtensions {
     }
 
     [Conditional("DEBUG")]
-    private static void DebugLog(string msg) => Console.WriteLine(msg);
+    internal static void DebugLog(string msg) => Console.WriteLine(msg);
 }
