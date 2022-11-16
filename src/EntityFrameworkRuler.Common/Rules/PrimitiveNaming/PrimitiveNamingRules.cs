@@ -15,8 +15,12 @@ public sealed class PrimitiveNamingRules : IRuleModelRoot {
     [DataMember(Order = 1)]
     public bool PreserveCasingUsingRegex { get; set; }
 
+    /// <summary> If true, generate entity models for schemas that are not identified in this ruleset.  Default is false. </summary>
+    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 2)]
+    public bool IncludeUnknownSchemas { get; set; }
+
     /// <summary> Schema rules </summary>
-    [DataMember(Order = 2)]
+    [DataMember(Order = 3)]
     public List<SchemaRule> Schemas { get; set; } = new();
 
 

@@ -35,6 +35,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected readonly HashSet<string> OmittedTables = new();
 
+    protected readonly HashSet<string> OmittedSchemas = new();
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledRelationalScaffoldingModelFactory(IServiceProvider serviceProvider,
         IOperationReporter reporter,
@@ -100,7 +102,14 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         primitiveNamingRules.TryResolveRuleFor(table.Schema, table.Name, out var schemaRule, out var tableRule);
 
-        if (schemaRule == null) return baseCall(); // nothing to go on
+        if (schemaRule == null) {
+            if (primitiveNamingRules?.IncludeUnknownSchemas != false) return baseCall(); // nothing to go on
+
+            if (OmittedSchemas.Add(table.Schema))
+                reporter?.WriteInformation($"RULED: Schema {table.Schema} omitted.");
+            OmittedTables.Add(table.GetFullName());
+            return null; // alien schema. do not generate unknown
+        }
 
         var isView = table is DatabaseView;
         var includeTable =
@@ -143,21 +152,21 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (excludedColumns.Count > 0) {
             var indexesToBeRemoved = new HashSet<DatabaseIndex>();
             foreach (var index in table.Indexes)
-                foreach (var column in index.Columns)
-                    if (excludedColumns.Contains(column)) {
-                        indexesToBeRemoved.Add(index);
-                        break;
-                    }
+            foreach (var column in index.Columns)
+                if (excludedColumns.Contains(column)) {
+                    indexesToBeRemoved.Add(index);
+                    break;
+                }
 
             foreach (var index in indexesToBeRemoved) table.Indexes.Remove(index);
 
             var fksToBeRemoved = new HashSet<DatabaseForeignKey>();
             foreach (var foreignKey in table.ForeignKeys)
-                foreach (var column in foreignKey.Columns)
-                    if (excludedColumns.Contains(column)) {
-                        fksToBeRemoved.Add(foreignKey);
-                        break;
-                    }
+            foreach (var column in foreignKey.Columns)
+                if (excludedColumns.Contains(column)) {
+                    fksToBeRemoved.Add(foreignKey);
+                    break;
+                }
 
             foreach (var index in fksToBeRemoved) table.ForeignKeys.Remove(index);
         }
@@ -229,8 +238,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 VisitForeignKey(modelBuilder, fk);
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-                foreach (var foreignKey in entityType.GetForeignKeys())
-                    AddNavigationProperties(foreignKey);
+            foreach (var foreignKey in entityType.GetForeignKeys())
+                AddNavigationProperties(foreignKey);
         }
 
         return modelBuilder;
@@ -254,38 +263,38 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     void IInterceptor.Intercept(IInvocation invocation) {
         switch (invocation.Method.Name) {
             case "GetTypeScaffoldingInfo" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseColumn dc: {
-                    TypeScaffoldingInfo BaseCall() {
-                        invocation.Proceed();
-                        return (TypeScaffoldingInfo)invocation.ReturnValue;
-                    }
-
-                    var response = GetTypeScaffoldingInfo(dc, BaseCall);
-                    invocation.ReturnValue = response;
-                    break;
+                TypeScaffoldingInfo BaseCall() {
+                    invocation.Proceed();
+                    return (TypeScaffoldingInfo)invocation.ReturnValue;
                 }
+
+                var response = GetTypeScaffoldingInfo(dc, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "VisitTable" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                    invocation.Arguments[1] is DatabaseTable dt: {
-                    EntityTypeBuilder BaseCall() {
-                        invocation.Proceed();
-                        return (EntityTypeBuilder)invocation.ReturnValue;
-                    }
-
-                    var response = VisitTable(mb, dt, BaseCall);
-                    invocation.ReturnValue = response;
-                    break;
+                EntityTypeBuilder BaseCall() {
+                    invocation.Proceed();
+                    return (EntityTypeBuilder)invocation.ReturnValue;
                 }
+
+                var response = VisitTable(mb, dt, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "VisitForeignKeys" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                          invocation.Arguments[1] is IList<DatabaseForeignKey> fks: {
-                    ModelBuilder BaseCall(IList<DatabaseForeignKey> databaseForeignKeys) {
-                        invocation.SetArgumentValue(1, databaseForeignKeys);
-                        invocation.Proceed();
-                        return (ModelBuilder)invocation.ReturnValue;
-                    }
-
-                    var response = VisitForeignKeys(mb, fks, BaseCall);
-                    invocation.ReturnValue = response;
-                    break;
+                ModelBuilder BaseCall(IList<DatabaseForeignKey> databaseForeignKeys) {
+                    invocation.SetArgumentValue(1, databaseForeignKeys);
+                    invocation.Proceed();
+                    return (ModelBuilder)invocation.ReturnValue;
                 }
+
+                var response = VisitForeignKeys(mb, fks, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
             default:
                 invocation.Proceed();
                 break;
