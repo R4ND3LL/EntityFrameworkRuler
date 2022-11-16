@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
+using System.Xml.Serialization;
 
 namespace EntityFrameworkRuler.Rules.PrimitiveNaming;
 
@@ -27,9 +29,12 @@ public sealed class ColumnRule : IPropertyRule {
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
     public string NewType { get; set; }
 
-    /// <summary> Optional flag to suppress this column in the scaffolding process. </summary>
+    /// <summary> Optional flag to omit this column during the scaffolding process. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
     public bool NotMapped { get; set; }
+
+    [IgnoreDataMember, JsonIgnore, XmlIgnore]
+    internal bool Mapped => !NotMapped;
 
     IEnumerable<string> IPropertyRule.GetCurrentNameOptions() => new[] { PropertyName, Name };
     string IPropertyRule.GetNewName() => NewName;

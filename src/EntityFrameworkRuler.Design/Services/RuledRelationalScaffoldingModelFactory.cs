@@ -30,6 +30,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     private readonly RelationalScaffoldingModelFactory proxy;
     private readonly MethodInfo visitForeignKeyMethod;
     private readonly MethodInfo addNavigationPropertiesMethod;
+    private readonly MethodInfo getEntityTypeNameMethod;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledRelationalScaffoldingModelFactory(IServiceProvider serviceProvider,
@@ -50,7 +51,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         visitForeignKeyMethod = t.GetMethod<ModelBuilder, DatabaseForeignKey>("VisitForeignKey");
         // protected virtual void AddNavigationProperties(IMutableForeignKey foreignKey)
         addNavigationPropertiesMethod = t.GetMethod<IMutableForeignKey>("AddNavigationProperties");
-
+        // protected virtual string GetEntityTypeName(DatabaseTable table)
+        getEntityTypeNameMethod = t.GetMethod<DatabaseTable>("GetEntityTypeName");
         if (visitForeignKeyMethod == null)
             reporter?.WriteWarning("Method not found: RelationalScaffoldingModelFactory.VisitForeignKey()");
         if (addNavigationPropertiesMethod == null)
@@ -92,14 +94,38 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         primitiveNamingRules ??= designTimeRuleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
 
-        if (!primitiveNamingRules.TryResolveRuleFor(table.Schema, table.Name, out _, out var tableRule))
-            return baseCall();
+        primitiveNamingRules.TryResolveRuleFor(table.Schema, table.Name, out var schemaRule, out var tableRule);
+
+        if (schemaRule == null) return baseCall(); // nothing to go on
+
+        var isView = table is DatabaseView;
+        var includeTable = schemaRule.Mapped && table == null &&
+                           (isView ? schemaRule.IncludeUnknownViews : schemaRule.IncludeUnknownTables);
+        if (includeTable && tableRule?.NotMapped == true) includeTable = false;
+        if (includeTable && tableRule?.IncludeUnknownColumns == false &&
+            (tableRule.Columns.IsNullOrEmpty() || tableRule.Columns.All(o => o.NotMapped))) includeTable = false;
 
         var excludedColumns = new List<DatabaseColumn>();
-        if (tableRule?.Columns?.Count > 0)
+
+        if (!includeTable) // remove ALL columns
+            foreach (var columnToRemove in table.Columns) {
+                excludedColumns.Add(columnToRemove);
+                table.Columns.Remove(columnToRemove);
+            }
+
+        if (tableRule.Columns?.Count > 0) // remove any NotMapped columns
             foreach (var column in tableRule.Columns.Where(o => o.NotMapped)) {
                 var columnToRemove = table.Columns.FirstOrDefault(c => c.Name.Equals(column.Name, StringComparison.OrdinalIgnoreCase));
                 if (columnToRemove == null) continue;
+                excludedColumns.Add(columnToRemove);
+                table.Columns.Remove(columnToRemove);
+            }
+
+        if (includeTable && tableRule?.Columns.Count > 0 && !tableRule.IncludeUnknownColumns) // remove any unknown columns
+            foreach (var columnToRemove in table.Columns) {
+                var columnRule =
+                    tableRule.Columns.FirstOrDefault(c => c.Name.Equals(columnToRemove.Name, StringComparison.OrdinalIgnoreCase));
+                if (columnRule?.Mapped == true) continue;
                 excludedColumns.Add(columnToRemove);
                 table.Columns.Remove(columnToRemove);
             }
@@ -114,6 +140,16 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         foreach (var index in indexesToBeRemoved) table.Indexes.Remove(index);
 
+        if (table.Columns.Count == 0 && getEntityTypeNameMethod != null) {
+            // remove the entire table
+            table.Indexes.Clear();
+            var entityTypeName = GetEntityTypeName(table);
+            modelBuilder.Model.RemoveEntityType(entityTypeName);
+            WriteVerbose($"Table {table.Name} omitted.");
+            return null;
+        }
+
+        foreach (var excludedColumn in excludedColumns) WriteVerbose($"Table {table.Name} column {excludedColumn.Name} omitted.");
         return baseCall();
     }
 
@@ -145,16 +181,30 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             // force simple ManyToMany junctions to be generated as entities
             reporter?.WriteInformation($"{schema} Simple ManyToMany junctions are being forced to generate entities for schema {schema}");
             foreach (var fk in schemaForeignKeys)
-                visitForeignKeyMethod!.Invoke(proxy, new object[] { modelBuilder, fk });
+                VisitForeignKey(modelBuilder, fk);
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             foreach (var foreignKey in entityType.GetForeignKeys())
-                addNavigationPropertiesMethod!.Invoke(proxy, new object[] { foreignKey });
+                AddNavigationProperties(foreignKey);
         }
 
         return modelBuilder;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual void VisitForeignKey(ModelBuilder modelBuilder, DatabaseForeignKey fk) {
+        visitForeignKeyMethod!.Invoke(proxy, new object[] { modelBuilder, fk });
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual void AddNavigationProperties(IMutableForeignKey foreignKey) {
+        addNavigationPropertiesMethod!.Invoke(proxy, new object[] { foreignKey });
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual string GetEntityTypeName(DatabaseTable table) {
+        return (string)getEntityTypeNameMethod?.Invoke(proxy, new object[] { table });
+    }
 
     internal void WriteVerbose(string msg) {
         reporter?.WriteVerbose(msg);

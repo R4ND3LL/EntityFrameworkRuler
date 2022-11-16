@@ -154,7 +154,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
         if (edmx?.Entities.IsNullOrEmpty() != false) return new();
 
         var root = new PrimitiveNamingRules();
-
+        var includeAll = true;
         foreach (var grp in edmx.Entities.GroupBy(o => o.DbSchema)) {
             if (grp.Key.IsNullOrWhiteSpace()) continue;
 
@@ -183,8 +183,8 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                     // if property name is different than db, it has to go into output
                     // Get the expected EF property identifier based on options.. just like EF would:
                     var expectedPropertyName = NamingService.GetExpectedPropertyName(property, expectedClassName);
-                    if (expectedPropertyName.IsNullOrWhiteSpace() ||
-                        (property.Name == expectedPropertyName && property.EnumType == null)) continue;
+                    if (!includeAll && (expectedPropertyName.IsNullOrWhiteSpace() ||
+                                        (property.Name == expectedPropertyName && property.EnumType == null))) continue;
                     tbl.Columns ??= new();
                     tbl.Columns.Add(new() {
                         Name = property.DbColumnName,
@@ -197,7 +197,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                     renamed = true;
                 }
 
-                if (renamed) schemaRule.Tables.Add(tbl);
+                if (renamed || includeAll) schemaRule.Tables.Add(tbl);
             }
         }
 

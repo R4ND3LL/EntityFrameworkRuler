@@ -3,17 +3,23 @@
    "Schemas": [
       {
          "SchemaName": "dbo",
+         "IncludeUnknownTables": false,
+         "IncludeUnknownViews": false,
          "Namespace": null,
          "Tables": [
             {
                "Name": "Alphabetical list of products",
                "EntityName": "AlphabeticalListOfProduct",
                "NewName": "Alphabetical_list_of_product",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "ProductID",
                      "PropertyName": "ProductId",
                      "NewName": "ProductID"
+                  },
+                  {
+                     "Name": "ProductName"
                   },
                   {
                      "Name": "SupplierID",
@@ -26,8 +32,26 @@
                      "NewName": "CategoryID"
                   },
                   {
+                     "Name": "QuantityPerUnit"
+                  },
+                  {
                      "Name": "UnitPrice",
                      "NewName": "UnitPriceCustom"
+                  },
+                  {
+                     "Name": "UnitsInStock"
+                  },
+                  {
+                     "Name": "UnitsOnOrder"
+                  },
+                  {
+                     "Name": "ReorderLevel"
+                  },
+                  {
+                     "Name": "Discontinued"
+                  },
+                  {
+                     "Name": "CategoryName"
                   }
                ]
             },
@@ -35,11 +59,21 @@
                "Name": "Categories",
                "EntityName": "Category",
                "NewName": "Category",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "CategoryID",
                      "PropertyName": "CategoryId",
                      "NewName": "CategoryID"
+                  },
+                  {
+                     "Name": "CategoryName"
+                  },
+                  {
+                     "Name": "Description"
+                  },
+                  {
+                     "Name": "Picture"
                   }
                ]
             },
@@ -47,17 +81,29 @@
                "Name": "Category Sales for 1997",
                "EntityName": "CategorySalesFor1997",
                "NewName": "Category_Sales_for_1997",
-               "Columns": [ ]
+               "IncludeUnknownColumns": false,
+               "Columns": [
+                  {
+                     "Name": "CategoryName"
+                  },
+                  {
+                     "Name": "CategorySales"
+                  }
+               ]
             },
             {
                "Name": "Current Product List",
                "EntityName": "CurrentProductList",
                "NewName": "Current_Product_List",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "ProductID",
                      "PropertyName": "ProductId",
                      "NewName": "ProductID"
+                  },
+                  {
+                     "Name": "ProductName"
                   }
                ]
             },
@@ -65,11 +111,42 @@
                "Name": "Customers",
                "EntityName": "Customer",
                "NewName": "Customer",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "CustomerID",
                      "PropertyName": "CustomerId",
                      "NewName": "CustomerID"
+                  },
+                  {
+                     "Name": "CompanyName"
+                  },
+                  {
+                     "Name": "ContactName"
+                  },
+                  {
+                     "Name": "ContactTitle"
+                  },
+                  {
+                     "Name": "Address"
+                  },
+                  {
+                     "Name": "City"
+                  },
+                  {
+                     "Name": "Region"
+                  },
+                  {
+                     "Name": "PostalCode"
+                  },
+                  {
+                     "Name": "Country"
+                  },
+                  {
+                     "Name": "Phone"
+                  },
+                  {
+                     "Name": "Fax"
                   }
                ]
             },
@@ -77,17 +154,35 @@
                "Name": "Customer and Suppliers by City",
                "EntityName": "CustomerAndSuppliersByCity",
                "NewName": "Customer_and_Suppliers_by_City",
-               "Columns": [ ]
+               "IncludeUnknownColumns": false,
+               "Columns": [
+                  {
+                     "Name": "City"
+                  },
+                  {
+                     "Name": "CompanyName"
+                  },
+                  {
+                     "Name": "ContactName"
+                  },
+                  {
+                     "Name": "Relationship"
+                  }
+               ]
             },
             {
                "Name": "CustomerDemographics",
                "EntityName": "CustomerDemographic",
                "NewName": "CustomerDemographic",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "CustomerTypeID",
                      "PropertyName": "CustomerTypeId",
                      "NewName": "CustomerTypeID"
+                  },
+                  {
+                     "Name": "CustomerDesc"
                   }
                ]
             },
@@ -95,6 +190,7 @@
                "Name": "Employees",
                "EntityName": "Employee",
                "NewName": "Employee",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "EmployeeID",
@@ -102,8 +198,56 @@
                      "NewName": "EmployeeID"
                   },
                   {
+                     "Name": "LastName"
+                  },
+                  {
+                     "Name": "FirstName"
+                  },
+                  {
+                     "Name": "Title"
+                  },
+                  {
+                     "Name": "TitleOfCourtesy"
+                  },
+                  {
+                     "Name": "BirthDate"
+                  },
+                  {
+                     "Name": "HireDate"
+                  },
+                  {
+                     "Name": "Address"
+                  },
+                  {
+                     "Name": "City"
+                  },
+                  {
+                     "Name": "Region"
+                  },
+                  {
+                     "Name": "PostalCode"
+                  },
+                  {
+                     "Name": "Country"
+                  },
+                  {
+                     "Name": "HomePhone"
+                  },
+                  {
+                     "Name": "Extension"
+                  },
+                  {
+                     "Name": "Photo"
+                  },
+                  {
+                     "Name": "Notes"
+                  },
+                  {
                      "Name": "ReportsTo",
                      "NewName": "ReportsToCustom"
+                  },
+                  {
+                     "Name": "PhotoPath"
                   }
                ]
             },
@@ -111,15 +255,52 @@
                "Name": "Invoices",
                "EntityName": "Invoice",
                "NewName": "Invoice",
+               "IncludeUnknownColumns": false,
                "Columns": [
+                  {
+                     "Name": "ShipName"
+                  },
+                  {
+                     "Name": "ShipAddress"
+                  },
+                  {
+                     "Name": "ShipCity"
+                  },
+                  {
+                     "Name": "ShipRegion"
+                  },
+                  {
+                     "Name": "ShipPostalCode"
+                  },
+                  {
+                     "Name": "ShipCountry"
+                  },
                   {
                      "Name": "CustomerID",
                      "PropertyName": "CustomerId",
                      "NewName": "CustomerID"
                   },
                   {
+                     "Name": "CustomerName"
+                  },
+                  {
+                     "Name": "Address"
+                  },
+                  {
                      "Name": "City",
                      "NewName": "CityCustom"
+                  },
+                  {
+                     "Name": "Region"
+                  },
+                  {
+                     "Name": "PostalCode"
+                  },
+                  {
+                     "Name": "Country"
+                  },
+                  {
+                     "Name": "Salesperson"
                   },
                   {
                      "Name": "OrderID",
@@ -127,13 +308,40 @@
                      "NewName": "OrderID"
                   },
                   {
+                     "Name": "OrderDate"
+                  },
+                  {
+                     "Name": "RequiredDate"
+                  },
+                  {
+                     "Name": "ShippedDate"
+                  },
+                  {
+                     "Name": "ShipperName"
+                  },
+                  {
                      "Name": "ProductID",
                      "PropertyName": "ProductId",
                      "NewName": "ProductID"
                   },
                   {
+                     "Name": "ProductName"
+                  },
+                  {
+                     "Name": "UnitPrice"
+                  },
+                  {
+                     "Name": "Quantity"
+                  },
+                  {
                      "Name": "Discount",
                      "NewName": "DiscountCustom"
+                  },
+                  {
+                     "Name": "ExtendedPrice"
+                  },
+                  {
+                     "Name": "Freight"
                   }
                ]
             },
@@ -141,6 +349,7 @@
                "Name": "Orders",
                "EntityName": "Order",
                "NewName": "Order",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "OrderID",
@@ -162,8 +371,35 @@
                      "NewName": "OrderDateCustom"
                   },
                   {
+                     "Name": "RequiredDate"
+                  },
+                  {
+                     "Name": "ShippedDate"
+                  },
+                  {
                      "Name": "ShipVia",
                      "NewName": "ShipViaCustom"
+                  },
+                  {
+                     "Name": "Freight"
+                  },
+                  {
+                     "Name": "ShipName"
+                  },
+                  {
+                     "Name": "ShipAddress"
+                  },
+                  {
+                     "Name": "ShipCity"
+                  },
+                  {
+                     "Name": "ShipRegion"
+                  },
+                  {
+                     "Name": "ShipPostalCode"
+                  },
+                  {
+                     "Name": "ShipCountry"
                   }
                ]
             },
@@ -171,6 +407,7 @@
                "Name": "Order Details",
                "EntityName": "OrderDetail",
                "NewName": "Order_Detail",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "OrderID",
@@ -183,8 +420,14 @@
                      "NewName": "ProductID"
                   },
                   {
+                     "Name": "UnitPrice"
+                  },
+                  {
                      "Name": "Quantity",
                      "NewType": "NorthwindModel.QuantityEnum"
+                  },
+                  {
+                     "Name": "Discount"
                   }
                ]
             },
@@ -192,6 +435,7 @@
                "Name": "Order Details Extended",
                "EntityName": "OrderDetailsExtended",
                "NewName": "Order_Details_Extended",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "OrderID",
@@ -204,12 +448,21 @@
                      "NewName": "ProductID"
                   },
                   {
+                     "Name": "ProductName"
+                  },
+                  {
                      "Name": "UnitPrice",
                      "NewName": "UnitPriceCustom"
                   },
                   {
+                     "Name": "Quantity"
+                  },
+                  {
                      "Name": "Discount",
                      "NewName": "DiscountCustom"
+                  },
+                  {
+                     "Name": "ExtendedPrice"
                   }
                ]
             },
@@ -217,11 +470,15 @@
                "Name": "Order Subtotals",
                "EntityName": "OrderSubtotal",
                "NewName": "Order_Subtotal",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "OrderID",
                      "PropertyName": "OrderId",
                      "NewName": "OrderID"
+                  },
+                  {
+                     "Name": "Subtotal"
                   }
                ]
             },
@@ -229,6 +486,7 @@
                "Name": "Orders Qry",
                "EntityName": "OrdersQry",
                "NewName": "Orders_Qry_Custom",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "OrderID",
@@ -244,6 +502,57 @@
                      "Name": "EmployeeID",
                      "PropertyName": "EmployeeId",
                      "NewName": "EmployeeID"
+                  },
+                  {
+                     "Name": "OrderDate"
+                  },
+                  {
+                     "Name": "RequiredDate"
+                  },
+                  {
+                     "Name": "ShippedDate"
+                  },
+                  {
+                     "Name": "ShipVia"
+                  },
+                  {
+                     "Name": "Freight"
+                  },
+                  {
+                     "Name": "ShipName"
+                  },
+                  {
+                     "Name": "ShipAddress"
+                  },
+                  {
+                     "Name": "ShipCity"
+                  },
+                  {
+                     "Name": "ShipRegion"
+                  },
+                  {
+                     "Name": "ShipPostalCode"
+                  },
+                  {
+                     "Name": "ShipCountry"
+                  },
+                  {
+                     "Name": "CompanyName"
+                  },
+                  {
+                     "Name": "Address"
+                  },
+                  {
+                     "Name": "City"
+                  },
+                  {
+                     "Name": "Region"
+                  },
+                  {
+                     "Name": "PostalCode"
+                  },
+                  {
+                     "Name": "Country"
                   }
                ]
             },
@@ -251,11 +560,15 @@
                "Name": "Products",
                "EntityName": "Product",
                "NewName": "Product",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "ProductID",
                      "PropertyName": "ProductId",
                      "NewName": "ProductID"
+                  },
+                  {
+                     "Name": "ProductName"
                   },
                   {
                      "Name": "SupplierID",
@@ -266,6 +579,24 @@
                      "Name": "CategoryID",
                      "PropertyName": "CategoryId",
                      "NewName": "CategoryID"
+                  },
+                  {
+                     "Name": "QuantityPerUnit"
+                  },
+                  {
+                     "Name": "UnitPrice"
+                  },
+                  {
+                     "Name": "UnitsInStock"
+                  },
+                  {
+                     "Name": "UnitsOnOrder"
+                  },
+                  {
+                     "Name": "ReorderLevel"
+                  },
+                  {
+                     "Name": "Discontinued"
                   }
                ]
             },
@@ -273,38 +604,71 @@
                "Name": "Product Sales for 1997",
                "EntityName": "ProductSalesFor1997",
                "NewName": "Product_Sales_for_1997",
-               "Columns": [ ]
+               "IncludeUnknownColumns": false,
+               "Columns": [
+                  {
+                     "Name": "CategoryName"
+                  },
+                  {
+                     "Name": "ProductName"
+                  },
+                  {
+                     "Name": "ProductSales"
+                  }
+               ]
             },
             {
                "Name": "Products Above Average Price",
                "EntityName": "ProductsAboveAveragePrice",
                "NewName": "Products_Above_Average_Price",
-               "Columns": [ ]
+               "IncludeUnknownColumns": false,
+               "Columns": [
+                  {
+                     "Name": "ProductName"
+                  },
+                  {
+                     "Name": "UnitPrice"
+                  }
+               ]
             },
             {
                "Name": "Products by Category",
                "EntityName": "ProductsByCategory",
                "NewName": "Products_by_Category",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "CategoryName",
                      "NewName": "CategoryNameCustom"
                   },
                   {
+                     "Name": "ProductName"
+                  },
+                  {
+                     "Name": "QuantityPerUnit"
+                  },
+                  {
                      "Name": "UnitsInStock",
                      "NewName": "UnitsInStockCustom",
                      "NewType": "NorthwindModel.UnitsInStockEnum"
+                  },
+                  {
+                     "Name": "Discontinued"
                   }
                ]
             },
             {
                "Name": "Region",
                "NewName": "RegionCustom",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "RegionID",
                      "PropertyName": "RegionId",
                      "NewName": "RegionID"
+                  },
+                  {
+                     "Name": "RegionDescription"
                   }
                ]
             },
@@ -312,11 +676,21 @@
                "Name": "Sales by Category",
                "EntityName": "SalesByCategory",
                "NewName": "Sales_by_Category",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "CategoryID",
                      "PropertyName": "CategoryId",
                      "NewName": "CategoryID"
+                  },
+                  {
+                     "Name": "CategoryName"
+                  },
+                  {
+                     "Name": "ProductName"
+                  },
+                  {
+                     "Name": "ProductSales"
                   }
                ]
             },
@@ -324,7 +698,11 @@
                "Name": "Sales Totals by Amount",
                "EntityName": "SalesTotalsByAmount",
                "NewName": "Sales_Totals_by_Amount",
+               "IncludeUnknownColumns": false,
                "Columns": [
+                  {
+                     "Name": "SaleAmount"
+                  },
                   {
                      "Name": "OrderID",
                      "PropertyName": "OrderId",
@@ -344,11 +722,18 @@
                "Name": "Shippers",
                "EntityName": "Shipper",
                "NewName": "Shipper",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "ShipperID",
                      "PropertyName": "ShipperId",
                      "NewName": "ShipperID"
+                  },
+                  {
+                     "Name": "CompanyName"
+                  },
+                  {
+                     "Name": "Phone"
                   }
                ]
             },
@@ -356,11 +741,18 @@
                "Name": "Summary of Sales by Quarter",
                "EntityName": "SummaryOfSalesByQuarter",
                "NewName": "Summary_of_Sales_by_Quarter",
+               "IncludeUnknownColumns": false,
                "Columns": [
+                  {
+                     "Name": "ShippedDate"
+                  },
                   {
                      "Name": "OrderID",
                      "PropertyName": "OrderId",
                      "NewName": "OrderID"
+                  },
+                  {
+                     "Name": "Subtotal"
                   }
                ]
             },
@@ -368,11 +760,18 @@
                "Name": "Summary of Sales by Year",
                "EntityName": "SummaryOfSalesByYear",
                "NewName": "Summary_of_Sales_by_Year",
+               "IncludeUnknownColumns": false,
                "Columns": [
+                  {
+                     "Name": "ShippedDate"
+                  },
                   {
                      "Name": "OrderID",
                      "PropertyName": "OrderId",
                      "NewName": "OrderID"
+                  },
+                  {
+                     "Name": "Subtotal"
                   }
                ]
             },
@@ -380,11 +779,45 @@
                "Name": "Suppliers",
                "EntityName": "Supplier",
                "NewName": "Supplier",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "SupplierID",
                      "PropertyName": "SupplierId",
                      "NewName": "SupplierID"
+                  },
+                  {
+                     "Name": "CompanyName"
+                  },
+                  {
+                     "Name": "ContactName"
+                  },
+                  {
+                     "Name": "ContactTitle"
+                  },
+                  {
+                     "Name": "Address"
+                  },
+                  {
+                     "Name": "City"
+                  },
+                  {
+                     "Name": "Region"
+                  },
+                  {
+                     "Name": "PostalCode"
+                  },
+                  {
+                     "Name": "Country"
+                  },
+                  {
+                     "Name": "Phone"
+                  },
+                  {
+                     "Name": "Fax"
+                  },
+                  {
+                     "Name": "HomePage"
                   }
                ]
             },
@@ -392,6 +825,7 @@
                "Name": "sysdiagrams",
                "EntityName": "Sysdiagram",
                "NewName": "sysdiagram",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "name",
@@ -424,11 +858,15 @@
                "Name": "Territories",
                "EntityName": "Territory",
                "NewName": "Territory",
+               "IncludeUnknownColumns": false,
                "Columns": [
                   {
                      "Name": "TerritoryID",
                      "PropertyName": "TerritoryId",
                      "NewName": "TerritoryID"
+                  },
+                  {
+                     "Name": "TerritoryDescription"
                   },
                   {
                      "Name": "RegionID",
