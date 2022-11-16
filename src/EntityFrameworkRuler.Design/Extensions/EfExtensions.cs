@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
@@ -376,4 +377,12 @@ internal static class EfExtensions {
             typeScaffoldingInfo?.ScaffoldPrecision,
             typeScaffoldingInfo?.ScaffoldScale);
     }
+
+    internal static void WriteVerbosely(this IOperationReporter reporter, string msg) {
+        reporter?.WriteVerbose(msg);
+        DebugLog(msg);
+    }
+
+    [Conditional("DEBUG")]
+    private static void DebugLog(string msg) => Console.WriteLine(msg);
 }

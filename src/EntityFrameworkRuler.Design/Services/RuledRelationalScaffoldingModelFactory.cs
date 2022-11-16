@@ -75,7 +75,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         var clrType = designTimeRuleLoader?.TryResolveType(columnRule.NewType, typeScaffoldingInfo?.ClrType, reporter);
         if (clrType == null) return typeScaffoldingInfo;
-        WriteVerbose($"Column rule applied: {tableRule.Name}.{columnRule.PropertyName} type set to {columnRule.NewType}");
+        reporter?.WriteVerbosely($"RULED: Table {tableRule.Name} property {columnRule.PropertyName} type set to {clrType.FullName}");
         // Regenerate the TypeScaffoldingInfo based on our new CLR type.
         return typeScaffoldingInfo.WithType(clrType);
     }
@@ -151,11 +151,12 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             table.Indexes.Clear();
             var entityTypeName = GetEntityTypeName(table);
             modelBuilder.Model.RemoveEntityType(entityTypeName);
-            WriteVerbose($"Table {table.Name} omitted.");
+            reporter?.WriteInformation($"RULED: Table {table.Name} omitted.");
             return null;
         }
 
-        foreach (var excludedColumn in excludedColumns) WriteVerbose($"Table {table.Name} column {excludedColumn.Name} omitted.");
+        foreach (var excludedColumn in excludedColumns)
+            reporter?.WriteInformation($"RULED: Table {table.Name} column {excludedColumn.Name} omitted.");
         return baseCall();
     }
 
@@ -185,7 +186,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
 
             // force simple ManyToMany junctions to be generated as entities
-            reporter?.WriteInformation($"{schema} Simple ManyToMany junctions are being forced to generate entities for schema {schema}");
+            reporter?.WriteInformation($"RULED: Simple many-to-many junctions in {schema} are being forced to generate entities.");
             foreach (var fk in schemaForeignKeys)
                 VisitForeignKey(modelBuilder, fk);
 
@@ -210,11 +211,6 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual string GetEntityTypeName(DatabaseTable table) {
         return (string)getEntityTypeNameMethod?.Invoke(proxy, new object[] { table });
-    }
-
-    internal void WriteVerbose(string msg) {
-        reporter?.WriteVerbose(msg);
-        DesignTimeRuleLoader.DebugLog(msg);
     }
 
     void IInterceptor.Intercept(IInvocation invocation) {

@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using EntityFrameworkRuler.Common;
+using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
 using EntityFrameworkRuler.Rules.NavigationNaming;
@@ -25,8 +26,8 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         var assemblyName = reporterAssembly?.GetName();
         EfVersion = assemblyName?.Version;
         // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-        if (EfVersion != null) reporter?.WriteInformation($"Rule loader detected EF v{assemblyName.Version}");
-        else reporter?.WriteInformation("Rule loader could not detect the EF version");
+        if (EfVersion != null) reporter?.WriteInformation($"EF Ruler detected Entity Framework v{assemblyName.Version}");
+        else reporter?.WriteInformation("EF Ruler could not detect the EF version");
     }
 
     /// <summary> The detected entity framework version.  </summary>
@@ -162,7 +163,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
                 break;
             case LogType.Information:
             default:
-                WriteVerbose(msg.Message);
+                reporter?.WriteVerbosely(msg.Message);
                 break;
         }
     }
@@ -179,13 +180,4 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             folder = CodeGenOptions.ContextDir.FindProjectParentPath();
         return folder.IsNullOrWhiteSpace() ? Directory.GetCurrentDirectory() : folder;
     }
-
-
-    internal void WriteVerbose(string msg) {
-        reporter?.WriteVerbose(msg);
-        DebugLog(msg);
-    }
-
-    [Conditional("DEBUG")]
-    internal static void DebugLog(string msg) => Console.WriteLine(msg);
 }
