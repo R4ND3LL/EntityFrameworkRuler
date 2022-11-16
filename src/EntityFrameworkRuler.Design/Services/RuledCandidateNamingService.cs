@@ -48,7 +48,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
             return base.GenerateCandidateIdentifier(table);
 
         if (tableRule?.NewName.HasNonWhiteSpace() == true) {
-            reporter?.WriteVerbosely($"RULED: Table {tableRule.Name} set to entity name {tableRule.NewName}");
+            reporter?.WriteVerbosely($"RULED: Table {table.Schema}.{table.Name} mapped to entity name {tableRule.NewName}");
             return tableRule.NewName;
         }
 
@@ -89,7 +89,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
             return base.GenerateCandidateIdentifier(column);
 
         if (columnRule?.NewName.HasNonWhiteSpace() == true) {
-            reporter?.WriteVerbosely($"RULED: Table {column.Table.Name} column {columnRule.Name} property name set to {columnRule.NewName}");
+            reporter?.WriteVerbosely($"RULED: Column {column.Table.Schema}.{column.Table.Name}.{columnRule.Name} property name set to {columnRule.NewName}");
             return columnRule.NewName;
         }
 
@@ -163,7 +163,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
         var rename = classRef.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
         if (rename?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
 
-        reporter?.WriteVerbosely($"RULED: Entity {entity.Name} constraint {fkName} navigation name set to {rename.NewName}");
+        reporter?.WriteVerbosely($"RULED: Entity {entity.Name} navigation {rename.NewName} defined");
         return rename.NewName.Trim();
     }
 

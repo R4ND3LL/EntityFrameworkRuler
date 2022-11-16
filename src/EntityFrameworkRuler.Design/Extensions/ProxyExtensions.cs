@@ -1,9 +1,6 @@
 ﻿using System.Reflection;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Castle.DynamicProxy;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using IInterceptor = Castle.DynamicProxy.IInterceptor;
 
 namespace EntityFrameworkRuler.Design.Extensions;

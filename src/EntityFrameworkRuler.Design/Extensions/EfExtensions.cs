@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
+using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace EntityFrameworkRuler.Design.Extensions;
@@ -349,6 +350,9 @@ internal static class EfExtensions {
     }
 
     public static bool IsView(this IEntityType entity) => GetViewName(entity).HasNonWhiteSpace();
+
+    /// <summary> Get schema.tableName </summary>
+    public static string GetFullName(this DatabaseTable table) => table?.Name != null ? $"{table.Schema}.{table.Name}" : "";
 
     public static string GetViewName(this IEntityType entity) {
         var viewName = entity?.FindAnnotation("Relational:ViewName");

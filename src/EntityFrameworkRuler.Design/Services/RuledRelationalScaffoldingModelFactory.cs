@@ -33,6 +33,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     private readonly MethodInfo getEntityTypeNameMethod;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected readonly HashSet<string> OmittedTables = new();
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledRelationalScaffoldingModelFactory(IServiceProvider serviceProvider,
         IOperationReporter reporter,
         IDesignTimeRuleLoader designTimeRuleLoader) {
@@ -70,12 +73,13 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         primitiveNamingRules ??= designTimeRuleLoader?.GetPrimitiveNamingRules() ?? new();
 
 
-        if (!TryResolveRuleFor(column, out _, out var tableRule, out var columnRule)) return typeScaffoldingInfo;
+        if (!TryResolveRuleFor(column, out var schemaRule, out var tableRule, out var columnRule)) return typeScaffoldingInfo;
         if (columnRule?.NewType.HasNonWhiteSpace() != true) return typeScaffoldingInfo;
 
         var clrType = designTimeRuleLoader?.TryResolveType(columnRule.NewType, typeScaffoldingInfo?.ClrType, reporter);
         if (clrType == null) return typeScaffoldingInfo;
-        reporter?.WriteVerbosely($"RULED: Table {tableRule.Name} property {columnRule.PropertyName} type set to {clrType.FullName}");
+        reporter?.WriteVerbosely(
+            $"RULED: Property {schemaRule.SchemaName}.{tableRule.Name}.{columnRule.PropertyName} type set to {clrType.FullName}");
         // Regenerate the TypeScaffoldingInfo based on our new CLR type.
         return typeScaffoldingInfo.WithType(clrType);
     }
@@ -111,12 +115,12 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (includeTable && tableRule?.IncludeUnknownColumns == false &&
             (tableRule.Columns.IsNullOrEmpty() || tableRule.Columns.All(o => o.NotMapped))) includeTable = false;
 
-        var excludedColumns = new List<DatabaseColumn>();
+        var excludedColumns = new HashSet<DatabaseColumn>();
 
         if (!includeTable) {
             // remove ALL columns
             foreach (var columnToRemove in table.Columns) excludedColumns.Add(columnToRemove);
-            excludedColumns.ForEach(o => table.Columns.Remove(o));
+            excludedColumns.ForAll(o => table.Columns.Remove(o));
         } else if (tableRule?.Columns?.Count > 0) // remove any NotMapped columns
             foreach (var column in tableRule.Columns.Where(o => o.NotMapped)) {
                 var columnToRemove = table.Columns.FirstOrDefault(c => c.Name.EqualsIgnoreCase(column.Name));
@@ -137,18 +141,32 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
 
         if (excludedColumns.Count > 0) {
-            var indexesToBeRemoved = new List<DatabaseIndex>();
+            var indexesToBeRemoved = new HashSet<DatabaseIndex>();
             foreach (var index in table.Indexes)
-            foreach (var column in index.Columns)
-                if (excludedColumns.Contains(column))
-                    indexesToBeRemoved.Add(index);
+                foreach (var column in index.Columns)
+                    if (excludedColumns.Contains(column)) {
+                        indexesToBeRemoved.Add(index);
+                        break;
+                    }
 
             foreach (var index in indexesToBeRemoved) table.Indexes.Remove(index);
 
-            var fksToBeRemoved = new List<DatabaseForeignKey>();
+            var fksToBeRemoved = new HashSet<DatabaseForeignKey>();
             foreach (var foreignKey in table.ForeignKeys)
-            foreach (var column in foreignKey.Columns)
-                if (excludedColumns.Contains(column))
+                foreach (var column in foreignKey.Columns)
+                    if (excludedColumns.Contains(column)) {
+                        fksToBeRemoved.Add(foreignKey);
+                        break;
+                    }
+
+            foreach (var index in fksToBeRemoved) table.ForeignKeys.Remove(index);
+        }
+
+        if (table.ForeignKeys.Count > 0 && OmittedTables.Count > 0) {
+            // check to see if any of the foreign keys map to omitted tables. if so, nuke them.
+            var fksToBeRemoved = new HashSet<DatabaseForeignKey>();
+            foreach (var foreignKey in table.ForeignKeys)
+                if (OmittedTables.Contains(foreignKey.PrincipalTable.GetFullName()))
                     fksToBeRemoved.Add(foreignKey);
 
             foreach (var index in fksToBeRemoved) table.ForeignKeys.Remove(index);
@@ -156,16 +174,17 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         if (table.Columns.Count == 0 && getEntityTypeNameMethod != null) {
             // remove the entire table
+            OmittedTables.Add(table.GetFullName());
             table.Indexes.Clear();
             table.ForeignKeys.Clear();
             var entityTypeName = GetEntityTypeName(table);
             modelBuilder.Model.RemoveEntityType(entityTypeName);
-            reporter?.WriteInformation($"RULED: Table {table.Name} omitted.");
+            reporter?.WriteInformation($"RULED: Table {table.Schema}.{table.Name} omitted.");
             return null;
         }
 
         foreach (var excludedColumn in excludedColumns)
-            reporter?.WriteInformation($"RULED: Table {table.Name} column {excludedColumn.Name} omitted.");
+            reporter?.WriteInformation($"RULED: Column {table.Schema}.{table.Name}.{excludedColumn.Name} omitted.");
         return baseCall();
     }
 
@@ -182,6 +201,16 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         var schemas = schemaNames.Select(o => primitiveNamingRules?.TryResolveRuleFor(o))
             .Where(o => o?.UseManyToManyEntity == true).ToArray();
+
+        if (OmittedTables.Count > 0) {
+            // check to see if the foreign key maps to an omitted table. if so, nuke it.
+            var fksToBeRemoved = new HashSet<DatabaseForeignKey>();
+            foreach (var foreignKey in foreignKeys)
+                if (OmittedTables.Contains(foreignKey.PrincipalTable.GetFullName()))
+                    fksToBeRemoved.Add(foreignKey);
+
+            foreignKeys = foreignKeys.Where(o => !fksToBeRemoved.Contains(o)).ToList();
+        }
 
         if (schemas.IsNullOrEmpty()) return baseCall(foreignKeys);
 
@@ -200,8 +229,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 VisitForeignKey(modelBuilder, fk);
 
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-            foreach (var foreignKey in entityType.GetForeignKeys())
-                AddNavigationProperties(foreignKey);
+                foreach (var foreignKey in entityType.GetForeignKeys())
+                    AddNavigationProperties(foreignKey);
         }
 
         return modelBuilder;
@@ -225,38 +254,38 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     void IInterceptor.Intercept(IInvocation invocation) {
         switch (invocation.Method.Name) {
             case "GetTypeScaffoldingInfo" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseColumn dc: {
-                TypeScaffoldingInfo BaseCall() {
-                    invocation.Proceed();
-                    return (TypeScaffoldingInfo)invocation.ReturnValue;
-                }
+                    TypeScaffoldingInfo BaseCall() {
+                        invocation.Proceed();
+                        return (TypeScaffoldingInfo)invocation.ReturnValue;
+                    }
 
-                var response = GetTypeScaffoldingInfo(dc, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = GetTypeScaffoldingInfo(dc, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitTable" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                    invocation.Arguments[1] is DatabaseTable dt: {
-                EntityTypeBuilder BaseCall() {
-                    invocation.Proceed();
-                    return (EntityTypeBuilder)invocation.ReturnValue;
-                }
+                    EntityTypeBuilder BaseCall() {
+                        invocation.Proceed();
+                        return (EntityTypeBuilder)invocation.ReturnValue;
+                    }
 
-                var response = VisitTable(mb, dt, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitTable(mb, dt, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitForeignKeys" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                          invocation.Arguments[1] is IList<DatabaseForeignKey> fks: {
-                ModelBuilder BaseCall(IList<DatabaseForeignKey> databaseForeignKeys) {
-                    invocation.SetArgumentValue(1, databaseForeignKeys);
-                    invocation.Proceed();
-                    return (ModelBuilder)invocation.ReturnValue;
-                }
+                    ModelBuilder BaseCall(IList<DatabaseForeignKey> databaseForeignKeys) {
+                        invocation.SetArgumentValue(1, databaseForeignKeys);
+                        invocation.Proceed();
+                        return (ModelBuilder)invocation.ReturnValue;
+                    }
 
-                var response = VisitForeignKeys(mb, fks, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitForeignKeys(mb, fks, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             default:
                 invocation.Proceed();
                 break;
