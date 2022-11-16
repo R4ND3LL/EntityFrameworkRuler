@@ -99,9 +99,15 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (schemaRule == null) return baseCall(); // nothing to go on
 
         var isView = table is DatabaseView;
-        var includeTable = schemaRule.Mapped && table == null &&
-                           (isView ? schemaRule.IncludeUnknownViews : schemaRule.IncludeUnknownTables);
-        if (includeTable && tableRule?.NotMapped == true) includeTable = false;
+        var includeTable =
+            schemaRule.Mapped &&
+            (
+                (tableRule == null && (isView ? schemaRule.IncludeUnknownViews : schemaRule.IncludeUnknownTables))
+                ||
+                (tableRule?.Mapped == true)
+            );
+
+        // drop the table if all columns are not mapped
         if (includeTable && tableRule?.IncludeUnknownColumns == false &&
             (tableRule.Columns.IsNullOrEmpty() || tableRule.Columns.All(o => o.NotMapped))) includeTable = false;
 
@@ -113,7 +119,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 table.Columns.Remove(columnToRemove);
             }
 
-        if (tableRule.Columns?.Count > 0) // remove any NotMapped columns
+        else if (tableRule?.Columns?.Count > 0) // remove any NotMapped columns
             foreach (var column in tableRule.Columns.Where(o => o.NotMapped)) {
                 var columnToRemove = table.Columns.FirstOrDefault(c => c.Name.Equals(column.Name, StringComparison.OrdinalIgnoreCase));
                 if (columnToRemove == null) continue;
@@ -121,7 +127,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 table.Columns.Remove(columnToRemove);
             }
 
-        if (includeTable && tableRule?.Columns.Count > 0 && !tableRule.IncludeUnknownColumns) // remove any unknown columns
+        if (includeTable && tableRule?.Columns?.Count > 0 && !tableRule.IncludeUnknownColumns) // remove any unknown columns
             foreach (var columnToRemove in table.Columns) {
                 var columnRule =
                     tableRule.Columns.FirstOrDefault(c => c.Name.Equals(columnToRemove.Name, StringComparison.OrdinalIgnoreCase));
@@ -130,15 +136,15 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 table.Columns.Remove(columnToRemove);
             }
 
-        if (excludedColumns.Count == 0) return baseCall();
+        if (excludedColumns.Count > 0) {
+            var indexesToBeRemoved = new List<DatabaseIndex>();
+            foreach (var index in table.Indexes)
+            foreach (var column in index.Columns)
+                if (excludedColumns.Contains(column))
+                    indexesToBeRemoved.Add(index);
 
-        var indexesToBeRemoved = new List<DatabaseIndex>();
-        foreach (var index in table.Indexes)
-        foreach (var column in index.Columns)
-            if (excludedColumns.Contains(column))
-                indexesToBeRemoved.Add(index);
-
-        foreach (var index in indexesToBeRemoved) table.Indexes.Remove(index);
+            foreach (var index in indexesToBeRemoved) table.Indexes.Remove(index);
+        }
 
         if (table.Columns.Count == 0 && getEntityTypeNameMethod != null) {
             // remove the entire table

@@ -7,6 +7,7 @@ using EntityFrameworkRuler.Rules.PrimitiveNaming;
 // ReSharper disable MemberCanBeInternal
 
 namespace EntityFrameworkRuler.Extension;
+
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class RuleExtensions {
     /// <summary> Get the primitive schema rule for the given target schema. Used during scaffolding phase. </summary>
@@ -23,13 +24,15 @@ public static class RuleExtensions {
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public static bool TryResolveRuleFor(this IList<SchemaRule> rules, string schema, out SchemaRule schemaRule) {
         schemaRule = null;
-        if (rules == null || rules.Count == 0 || schema.IsNullOrWhiteSpace()) return false;
+        if (rules.IsNullOrEmpty()) return false;
 
         if (schema.IsNullOrWhiteSpace()) {
-            if (rules.Count == 1) schemaRule = rules[0];
+            // default to dbo, otherwise fail
+            if (rules.Count == 1 && (rules[0].SchemaName.IsNullOrWhiteSpace() || rules[0].SchemaName == "dbo")) schemaRule = rules[0];
             else return false;
         } else {
             schemaRule = rules.FirstOrDefault(x => x.SchemaName == schema);
+            // if there is only one schema, and the name is not defined, default to that
             if (schemaRule == null && rules.Count == 1 && rules[0].SchemaName.IsNullOrWhiteSpace())
                 schemaRule = rules[0];
         }

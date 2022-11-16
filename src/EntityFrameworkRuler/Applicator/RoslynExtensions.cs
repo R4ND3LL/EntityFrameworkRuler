@@ -465,18 +465,18 @@ internal static class RoslynExtensions {
         var projectId = ws.AddProject(projInfo).Id;
 
         foreach (var filePath in filePaths) {
-            var info = new FileInfo(filePath);
             var content = File.ReadAllText(filePath);
             if (string.IsNullOrEmpty(content)) continue;
 
+            var fileName = Path.GetFileName(filePath);
             var text = SourceText.From(content);
             var documentInfo = DocumentInfo.Create(
                     DocumentId.CreateNewId(projectId),
-                    info.Name,
+                    fileName,
                     null,
                     SourceCodeKind.Regular,
-                    TextLoader.From(TextAndVersion.Create(text, VersionStamp.Default, info.FullName)))
-                .WithFilePath(info.FullName);
+                    TextLoader.From(TextAndVersion.Create(text, VersionStamp.Default, filePath)))
+                .WithFilePath(filePath);
             ws.AddDocument(documentInfo);
         }
 
