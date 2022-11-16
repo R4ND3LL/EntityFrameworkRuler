@@ -455,8 +455,7 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
             Path.Combine(projectBasePath, "obj") + Path.DirectorySeparatorChar,
             Path.Combine(projectBasePath, "Debug") + Path.DirectorySeparatorChar,
         };
-        var toIgnore = cSharpFiles
-            .Where(o => ignorePaths.Any(ip => o.StartsWith(ip, StringComparison.OrdinalIgnoreCase))).ToList();
+        var toIgnore = cSharpFiles.Where(o => ignorePaths.Any(o.StartsWithIgnoreCase)).ToList();
         toIgnore.ForEach(o => cSharpFiles.Remove(o));
 
         if (cSharpFiles.Count == 0) {

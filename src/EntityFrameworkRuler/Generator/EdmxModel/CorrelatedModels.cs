@@ -175,7 +175,7 @@ public sealed class EntityProperty : EntityPropertyBase {
     public EnumType EnumType { get => enumType; set => SetProperty(ref enumType, value, OnEnumTypeChanged); }
     private void OnEnumTypeChanged() { }
 
-    public bool Nullable => StorageProperty?.Nullable?.StartsWith("t", StringComparison.OrdinalIgnoreCase) == true;
+    public bool Nullable => StorageProperty?.Nullable?.StartsWithIgnoreCase("t") == true;
     public bool IsIdentity => StorageProperty?.StoreGeneratedPattern == "Identity";
 
     public StorageProperty StorageProperty { get; set; }
@@ -392,8 +392,6 @@ public sealed class EnumType : NotifyPropertyChanged {
 
     public override string ToString() { return $"EnumType: {Name} (Ext: {ExternalTypeName})"; }
 }
-
-
 
 public sealed class EndRole : NotifyPropertyChanged {
     public EndRole(ConceptualAssociation conceptualAssociation, ConceptualEnd conceptualEnd, EntityType entityType) {

@@ -53,7 +53,7 @@ public static class PathExtensions {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static FileInfo[] ResolveCsProjFiles(ref string projectBasePath) {
         FileInfo[] csProjFiles;
-        if (projectBasePath.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)) {
+        if (projectBasePath.EndsWithIgnoreCase(".csproj")) {
             csProjFiles = new[] { new FileInfo(projectBasePath) };
             projectBasePath = csProjFiles[0].Directory?.FullName;
         } else {

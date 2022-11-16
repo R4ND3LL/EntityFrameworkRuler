@@ -45,13 +45,11 @@ public sealed class EdmxParser : NotifyPropertyChanged {
             var fullName = entity.FullName;
             var selfName = entity.SelfName;
 
-            entity.EntitySetMapping = edmx.Mappings.Mapping.EntityContainerMapping.EntitySetMappings?.FirstOrDefault(
-                o =>
-                    o.EntityTypeMappings.Any(etm =>
-                        string.Equals(etm.TypeName, fullName, StringComparison.OrdinalIgnoreCase)));
+            entity.EntitySetMapping = edmx.Mappings.Mapping.EntityContainerMapping.EntitySetMappings?
+                .FirstOrDefault(o => o.EntityTypeMappings.Any(etm => etm.TypeName.EqualsIgnoreCase(fullName)));
 
             entity.MappingFragments = entity.EntitySetMapping?.EntityTypeMappings?
-                .FirstOrDefault(etm => string.Equals(etm.TypeName, fullName, StringComparison.OrdinalIgnoreCase))
+                .FirstOrDefault(etm => etm.TypeName.EqualsIgnoreCase(fullName))
                 ?.MappingFragments ?? new List<MappingFragment>();
 
             if (entity.MappingFragments?.Count > 0) {
@@ -131,8 +129,8 @@ public sealed class EdmxParser : NotifyPropertyChanged {
 
                 var relationship = conceptualProperty.Relationship;
                 relationship = relationship.Split('.').Last() ?? string.Empty; // remove namespace
-                property.ConceptualAssociation = entity.Associations?.FirstOrDefault(o =>
-                    string.Equals(o.Name, relationship, StringComparison.OrdinalIgnoreCase));
+                property.ConceptualAssociation = entity.Associations?
+                    .FirstOrDefault(o => o.Name.EqualsIgnoreCase(relationship));
                 if (property.ConceptualAssociation == null) {
                     // take a broader look. suspicious end Type in here
                     var match = conceptualAssociationsByName.TryGetValue(relationship, out var v) ? v : null;
@@ -274,8 +272,8 @@ public sealed class EdmxParser : NotifyPropertyChanged {
 
     private EntityProperty[] GetProperties(EntityType entity, string[] propNames) {
         if (entity == null) throw new ArgumentNullException(nameof(entity));
-        var props = propNames.Select(n => entity.Properties.FirstOrDefault(o =>
-                string.Equals(o.Name, n, StringComparison.OrdinalIgnoreCase)))
+        var props = propNames.Select(n => entity.Properties
+                .FirstOrDefault(o => o.Name.EqualsIgnoreCase(n)))
             .Where(o => o != null).ToArray();
         return props;
     }

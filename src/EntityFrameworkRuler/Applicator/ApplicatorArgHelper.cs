@@ -36,17 +36,15 @@ public static class ApplicatorArgHelper {
             return true;
         }
 
-        var csProjFile =
-            args.FirstOrDefault(o => o?.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase) == true);
+        var csProjFile = args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".csproj") == true);
 
         if (csProjFile != null && File.Exists(csProjFile)) {
             applicatorOptions.ProjectBasePath = new FileInfo(csProjFile).Directory?.FullName;
             return applicatorOptions.ProjectBasePath != null;
         }
 
-        applicatorOptions.ProjectBasePath = args.FirstOrDefault(o =>
-            o?.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase) == false
-            && Directory.Exists(o));
+        applicatorOptions.ProjectBasePath = args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".csproj") == false
+                                                                     && Directory.Exists(o));
         if (applicatorOptions == null) return false;
 
         if (!Directory.Exists(applicatorOptions.ProjectBasePath)) return false;

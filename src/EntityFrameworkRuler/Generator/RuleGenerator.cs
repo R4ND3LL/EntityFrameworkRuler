@@ -154,7 +154,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
         if (edmx?.Entities.IsNullOrEmpty() != false) return new();
 
         var root = new PrimitiveNamingRules();
-        var includeAll = true;
+        var includeAll = !Options.IncludeUnknowns || !Options.CompactRules;
         foreach (var grp in edmx.Entities.GroupBy(o => o.DbSchema)) {
             if (grp.Key.IsNullOrWhiteSpace()) continue;
 
@@ -162,19 +162,21 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             root.Schemas.Add(schemaRule);
             schemaRule.SchemaName = grp.Key;
             schemaRule.UseSchemaName = false; // will append schema name to entity name
-
+            schemaRule.IncludeUnknownTables = Options.IncludeUnknowns;
+            schemaRule.IncludeUnknownViews = Options.IncludeUnknowns;
             foreach (var entity in grp.OrderBy(o => o.Name)) {
                 // if entity name is different than db, it has to go into output
-                var renamed = false;
+                var altered = false;
                 // Get the expected EF entity identifier based on options.. just like EF would:
                 var expectedClassName = NamingService.GetExpectedEntityTypeName(entity);
                 var tbl = new TableRule {
                     Name = entity.StorageName,
                     EntityName = entity.StorageName == expectedClassName ? null : expectedClassName,
-                    NewName = entity.Name.CoalesceWhiteSpace(expectedClassName, entity.StorageName)
+                    NewName = entity.Name.CoalesceWhiteSpace(expectedClassName, entity.StorageName),
+                    IncludeUnknownColumns = Options.IncludeUnknowns
                 };
 
-                if (tbl.Name != tbl.NewName) renamed = true;
+                if (tbl.Name != tbl.NewName) altered = true;
 
                 Debug.Assert(tbl.EntityName?.IsValidSymbolName() != false);
                 Debug.Assert(tbl.NewName.IsValidSymbolName());
@@ -194,10 +196,10 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                     });
                     Debug.Assert(tbl.Columns[^1].PropertyName == null || tbl.Columns[^1].PropertyName.IsValidSymbolName());
                     Debug.Assert(tbl.Columns[^1].NewName == null || tbl.Columns[^1].NewName.IsValidSymbolName());
-                    renamed = true;
+                    altered = true;
                 }
 
-                if (renamed || includeAll) schemaRule.Tables.Add(tbl);
+                if (altered || includeAll) schemaRule.Tables.Add(tbl);
             }
         }
 

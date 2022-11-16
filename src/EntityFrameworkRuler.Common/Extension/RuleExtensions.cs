@@ -116,14 +116,12 @@ public static class RuleExtensions {
         IEnumerable<ClassReference> tables = rules.Classes;
         // use optional schema filter
         if (schema.HasNonWhiteSpace())
-            tables = tables.Where(o => o.DbSchema.IsNullOrEmpty() ||
-                                       string.Equals(o.DbSchema, schema, StringComparison.OrdinalIgnoreCase));
+            tables = tables.Where(o => o.DbSchema.IsNullOrEmpty() || o.DbSchema.EqualsIgnoreCase(schema));
 
         // use optional table filter
         // ReSharper disable once InvertIf
         if (table.HasNonWhiteSpace()) {
-            tables = tables.Where(o => o.DbName.IsNullOrEmpty() ||
-                                       string.Equals(o.DbName, table, StringComparison.OrdinalIgnoreCase));
+            tables = tables.Where(o => o.DbName.IsNullOrEmpty() || o.DbName.EqualsIgnoreCase(table));
 
             // this should be enough IF the rule had the DBName defined.
             // query now because this is more reliable than using the expected entity name.

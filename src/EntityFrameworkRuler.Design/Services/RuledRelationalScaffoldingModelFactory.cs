@@ -113,28 +113,28 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         var excludedColumns = new List<DatabaseColumn>();
 
-        if (!includeTable) // remove ALL columns
-            foreach (var columnToRemove in table.Columns) {
-                excludedColumns.Add(columnToRemove);
-                table.Columns.Remove(columnToRemove);
-            }
-
-        else if (tableRule?.Columns?.Count > 0) // remove any NotMapped columns
+        if (!includeTable) {
+            // remove ALL columns
+            foreach (var columnToRemove in table.Columns) excludedColumns.Add(columnToRemove);
+            excludedColumns.ForEach(o => table.Columns.Remove(o));
+        } else if (tableRule?.Columns?.Count > 0) // remove any NotMapped columns
             foreach (var column in tableRule.Columns.Where(o => o.NotMapped)) {
-                var columnToRemove = table.Columns.FirstOrDefault(c => c.Name.Equals(column.Name, StringComparison.OrdinalIgnoreCase));
+                var columnToRemove = table.Columns.FirstOrDefault(c => c.Name.EqualsIgnoreCase(column.Name));
                 if (columnToRemove == null) continue;
                 excludedColumns.Add(columnToRemove);
                 table.Columns.Remove(columnToRemove);
             }
 
-        if (includeTable && tableRule?.Columns?.Count > 0 && !tableRule.IncludeUnknownColumns) // remove any unknown columns
-            foreach (var columnToRemove in table.Columns) {
-                var columnRule =
-                    tableRule.Columns.FirstOrDefault(c => c.Name.Equals(columnToRemove.Name, StringComparison.OrdinalIgnoreCase));
-                if (columnRule?.Mapped == true) continue;
+        if (includeTable && tableRule?.Columns?.Count > 0 && !tableRule.IncludeUnknownColumns) {
+            // remove any unknown columns
+            foreach (var columnToRemove in table.Columns
+                         .Where(o => tableRule.Columns
+                             .FirstOrDefault(c => c.Name.EqualsIgnoreCase(o.Name))?.Mapped != true)
+                         .ToList()) {
                 excludedColumns.Add(columnToRemove);
                 table.Columns.Remove(columnToRemove);
             }
+        }
 
         if (excludedColumns.Count > 0) {
             var indexesToBeRemoved = new List<DatabaseIndex>();

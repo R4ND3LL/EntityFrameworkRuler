@@ -44,7 +44,7 @@ public static class GeneratorArgHelper {
         }
 
         generatorOptions.EdmxFilePath =
-            args.FirstOrDefault(o => o?.EndsWith(".edmx", StringComparison.OrdinalIgnoreCase) == true);
+            args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".edmx") == true);
         if (generatorOptions.EdmxFilePath == null)
             // inspect arg paths for edmx
             foreach (var arg in args) {
@@ -62,7 +62,7 @@ public static class GeneratorArgHelper {
         if (generatorOptions.EdmxFilePath.IsNullOrEmpty() || !File.Exists(generatorOptions.EdmxFilePath)) return false;
 
         generatorOptions.ProjectBasePath =
-            args.FirstOrDefault(o => o?.EndsWith(".edmx", StringComparison.OrdinalIgnoreCase) == false);
+            args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".edmx") == false);
         if (generatorOptions.ProjectBasePath.IsNullOrWhiteSpace() || generatorOptions.ProjectBasePath == ".")
             generatorOptions.ProjectBasePath = Directory.GetCurrentDirectory();
 

@@ -215,12 +215,12 @@ public class RulerNamingService : IRulerNamingService {
     /// <summary> Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService </summary>
     private static string StripId(string commonPrefix) {
         if (commonPrefix.Length < 3
-            || !commonPrefix.EndsWith("id", StringComparison.OrdinalIgnoreCase))
+            || !commonPrefix.EndsWithIgnoreCase("id"))
             return commonPrefix;
 
         var ignoredCharacterCount = 2;
         if (commonPrefix.Length > 4
-            && commonPrefix.EndsWith("guid", StringComparison.OrdinalIgnoreCase))
+            && commonPrefix.EndsWithIgnoreCase("guid"))
             ignoredCharacterCount = 4;
 
         int i;

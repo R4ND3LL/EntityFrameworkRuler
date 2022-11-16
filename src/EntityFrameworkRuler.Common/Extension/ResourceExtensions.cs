@@ -15,9 +15,7 @@ internal static class ResourceExtensions {
 
         var names = assembly.GetManifestResourceNames();
         foreach (var name in names) {
-            if (name.StartsWith(fullResourcePath, StringComparison.OrdinalIgnoreCase)) {
-                yield return GetResourceText(assembly, name);
-            }
+            if (name.StartsWithIgnoreCase(fullResourcePath)) yield return GetResourceText(assembly, name);
         }
     }
 

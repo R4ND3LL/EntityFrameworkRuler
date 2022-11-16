@@ -6,6 +6,20 @@ using System.Text;
 namespace EntityFrameworkRuler.Extension;
 
 internal static class StringExtensions {
+    /// <summary> Return true if strings are equal. </summary>
+    [DebuggerStepThrough]
+    public static bool EqualsIgnoreCase(this string str, string str2) => string.Equals(str, str2, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary> Return true if string starts with the given string. </summary>
+    [DebuggerStepThrough]
+    public static bool StartsWithIgnoreCase(this string str, string str2) =>
+        str?.StartsWith(str2, StringComparison.OrdinalIgnoreCase) == true;
+
+    /// <summary> Return true if string starts with the given string. </summary>
+    [DebuggerStepThrough]
+    public static bool EndsWithIgnoreCase(this string str, string str2) =>
+        str?.EndsWith(str2, StringComparison.OrdinalIgnoreCase) == true;
+
     /// <summary> Return null if the given value is empty.  Return the original value otherwise. </summary>
     [DebuggerStepThrough]
     public static string NullIfEmpty(this string str) { return string.IsNullOrEmpty(str) ? null : str; }
