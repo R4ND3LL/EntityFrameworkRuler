@@ -1,13 +1,38 @@
-﻿using EntityFrameworkRuler.Design.Services;
+﻿using System.Diagnostics.CodeAnalysis;
+using EntityFrameworkRuler.Design.Services;
+using Microsoft.EntityFrameworkCore.Design.Internal;
 
 // ReSharper disable MemberCanBeInternal
 
 namespace EntityFrameworkRuler.Design.Extensions;
 
 /// <summary> Rule extensions </summary>
+[SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public static class RuleExtensions {
+    private static readonly Dictionary<string, Type> typeCache = new();
+
     /// <summary> Use the current scaffolding context to load the given type </summary>
-    public static Type TryResolveType(this IDesignTimeRuleLoader designTimeRuleLoader, string clrTypeName, Type underlyingType) {
+    public static Type TryResolveType(this IDesignTimeRuleLoader designTimeRuleLoader, string clrTypeName, Type underlyingType,
+        IOperationReporter reporter = null) {
+        return typeCache.GetOrAddNew(clrTypeName, Factory);
+
+        Type Factory(string arg) {
+            try {
+                var clrType = designTimeRuleLoader?.TryResolveTypeInternal(clrTypeName, underlyingType);
+                if (clrType != null) return clrType;
+
+                reporter?.WriteWarning($"Type not found: {clrTypeName}");
+                return null;
+            } catch (Exception ex) {
+                reporter?.WriteWarning($"Error loading type '{clrTypeName}': {ex.Message}");
+                return null;
+            }
+        }
+    }
+
+
+    /// <summary> Use the current scaffolding context to load the given type </summary>
+    private static Type TryResolveTypeInternal(this IDesignTimeRuleLoader designTimeRuleLoader, string clrTypeName, Type underlyingType) {
         var clrTypeNamespaceAndName = clrTypeName.SplitNamespaceAndName();
         var candidateNames = new List<string> { clrTypeName };
 

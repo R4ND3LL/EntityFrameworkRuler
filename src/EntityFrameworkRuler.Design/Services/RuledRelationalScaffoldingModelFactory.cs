@@ -71,26 +71,12 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (!TryResolveRuleFor(column, out _, out var tableRule, out var columnRule)) return typeScaffoldingInfo;
         if (columnRule?.NewType.HasNonWhiteSpace() != true) return typeScaffoldingInfo;
 
-        try {
-            var clrTypeName = columnRule.NewType;
-            var clrType = designTimeRuleLoader?.TryResolveType(clrTypeName, typeScaffoldingInfo?.ClrType);
-
-            if (clrType == null) {
-                reporter?.WriteWarning($"Type not found: {columnRule.NewType}");
-                return typeScaffoldingInfo;
-            }
-
-            // Regenerate the TypeScaffoldingInfo based on our new CLR type.
-            typeScaffoldingInfo = typeScaffoldingInfo.WithType(clrType);
-            WriteVerbose($"Column rule applied: {tableRule.Name}.{columnRule.PropertyName} type set to {columnRule.NewType}");
-            return typeScaffoldingInfo;
-        } catch (Exception ex) {
-            reporter?.WriteWarning($"Error loading type '{columnRule.NewType}' reference: {ex.Message}");
-        }
-
-        return typeScaffoldingInfo;
+        var clrType = designTimeRuleLoader?.TryResolveType(columnRule.NewType, typeScaffoldingInfo?.ClrType, reporter);
+        if (clrType == null) return typeScaffoldingInfo;
+        WriteVerbose($"Column rule applied: {tableRule.Name}.{columnRule.PropertyName} type set to {columnRule.NewType}");
+        // Regenerate the TypeScaffoldingInfo based on our new CLR type.
+        return typeScaffoldingInfo.WithType(clrType);
     }
-
 
     /// <summary> Get the type changing rule for this column </summary>
     protected virtual bool TryResolveRuleFor(DatabaseColumn column, out SchemaRule schemaRule, out TableRule tableRule,

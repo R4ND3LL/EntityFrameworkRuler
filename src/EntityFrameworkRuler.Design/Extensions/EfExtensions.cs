@@ -364,6 +364,7 @@ internal static class EfExtensions {
         return default;
     }
 
+    /// <summary> Regenerate the TypeScaffoldingInfo based on our new CLR type. </summary>
     public static TypeScaffoldingInfo WithType(this TypeScaffoldingInfo typeScaffoldingInfo, Type clrType) {
         if (clrType == null) throw new ArgumentNullException(nameof(clrType));
         return new(

@@ -163,7 +163,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             schemaRule.SchemaName = grp.Key;
             schemaRule.UseSchemaName = false; // will append schema name to entity name
 
-            foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
+            foreach (var entity in grp.OrderBy(o => o.Name)) {
                 // if entity name is different than db, it has to go into output
                 var renamed = false;
                 // Get the expected EF entity identifier based on options.. just like EF would:
