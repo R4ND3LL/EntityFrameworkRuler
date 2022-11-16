@@ -366,3 +366,4 @@ MigrationBackup/
 /src/Tests/NorthwindTestProject/Models/Sales_Totals_by_Amount.cs
 /src/Tests/NorthwindTestProject/Models/Summary_of_Sales_by_Quarter.cs
 /src/Tests/NorthwindTestProject/Models/Summary_of_Sales_by_Year.cs
+/src/Tests/NorthwindTestProject/CodeTemplates/EFCore/*.dll

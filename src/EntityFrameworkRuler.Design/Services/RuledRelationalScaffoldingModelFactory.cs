@@ -35,6 +35,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected readonly HashSet<string> OmittedTables = new();
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected readonly HashSet<string> OmittedSchemas = new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -216,6 +217,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var fksToBeRemoved = new HashSet<DatabaseForeignKey>();
             foreach (var foreignKey in foreignKeys)
                 if (OmittedTables.Contains(foreignKey.PrincipalTable.GetFullName()))
+                    fksToBeRemoved.Add(foreignKey);
+                else if (OmittedSchemas.Contains(foreignKey.PrincipalTable.Schema))
                     fksToBeRemoved.Add(foreignKey);
 
             foreignKeys = foreignKeys.Where(o => !fksToBeRemoved.Contains(o)).ToList();
