@@ -20,10 +20,15 @@
             <PackagePath></PackagePath>
             <Link>crown128.png</Link>
         </None>
+        <EmbeddedResource Include="..\Tests\NorthwindTestProject\CodeTemplates\EFCore\EntityTypeConfiguration.t4">
+          <Link>Resources\EntityTypeConfiguration.t4</Link>
+        </EmbeddedResource>
         <None Include="build\**\*">
             <Pack>True</Pack>
             <PackagePath>build</PackagePath>
         </None>
+        <None Include="..\..\docs\Design.md" Pack="true" PackagePath="\" />
+        
     </ItemGroup>
 
     <ItemGroup>
@@ -63,8 +68,5 @@
 
     <ItemGroup>
         <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj" />
-    </ItemGroup>
-    <ItemGroup>
-        <None Include="..\..\docs\Design.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>

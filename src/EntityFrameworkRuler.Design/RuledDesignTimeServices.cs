@@ -37,7 +37,7 @@ namespace EntityFrameworkRuler.Design {
                 .AddSingleton<IReverseEngineerScaffolder, RuledReverseEngineerScaffolder>()
                 //.AddSingleton<ICandidateNamingService, CandidateNamingService>()
                 .AddSingleton<IDesignTimeRuleLoader, DesignTimeRuleLoader>()
-                .TryAddSingletonEnumerable<IModelCodeGenerator, RuledTemplatedModelGenerator>()
+                //.TryAddSingletonEnumerable<IModelCodeGenerator, RuledTemplatedModelGenerator>()
                 .AddRuleLoader();
         }
     }

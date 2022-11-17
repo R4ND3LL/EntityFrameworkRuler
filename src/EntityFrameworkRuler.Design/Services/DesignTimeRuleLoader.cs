@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Text;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Loader;
@@ -91,6 +92,13 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
         var dir = new DirectoryInfo(projectDir!);
         if (!dir.Exists) return this;
+        InitializeTargetAssemblies(options, projectDir);
+        InitializeConfigurationSplitting(projectDir);
+        return this;
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual void InitializeTargetAssemblies(ModelCodeGenerationOptions options, string projectDir) {
         try {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies().Select(o => new TargetAssembly(o)).ToArray();
 
@@ -102,33 +110,76 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             // if assembly name is available, filter by it. otherwise, filter by the folder:
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (assemblyName.IsNullOrWhiteSpace())
-                targetAssembliesQuery = targetAssembliesQuery.Where(o => o.Assembly.Location.StartsWith(SolutionPath ?? projectDir));
+                targetAssembliesQuery =
+                    targetAssembliesQuery.Where(o => o.Assembly.Location.StartsWith(SolutionPath ?? projectDir));
             else
-                targetAssembliesQuery = targetAssembliesQuery.Where(o => o.AssemblyName.Name.EqualsIgnoreCase(assemblyName));
+                targetAssembliesQuery =
+                    targetAssembliesQuery.Where(o => o.AssemblyName.Name.EqualsIgnoreCase(assemblyName));
 
             targetAssemblies = targetAssembliesQuery.ToList();
-            if (targetAssemblies.Count > 0) {
+            if (targetAssemblies.Count > 0)
                 reporter?.WriteInformation($"Rule loader resolved target assembly: {targetAssemblies[0].Assembly.GetName().Name}");
-            }
 
-            if (targetAssemblies.Count is > 0 and <= 2) {
-                // we have a small number of targets.  add the references of our targets to expand the list. better for type resolution later
-                foreach (var targetAssembly in targetAssemblies.ToArray()) {
-                    var ans = targetAssembly.Assembly.GetReferencedAssemblies();
-                    foreach (var an in ans) {
-                        // the assembly is lazy loaded later on if it is not already in memory
-                        var loaded = assemblies.FirstOrDefault(o => o.AssemblyName.FullName == an.FullName) ??
-                                     assemblies.FirstOrDefault(o => o.AssemblyName.Name == an.Name);
-                        targetAssemblies.Add(loaded ?? new(an));
-                    }
+            if (targetAssemblies.Count is <= 0 or > 2) return;
+            // we have a small number of targets.  add the references of our targets to expand the list. better for type resolution later
+            foreach (var targetAssembly in targetAssemblies.ToArray()) {
+                var ans = targetAssembly.Assembly.GetReferencedAssemblies();
+                foreach (var an in ans) {
+                    // the assembly is lazy loaded later on if it is not already in memory
+                    var loaded = assemblies.FirstOrDefault(o => o.AssemblyName.FullName == an.FullName) ??
+                                 assemblies.FirstOrDefault(o => o.AssemblyName.Name == an.Name);
+                    targetAssemblies.Add(loaded ?? new(an));
                 }
             }
         } catch (Exception ex) {
             Console.WriteLine($"Assembly inspection failed: {ex.Message}");
         }
-
-        return this;
     }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public virtual void InitializeConfigurationSplitting(string projectDir) {
+        if (projectDir.IsNullOrWhiteSpace()) return;
+        if (!(EfVersion?.Major >= 7)) return;
+        // EF v7 supports entity config templating.
+        var rules = GetPrimitiveNamingRules();
+        var splitConfigs = rules?.SplitEntityTypeConfigurations ?? false;
+
+        var configurationTemplate = RuledTemplatedModelGenerator.GetEntityTypeConfigurationFile(projectDir);
+        if (configurationTemplate?.Directory == null) return;
+
+        if (splitConfigs) {
+            if (configurationTemplate.Exists) return;
+            // we need to create the t4
+            var assembly = GetType().Assembly;
+            // var names = assembly.GetManifestResourceNames();
+            // var entityTypeConfigurationName = names.FirstOrDefault(o => o.Contains("EntityTypeConfiguration"));
+            // if (entityTypeConfigurationName == null) return;
+            try {
+                var text = assembly.GetResourceText("EntityFrameworkRuler.Design.Resources.EntityTypeConfiguration.t4");
+                if (text.IsNullOrWhiteSpace()) return;
+                if (!configurationTemplate.Directory.FullName.EnsurePathExists()) return; // could not create directory
+                File.WriteAllText(configurationTemplate.FullName, text, Encoding.UTF8);
+            } catch (Exception ex) {
+                reporter?.WriteError($"Error generating EntityTypeConfiguration.t4 file: {ex.Message}");
+            }
+        } else {
+            if (!configurationTemplate.Exists) return;
+            // we need to remove the t4
+            try {
+                var bakFile = configurationTemplate.FullName + ".bak";
+                if (File.Exists(bakFile)) {
+                    // just delete the t4
+                    File.Delete(configurationTemplate.FullName);
+                } else {
+                    // rename the t4 to bak
+                    File.Move(configurationTemplate.FullName, bakFile);
+                }
+            } catch (Exception ex) {
+                reporter?.WriteError($"Error removing EntityTypeConfiguration.t4 file: {ex.Message}");
+            }
+        }
+    }
+
 
     /// <inheritdoc />
     public IDesignTimeRuleLoader SetReverseEngineerOptions(ModelReverseEngineerOptions options) {

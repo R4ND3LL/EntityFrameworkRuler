@@ -1,5 +1,7 @@
 ﻿{
    "PreserveCasingUsingRegex": false,
+   "IncludeUnknownSchemas": false,
+   "SplitEntityTypeConfigurations": true,
    "Schemas": [
       {
          "SchemaName": "dbo",

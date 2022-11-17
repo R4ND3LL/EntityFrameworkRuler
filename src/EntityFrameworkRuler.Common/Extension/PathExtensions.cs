@@ -11,6 +11,20 @@ namespace EntityFrameworkRuler.Extension;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class PathExtensions {
+    /// <summary> Ensure the path exists by creating the directory if missing. </summary>
+    public static bool EnsurePathExists(this string path) {
+        try {
+            var filename = Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(filename) && Path.HasExtension(filename)) path = path[..(path.Length - filename.Length - 1)];
+
+            if (Directory.Exists(path)) return true;
+            var di = Directory.CreateDirectory(path);
+            return di.Exists;
+        } catch {
+            return false;
+        }
+    }
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static Task<FileInfo[]> FindEdmxFilesNearProjectAsync(this string projectBasePath) {
         return FindEdmxFilesUnderPathAsync(FindSolutionParentPath(projectBasePath));
