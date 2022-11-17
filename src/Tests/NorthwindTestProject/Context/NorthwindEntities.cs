@@ -1,14 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using NorthwindTestProject.Models;
 
-namespace NorthwindTestProject.Models;
+namespace NorthwindTestProject.Context;
 
-public partial class NorthwindDbContext : DbContext {
-    public NorthwindDbContext() {
+public partial class NorthwindEntities : DbContext
+{
+    public NorthwindEntities()
+    {
     }
 
-    public NorthwindDbContext(DbContextOptions<NorthwindDbContext> options)
-        : base(options) {
+    public NorthwindEntities(DbContextOptions<NorthwindEntities> options)
+        : base(options)
+    {
     }
 
     public virtual DbSet<AlphabeticalListOfProduct> AlphabeticalListOfProducts { get; set; }
@@ -47,6 +52,8 @@ public partial class NorthwindDbContext : DbContext {
 
     public virtual DbSet<ProductsByCategory> ProductsByCategories { get; set; }
 
+    public virtual DbSet<QuarterlyOrder> QuarterlyOrders { get; set; }
+
     public virtual DbSet<Region> Regions { get; set; }
 
     public virtual DbSet<SalesByCategory> SalesByCategories { get; set; }
@@ -64,12 +71,13 @@ public partial class NorthwindDbContext : DbContext {
     public virtual DbSet<Territory> Territories { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https: //go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer(
-            "data source=localhost;initial catalog=Northwind;persist security info=True;Integrated Security=SSPI;TrustServerCertificate=True;");
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("data source=localhost;initial catalog=Northwind;persist security info=True;Integrated Security=SSPI;TrustServerCertificate=True;");
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder) {
-        modelBuilder.Entity<AlphabeticalListOfProduct>(entity => {
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AlphabeticalListOfProduct>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Alphabetical list of products");
@@ -87,7 +95,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.UnitPrice).HasColumnType("money");
         });
 
-        modelBuilder.Entity<Category>(entity => {
+        modelBuilder.Entity<Category>(entity =>
+        {
             entity.HasIndex(e => e.CategoryName, "CategoryName");
 
             entity.Property(e => e.CategoryId).HasColumnName("CategoryID");
@@ -98,7 +107,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.Picture).HasColumnType("image");
         });
 
-        modelBuilder.Entity<CategorySalesFor1997>(entity => {
+        modelBuilder.Entity<CategorySalesFor1997>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Category Sales for 1997");
@@ -109,7 +119,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.CategorySales).HasColumnType("money");
         });
 
-        modelBuilder.Entity<CurrentProductList>(entity => {
+        modelBuilder.Entity<CurrentProductList>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Current Product List");
@@ -122,7 +133,8 @@ public partial class NorthwindDbContext : DbContext {
                 .HasMaxLength(40);
         });
 
-        modelBuilder.Entity<Customer>(entity => {
+        modelBuilder.Entity<Customer>(entity =>
+        {
             entity.HasIndex(e => e.City, "City");
 
             entity.HasIndex(e => e.CompanyName, "CompanyName");
@@ -159,13 +171,15 @@ public partial class NorthwindDbContext : DbContext {
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
                         .HasConstraintName("FK_CustomerCustomerDemo_Customers"),
-                    j => {
+                    j =>
+                    {
                         j.HasKey("CustomerId", "CustomerTypeId").IsClustered(false);
                         j.ToTable("CustomerCustomerDemo");
                     });
         });
 
-        modelBuilder.Entity<CustomerAndSuppliersByCity>(entity => {
+        modelBuilder.Entity<CustomerAndSuppliersByCity>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Customer and Suppliers by City");
@@ -181,7 +195,8 @@ public partial class NorthwindDbContext : DbContext {
                 .IsUnicode(false);
         });
 
-        modelBuilder.Entity<CustomerDemographic>(entity => {
+        modelBuilder.Entity<CustomerDemographic>(entity =>
+        {
             entity.HasKey(e => e.CustomerTypeId).IsClustered(false);
 
             entity.Property(e => e.CustomerTypeId)
@@ -191,7 +206,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.CustomerDesc).HasColumnType("ntext");
         });
 
-        modelBuilder.Entity<Employee>(entity => {
+        modelBuilder.Entity<Employee>(entity =>
+        {
             entity.HasIndex(e => e.LastName, "LastName");
 
             entity.HasIndex(e => e.PostalCode, "PostalCode");
@@ -233,12 +249,14 @@ public partial class NorthwindDbContext : DbContext {
                         .HasForeignKey("EmployeeId")
                         .OnDelete(DeleteBehavior.ClientSetNull)
                         .HasConstraintName("FK_EmployeeTerritories_Employees"),
-                    j => {
+                    j =>
+                    {
                         j.HasKey("EmployeeId", "TerritoryId").IsClustered(false);
                     });
         });
 
-        modelBuilder.Entity<Invoice>(entity => {
+        modelBuilder.Entity<Invoice>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Invoices");
@@ -280,7 +298,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.UnitPrice).HasColumnType("money");
         });
 
-        modelBuilder.Entity<Order>(entity => {
+        modelBuilder.Entity<Order>(entity =>
+        {
             entity.HasIndex(e => e.CustomerId, "CustomerID");
 
             entity.HasIndex(e => e.CustomerId, "CustomersOrders");
@@ -329,7 +348,8 @@ public partial class NorthwindDbContext : DbContext {
                 .HasConstraintName("FK_Orders_Shippers");
         });
 
-        modelBuilder.Entity<OrderDetail>(entity => {
+        modelBuilder.Entity<OrderDetail>(entity =>
+        {
             entity.HasKey(e => new { e.OrderId, e.ProductId }).HasName("PK_Order_Details");
 
             entity.ToTable("Order Details");
@@ -358,7 +378,8 @@ public partial class NorthwindDbContext : DbContext {
                 .HasConstraintName("FK_Order_Details_Products");
         });
 
-        modelBuilder.Entity<OrderDetailsExtended>(entity => {
+        modelBuilder.Entity<OrderDetailsExtended>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Order Details Extended");
@@ -372,7 +393,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.UnitPrice).HasColumnType("money");
         });
 
-        modelBuilder.Entity<OrderSubtotal>(entity => {
+        modelBuilder.Entity<OrderSubtotal>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Order Subtotals");
@@ -381,7 +403,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.Subtotal).HasColumnType("money");
         });
 
-        modelBuilder.Entity<OrdersQry>(entity => {
+        modelBuilder.Entity<OrdersQry>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Orders Qry");
@@ -412,7 +435,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.ShippedDate).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<Product>(entity => {
+        modelBuilder.Entity<Product>(entity =>
+        {
             entity.HasIndex(e => e.CategoryId, "CategoriesProducts");
 
             entity.HasIndex(e => e.CategoryId, "CategoryID");
@@ -446,7 +470,8 @@ public partial class NorthwindDbContext : DbContext {
                 .HasConstraintName("FK_Products_Suppliers");
         });
 
-        modelBuilder.Entity<ProductSalesFor1997>(entity => {
+        modelBuilder.Entity<ProductSalesFor1997>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Product Sales for 1997");
@@ -460,7 +485,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.ProductSales).HasColumnType("money");
         });
 
-        modelBuilder.Entity<ProductsAboveAveragePrice>(entity => {
+        modelBuilder.Entity<ProductsAboveAveragePrice>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Products Above Average Price");
@@ -471,7 +497,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.UnitPrice).HasColumnType("money");
         });
 
-        modelBuilder.Entity<ProductsByCategory>(entity => {
+        modelBuilder.Entity<ProductsByCategory>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Products by Category");
@@ -485,7 +512,23 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.QuantityPerUnit).HasMaxLength(20);
         });
 
-        modelBuilder.Entity<Region>(entity => {
+        modelBuilder.Entity<QuarterlyOrder>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("Quarterly Orders");
+
+            entity.Property(e => e.City).HasMaxLength(15);
+            entity.Property(e => e.CompanyName).HasMaxLength(40);
+            entity.Property(e => e.Country).HasMaxLength(15);
+            entity.Property(e => e.CustomerId)
+                .HasMaxLength(5)
+                .IsFixedLength()
+                .HasColumnName("CustomerID");
+        });
+
+        modelBuilder.Entity<Region>(entity =>
+        {
             entity.HasKey(e => e.RegionId).IsClustered(false);
 
             entity.ToTable("Region");
@@ -499,7 +542,8 @@ public partial class NorthwindDbContext : DbContext {
                 .IsFixedLength();
         });
 
-        modelBuilder.Entity<SalesByCategory>(entity => {
+        modelBuilder.Entity<SalesByCategory>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Sales by Category");
@@ -514,7 +558,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.ProductSales).HasColumnType("money");
         });
 
-        modelBuilder.Entity<SalesTotalsByAmount>(entity => {
+        modelBuilder.Entity<SalesTotalsByAmount>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Sales Totals by Amount");
@@ -527,7 +572,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.ShippedDate).HasColumnType("datetime");
         });
 
-        modelBuilder.Entity<Shipper>(entity => {
+        modelBuilder.Entity<Shipper>(entity =>
+        {
             entity.Property(e => e.ShipperId).HasColumnName("ShipperID");
             entity.Property(e => e.CompanyName)
                 .IsRequired()
@@ -535,7 +581,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.Phone).HasMaxLength(24);
         });
 
-        modelBuilder.Entity<SummaryOfSalesByQuarter>(entity => {
+        modelBuilder.Entity<SummaryOfSalesByQuarter>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Summary of Sales by Quarter");
@@ -545,7 +592,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.Subtotal).HasColumnType("money");
         });
 
-        modelBuilder.Entity<SummaryOfSalesByYear>(entity => {
+        modelBuilder.Entity<SummaryOfSalesByYear>(entity =>
+        {
             entity
                 .HasNoKey()
                 .ToView("Summary of Sales by Year");
@@ -555,7 +603,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.Subtotal).HasColumnType("money");
         });
 
-        modelBuilder.Entity<Supplier>(entity => {
+        modelBuilder.Entity<Supplier>(entity =>
+        {
             entity.HasIndex(e => e.CompanyName, "CompanyName");
 
             entity.HasIndex(e => e.PostalCode, "PostalCode");
@@ -576,7 +625,8 @@ public partial class NorthwindDbContext : DbContext {
             entity.Property(e => e.Region).HasMaxLength(15);
         });
 
-        modelBuilder.Entity<Territory>(entity => {
+        modelBuilder.Entity<Territory>(entity =>
+        {
             entity.HasKey(e => e.TerritoryId).IsClustered(false);
 
             entity.Property(e => e.TerritoryId)

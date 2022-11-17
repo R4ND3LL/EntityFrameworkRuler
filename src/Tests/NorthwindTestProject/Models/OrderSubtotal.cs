@@ -1,4 +1,7 @@
-﻿namespace NorthwindTestProject.Models;
+﻿using System;
+using System.Collections.Generic;
+
+namespace NorthwindTestProject.Models;
 
 public partial class OrderSubtotal
 {

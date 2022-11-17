@@ -4,8 +4,9 @@ using NorthwindTestProject.Models;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore.Design;
+using NorthwindTestProject.Context;
 
-[assembly: DesignTimeServicesReference("EntityFrameworkRuler.Design.RuledDesignTimeServices, EntityFrameworkRuler.Design")]
+//[assembly: DesignTimeServicesReference("EntityFrameworkRuler.Design.RuledDesignTimeServices, EntityFrameworkRuler.Design")]
 // ReSharper disable CollectionNeverUpdated.Local
 // ReSharper disable SuggestVarOrType_SimpleTypes
 // ReSharper disable PossibleNullReferenceException
@@ -17,8 +18,8 @@ internal class Program {
         /***************************************************************************************/
         /********* Do not run this project.  It is a target for rule application only. *********/
         /***************************************************************************************/
-
-        using var dbContext = new NorthwindDbContext(new DbContextOptions<NorthwindDbContext>());
+#if true
+        using var dbContext = new NorthwindEntities(new DbContextOptions<NorthwindEntities>());
 
         // ReSharper disable once SuggestVarOrType_SimpleTypes
         Order order = dbContext.Orders.FirstOrDefault();
@@ -34,7 +35,9 @@ internal class Program {
             var list = new List<Category>();
             list[0].Products.Clear();
         }
+#endif
 
         Console.WriteLine("This is a fake test project to illustrate rule application only!");
     }
 }
+

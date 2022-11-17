@@ -26,18 +26,24 @@
 
     <ItemGroup>
         <Compile Remove="Configurations\EntityConfigurations.cs" />
-        <None Include="Configurations\EntityConfigurations.cs" />
         <Compile Remove="Configurations\ProductConfiguration.cs" />
-        <None Include="Configurations\ProductConfiguration.cs" />
         <None Remove="CodeTemplates\EFCore\*.dll" />
         <Compile Remove="Data\EmployeeConfiguration.cs" />
         <Compile Remove="Data\Current_Product_ListConfiguration.cs" />
         <None Remove="CodeTemplates\EFCore\Microsoft.SqlServer.Server.dll" />
         <None Remove="CodeTemplates\EFCore\Microsoft.Win32.SystemEvents.dll" />
         <None Remove="CodeTemplates\EFCore\Mono.TextTemplating.dll" />
+        <Compile Update="Models\NorthwindEntities.cs">
+          <AutoGen>True</AutoGen>
+          <DesignTime>True</DesignTime>
+          <DependentUpon>NorthwindEntities.tt</DependentUpon>
+        </Compile>
+        <Compile Remove="Models\UnitsInStockEnum.cs" />
+        <Compile Remove="Models\QuantityEnum.cs" />
     </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />
+    <ItemGroup><!--        <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />-->
+    
+      <Folder Include="Models" />
     </ItemGroup>
 </Project>
