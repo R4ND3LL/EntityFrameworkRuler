@@ -42,7 +42,8 @@
         <Compile Remove="Models\QuantityEnum.cs" />
     </ItemGroup>
 
-    <ItemGroup><!--        <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />-->
+    <ItemGroup>
+        <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />
     
       <Folder Include="Models" />
     </ItemGroup>

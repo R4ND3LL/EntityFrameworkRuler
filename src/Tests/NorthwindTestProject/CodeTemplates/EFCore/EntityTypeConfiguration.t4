@@ -1,4 +1,4 @@
-<#@ template hostSpecific="true" #>
+<#@ template hostSpecific="true" debug="false" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Relational" #>
@@ -156,9 +156,12 @@ public partial class <#= EntityType.Name #>Configuration : IEntityTypeConfigurat
             {
                 WriteLine("");
             }
+            if (foreignKey.DependentToPrincipal?.Name != null && foreignKey.PrincipalToDependent?.Name != null)
+            {
 #>
         entity.HasOne(d => d.<#= foreignKey.DependentToPrincipal.Name #>).<#= foreignKey.IsUnique ? "WithOne" : "WithMany" #>(p => p.<#= foreignKey.PrincipalToDependent.Name #>)<#= code.Fragment(foreignKeyFluentApiCalls, indent: 3) #>;
 <#
+            }
             anyEntityTypeConfiguration = true;
         }
 
