@@ -334,6 +334,8 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
                     }
                 }
             }
+
+            state.Project = classState.Project;
         }
 
         if (classRenameCount == 0 && propRenameCount == 0 && typeMapCount == 0) {

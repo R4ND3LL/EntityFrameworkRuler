@@ -156,8 +156,7 @@ internal static class RoslynExtensions {
         return new() { Project = newDocument.Project, PropertySyntax = propSyntax };
     }
 
-    public static async Task<PropertyActionResult> ChangePropertyTypeAsync(this Project project,
-        INamedTypeSymbol classSymbol,
+    public static async Task<PropertyActionResult> ChangePropertyTypeAsync(this Project project, INamedTypeSymbol classSymbol,
         string propertyName, string newTypeName) {
         if (project == null) throw new ArgumentNullException(nameof(project));
         if (classSymbol == null) throw new ArgumentNullException(nameof(classSymbol));
