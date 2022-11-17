@@ -22,6 +22,8 @@ public sealed class EdmxParser : NotifyPropertyChanged {
         var schema = new Schema(edmx.ConceptualModels.Schema, edmx.StorageModels.Schema);
         Schemas.Add(schema);
 
+        State.ContextName = schema.ConceptualSchema?.EntityContainer?.Name?.Trim();
+
         // weave the model data together starting with enums, then on to the conceptual entities
         var enums = edmx.ConceptualModels.Schema.EnumTypes
             .Select(enumItem => new EnumType(enumItem, schema)).ToArray();

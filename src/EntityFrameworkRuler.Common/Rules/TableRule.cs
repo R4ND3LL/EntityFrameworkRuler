@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
-namespace EntityFrameworkRuler.Rules.PrimitiveNaming;
+namespace EntityFrameworkRuler.Rules;
 
 /// <inheritdoc />
 [DebuggerDisplay("Table {Name} to {NewName}")]
@@ -36,11 +36,23 @@ public sealed class TableRule : IClassRule {
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     internal bool Mapped => !NotMapped;
 
-    /// <summary> The property rules to apply to this entity. </summary>
+    /// <summary> The primitive property rules to apply to this entity. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     public List<ColumnRule> Columns { get; set; } = new();
 
+    /// <summary> The navigation property rules to apply to this entity. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 7)]
+    public List<NavigationRule> Navigations { get; set; } = new();
+
     string IClassRule.GetOldName() => EntityName.CoalesceWhiteSpace(Name);
     string IClassRule.GetNewName() => NewName.CoalesceWhiteSpace(EntityName);
-    IEnumerable<IPropertyRule> IClassRule.GetProperties() => Columns;
+
+    IEnumerable<IPropertyRule> IClassRule.GetProperties() {
+        if (!Columns.IsNullOrEmpty())
+            foreach (var rule in Columns)
+                yield return rule;
+        if (!Navigations.IsNullOrEmpty())
+            foreach (var rule in Navigations)
+                yield return rule;
+    }
 }

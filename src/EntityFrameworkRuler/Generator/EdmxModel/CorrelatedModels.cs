@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using EntityFrameworkRuler.Generator.Services;
-using EntityFrameworkRuler.Rules.NavigationNaming;
+using EntityFrameworkRuler.Rules;
 
 // ReSharper disable InvertIf
 // ReSharper disable MemberCanBeInternal

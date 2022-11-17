@@ -1,4 +1,5 @@
 ﻿{
+   "Name": "NorthwindEntities",
    "PreserveCasingUsingRegex": false,
    "IncludeUnknownSchemas": false,
    "SplitEntityTypeConfigurations": true,
@@ -55,7 +56,8 @@
                   {
                      "Name": "CategoryName"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Categories",
@@ -77,7 +79,8 @@
                   {
                      "Name": "Picture"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Category Sales for 1997",
@@ -91,7 +94,8 @@
                   {
                      "Name": "CategorySales"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Current Product List",
@@ -107,7 +111,8 @@
                   {
                      "Name": "ProductName"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Customers",
@@ -150,6 +155,18 @@
                   {
                      "Name": "Fax"
                   }
+               ],
+               "Navigations": [
+                  {
+                     "Name": [
+                        "Orders"
+                     ],
+                     "NewName": "OrdersCustom",
+                     "FkName": "FK_Orders_Customers",
+                     "ToEntity": "Order",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
+                  }
                ]
             },
             {
@@ -170,7 +187,8 @@
                   {
                      "Name": "Relationship"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "CustomerDemographics",
@@ -186,7 +204,8 @@
                   {
                      "Name": "CustomerDesc"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Employees",
@@ -250,6 +269,37 @@
                   },
                   {
                      "Name": "PhotoPath"
+                  }
+               ],
+               "Navigations": [
+                  {
+                     "Name": [
+                        "InverseReportsToNavigation"
+                     ],
+                     "NewName": "EmployeesCustom",
+                     "FkName": "FK_Employees_Employees",
+                     "ToEntity": "Employee",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
+                  },
+                  {
+                     "Name": [
+                        "ReportsToNavigation"
+                     ],
+                     "NewName": "EmployeeOneCustom",
+                     "FkName": "FK_Employees_Employees",
+                     "ToEntity": "Employee",
+                     "Multiplicity": "0..1"
+                  },
+                  {
+                     "Name": [
+                        "OrdersNavigation"
+                     ],
+                     "NewName": "Orders",
+                     "FkName": "FK_Orders_Employees",
+                     "ToEntity": "Order",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
                   }
                ]
             },
@@ -345,7 +395,8 @@
                   {
                      "Name": "Freight"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Orders",
@@ -403,6 +454,45 @@
                   {
                      "Name": "ShipCountry"
                   }
+               ],
+               "Navigations": [
+                  {
+                     "Name": [
+                        "CustomerNavigation"
+                     ],
+                     "NewName": "Customer",
+                     "FkName": "FK_Orders_Customers",
+                     "ToEntity": "Customer",
+                     "Multiplicity": "0..1"
+                  },
+                  {
+                     "Name": [
+                        "Employee"
+                     ],
+                     "NewName": "CustomEmployee",
+                     "FkName": "FK_Orders_Employees",
+                     "ToEntity": "Employee",
+                     "Multiplicity": "0..1"
+                  },
+                  {
+                     "Name": [
+                        "OrderDetails"
+                     ],
+                     "NewName": "OrderDetailsCustom",
+                     "FkName": "FK_Order_Details_Orders",
+                     "ToEntity": "Order_Detail",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
+                  },
+                  {
+                     "Name": [
+                        "ShipViaNavigation"
+                     ],
+                     "NewName": "CustomShipper",
+                     "FkName": "FK_Orders_Shippers",
+                     "ToEntity": "Shipper",
+                     "Multiplicity": "0..1"
+                  }
                ]
             },
             {
@@ -430,6 +520,26 @@
                   },
                   {
                      "Name": "Discount"
+                  }
+               ],
+               "Navigations": [
+                  {
+                     "Name": [
+                        "Order"
+                     ],
+                     "NewName": "OrderCustom",
+                     "FkName": "FK_Order_Details_Orders",
+                     "ToEntity": "Order",
+                     "Multiplicity": "1"
+                  },
+                  {
+                     "Name": [
+                        "Product"
+                     ],
+                     "NewName": "ProductCustom",
+                     "FkName": "FK_Order_Details_Products",
+                     "ToEntity": "Product",
+                     "Multiplicity": "1"
                   }
                ]
             },
@@ -466,7 +576,8 @@
                   {
                      "Name": "ExtendedPrice"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Order Subtotals",
@@ -482,7 +593,8 @@
                   {
                      "Name": "Subtotal"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Orders Qry",
@@ -556,7 +668,8 @@
                   {
                      "Name": "Country"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Products",
@@ -600,6 +713,36 @@
                   {
                      "Name": "Discontinued"
                   }
+               ],
+               "Navigations": [
+                  {
+                     "Name": [
+                        "Category"
+                     ],
+                     "NewName": "CategoryCustom",
+                     "FkName": "FK_Products_Categories",
+                     "ToEntity": "Category",
+                     "Multiplicity": "0..1"
+                  },
+                  {
+                     "Name": [
+                        "OrderDetails"
+                     ],
+                     "NewName": "Order_Details",
+                     "FkName": "FK_Order_Details_Products",
+                     "ToEntity": "Order_Detail",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
+                  },
+                  {
+                     "Name": [
+                        "SupplierNavigation"
+                     ],
+                     "NewName": "Supplier",
+                     "FkName": "FK_Products_Suppliers",
+                     "ToEntity": "Supplier",
+                     "Multiplicity": "0..1"
+                  }
                ]
             },
             {
@@ -617,7 +760,8 @@
                   {
                      "Name": "ProductSales"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Products Above Average Price",
@@ -631,7 +775,8 @@
                   {
                      "Name": "UnitPrice"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Products by Category",
@@ -657,7 +802,8 @@
                   {
                      "Name": "Discontinued"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Region",
@@ -671,6 +817,18 @@
                   },
                   {
                      "Name": "RegionDescription"
+                  }
+               ],
+               "Navigations": [
+                  {
+                     "Name": [
+                        "Territories"
+                     ],
+                     "NewName": "TerritoriesCustom",
+                     "FkName": "FK_Territories_Region",
+                     "ToEntity": "Territory",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
                   }
                ]
             },
@@ -694,7 +852,8 @@
                   {
                      "Name": "ProductSales"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Sales Totals by Amount",
@@ -718,7 +877,8 @@
                      "Name": "ShippedDate",
                      "NewName": "ShippedDateCustom"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Shippers",
@@ -736,6 +896,18 @@
                   },
                   {
                      "Name": "Phone"
+                  }
+               ],
+               "Navigations": [
+                  {
+                     "Name": [
+                        "Orders"
+                     ],
+                     "NewName": "OrdersCustom",
+                     "FkName": "FK_Orders_Shippers",
+                     "ToEntity": "Order",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
                   }
                ]
             },
@@ -756,7 +928,8 @@
                   {
                      "Name": "Subtotal"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Summary of Sales by Year",
@@ -775,7 +948,8 @@
                   {
                      "Name": "Subtotal"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Suppliers",
@@ -821,6 +995,18 @@
                   {
                      "Name": "HomePage"
                   }
+               ],
+               "Navigations": [
+                  {
+                     "Name": [
+                        "Products"
+                     ],
+                     "NewName": "ProductsCustom",
+                     "FkName": "FK_Products_Suppliers",
+                     "ToEntity": "Product",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
+                  }
                ]
             },
             {
@@ -854,7 +1040,8 @@
                      "PropertyName": "Definition",
                      "NewName": "definition"
                   }
-               ]
+               ],
+               "Navigations": [ ]
             },
             {
                "Name": "Territories",
@@ -874,6 +1061,17 @@
                      "Name": "RegionID",
                      "PropertyName": "RegionId",
                      "NewName": "RegionID"
+                  }
+               ],
+               "Navigations": [
+                  {
+                     "Name": [
+                        "Region"
+                     ],
+                     "NewName": "RegionCustom",
+                     "FkName": "FK_Territories_Region",
+                     "ToEntity": "RegionCustom",
+                     "Multiplicity": "1"
                   }
                ]
             }

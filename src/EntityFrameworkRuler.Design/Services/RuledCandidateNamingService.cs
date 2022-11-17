@@ -3,8 +3,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using EntityFrameworkRuler.Design.Extensions;
-using EntityFrameworkRuler.Rules.NavigationNaming;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
+using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -23,8 +22,8 @@ namespace EntityFrameworkRuler.Design.Services;
 public class RuledCandidateNamingService : CandidateNamingService {
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
     private readonly IOperationReporter reporter;
-    private PrimitiveNamingRules primitiveNamingRules;
-    private NavigationNamingRules navigationRules;
+    private DbContextRule dbContextRule;
+    //private NavigationNamingRules navigationRules;
     private readonly MethodInfo generateCandidateIdentifierMethod;
 
     /// <inheritdoc />
@@ -41,10 +40,10 @@ public class RuledCandidateNamingService : CandidateNamingService {
     /// <summary> Name that table </summary>
     public override string GenerateCandidateIdentifier(DatabaseTable table) {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
-        primitiveNamingRules ??= designTimeRuleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
+        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRule();
 
 
-        if (!primitiveNamingRules.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule))
+        if (!dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule))
             return base.GenerateCandidateIdentifier(table);
 
         if (tableRule?.NewName.HasNonWhiteSpace() == true) {
@@ -57,7 +56,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         string newTableName;
         if (!string.IsNullOrEmpty(schema.TableRegexPattern) && schema.TablePatternReplaceWith != null) {
-            if (primitiveNamingRules.PreserveCasingUsingRegex)
+            if (dbContextRule.PreserveCasingUsingRegex)
                 newTableName = RegexNameReplace(schema.TableRegexPattern, table.Name,
                     schema.TablePatternReplaceWith);
             else
@@ -81,9 +80,9 @@ public class RuledCandidateNamingService : CandidateNamingService {
     [SuppressMessage("ReSharper", "InvertIf")]
     public override string GenerateCandidateIdentifier(DatabaseColumn column) {
         if (column is null) throw new ArgumentNullException(nameof(column));
-        primitiveNamingRules ??= designTimeRuleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
+        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRule();
 
-        if (!primitiveNamingRules.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, out var schema, out var tableRule))
+        if (!dbContextRule.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, out var schema, out var tableRule))
             return base.GenerateCandidateIdentifier(column);
         if (!tableRule.TryResolveRuleFor(column?.Name, out var columnRule))
             return base.GenerateCandidateIdentifier(column);
@@ -96,7 +95,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
         if (!string.IsNullOrEmpty(schema.ColumnRegexPattern) && schema.ColumnPatternReplaceWith != null) {
             var candidateStringBuilder = new StringBuilder();
             string newColumnName;
-            if (primitiveNamingRules.PreserveCasingUsingRegex)
+            if (dbContextRule.PreserveCasingUsingRegex)
                 newColumnName = RegexNameReplace(schema.ColumnRegexPattern, column.Name,
                     schema.ColumnPatternReplaceWith);
             else
@@ -135,7 +134,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
         Func<string> defaultEfName) {
         if (foreignKey is null) throw new ArgumentNullException(nameof(foreignKey));
         if (defaultEfName == null) throw new ArgumentNullException(nameof(defaultEfName));
-        navigationRules ??= designTimeRuleLoader?.GetNavigationNamingRules() ?? new NavigationNamingRules();
+        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRule();
 
         var fkName = foreignKey.GetConstraintName();
         var entity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
@@ -157,10 +156,10 @@ public class RuledCandidateNamingService : CandidateNamingService {
             schemaName = null;
         }
 
-        var classRef = navigationRules.TryResolveClassRuleFor(entity.Name, schemaName, tableName);
-        if (classRef?.Properties.IsNullOrEmpty() != false) return defaultEfName();
+        var tableRule = dbContextRule.TryResolveRuleForEntity(entity.Name, schemaName, tableName);
+        if (tableRule?.Navigations.IsNullOrEmpty() != false) return defaultEfName();
 
-        var rename = classRef.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
+        var rename = tableRule.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
         if (rename?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
 
         reporter?.WriteVerbosely($"RULED: Entity {entity.Name} navigation {rename.NewName} defined");

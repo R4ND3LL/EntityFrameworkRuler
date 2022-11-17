@@ -1,8 +1,6 @@
 ﻿using System.Threading.Tasks;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
-using EntityFrameworkRuler.Rules.NavigationNaming;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
 
 // ReSharper disable MemberCanBeInternal
 
@@ -21,18 +19,9 @@ public interface IRuleApplicator : IRuleLoader {
     Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(IEnumerable<IRuleModelRoot> rules);
 
     /// <summary> Apply the given rules to the target project. </summary>
-    /// <param name="navigationNamingRules"> The rules to apply. </param>
+    /// <param name="dbContextRule"> The rules to apply. </param>
     /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <returns></returns>
-    Task<ApplyRulesResponse> ApplyRules(NavigationNamingRules navigationNamingRules, string contextFolder = null,
-        string modelsFolder = null);
-
-
-    /// <summary> Apply the given rules to the target project. </summary>
-    /// <param name="primitiveNamingRules"> The rules to apply. </param>
-    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <returns></returns>
-    Task<ApplyRulesResponse> ApplyRules(PrimitiveNamingRules primitiveNamingRules, string contextFolder = null, string modelsFolder = null);
+    Task<ApplyRulesResponse> ApplyRules(DbContextRule dbContextRule, string contextFolder = null, string modelsFolder = null);
 }

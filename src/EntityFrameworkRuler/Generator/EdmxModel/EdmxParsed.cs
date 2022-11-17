@@ -9,6 +9,7 @@ public sealed class EdmxParsed {
         FilePath = filePath;
     }
 
+    public string ContextName { get; set; }
     public string FilePath { get; }
     public Dictionary<string, AssociationBase> AssociationsByName { get; internal set; }
     public Dictionary<string, EnumType> EnumsByName { get; internal set; }
@@ -22,5 +23,5 @@ public sealed class EdmxParsed {
     public ObservableCollection<NavigationProperty> NavProps { get; } = new();
 
     public ObservableCollection<EntityProperty> Props { get; } = new();
- 
+
 }

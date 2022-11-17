@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using EntityFrameworkRuler.Rules.NavigationNaming;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
+using EntityFrameworkRuler.Rules;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable MemberCanBeInternal
@@ -12,12 +11,12 @@ namespace EntityFrameworkRuler.Extension;
 public static class RuleExtensions {
     /// <summary> Get the primitive schema rule for the given target schema. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static bool TryResolveRuleFor(this PrimitiveNamingRules rules, string schema, out SchemaRule schemaRule) =>
+    public static bool TryResolveRuleFor(this DbContextRule rules, string schema, out SchemaRule schemaRule) =>
         TryResolveRuleFor(rules?.Schemas, schema, out schemaRule);
 
     /// <summary> Get the primitive schema rule for the given target schema. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static SchemaRule TryResolveRuleFor(this PrimitiveNamingRules rules, string schema) =>
+    public static SchemaRule TryResolveRuleFor(this DbContextRule rules, string schema) =>
         TryResolveRuleFor(rules?.Schemas, schema, out var schemaRule) ? schemaRule : null;
 
     /// <summary> Get the primitive schema rule for the given target schema. Used during scaffolding phase. </summary>
@@ -78,7 +77,7 @@ public static class RuleExtensions {
 
     /// <summary> Get the primitive schema and table rules for the given target table. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static bool TryResolveRuleFor(this PrimitiveNamingRules rules,
+    public static bool TryResolveRuleFor(this DbContextRule rules,
         string schema,
         string table,
         out SchemaRule schemaRule,
@@ -91,7 +90,7 @@ public static class RuleExtensions {
 
     /// <summary> Get the primitive schema, table and column rules for the given target column. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static bool TryResolveRuleFor(this PrimitiveNamingRules rules,
+    public static bool TryResolveRuleFor(this DbContextRule rules,
         string schema,
         string table, string column,
         out SchemaRule schemaRule,
@@ -105,53 +104,55 @@ public static class RuleExtensions {
         return columnRule != null;
     }
 
-    /// <summary> Return the navigation naming rules ClassReference object for the given entity </summary>
+    /// <summary> Return the navigation naming rules TableRule object for the given entity </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static ClassReference TryResolveClassRuleFor(this NavigationNamingRules rules,
+    public static TableRule TryResolveRuleForEntity(this DbContextRule rules,
         string entity,
         string schema,
         string table) {
-        if (rules?.Classes == null || rules.Classes.Count == 0 || entity.IsNullOrWhiteSpace()) return null;
+        if (rules?.Schemas == null || rules.Schemas.Count == 0 || entity.IsNullOrWhiteSpace()) return null;
 
-        IEnumerable<ClassReference> tables = rules.Classes;
+        var schemas = rules.Schemas.Where(o => o.Tables?.Count > 0);
         // use optional schema filter
         if (schema.HasNonWhiteSpace())
-            tables = tables.Where(o => o.DbSchema.IsNullOrEmpty() || o.DbSchema.EqualsIgnoreCase(schema));
+            schemas = schemas.Where(o => o.SchemaName.IsNullOrEmpty() || o.SchemaName.EqualsIgnoreCase(schema));
+
+        var tables = schemas.SelectMany(o => o.Tables);
 
         // use optional table filter
         // ReSharper disable once InvertIf
         if (table.HasNonWhiteSpace()) {
-            tables = tables.Where(o => o.DbName.IsNullOrEmpty() || o.DbName.EqualsIgnoreCase(table));
+            tables = tables.Where(o => o.Name.IsNullOrEmpty() || o.Name.EqualsIgnoreCase(table));
 
             // this should be enough IF the rule had the DBName defined.
             // query now because this is more reliable than using the expected entity name.
-            var tableRule = tables.FirstOrDefault(o => o.DbName.HasNonWhiteSpace());
+            var tableRule = tables.FirstOrDefault(o => o.Name.HasNonWhiteSpace());
             if (tableRule != null) return tableRule;
         }
 
-        return tables.FirstOrDefault(o => o.Name == entity);
+        return tables.FirstOrDefault(o => o.EntityName == entity);
     }
 
     /// <summary> Return the navigation naming rule for the given navigation info </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static NavigationRename TryResolveNavigationRuleFor(this ClassReference classRef,
+    public static NavigationRule TryResolveNavigationRuleFor(this TableRule tableRule,
         string fkName,
         Func<string> defaultEfName,
         bool thisIsPrincipal,
         bool isManyToMany) {
-        if (classRef?.Properties == null || classRef.Properties.Count == 0) return null;
+        if (tableRule?.Navigations == null || tableRule.Navigations.Count == 0) return null;
 
         // locate by fkName first, which is most reliable.
         var navigationRenames = fkName.HasNonWhiteSpace()
-            ? classRef.Properties
+            ? tableRule.Navigations
                 .Where(t => t.FkName == fkName)
                 .ToArray()
-            : Array.Empty<NavigationRename>();
+            : Array.Empty<NavigationRule>();
 
         if (navigationRenames.Length == 0) {
             // Maybe FkName is not defined?  if not, try to locate by expected target name instead
             if (fkName.HasNonWhiteSpace()) {
-                var someFkNamesEmpty = classRef.Properties.Any(o => o.FkName.IsNullOrWhiteSpace());
+                var someFkNamesEmpty = tableRule.Navigations.Any(o => o.FkName.IsNullOrWhiteSpace());
                 if (!someFkNamesEmpty) {
                     // Fk names ARE defined, this property is just not found. Use default.
                     return null;
@@ -159,7 +160,7 @@ public static class RuleExtensions {
             }
 
             var efName = defaultEfName();
-            navigationRenames = classRef.Properties.Where(o => o.Name?.Count > 0 && o.Name.Contains(efName))
+            navigationRenames = tableRule.Navigations.Where(o => o.Name?.Count > 0 && o.Name.Contains(efName))
                 .ToArray();
             if (navigationRenames.Length == 0) return null; // expected EF name resolution failed to
         }

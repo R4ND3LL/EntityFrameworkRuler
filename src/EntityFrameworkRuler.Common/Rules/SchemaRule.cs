@@ -3,7 +3,7 @@ using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
-namespace EntityFrameworkRuler.Rules.PrimitiveNaming;
+namespace EntityFrameworkRuler.Rules;
 
 /// <summary> Schema rule </summary>
 [DebuggerDisplay("Schema {SchemaName}")]

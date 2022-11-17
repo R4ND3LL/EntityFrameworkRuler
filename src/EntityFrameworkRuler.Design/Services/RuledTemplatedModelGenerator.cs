@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding;
-using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
+
+// ReSharper disable MemberCanBePrivate.Global
 
 // ReSharper disable ClassCanBeSealed.Global
 
@@ -11,6 +11,10 @@ namespace EntityFrameworkRuler.Design.Services;
 
 /// <inheritdoc />
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
+[SuppressMessage("ReSharper", "InconsistentNaming")]
+[SuppressMessage("ReSharper", "NotAccessedField.Local")]
+[SuppressMessage("ReSharper", "UnusedMember.Local")]
+// ReSharper disable once ClassNeverInstantiated.Global
 internal class RuledTemplatedModelGenerator : IModelCodeGenerator {
     private readonly IOperationReporter reporter;
     private readonly IDesignTimeRuleLoader ruleLoader;
@@ -29,7 +33,7 @@ internal class RuledTemplatedModelGenerator : IModelCodeGenerator {
 
     internal static FileInfo GetEntityTypeConfigurationFile(string projectDir) {
         if (projectDir.IsNullOrWhiteSpace()) return null;
-        return new FileInfo(Path.Combine(projectDir!, TemplatesDirectory, EntityTypeConfigurationTemplate));
+        return new(Path.Combine(projectDir!, TemplatesDirectory, EntityTypeConfigurationTemplate));
     }
 
     /// <summary>

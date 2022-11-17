@@ -1,4 +1,4 @@
-using EntityFrameworkRuler.Rules.NavigationNaming;
+
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -8,6 +8,9 @@ namespace EntityFrameworkRuler.Rules;
 public interface IRuleModelRoot {
     /// <summary> Get rule model kind </summary>
     RuleModelKind Kind { get; }
+
+    /// <summary> The name of the model </summary>
+    string GetName();
 
     /// <summary> Get class rules </summary>
     IEnumerable<IClassRule> GetClasses();

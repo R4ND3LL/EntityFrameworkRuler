@@ -35,7 +35,7 @@ internal static class ListExtensions {
         return false;
     }
 
-    // internal static NavigationNamingRules ToPropertyRules(this PrimitiveNamingRules primitiveNamingRules) {
+    // internal static NavigationNamingRules ToPropertyRules(this DbContextRule primitiveNamingRules) {
     //     var rules = new NavigationNamingRules();
     //     foreach (var schema in primitiveNamingRules.Schemas) {
     //         var r = new NavigationNamingRules();
@@ -45,7 +45,7 @@ internal static class ListExtensions {
     //             };
     //             r.Classes.Add(c);
     //             foreach (var propertyRename in classRename.Columns) {
-    //                 var p = new NavigationRename {
+    //                 var p = new NavigationRule {
     //                     NewName = propertyRename.NewName
     //                 };
     //                 p.Name.Add(propertyRename.Name);

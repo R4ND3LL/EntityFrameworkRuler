@@ -8,8 +8,7 @@ using EntityFrameworkRuler.Applicator;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Extension;
 using EntityFrameworkRuler.Generator;
-using EntityFrameworkRuler.Rules.NavigationNaming;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
+using EntityFrameworkRuler.Rules;
 using Microsoft.CodeAnalysis;
 using Shouldly;
 using Xunit;
@@ -35,42 +34,44 @@ public sealed class EdmxRulerTests {
         var rules = generateRulesResponse.Rules;
         var elapsed = DateTimeExtensions.GetTime() - start;
         generateRulesResponse.Errors.Count().ShouldBe(0);
-        generateRulesResponse.Rules.Count.ShouldBe(2);
+        generateRulesResponse.Rules.Count.ShouldBe(1);
         output.WriteLine($"Successfully generated {generateRulesResponse.Rules.Count} rule files in {elapsed}ms");
         rules.ShouldBe(generateRulesResponse.Rules);
-        var enumMappingRules = rules.OfType<PrimitiveNamingRules>().Single().Schemas.SelectMany(o => o.Tables).SelectMany(o => o.Columns)
+        var enumMappingRules = rules.OfType<DbContextRule>().Single().Schemas.SelectMany(o => o.Tables).SelectMany(o => o.Columns)
             .Where(o => o.NewType.HasNonWhiteSpace()).ToList();
-        var primitiveNamingRules = rules.OfType<PrimitiveNamingRules>().Single();
-        var navigationNamingRules = rules.OfType<NavigationNamingRules>().Single();
+        var dbContextRule = rules.OfType<DbContextRule>().Single();
+        var navigationNamingRules = rules.OfType<DbContextRule>().Single().Schemas
+            .SelectMany(o => o.Tables)
+            .SelectMany(o => o.Navigations)
+            .ToList();
 
         enumMappingRules.Count.ShouldBe(2);
         enumMappingRules.ForEach(o => o.Name.IsValidSymbolName().ShouldBeTrue());
         enumMappingRules.ForAll(o => (o.PropertyName == null || o.PropertyName.IsValidSymbolName()).ShouldBeTrue());
 
-        primitiveNamingRules.Schemas.Count.ShouldBe(1);
-        primitiveNamingRules.Schemas[0].Tables.Count.ShouldBe(27);
-        var prod = primitiveNamingRules.Schemas[0].Tables.FirstOrDefault(o => o.Name == "Products");
+        dbContextRule.Schemas.Count.ShouldBe(1);
+        dbContextRule.Schemas[0].Tables.Count.ShouldBe(27);
+        var prod = dbContextRule.Schemas[0].Tables.FirstOrDefault(o => o.Name == "Products");
         prod.ShouldNotBeNull();
         prod.Columns.Count.ShouldBe(10);
         prod.Columns[0].PropertyName.ShouldBe("ProductId");
         prod.Columns[0].NewName.ShouldBe("ProductID");
-        primitiveNamingRules.Schemas[0].Tables.ForEach(o => (o.EntityName?.IsValidSymbolName() != false).ShouldBeTrue());
-        primitiveNamingRules.Schemas[0].Tables.ForEach(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
-        primitiveNamingRules.Schemas[0].Tables.SelectMany(o => o.Columns)
+        dbContextRule.Schemas[0].Tables.ForEach(o => (o.EntityName?.IsValidSymbolName() != false).ShouldBeTrue());
+        dbContextRule.Schemas[0].Tables.ForEach(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
+        dbContextRule.Schemas[0].Tables.SelectMany(o => o.Columns)
             .ForAll(o => (o.PropertyName?.IsValidSymbolName() != false).ShouldBeTrue());
-        primitiveNamingRules.Schemas[0].Tables.SelectMany(o => o.Columns)
+        dbContextRule.Schemas[0].Tables.SelectMany(o => o.Columns)
             .ForAll(o => (o.NewName == null || o.NewName.IsValidSymbolName()).ShouldBeTrue());
 
-        navigationNamingRules.Namespace.ShouldBe("");
-        navigationNamingRules.Classes.Count.ShouldBe(9);
-        navigationNamingRules.Classes.All(o => o.Properties.Count > 0).ShouldBeTrue();
-        navigationNamingRules.Classes[0].Properties[0].Name.Contains("Orders").ShouldBeTrue();
-        navigationNamingRules.Classes[0].Properties[0].NewName.ShouldBe("OrdersCustom");
-        navigationNamingRules.Classes.ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
-        navigationNamingRules.Classes.SelectMany(o => o.Properties)
-            .ForAll(o => o.Name.ForAll(n => n.IsValidSymbolName().ShouldBeTrue()));
-        navigationNamingRules.Classes.SelectMany(o => o.Properties)
-            .ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
+        navigationNamingRules.Count.ShouldBeGreaterThan(15);
+        var fkOrdersCustomersRules = navigationNamingRules.Where(o => o.FkName == "FK_Orders_Customers").ToArray();
+        fkOrdersCustomersRules.Length.ShouldBe(2);
+        fkOrdersCustomersRules.Any(o => o.Name.Contains("Orders")).ShouldBeTrue();
+        fkOrdersCustomersRules.Any(o => o.Name.Contains("CustomerNavigation")).ShouldBeTrue();
+        fkOrdersCustomersRules.Any(o => o.NewName == "OrdersCustom").ShouldBeTrue();
+
+        navigationNamingRules.ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
+        navigationNamingRules.ForAll(o => o.Name.ForAll(n => n.IsValidSymbolName().ShouldBeTrue()));
 
         elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"Rule contents look good at {elapsed}ms");
@@ -81,32 +82,18 @@ public sealed class EdmxRulerTests {
         applicator.OnLog += LogReceived;
         start = DateTimeExtensions.GetTime();
         ApplyRulesResponse response;
-        response = await applicator.ApplyRules(primitiveNamingRules);
+        response = await applicator.ApplyRules(dbContextRule);
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
-        response.Information.Last().ShouldStartWith("16 classes renamed, 46 properties renamed across 2", Case.Insensitive);
+        response.Information.Last().ShouldStartWith("16 classes renamed, 60 properties renamed across 2", Case.Insensitive);
         elapsed = DateTimeExtensions.GetTime() - start;
-        output.WriteLine($"Primitive naming rules applied correctly at {elapsed}ms");
-
-        response = await applicator.ApplyRules(navigationNamingRules);
-        response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
-        if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
+        output.WriteLine($"DbContext rules applied correctly at {elapsed}ms");
 
         var renamed = response.Information.Where(o => o.StartsWith("Renamed")).ToArray();
-        renamed.Length.ShouldBe(14);
-        var couldNotFind = response.Information.Where(o => o.StartsWith("Could not find ")).ToArray();
+        renamed.Length.ShouldBeGreaterThan(70);
+        var couldNotFind = response.Information.Where(o => o.StartsWith("Could not find ") && !o.Contains("Sysdiagram")).ToArray();
         couldNotFind.Length.ShouldBe(0);
-        response.Information.Last().ShouldStartWith("14 properties renamed across 10 files", Case.Insensitive);
-
-        elapsed = DateTimeExtensions.GetTime() - start;
-        output.WriteLine($"Navigation naming rules applied correctly at {elapsed}ms");
-
-        elapsed = DateTimeExtensions.GetTime() - start;
-        output.WriteLine($"Enum mapping rules applied correctly at {elapsed}ms");
-        logReceivedCount.ShouldBeGreaterThan(30);
-        elapsed = DateTimeExtensions.GetTime() - start;
-        output.WriteLine($"Completed in {elapsed}ms.");
 #if DEBUG
         output.WriteLine(
             $"FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");

@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using EntityFrameworkRuler.Design.Extensions;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -9,6 +8,7 @@ using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Castle.DynamicProxy;
+using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore.Metadata;
 using IInterceptor = Castle.DynamicProxy.IInterceptor;
 
@@ -26,7 +26,7 @@ namespace EntityFrameworkRuler.Design.Services;
 public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, IInterceptor {
     private readonly IOperationReporter reporter;
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
-    private PrimitiveNamingRules primitiveNamingRules;
+    private DbContextRule dbContextRule;
     private readonly RelationalScaffoldingModelFactory proxy;
     private readonly MethodInfo visitForeignKeyMethod;
     private readonly MethodInfo addNavigationPropertiesMethod;
@@ -76,7 +76,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseColumn column, Func<TypeScaffoldingInfo> baseCall) {
         var typeScaffoldingInfo = baseCall();
-        primitiveNamingRules ??= designTimeRuleLoader?.GetPrimitiveNamingRules() ?? new();
+        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new();
 
 
         if (!TryResolveRuleFor(column, out var schemaRule, out var tableRule, out var columnRule)) return typeScaffoldingInfo;
@@ -93,7 +93,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> Get the type changing rule for this column </summary>
     protected virtual bool TryResolveRuleFor(DatabaseColumn column, out SchemaRule schemaRule, out TableRule tableRule,
         out ColumnRule columnRule) {
-        return primitiveNamingRules.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, column?.Name,
+        return dbContextRule.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, column?.Name,
             out schemaRule, out tableRule, out columnRule);
     }
 
@@ -102,12 +102,12 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         // ReSharper disable once AssignNullToNotNullAttribute
         if (table is null) return baseCall();
 
-        primitiveNamingRules ??= designTimeRuleLoader?.GetPrimitiveNamingRules() ?? new PrimitiveNamingRules();
+        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRule();
 
-        primitiveNamingRules.TryResolveRuleFor(table.Schema, table.Name, out var schemaRule, out var tableRule);
+        dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schemaRule, out var tableRule);
 
         if (schemaRule == null) {
-            if (primitiveNamingRules?.IncludeUnknownSchemas != false) return baseCall(); // nothing to go on
+            if (dbContextRule?.IncludeUnknownSchemas != false) return baseCall(); // nothing to go on
 
             if (OmittedSchemas.Add(table.Schema))
                 reporter?.WriteInformation($"RULED: Schema {table.Schema} omitted.");
@@ -212,7 +212,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         var schemaNames = foreignKeys.Select(o => o.Table?.Schema).Where(o => o.HasNonWhiteSpace()).Distinct().ToArray();
 
-        var schemas = schemaNames.Select(o => primitiveNamingRules?.TryResolveRuleFor(o))
+        var schemas = schemaNames.Select(o => dbContextRule?.TryResolveRuleFor(o))
             .Where(o => o?.UseManyToManyEntity == true).ToArray();
 
         if (OmittedTables.Count > 0) {

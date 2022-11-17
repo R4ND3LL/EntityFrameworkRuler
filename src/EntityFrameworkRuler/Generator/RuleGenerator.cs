@@ -5,8 +5,6 @@ using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator.EdmxModel;
 using EntityFrameworkRuler.Generator.Services;
 using EntityFrameworkRuler.Rules;
-using EntityFrameworkRuler.Rules.NavigationNaming;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
 using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable UnusedMethodReturnValue.Global
@@ -84,8 +82,8 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             }
 
 
-            GenerateAndAdd(GetPrimitiveNamingRules);
-            GenerateAndAdd(GetNavigationNamingRules);
+            GenerateAndAdd(GetDbContextRules);
+
             return response;
         } finally {
             response.OnLog -= ResponseOnLog;
@@ -120,18 +118,22 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             }
 
             fileNameOptions ??= new();
-            await TryWriteRules<PrimitiveNamingRules>(fileNameOptions.PrimitiveRulesFile);
-            await TryWriteRules<NavigationNamingRules>(fileNameOptions.NavigationRulesFile);
+
+            await TryWriteRules<DbContextRule>(
+                fileNameOptions.DbContextRulesFile.CoalesceWhiteSpace(() => new RuleFileNameOptions().DbContextRulesFile));
+
             return response;
 
 
             async Task TryWriteRules<T>(string fileName) where T : class, IRuleModelRoot {
                 try {
                     if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
-                    T rulesRoot = rules?.OfType<T>().FirstOrDefault() ??
-                                  throw new("Rule model null");
-                    await WriteRules<T>(rulesRoot, fileName);
-                    response.LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");
+                    foreach (var rulesRoot in rules?.OfType<T>()) {
+                        var name = rulesRoot.GetName() ?? "dbcontext";
+                        fileName = fileName.Replace("<ContextName>", name, StringComparison.OrdinalIgnoreCase);
+                        await WriteRules<T>(rulesRoot, fileName);
+                        response.LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");
+                    }
                 } catch (Exception ex) {
                     response.LogError($"Error writing rule to file {fileName}: {ex.Message}");
                 }
@@ -150,10 +152,11 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
 
     #region Main rule gen methods
 
-    private PrimitiveNamingRules GetPrimitiveNamingRules(EdmxParsed edmx) {
+    private DbContextRule GetDbContextRules(EdmxParsed edmx) {
         if (edmx?.Entities.IsNullOrEmpty() != false) return new();
 
-        var root = new PrimitiveNamingRules {
+        var root = new DbContextRule {
+            Name = edmx.ContextName,
             IncludeUnknownSchemas = Options.IncludeUnknowns
         };
         var generateAll = !Options.IncludeUnknowns || !Options.CompactRules;
@@ -201,61 +204,38 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                     altered = true;
                 }
 
+                foreach (var navigation in entity.NavigationProperties) {
+                    tbl.Navigations ??= new();
+                    var navigationRename = new NavigationRule {
+                        NewName = navigation.Name
+                    };
+
+                    navigationRename.Name
+                        .AddRange(NamingService.FindCandidateNavigationNames(navigation)
+                            .Where(o => o != navigation.Name));
+
+                    if (navigationRename.Name.Count == 0) continue;
+
+                    //if (navigationRename.Name.Any(o => o.Contains("Inverse"))) Debugger.Break();
+
+                    // fill in other metadata
+                    var inverseNav = navigation.InverseNavigation;
+                    var inverseEntity = inverseNav?.Entity;
+                    navigationRename.FkName = navigation.Association?.Name;
+                    navigationRename.Multiplicity = navigation.Multiplicity.ToMultiplicityString();
+                    navigationRename.ToEntity =
+                        inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameIdentifier;
+                    navigationRename.IsPrincipal = navigation.IsPrincipalEnd;
+
+                    tbl.Navigations.Add(navigationRename);
+                    altered = true;
+                }
+
                 if (altered || generateAll) schemaRule.Tables.Add(tbl);
             }
         }
 
         return root;
-    }
-
-    private NavigationNamingRules GetNavigationNamingRules(EdmxParsed edmx) {
-        var rule = new NavigationNamingRules();
-        rule.Classes ??= new();
-
-        if (edmx?.Entities.IsNullOrEmpty() != false) return new();
-
-        foreach (var entity in edmx.Entities.OrderBy(o => o.Name)) {
-            // omit the namespace. it often does not match the Reverse Engineered value
-            rule.Namespace ??= ""; //entity.Namespace;
-
-            // if entity name is different than db, it has to go into output
-            var renamed = false;
-            var tbl = new ClassReference {
-                DbName = entity.Name == entity.StorageName ? null : entity.StorageName,
-                Name = entity.Name, // expected name is EDMX entity name at this stage, because primitives have been applied
-            };
-
-            foreach (var navigation in entity.NavigationProperties) {
-                tbl.Properties ??= new();
-                var navigationRename = new NavigationRename {
-                    NewName = navigation.Name
-                };
-
-                navigationRename.Name
-                    .AddRange(NamingService.FindCandidateNavigationNames(navigation)
-                        .Where(o => o != navigation.Name));
-
-                if (navigationRename.Name.Count == 0) continue;
-
-                //if (navigationRename.Name.Any(o => o.Contains("Inverse"))) Debugger.Break();
-
-                // fill in other metadata
-                var inverseNav = navigation.InverseNavigation;
-                var inverseEntity = inverseNav?.Entity;
-                navigationRename.FkName = navigation.Association?.Name;
-                navigationRename.Multiplicity = navigation.Multiplicity.ToMultiplicityString();
-                navigationRename.ToEntity =
-                    inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameIdentifier;
-                navigationRename.IsPrincipal = navigation.IsPrincipalEnd;
-
-                tbl.Properties.Add(navigationRename);
-                renamed = true;
-            }
-
-            if (renamed) rule.Classes.Add(tbl);
-        }
-
-        return rule;
     }
 
     #endregion
@@ -268,8 +248,8 @@ public sealed class GenerateRulesResponse : LoggedResponse {
     /// <summary> The rules generated from the EDMX via the TryGenerateRules() call </summary>
     public IReadOnlyCollection<IRuleModelRoot> Rules => rules;
 
-    public PrimitiveNamingRules PrimitiveNamingRules => rules.OfType<PrimitiveNamingRules>().SingleOrDefault();
-    public NavigationNamingRules NavigationNamingRules => rules.OfType<NavigationNamingRules>().SingleOrDefault();
+    public DbContextRule DbContextRule => rules.OfType<DbContextRule>().SingleOrDefault();
+
 
     /// <summary> The correlated EDMX model that is read from the EDMX file during the TryGenerateRules() call </summary>
     public EdmxParsed EdmxParsed { get; internal set; }

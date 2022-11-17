@@ -569,7 +569,7 @@ public class ConceptualOnDelete {
 [XmlRoot(ElementName = "Schema", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualSchema {
     [XmlElement(ElementName = "EntityContainer", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-    public ConceptualEntityContainer EntityContainers { get; set; }
+    public ConceptualEntityContainer EntityContainer { get; set; }
 
     [XmlElement(ElementName = "ComplexType", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public List<ComplexType> ComplexTypes { get; set; }

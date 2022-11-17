@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Linq;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator.EdmxModel;
-using EntityFrameworkRuler.Rules.NavigationNaming;
+using EntityFrameworkRuler.Rules;
 using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable MemberCanBeInternal
@@ -201,6 +201,7 @@ public class RulerNamingService : IRulerNamingService {
         var prefixLength = 0;
         foreach (var c in firstName) {
             // ReSharper disable once LoopCanBeConvertedToQuery
+            // ReSharper disable once PossibleMultipleEnumeration
             foreach (var s in propertyNames)
                 if (s.Length <= prefixLength
                     || s[prefixLength] != c)

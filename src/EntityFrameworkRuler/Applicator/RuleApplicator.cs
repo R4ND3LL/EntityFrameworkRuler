@@ -8,8 +8,6 @@ using EntityFrameworkRuler.Applicator.CsProjParser;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
-using EntityFrameworkRuler.Rules.NavigationNaming;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Project = Microsoft.CodeAnalysis.Project;
@@ -90,13 +88,13 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
                 response.OnLog += ResponseOnLog;
                 try {
                     switch (rule) {
-                        case PrimitiveNamingRules primitiveNamingRules:
-                            await ApplyPrimitiveRulesCore(primitiveNamingRules, response, null, null, state);
+                        case DbContextRule dbContextRule:
+                            await ApplyDbContextRulesCore(dbContextRule, response, null, null, state);
                             break;
-                        case NavigationNamingRules navigationNamingRules:
-                            await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace,
-                                response, state: state);
-                            break;
+                        // case NavigationNamingRules navigationNamingRules:
+                        //     await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace,
+                        //         response, state: state);
+                        //     break;
                         default:
                             continue;
                     }
@@ -116,49 +114,49 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
         return responses;
     }
 
+    // /// <summary> Apply the given rules to the target project. </summary>
+    // /// <param name="navigationNamingRules"> The rules to apply. </param>
+    // /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
+    // /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
+    // /// <returns></returns>
+    // public async Task<ApplyRulesResponse> ApplyRules(NavigationNamingRules navigationNamingRules,
+    //     string contextFolder = null, string modelsFolder = null) {
+    //     var response = new ApplyRulesResponse(navigationNamingRules);
+    //     response.OnLog += ResponseOnLog;
+    //     try {
+    //         await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace, response,
+    //             contextFolder: contextFolder,
+    //             modelsFolder: modelsFolder);
+    //     } finally {
+    //         response.OnLog -= ResponseOnLog;
+    //     }
+    //
+    //     return response;
+    // }
+
     /// <summary> Apply the given rules to the target project. </summary>
-    /// <param name="navigationNamingRules"> The rules to apply. </param>
+    /// <param name="dbContextRule"> The rules to apply. </param>
     /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <returns></returns>
-    public async Task<ApplyRulesResponse> ApplyRules(NavigationNamingRules navigationNamingRules,
-        string contextFolder = null, string modelsFolder = null) {
-        var response = new ApplyRulesResponse(navigationNamingRules);
-        response.OnLog += ResponseOnLog;
-        try {
-            await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace, response,
-                contextFolder: contextFolder,
-                modelsFolder: modelsFolder);
-        } finally {
-            response.OnLog -= ResponseOnLog;
-        }
-
-        return response;
-    }
-
-    /// <summary> Apply the given rules to the target project. </summary>
-    /// <param name="primitiveNamingRules"> The rules to apply. </param>
-    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <returns></returns>
-    public async Task<ApplyRulesResponse> ApplyRules(PrimitiveNamingRules primitiveNamingRules,
+    public async Task<ApplyRulesResponse> ApplyRules(DbContextRule dbContextRule,
         string contextFolder = null, string modelsFolder = null) {
         // map to class renaming
-        var response = new ApplyRulesResponse(primitiveNamingRules);
+        var response = new ApplyRulesResponse(dbContextRule);
         response.OnLog += ResponseOnLog;
         try {
             var state = new RoslynProjectState(this);
-            await ApplyPrimitiveRulesCore(primitiveNamingRules, response, contextFolder, modelsFolder, state);
+            await ApplyDbContextRulesCore(dbContextRule, response, contextFolder, modelsFolder, state);
             return response;
         } finally {
             response.OnLog -= ResponseOnLog;
         }
     }
 
-    private async Task ApplyPrimitiveRulesCore(PrimitiveNamingRules primitiveNamingRules, ApplyRulesResponse response,
+    private async Task ApplyDbContextRulesCore(DbContextRule dbContextRule, ApplyRulesResponse response,
         string contextFolder,
         string modelsFolder, RoslynProjectState state) {
-        foreach (var schema in primitiveNamingRules.Schemas) {
+        foreach (var schema in dbContextRule.Schemas) {
             var schemaResponse = new ApplyRulesResponse(null);
             schemaResponse.OnLog += ResponseOnLog;
             try {
@@ -197,9 +195,9 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
         var classRenameCount = 0;
         var typeMapCount = 0;
         var dirtyClassStates = new HashSet<ClassState>();
-        foreach (var classRef in classRules) {
-            var newClassName = classRef.GetNewName();
-            var oldClassName = classRef.GetOldName().CoalesceWhiteSpace(newClassName);
+        foreach (var classRule in classRules) {
+            var newClassName = classRule.GetNewName();
+            var oldClassName = classRule.GetOldName().CoalesceWhiteSpace(newClassName);
             newClassName = newClassName.CoalesceWhiteSpace(oldClassName);
             if (newClassName.IsNullOrWhiteSpace()) continue; // invalid entry
 
@@ -248,7 +246,7 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
 
 
             // process property changes
-            foreach (var propertyRef in classRef.GetProperties()) {
+            foreach (var propertyRef in classRule.GetProperties()) {
                 var newPropName = propertyRef.GetNewName().NullIfWhitespace();
                 var currentNames = propertyRef.GetCurrentNameOptions()
                     .Where(o => o.HasNonWhiteSpace()).Select(o => o.Trim()).Distinct().ToArray();
@@ -345,7 +343,7 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
 
         int saved;
         if (classRenameCount > 0 || propRenameCount > 0) {
-            // unfortunately we have to go over all documents and save because we don't know how far reaching the rename refactoring was.
+            // perform a diff on the documents to find changes.
             var changes = state.Project.GetChangedDocuments(state.OriginalProject);
             saved = changes?.Count > 0 ? await changes.SaveDocumentsAsync(false) : 0;
         } else {

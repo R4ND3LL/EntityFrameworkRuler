@@ -27,7 +27,7 @@ public sealed class ClassReference : IClassRule {
 
     /// <summary> The property rules to apply to this entity. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
-    public List<NavigationRename> Properties { get; set; } = new();
+    public List<NavigationRule> Properties { get; set; } = new();
 
     string IClassRule.GetOldName() => Name.CoalesceWhiteSpace(DbName);
     string IClassRule.GetNewName() => Name;

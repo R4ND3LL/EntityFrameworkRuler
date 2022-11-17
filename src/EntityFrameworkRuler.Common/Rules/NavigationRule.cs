@@ -1,15 +1,14 @@
 ﻿using System.Diagnostics;
-using System.Linq;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
-namespace EntityFrameworkRuler.Rules.NavigationNaming;
+namespace EntityFrameworkRuler.Rules;
 
 /// <inheritdoc />
 [DebuggerDisplay("Nav {FirstName} to {NewName} FkName={FkName} IsPrincipal={IsPrincipal}")]
 [DataContract]
-public sealed class NavigationRename : IPropertyRule {
+public sealed class NavigationRule : IPropertyRule {
     /// <summary>
     /// Gets or sets the name alternatives to look for when identifying this property.
     /// Used in navigation renaming since prediction of the reverse engineered name can be difficult.

@@ -42,5 +42,9 @@
         <None Include="..\..\docs\Common.md" Pack="true" PackagePath="\" />
         <Compile Remove="Design\DesignTimeTypeMappingReferenceAttribute.cs" />
         <None Include="Design\DesignTimeTypeMappingReferenceAttribute.cs" />
+        <Compile Remove="Rules\NavigationNaming\ClassReference.cs" />
+        <None Include="Rules\NavigationNaming\ClassReference.cs" />
+        <Compile Remove="Rules\NavigationNaming\NavigationNamingRules.cs" />
+        <None Include="Rules\NavigationNaming\NavigationNamingRules.cs" />
     </ItemGroup>
 </Project>

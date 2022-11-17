@@ -111,12 +111,6 @@ internal static class EfExtensions {
             return edmType.ClrType;
         }
 
-        //var primitiveType = edmType as IProperty;
-        //if (primitiveType != null) return primitiveType.ClrType;
-
-        //var enumType = edmType as EnumType;
-        //if (enumType != null) return enumType.UnderlyingType.ClrEquivalentType;
-
         return typeof(object);
     }
 

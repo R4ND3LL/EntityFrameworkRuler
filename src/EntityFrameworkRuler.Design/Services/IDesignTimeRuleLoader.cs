@@ -1,6 +1,5 @@
 using System.Reflection;
-using EntityFrameworkRuler.Rules.NavigationNaming;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
+using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 
 namespace EntityFrameworkRuler.Design.Services;
@@ -8,13 +7,13 @@ namespace EntityFrameworkRuler.Design.Services;
 /// <summary> Loader of rule configuration for runtime ef scaffolding operations </summary>
 public interface IDesignTimeRuleLoader {
     /// <summary> Load the respective rule info </summary>
-    PrimitiveNamingRules GetPrimitiveNamingRules();
+    DbContextRule GetDbContextRules();
 
     // /// <summary> Load the respective rule info </summary>
     // PropertyTypeChangingRules GetPropertyTypeChangingRules();
 
-    /// <summary> Load the respective rule info </summary>
-    NavigationNamingRules GetNavigationNamingRules();
+    ///// <summary> Load the respective rule info </summary>
+    //NavigationNamingRules GetNavigationNamingRules();
 
     /// <summary> Gets the ModelCodeGenerationOptions that describes the ef scaffolding context, such that rule info can be processed correctly. </summary>
     ModelCodeGenerationOptions CodeGenOptions { get; }

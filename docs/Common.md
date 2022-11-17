@@ -87,8 +87,8 @@ var response = await applicator.ApplyRulesInProjectPath();
 ```csharp
 var applicator = new RuleApplicator(projectBasePath);  
 var loadResponse = await applicator.LoadRulesInProjectPath();  
-var navRules = loadResponse.Rules.OfType<NavigationNamingRules>().First();
-var applyResponse = await applicator.ApplyRules(enumRules);
+var rules = loadResponse.Rules.OfType<DbContextRule>().First();
+var applyResponse = await applicator.ApplyRules(rules);
 ```
 
 #### Customize rule file names:
@@ -97,8 +97,7 @@ var generator = new RuleGenerator(edmxPath);
 var rules = generator.TryGenerateRules();  
 await generator.TrySaveRules(projectBasePath,  
     new RuleFileNameOptions() {  
-        PrimitiveRulesFile = null, // null will skip this file
-        NavigationRulesFile = "NavRules.json" 
+        DbContextRulesFile = "DbContextRules.json" 
   }  
 );
 ```

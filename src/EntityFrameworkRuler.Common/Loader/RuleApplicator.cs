@@ -1,7 +1,5 @@
 ﻿using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Rules;
-using EntityFrameworkRuler.Rules.NavigationNaming;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
 using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
@@ -62,31 +60,26 @@ public class RuleLoader : RuleProcessor, IRuleLoader {
 
             fileNameOptions ??= new();
 
-            var jsonFiles = new[] { fileNameOptions.PrimitiveRulesFile, fileNameOptions.NavigationRulesFile }
-                .Where(o => o.HasNonWhiteSpace())
-                .Select(o => o.Trim())
-                .ToArray();
+            if (fileNameOptions.DbContextRulesFile.IsNullOrWhiteSpace())
+                return response;
 
+            var mask = fileNameOptions.DbContextRulesFile.Replace("<ContextName>", "*", StringComparison.OrdinalIgnoreCase);
 
+            var jsonFiles = projectBasePath.FindFiles(mask, true, 2).ToArray();
             if (jsonFiles.Length == 0) return response; // nothing to do
 
-            foreach (var jsonFile in jsonFiles)
+            foreach (var fileInfo in jsonFiles)
                 try {
-                    if (jsonFile.IsNullOrWhiteSpace()) continue;
-                    var fullPath = Path.Combine(projectBasePath, jsonFile);
-                    var fileInfo = new FileInfo(fullPath);
                     if (!fileInfo.Exists) continue;
 
-                    if (jsonFile == fileNameOptions.PrimitiveRulesFile) {
-                        if (await TryReadRules<PrimitiveNamingRules>(fileInfo, response) is { } schemas)
-                            rules.Add(schemas);
-                    } else if (jsonFile == fileNameOptions.NavigationRulesFile) {
-                        if (await TryReadRules<NavigationNamingRules>(fileInfo, response) is { } propertyRenamingRoot)
-                            rules.Add(propertyRenamingRoot);
+                    if (await TryReadRules<DbContextRule>(fileInfo, response) is { } dbContextRule) {
+                        dbContextRule.FilePath = fileInfo.FullName;
+                        if (dbContextRule.Schemas == null) continue;
+                        rules.Add(dbContextRule);
                     }
                 } catch (Exception ex) {
                     Console.WriteLine(ex);
-                    response.LogError($"Error processing {jsonFile}: {ex.Message}");
+                    response.LogError($"Error processing {fileInfo.Name}: {ex.Message}");
                 }
 
             return response;

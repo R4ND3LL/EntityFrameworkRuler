@@ -5,8 +5,6 @@ using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
-using EntityFrameworkRuler.Rules.NavigationNaming;
-using EntityFrameworkRuler.Rules.PrimitiveNaming;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 
@@ -64,14 +62,14 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         Array.Empty<Assembly>();
 
     /// <inheritdoc />
-    public PrimitiveNamingRules GetPrimitiveNamingRules() {
-        return GetRules().OfType<PrimitiveNamingRules>().FirstOrDefault();
+    public DbContextRule GetDbContextRules() {
+        return GetRules().OfType<DbContextRule>().FirstOrDefault();
     }
 
-    /// <inheritdoc />
-    public NavigationNamingRules GetNavigationNamingRules() {
-        return GetRules().OfType<NavigationNamingRules>().FirstOrDefault();
-    }
+    // /// <inheritdoc />
+    // public NavigationNamingRules GetNavigationNamingRules() {
+    //     return GetRules().OfType<NavigationNamingRules>().FirstOrDefault();
+    // }
 
     /// <inheritdoc />
     public IDesignTimeRuleLoader SetCodeGenerationOptions(ModelCodeGenerationOptions options) {
@@ -141,7 +139,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         if (projectDir.IsNullOrWhiteSpace()) return;
         if (!(EfVersion?.Major >= 7)) return;
         // EF v7 supports entity config templating.
-        var rules = GetPrimitiveNamingRules();
+        var rules = GetDbContextRules();
         var splitConfigs = rules?.SplitEntityTypeConfigurations ?? false;
 
         var configurationTemplate = RuledTemplatedModelGenerator.GetEntityTypeConfigurationFile(projectDir);

@@ -1,4 +1,4 @@
-﻿using EntityFrameworkRuler.Rules.NavigationNaming;
+﻿using EntityFrameworkRuler.Rules;
 
 namespace EntityFrameworkRuler.Extension;
 
