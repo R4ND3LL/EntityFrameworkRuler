@@ -38,6 +38,6 @@ public sealed class ColumnRule : IPropertyRule {
 
     IEnumerable<string> IPropertyRule.GetCurrentNameOptions() => new[] { PropertyName, Name };
     string IPropertyRule.GetNewName() => NewName;
-    string IPropertyRule.GetNewTypeName() => null;
+    string IPropertyRule.GetNewTypeName() => NewType;
     NavigationMetadata IPropertyRule.GetNavigationMetadata() => default;
 }
