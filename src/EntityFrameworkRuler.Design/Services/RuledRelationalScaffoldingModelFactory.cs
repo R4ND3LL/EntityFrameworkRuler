@@ -45,6 +45,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         this.reporter = reporter;
         this.designTimeRuleLoader = designTimeRuleLoader;
 
+        // avoid runtime binding errors against EF6 by using reflection and a proxy to access the resources we need.
+        // this allows more fluid compatibility with EF versions without retargeting this project.
+
         try {
             proxy = serviceProvider.CreateClassProxy<RelationalScaffoldingModelFactory>(this);
         } catch (Exception ex) {

@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace EntityFrameworkRuler.Design.Extensions;
 
@@ -389,4 +391,21 @@ internal static class EfExtensions {
 
     [Conditional("DEBUG")]
     internal static void DebugLog(string msg) => Console.WriteLine(msg);
+
+    /// <summary>
+    ///     Adds a <see cref="ServiceLifetime.Singleton" /> service implemented by the given concrete
+    ///     type to the list of services that implement the given contract. The service is only added
+    ///     if the collection contains no other registration for the same service and implementation type.
+    /// </summary>
+    /// <typeparam name="TService">The contract for the service.</typeparam>
+    /// <typeparam name="TImplementation">The concrete type that implements the service.</typeparam>
+    /// <returns>The service collection, such that further calls can be chained.</returns>
+    public static IServiceCollection TryAddSingletonEnumerable
+        <TService, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TImplementation>(
+            this IServiceCollection serviceCollection)
+        where TService : class
+        where TImplementation : class, TService {
+        serviceCollection.TryAddEnumerable(new ServiceDescriptor(typeof(TService), typeof(TImplementation), ServiceLifetime.Singleton));
+        return serviceCollection;
+    }
 }

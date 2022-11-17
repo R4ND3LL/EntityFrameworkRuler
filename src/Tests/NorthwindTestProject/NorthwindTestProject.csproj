@@ -11,13 +11,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.0"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="7.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="7.0.0"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.0"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -25,53 +25,19 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Remove="Configurations\EntityConfigurations.cs" />
-        <None Include="Configurations\EntityConfigurations.cs" />
-        <Compile Remove="Configurations\ProductConfiguration.cs" />
-        <None Include="Configurations\ProductConfiguration.cs" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Bcl.AsyncInterfaces.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Data.SqlClient.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.EntityFrameworkCore.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.EntityFrameworkCore.Abstractions.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.EntityFrameworkCore.Design.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.EntityFrameworkCore.InMemory.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.EntityFrameworkCore.Relational.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.EntityFrameworkCore.SqlServer.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Extensions.Caching.Abstractions.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Extensions.Caching.Memory.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Extensions.Configuration.Abstractions.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Extensions.DependencyInjection.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Extensions.DependencyInjection.Abstractions.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Extensions.DependencyModel.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Extensions.Logging.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Extensions.Logging.Abstractions.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Extensions.Options.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Extensions.Primitives.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Identity.Client.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Identity.Client.Extensions.Msal.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.IdentityModel.Abstractions.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.IdentityModel.JsonWebTokens.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.IdentityModel.Logging.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.IdentityModel.Protocols.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.IdentityModel.Tokens.dll" />
-        <None Remove="CodeTemplates\EFCore\System.CodeDom.dll" />
-        <None Remove="CodeTemplates\EFCore\System.Configuration.ConfigurationManager.dll" />
-        <None Remove="CodeTemplates\EFCore\System.Diagnostics.EventLog.dll" />
-        <None Remove="CodeTemplates\EFCore\System.Drawing.Common.dll" />
-        <None Remove="CodeTemplates\EFCore\System.IdentityModel.Tokens.Jwt.dll" />
-        <None Remove="CodeTemplates\EFCore\System.Memory.Data.dll" />
-        <None Remove="CodeTemplates\EFCore\System.Runtime.Caching.dll" />
-        <None Remove="CodeTemplates\EFCore\System.Security.Cryptography.ProtectedData.dll" />
-        <None Remove="CodeTemplates\EFCore\System.Security.Permissions.dll" />
-        <None Remove="CodeTemplates\EFCore\System.Text.Encodings.Web.dll" />
-        <None Remove="CodeTemplates\EFCore\System.Text.Json.dll" />
-        <None Remove="CodeTemplates\EFCore\System.Windows.Extensions.dll" />
-        <Compile Remove="Data\EmployeeConfiguration.cs" />
-        <Compile Remove="Data\Current_Product_ListConfiguration.cs" />      
+        <Compile Remove="Configurations\EntityConfigurations.cs"/>
+        <None Include="Configurations\EntityConfigurations.cs"/>
+        <Compile Remove="Configurations\ProductConfiguration.cs"/>
+        <None Include="Configurations\ProductConfiguration.cs"/>
+        <None Remove="CodeTemplates\EFCore\*.dll"/>
+        <Compile Remove="Data\EmployeeConfiguration.cs"/>
+        <Compile Remove="Data\Current_Product_ListConfiguration.cs"/>
+        <None Remove="CodeTemplates\EFCore\Microsoft.SqlServer.Server.dll"/>
+        <None Remove="CodeTemplates\EFCore\Microsoft.Win32.SystemEvents.dll"/>
+        <None Remove="CodeTemplates\EFCore\Mono.TextTemplating.dll"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />
+        <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj"/>
     </ItemGroup>
 </Project>

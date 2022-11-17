@@ -25,14 +25,13 @@ public static class ApplicatorArgHelper {
 
         if (args == null || args.Count == 0 || (args.Count == 1 && args[0] == ".")) {
             // auto inspect current folder for both csproj and edmx
-            applicatorOptions.ProjectBasePath = Directory.GetCurrentDirectory();
-            var projectFiles =
-                Directory.GetFiles(applicatorOptions.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
-            if (projectFiles.Length != 1) {
+            var projectDir = PathExtensions.FindProjectDirUnderCurrentCached();
+            if (projectDir?.FullName == null) {
                 applicatorOptions = null;
                 return false;
             }
 
+            applicatorOptions.ProjectBasePath = projectDir.FullName;
             return true;
         }
 
@@ -45,17 +44,15 @@ public static class ApplicatorArgHelper {
 
         applicatorOptions.ProjectBasePath = args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".csproj") == false
                                                                      && Directory.Exists(o));
-        if (applicatorOptions == null) return false;
+        if (applicatorOptions == null || applicatorOptions.ProjectBasePath.IsNullOrEmpty()) return false;
 
-        if (!Directory.Exists(applicatorOptions.ProjectBasePath)) return false;
+        var projectDir2 = new DirectoryInfo(applicatorOptions.ProjectBasePath!);
+        if (!projectDir2.Exists) return false;
 
-        var projectFiles2 =
-            Directory.GetFiles(applicatorOptions.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
-        if (projectFiles2.Length == 0) {
-            applicatorOptions = null;
-            return false;
-        }
+        var projectFiles2 = projectDir2.FindProjectFileCached();
+        if (projectFiles2 != null) return true;
 
-        return true;
+        applicatorOptions = null;
+        return false;
     }
 }

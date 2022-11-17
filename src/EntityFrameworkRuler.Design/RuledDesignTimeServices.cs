@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace EntityFrameworkRuler.Design {
     /// <summary>
@@ -29,14 +30,15 @@ namespace EntityFrameworkRuler.Design {
         /// <param name="services">The service collection.</param>
         [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
         public void ConfigureDesignTimeServices(IServiceCollection services) {
-            services.AddSingleton<IPluralizer, RuledPluralizer>();
-            //services.AddSingleton<IScaffoldingTypeMapper, EfRulerScaffoldingTypeMapper>();
-            services.AddSingleton<ICandidateNamingService, RuledCandidateNamingService>();
-            services.AddSingleton<IScaffoldingModelFactory, RuledRelationalScaffoldingModelFactory>();
-            services.AddSingleton<IReverseEngineerScaffolder, RuledReverseEngineerScaffolder>();
-            //services.AddSingleton<ICandidateNamingService, CandidateNamingService>();
-            services.AddSingleton<IDesignTimeRuleLoader, DesignTimeRuleLoader>();
-            services.AddRuleLoader();
+            services.AddSingleton<IPluralizer, RuledPluralizer>()
+                //.AddSingleton<IScaffoldingTypeMapper, EfRulerScaffoldingTypeMapper>()
+                .AddSingleton<ICandidateNamingService, RuledCandidateNamingService>()
+                .AddSingleton<IScaffoldingModelFactory, RuledRelationalScaffoldingModelFactory>()
+                .AddSingleton<IReverseEngineerScaffolder, RuledReverseEngineerScaffolder>()
+                //.AddSingleton<ICandidateNamingService, CandidateNamingService>()
+                .AddSingleton<IDesignTimeRuleLoader, DesignTimeRuleLoader>()
+                .TryAddSingletonEnumerable<IModelCodeGenerator, RuledTemplatedModelGenerator>()
+                .AddRuleLoader();
         }
     }
 }

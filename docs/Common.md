@@ -12,13 +12,13 @@ EF Ruler applies customizations from a rule document stored in the project folde
 >"EF Ruler provides a smooth upgrade path from EF6 to EF Core by ensuring that the Reverse Engineered model maps perfectly from the old EDMX structure."
 
 ### Upgrading from EF6 couldn't be simpler:
-1)	The the [CLI tool](https://www.nuget.org/packages/EntityFrameworkRuler/) to analyze the EDMX for all customizations and generate the rules.
-2)	Discard the EDMX (optional of course).
-3)	Reference [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project and run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command.
+1) The the [CLI tool](https://www.nuget.org/packages/EntityFrameworkRuler/) to analyze the EDMX for all customizations and generate the rules.
+2) Reference [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.
+3) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will do the rest.
 
 Done.  
 
-## Applying the Model Customizations:
+## Applying Model Customizations:
 There are two options for applying the rules to a DB context model:
 1) Simply reference [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.  Proceed with CLI scaffolding (as mentioned above).  [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) is a Design-Time reference package, meaning EF Core can use it during the scaffolding process to customize the generated model, but the assembly will NOT appear in the project build output.  It can't get more automated than this.
 2) Use the [CLI tool](https://www.nuget.org/packages/EntityFrameworkRuler/) to apply changes to an already generated EF Core model.  This approach uses [Roslyn](https://learn.microsoft.com/en-us/visualstudio/code-quality/roslyn-analyzers-overview) to apply code changes.  The code analysis is reliable, but for very large models this option can take a minute. 
@@ -58,8 +58,7 @@ Structure rules will be extracted from the EDMX and saved in the EF Core project
    ```
    > efruler -a <efCoreProjectBasePath>
    ```
-This assumes that you have executed the scaffolding process to generate the model from the database.
-For details on reverse engineering, go to: https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli
+This assumes that you have executed the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command to generate the model previously.
 
 # API Usage
 ### To generate rules from an EDMX, use the following class:

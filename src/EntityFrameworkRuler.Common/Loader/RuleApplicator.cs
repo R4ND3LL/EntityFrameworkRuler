@@ -53,10 +53,11 @@ public class RuleLoader : RuleProcessor, IRuleLoader {
             if (ProjectBasePath == null) throw new ArgumentException(nameof(ProjectBasePath));
 
             var projectBasePath = ProjectBasePath;
-            var csProjFiles = PathExtensions.ResolveCsProjFiles(ref projectBasePath);
-            if (csProjFiles.IsNullOrEmpty()) throw new ArgumentException(nameof(ProjectBasePath));
+            var csProjFile = projectBasePath.FindProjectFileCached();
+            if (csProjFile == null) throw new ArgumentException(nameof(ProjectBasePath));
 
-            var fullProjectPath = csProjFiles.FirstOrDefault();
+            projectBasePath = ProjectBasePath = csProjFile.Directory?.FullName ?? projectBasePath;
+            var fullProjectPath = csProjFile.FullName;
             if (fullProjectPath == null) throw new ArgumentException("csproj not found", nameof(ProjectBasePath));
 
             fileNameOptions ??= new();

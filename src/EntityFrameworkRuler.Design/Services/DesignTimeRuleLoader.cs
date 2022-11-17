@@ -31,7 +31,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     }
 
     /// <summary> The detected entity framework version.  </summary>
-    public Version EfVersion { get; set; }
+    public Version EfVersion { get; protected set; }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected bool IsEf6 => EfVersion?.Major == 6;
@@ -51,14 +51,16 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     public string SolutionPath { get; private set; }
 
 
-    private IList<Assembly> targetAssemblies;
+    private IList<TargetAssembly> targetAssemblies;
 
 
     /// <inheritdoc />
-    public IList<Assembly> TargetAssemblies {
-        get => targetAssemblies ?? Array.Empty<Assembly>();
-        private set => targetAssemblies = value;
-    }
+    public IEnumerable<Assembly> TargetAssemblies =>
+        targetAssemblies?
+            .Select(o => o.Assembly)
+            .Where(o => o != null)
+            .Distinct() ??
+        Array.Empty<Assembly>();
 
     /// <inheritdoc />
     public PrimitiveNamingRules GetPrimitiveNamingRules() {
@@ -76,9 +78,9 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
         var projectDir = GetProjectDir();
         SolutionPath = projectDir?.FindSolutionParentPath();
-        if (TargetAssemblies?.Count > 0) {
-            if (TargetAssemblies.IsReadOnly) TargetAssemblies = new List<Assembly>();
-            else TargetAssemblies.Clear();
+        if (targetAssemblies?.Count > 0) {
+            if (targetAssemblies.IsReadOnly) targetAssemblies = new List<TargetAssembly>();
+            else targetAssemblies.Clear();
         }
 
         if (projectDir.IsNullOrWhiteSpace()) return this;
@@ -90,34 +92,37 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         var dir = new DirectoryInfo(projectDir!);
         if (!dir.Exists) return this;
         try {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies().Select(o => new TargetAssembly(o)).ToArray();
 
             var csProj = projectDir.InspectProject();
             var assemblyName = csProj.GetAssemblyName().CoalesceWhiteSpace(options.RootNamespace);
 
-            var targetAssembliesQuery = assemblies.Where(o => !o.IsDynamic);
+            var targetAssembliesQuery = assemblies.Where(o => !o.Assembly.IsDynamic);
 
             // if assembly name is available, filter by it. otherwise, filter by the folder:
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (assemblyName.IsNullOrWhiteSpace())
-                targetAssembliesQuery = targetAssembliesQuery.Where(o => o.Location.StartsWith(projectDir));
+                targetAssembliesQuery = targetAssembliesQuery.Where(o => o.Assembly.Location.StartsWith(SolutionPath ?? projectDir));
             else
-                targetAssembliesQuery = targetAssembliesQuery.Where(o => o.GetName().Name == assemblyName);
+                targetAssembliesQuery = targetAssembliesQuery.Where(o => o.AssemblyName.Name.EqualsIgnoreCase(assemblyName));
 
-            TargetAssemblies = targetAssembliesQuery.ToList();
-            if (TargetAssemblies.Count > 0) {
-                reporter?.WriteInformation($"Rule loader resolved target assembly: {TargetAssemblies[0].GetName().Name}");
+            targetAssemblies = targetAssembliesQuery.ToList();
+            if (targetAssemblies.Count > 0) {
+                reporter?.WriteInformation($"Rule loader resolved target assembly: {targetAssemblies[0].Assembly.GetName().Name}");
             }
-            // if (TargetAssemblies.Count > 0) {
-            //     // also add direct references that are under the sln folder as locations to load property types from
-            //     if (SolutionPath.HasNonWhiteSpace()) {
-            //         foreach (var targetAssembly in TargetAssemblies) {
-            //             var ans = targetAssembly.GetReferencedAssemblies();
-            //             foreach (var an in ans) {
-            //             }
-            //         }
-            //     }
-            // }
+
+            if (targetAssemblies.Count is > 0 and <= 2) {
+                // we have a small number of targets.  add the references of our targets to expand the list. better for type resolution later
+                foreach (var targetAssembly in targetAssemblies.ToArray()) {
+                    var ans = targetAssembly.Assembly.GetReferencedAssemblies();
+                    foreach (var an in ans) {
+                        // the assembly is lazy loaded later on if it is not already in memory
+                        var loaded = assemblies.FirstOrDefault(o => o.AssemblyName.FullName == an.FullName) ??
+                                     assemblies.FirstOrDefault(o => o.AssemblyName.Name == an.Name);
+                        targetAssemblies.Add(loaded ?? new(an));
+                    }
+                }
+            }
         } catch (Exception ex) {
             Console.WriteLine($"Assembly inspection failed: {ex.Message}");
         }
@@ -168,16 +173,41 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         }
     }
 
-    /// <summary> Get the project folder where the EF context model is being built </summary>
-    protected virtual string GetProjectDir() {
+    /// <summary> Get the project base folder where the EF context model is being built </summary>
+    public virtual string GetProjectDir() {
         // use reflecting to access ProjectDir property, which was added in EF 7.
-        // otherwise, binding errors may occur against EF 6.
-        if (CodeGenOptions == null) return Directory.GetCurrentDirectory();
+        // otherwise, runtime binding errors may occur against EF 6.
+        if (CodeGenOptions == null) return PathExtensions.FindProjectDirUnderCurrentCached()?.FullName;
         string folder = null;
         var prop = CodeGenOptions.GetType().GetProperty("ProjectDir");
         if (prop != null) folder = prop.GetValue(CodeGenOptions) as string;
         if (folder.IsNullOrWhiteSpace() && CodeGenOptions.ContextDir.HasNonWhiteSpace() && Path.IsPathRooted(CodeGenOptions.ContextDir))
             folder = CodeGenOptions.ContextDir.FindProjectParentPath();
-        return folder.IsNullOrWhiteSpace() ? Directory.GetCurrentDirectory() : folder;
+        return folder.IsNullOrWhiteSpace() ? PathExtensions.FindProjectDirUnderCurrentCached()?.FullName : folder;
+    }
+}
+
+internal sealed class TargetAssembly {
+    private readonly Lazy<Assembly> assembly;
+    private AssemblyName name;
+
+    public TargetAssembly(AssemblyName name) {
+        this.name = name;
+        assembly = new(Factory, LazyThreadSafetyMode.ExecutionAndPublication);
+    }
+
+    public AssemblyName AssemblyName => name ??= assembly.Value?.GetName();
+    public Assembly Assembly => assembly.Value;
+
+    private Assembly Factory() {
+        try {
+            return Assembly.Load(name);
+        } catch {
+            return null;
+        }
+    }
+
+    public TargetAssembly(Assembly assembly) {
+        this.assembly = new(assembly);
     }
 }

@@ -65,6 +65,6 @@
         <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <None Include="..\..\docs\Design.md" Pack="true" PackagePath="\"/>
+        <None Include="..\..\docs\Design.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>

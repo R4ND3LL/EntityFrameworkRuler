@@ -22,6 +22,12 @@ public interface IDesignTimeRuleLoader {
     /// <summary> Gets the ModelReverseEngineerOptions. </summary>
     ModelReverseEngineerOptions ReverseEngineerOptions { get; }
 
+    /// <summary> The detected entity framework version.  </summary>
+    Version EfVersion { get; }
+
+    /// <summary> Get the project base folder where the EF context model is being built </summary>
+    string GetProjectDir();
+
     /// <summary> Gets the solution folder assuming it was resolvable as a parent of the project folder. </summary>
     string SolutionPath { get; }
 
@@ -32,5 +38,5 @@ public interface IDesignTimeRuleLoader {
     IDesignTimeRuleLoader SetReverseEngineerOptions(ModelReverseEngineerOptions options);
 
     /// <summary> The target project assembly, and relevant references.  Used to resolve custom property types from. </summary>
-    IList<Assembly> TargetAssemblies { get; }
+    IEnumerable<Assembly> TargetAssemblies { get; }
 }

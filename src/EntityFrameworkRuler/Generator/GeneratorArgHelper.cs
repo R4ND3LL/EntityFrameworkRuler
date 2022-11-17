@@ -28,18 +28,18 @@ public static class GeneratorArgHelper {
 
         if (args.IsNullOrEmpty() || (args.Count == 1 && args[0] == ".")) {
             // auto inspect current folder for both csproj and edmx
-            generatorOptions.ProjectBasePath = Directory.GetCurrentDirectory();
-            var projectFiles =
-                Directory.GetFiles(generatorOptions.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
-            if (projectFiles.Length != 1) {
+            var projectDir = PathExtensions.FindProjectDirUnderCurrentCached();
+            if (projectDir?.FullName == null) {
                 generatorOptions.ProjectBasePath = null;
                 return false;
             }
 
-            var edmxFiles = Directory.GetFiles(generatorOptions.ProjectBasePath, "*.edmx");
-            if (edmxFiles.Length != 1) return false;
+            generatorOptions.ProjectBasePath = projectDir.FullName;
 
-            generatorOptions.EdmxFilePath = edmxFiles[0];
+            var edmxFile = projectDir.FindFile("*.edmx", maxRecursionDepth: 3);
+            if (edmxFile == null) return false;
+
+            generatorOptions.EdmxFilePath = edmxFile.FullName;
             return true;
         }
 

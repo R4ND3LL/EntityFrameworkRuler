@@ -55,7 +55,7 @@ public static class RuleExtensions {
         foreach (var candidateName in candidateNames) {
             clrType = Type.GetType(candidateName, false);
             if (clrType != null) continue;
-            if (designTimeRuleLoader?.TargetAssemblies?.Count > 0)
+            if (designTimeRuleLoader?.TargetAssemblies != null)
                 foreach (var targetAssembly in designTimeRuleLoader.TargetAssemblies) {
                     clrType = targetAssembly.GetType(candidateName, false);
                     if (clrType != null) break;
@@ -66,7 +66,7 @@ public static class RuleExtensions {
 
         if (clrType != null) return clrType;
         // try a full assembly scan without the namespace, but filter for enum types only with matching name
-        if (!(designTimeRuleLoader?.TargetAssemblies?.Count > 0)) return null;
+        if (designTimeRuleLoader?.TargetAssemblies == null) return null;
         foreach (var targetAssembly in designTimeRuleLoader.TargetAssemblies) {
             var allTypes = targetAssembly.GetTypes();
             var someTypes = allTypes.Where(o => o.IsEnum && o.Name == clrTypeNamespaceAndName.name).ToList();
