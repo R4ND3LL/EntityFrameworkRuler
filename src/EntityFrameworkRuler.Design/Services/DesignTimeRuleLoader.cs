@@ -63,7 +63,13 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
     /// <inheritdoc />
     public DbContextRule GetDbContextRules() {
-        return GetRules().OfType<DbContextRule>().FirstOrDefault();
+        // pick the rule file that matches the context name
+        var rules = GetRules()?.OfType<DbContextRule>().ToArray();
+        if (rules.IsNullOrEmpty()) return DbContextRule.DefaultNoRulesFoundBehavior;
+        var contextName = CodeGenOptions?.ContextName?.Trim();
+        if (!contextName.HasNonWhiteSpace()) return rules![0];
+        var rule = rules!.FirstOrDefault(o => o.Name?.Trim().EqualsIgnoreCase(contextName) == true);
+        return rule ?? rules![0];
     }
 
     // /// <inheritdoc />
@@ -187,7 +193,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
 
     /// <summary> Internal load method for all rules </summary>
-    protected virtual List<IRuleModelRoot> GetRules() {
+    protected virtual IEnumerable<IRuleModelRoot> GetRules() {
         LoadRulesResponse Fetch() {
             var projectFolder = GetProjectDir();
             if (projectFolder.IsNullOrWhiteSpace() || !Directory.Exists(projectFolder)) {
@@ -204,7 +210,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         }
 
         response ??= Fetch() ?? new LoadRulesResponse();
-        return response?.Rules;
+        return response?.Rules ?? Enumerable.Empty<IRuleModelRoot>();
     }
 
     private void LoaderOnLog(object sender, LogMessage msg) {
