@@ -41,8 +41,6 @@ public class RulerNamingService : IRulerNamingService {
     public IEnumerable<string> FindCandidateNavigationNames(NavigationProperty navigation) {
         var ass = navigation.Association;
 
-        if (navigation.Entity.Name == "WorkPool" && navigation.ToRole.Entity.Name == "Employee") Debugger.Break();
-
         var isMany = navigation.Multiplicity == Multiplicity.Many;
         switch (ass) {
             case FkAssociation fkAssociation: {

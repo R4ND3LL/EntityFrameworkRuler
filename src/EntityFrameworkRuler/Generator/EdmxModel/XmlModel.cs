@@ -19,8 +19,87 @@ namespace EntityFrameworkRuler.Generator.EdmxModel;
 #pragma warning disable CA1002
 #pragma warning disable SA1649
 
-public interface IConceptualProperty {
+public interface IPropertyRef {
     string Name { get; set; }
+}
+
+public interface IConstraintEnd : IEquatable<IConstraintEnd> {
+    IEnumerable<IPropertyRef> Properties { get; }
+    string Role { get; set; }
+}
+
+public abstract class ConstraintEnd : IConstraintEnd {
+    public abstract IEnumerable<IPropertyRef> Properties { get; }
+
+    [XmlAttribute(AttributeName = "Role")]
+    public string Role { get; set; }
+
+    public bool Equals(IConstraintEnd other) {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Role == other.Role && PropertiesAreEqual(this, other);
+    }
+
+    public override bool Equals(object obj) => ReferenceEquals(this, obj) || (obj is IConstraintEnd other && Equals(other));
+
+    private static bool PropertiesAreEqual(IConstraintEnd p1, IConstraintEnd p2) {
+        using var props2 = p2.Properties.GetEnumerator();
+        foreach (var prop1Ref in p1.Properties) {
+            if (!props2.MoveNext()) return false;
+            if (props2.Current?.Name != prop1Ref.Name) return false;
+        }
+
+        return true;
+    }
+
+    // ReSharper disable once NonReadonlyMemberInGetHashCode
+    public override int GetHashCode() => HashCode.Combine(Properties, Role);
+    public static bool operator ==(ConstraintEnd left, ConstraintEnd right) => Equals(left, right);
+    public static bool operator !=(ConstraintEnd left, ConstraintEnd right) => !Equals(left, right);
+    public static bool operator ==(ConstraintEnd left, IConstraintEnd right) => Equals(left, right);
+    public static bool operator !=(ConstraintEnd left, IConstraintEnd right) => !Equals(left, right);
+    public static bool operator ==(IConstraintEnd left, ConstraintEnd right) => Equals(left, right);
+    public static bool operator !=(IConstraintEnd left, ConstraintEnd right) => !Equals(left, right);
+}
+
+public interface IReferentialConstraint : IEquatable<IReferentialConstraint> {
+    IConstraintEnd Principal { get; }
+    IConstraintEnd Dependent { get; }
+}
+
+public abstract class ReferentialConstraintBase : IReferentialConstraint {
+    [XmlIgnore]
+    IConstraintEnd IReferentialConstraint.Principal => GetPrincipal();
+
+    protected abstract IConstraintEnd GetPrincipal();
+
+    [XmlIgnore]
+    IConstraintEnd IReferentialConstraint.Dependent => GetDependent();
+
+    protected abstract IConstraintEnd GetDependent();
+
+    public bool Equals(IReferentialConstraint other) {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        var p1 = GetPrincipal();
+        var p2 = other.Principal;
+        if (p1 == null || p2 == null) return false;
+        if (!p1.Equals(p2)) return false;
+        var d1 = GetDependent();
+        var d2 = other.Dependent;
+        if (d1 == null || d2 == null) return false;
+        return d1.Equals(d2);
+    }
+
+    public override int GetHashCode() => HashCode.Combine(GetPrincipal()?.Role, GetDependent()?.Role);
+    public static bool operator ==(ReferentialConstraintBase left, ReferentialConstraintBase right) => Equals(left, right);
+    public static bool operator !=(ReferentialConstraintBase left, ReferentialConstraintBase right) => !Equals(left, right);
+    public static bool operator ==(ReferentialConstraintBase left, IReferentialConstraint right) => Equals(left, right);
+    public static bool operator !=(ReferentialConstraintBase left, IReferentialConstraint right) => !Equals(left, right);
+    public static bool operator ==(IReferentialConstraint left, ReferentialConstraintBase right) => Equals(left, right);
+    public static bool operator !=(IReferentialConstraint left, ReferentialConstraintBase right) => !Equals(left, right);
+    public override bool Equals(object obj) => ReferenceEquals(this, obj) || (obj is IReferentialConstraint other && Equals(other));
 }
 
 #region storage elements
@@ -90,32 +169,35 @@ public class StorageEnd {
 
 [DebuggerDisplay("StoragePrincipal Role {Role}")]
 [XmlRoot(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-public class StoragePrincipal {
+public class StoragePrincipal : ConstraintEnd {
     [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
     public List<StoragePropertyRef> PropertyRefs { get; set; }
 
-    [XmlAttribute(AttributeName = "Role")]
-    public string Role { get; set; }
+    [XmlIgnore]
+    public override IEnumerable<IPropertyRef> Properties => PropertyRefs;
 }
 
 [DebuggerDisplay("StorageDependent Role {Role}")]
 [XmlRoot(ElementName = "Dependent", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-public class StorageDependent {
+public class StorageDependent : ConstraintEnd {
     [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
     public List<StoragePropertyRef> PropertyRefs { get; set; }
 
-    [XmlAttribute(AttributeName = "Role")]
-    public string Role { get; set; }
+    [XmlIgnore]
+    public override IEnumerable<IPropertyRef> Properties => PropertyRefs;
 }
 
 [DebuggerDisplay("Storage FK Principal {Principal} Dependent {Dependent}")]
 [XmlRoot(ElementName = "ReferentialConstraint", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-public class StorageReferentialConstraint {
+public class StorageReferentialConstraint : ReferentialConstraintBase {
     [XmlElement(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
     public StoragePrincipal Principal { get; set; }
 
     [XmlElement(ElementName = "Dependent", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
     public StorageDependent Dependent { get; set; }
+
+    protected override IConstraintEnd GetPrincipal() => Principal;
+    protected override IConstraintEnd GetDependent() => Dependent;
 }
 
 [DebuggerDisplay("StorageAssociation {Name}")]
@@ -152,7 +234,7 @@ public class StorageParameter {
 
 [DebuggerDisplay("StoragePropertyRef {Name}")]
 [XmlRoot(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-public class StoragePropertyRef {
+public class StoragePropertyRef : IPropertyRef {
     [XmlAttribute(AttributeName = "Name")]
     public string Name { get; set; }
 }
@@ -268,7 +350,7 @@ public class StorageSchema {
     public string Store { get; set; }
 
     [XmlAttribute(AttributeName = "customannotation", Namespace = "http://www.w3.org/2000/xmlns/")]
-    public string Customannotation { get; set; }
+    public string CustomAnnotation { get; set; }
 
     [XmlAttribute(AttributeName = "xmlns")]
     public string Xmlns { get; set; }
@@ -374,7 +456,7 @@ public class ConceptualEntityContainer {
 
 [DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "Property", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-public class ConceptualProperty : IConceptualProperty {
+public class ConceptualProperty : IPropertyRef {
     [XmlAttribute(AttributeName = "Type")]
     public string Type { get; set; }
 
@@ -463,7 +545,7 @@ public class ConceptualEnumType {
 
 [DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-public class ConceptualPropertyRef {
+public class ConceptualPropertyRef : IPropertyRef {
     [XmlAttribute(AttributeName = "Name")]
     public string Name { get; set; }
 }
@@ -476,7 +558,7 @@ public class ConceptualEntityKey {
 
 [DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "NavigationProperty", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-public class ConceptualNavigationProperty : IConceptualProperty {
+public class ConceptualNavigationProperty : IPropertyRef {
     [XmlAttribute(AttributeName = "Name")]
     public string Name { get; set; }
 
@@ -514,32 +596,35 @@ public class ConceptualDocumentation {
 
 [DebuggerDisplay("{Role}")]
 [XmlRoot(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-public class ConceptualPrincipal {
+public class ConceptualPrincipal : ConstraintEnd {
     [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public List<ConceptualPropertyRef> PropertyRefs { get; set; }
 
-    [XmlAttribute(AttributeName = "Role")]
-    public string Role { get; set; }
+    [XmlIgnore]
+    public override IEnumerable<IPropertyRef> Properties => PropertyRefs;
 }
 
 [DebuggerDisplay("{Role}")]
 [XmlRoot(ElementName = "Dependent", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-public class ConceptualDependent {
+public class ConceptualDependent : ConstraintEnd {
     [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public List<ConceptualPropertyRef> PropertyRefs { get; set; }
 
-    [XmlAttribute(AttributeName = "Role")]
-    public string Role { get; set; }
+    [XmlIgnore]
+    public override IEnumerable<IPropertyRef> Properties => PropertyRefs;
 }
 
 [DebuggerDisplay("{Principal} {Dependent}")]
 [XmlRoot(ElementName = "ReferentialConstraint", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-public class ConceptualReferentialConstraint {
+public class ConceptualReferentialConstraint : ReferentialConstraintBase {
     [XmlElement(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public ConceptualPrincipal Principal { get; set; }
 
     [XmlElement(ElementName = "Dependent", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public ConceptualDependent Dependent { get; set; }
+
+    protected override IConstraintEnd GetPrincipal() => Principal;
+    protected override IConstraintEnd GetDependent() => Dependent;
 }
 
 [DebuggerDisplay("{Name} {ReferentialConstraint}")]

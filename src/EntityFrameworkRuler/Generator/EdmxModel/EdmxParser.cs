@@ -173,7 +173,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
                 ResolveDesignAssociation(navigation, ass, endRoles, toEndRole, associationSetMappings);
             } else {
                 // normal fk association
-                ResolveFkAssociation(navigation, ass, endRoles, toEndRole);
+                ResolveFkAssociation(navigation, ass, endRoles, toEndRole, edmxModel);
             }
 #if DEBUGPARSER
             if (navigation.Association == null && Debugger.IsAttached)
@@ -222,7 +222,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
     }
 
     private void ResolveFkAssociation(NavigationProperty navigation, ConceptualAssociation ass,
-        EndRole[] endRoles, EndRole toEndRole) {
+        EndRole[] endRoles, EndRole toEndRole, EdmxRoot edmx) {
         var constraint = navigation?.ConceptualAssociation?.ReferentialConstraint;
         if (constraint == null) return;
         var principalEndRole = endRoles.FirstOrDefault(o => o.Role == constraint.Principal.Role);
@@ -241,6 +241,26 @@ public sealed class EdmxParser : NotifyPropertyChanged {
             new(constraint, pProps, dProps)
         );
         if (navigation.Association != a) throw new InvalidConstraintException("Association not wired to navigation");
+        /* still need to resolve the storage association in order to get the real name
+            /Edmx/Runtime/ConceptualModels/Schema/EntityType/NavigationProperty/@Relationship = Conceptual association name with Namespace. prefix
+            /Edmx/Runtime/ConceptualModels/Schema/Association/@Name = Conceptual association name and contains role and constraint details.
+
+            There is no named mapping from conceptual to storage association as per the following:
+
+            /Edmx/Runtime/StorageModels/Schema/EntityContainer/AssociationSet/@Association = DB association name with Self. prefix
+            /Edmx/Runtime/StorageModels/Schema/EntityContainer/AssociationSet/@Name = DB association name
+            /Edmx/Runtime/StorageModels/Schema/Association/@Name = DB association name and details the storage RefConstraint
+
+            Best to compare constraints to determine equality.
+         */
+        var crc = a?.ReferentialConstraint?.ConceptualReferentialConstraint;
+        if (crc == null) return;
+        var src = edmx.Runtime.StorageModels.Schema.Associations.FirstOrDefault(o =>
+            o.Name == a.ConceptualAssociation.Name || crc.Equals(o.ReferentialConstraint));
+        if (src != null) {
+            a.ReferentialConstraint.StorageReferentialConstraint = src;
+        } else {
+        }
     }
 
     private Schema GetSchema(string schemaNamespace) {

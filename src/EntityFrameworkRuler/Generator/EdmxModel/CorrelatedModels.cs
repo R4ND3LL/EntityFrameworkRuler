@@ -146,7 +146,7 @@ internal readonly struct NamingCache<T> {
 
 [DebuggerDisplay("{Name}")]
 public class EntityPropertyBase : NotifyPropertyChanged {
-    public EntityPropertyBase(EntityType e, IConceptualProperty conceptualProperty) {
+    public EntityPropertyBase(EntityType e, IPropertyRef conceptualProperty) {
         ConceptualProperty = conceptualProperty;
         Entity = e;
     }
@@ -155,7 +155,7 @@ public class EntityPropertyBase : NotifyPropertyChanged {
     public string Name => ConceptualProperty.Name;
 
     public EntityType Entity { get; }
-    public IConceptualProperty ConceptualProperty { get; }
+    public IPropertyRef ConceptualProperty { get; }
     public string EntityName => Entity?.Name;
 }
 
@@ -297,6 +297,8 @@ public sealed class FkAssociation : AssociationBase {
         }
     }
 
+    public override string Name => ReferentialConstraint?.StorageReferentialConstraint?.Name ?? base.Name;
+
     public ReferentialConstraint ReferentialConstraint { get; }
     public override string ToString() { return $"FK Association: {Name}"; }
 }
@@ -335,7 +337,7 @@ public abstract class AssociationBase : NotifyPropertyChanged {
     public IList<NavigationProperty> Navigations { get; set; } = new List<NavigationProperty>();
 
     /// <summary> Gets this is the relationship name. </summary>
-    public string Name => ConceptualAssociation.Name;
+    public virtual string Name => ConceptualAssociation.Name;
 
     public ConceptualAssociation ConceptualAssociation { get; }
     public IList<EndRole> EndRoles { get; }
@@ -441,6 +443,8 @@ public sealed class ReferentialConstraint : NotifyPropertyChanged {
     }
 
     public ConceptualReferentialConstraint ConceptualReferentialConstraint { get; }
+    public StorageAssociation StorageReferentialConstraint { get; set; }
+
 
     public string PrincipalRole => ConceptualReferentialConstraint.Principal.Role;
     public EntityProperty[] PrincipalProperties { get; }
@@ -471,6 +475,7 @@ public sealed class ReferentialConstraint : NotifyPropertyChanged {
     /// </summary>
     public bool IsUnique => DependentProperties.Length == DependentEntity.StorageKey.Count &&
                             DependentProperties.All(o => o.IsStorageKey);
+
 
     public bool IsSelfReferencing() => PrincipalEntity != null && PrincipalEntity == DependentEntity;
 
