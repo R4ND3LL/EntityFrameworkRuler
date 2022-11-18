@@ -10,6 +10,7 @@
         <PackageId>EntityFrameworkRuler.Common</PackageId>
         <TargetFrameworks>netstandard2.1;net6.0</TargetFrameworks>
         <PackageReadmeFile>Common.md</PackageReadmeFile>
+        <PackageIcon>crown128.png</PackageIcon>
     </PropertyGroup>
     <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
         <DefineConstants>NET6</DefineConstants>
@@ -41,6 +42,11 @@
     <ItemGroup>
         <None Include="..\..\docs\Common.md" Pack="true" PackagePath="\" />
         <Compile Remove="Design\DesignTimeTypeMappingReferenceAttribute.cs" />
+        <None Include="..\Resources\crown128.png">
+          <Pack>True</Pack>
+          <PackagePath></PackagePath>
+          <Link>crown128.png</Link>
+        </None>
         <None Include="Design\DesignTimeTypeMappingReferenceAttribute.cs" />
         <Compile Remove="Rules\NavigationNaming\ClassReference.cs" />
         <None Include="Rules\NavigationNaming\ClassReference.cs" />

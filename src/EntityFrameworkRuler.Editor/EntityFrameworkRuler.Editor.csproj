@@ -11,6 +11,7 @@
         <RootNamespace>EntityFrameworkRuler.Editor</RootNamespace>
         <PackageId>EntityFrameworkRuler.Editor</PackageId>
         <PackageReadmeFile>Editor.md</PackageReadmeFile>
+        <PackageIcon>crown128.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,6 +21,11 @@
         </PackageReference>
     </ItemGroup>
     <ItemGroup>
-        <None Include="..\..\docs\Editor.md" Pack="true" PackagePath="\"/>
+        <None Include="..\..\docs\Editor.md" Pack="true" PackagePath="\" />
+        <None Include="..\Resources\crown128.png">
+          <Pack>True</Pack>
+          <PackagePath></PackagePath>
+          <Link>crown128.png</Link>
+        </None>
     </ItemGroup>
 </Project>
