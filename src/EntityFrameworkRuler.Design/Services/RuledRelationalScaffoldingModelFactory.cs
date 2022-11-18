@@ -107,7 +107,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schemaRule, out var tableRule);
 
         if (schemaRule == null) {
-            if (dbContextRule?.IncludeUnknownSchemas != false) return baseCall(); // nothing to go on
+            if (dbContextRule == null || dbContextRule.IncludeUnknownSchemas) return baseCall(); // nothing to go on
 
             if (OmittedSchemas.Add(table.Schema))
                 reporter?.WriteInformation($"RULED: Schema {table.Schema} omitted.");
