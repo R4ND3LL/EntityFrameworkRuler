@@ -10,7 +10,7 @@ namespace EntityFrameworkRuler.Rules;
 /// </summary>
 [DataContract]
 public sealed class DbContextRule : IRuleModelRoot {
-    internal static DbContextRule DefaultNoRulesFoundBehavior => DbContextRule.DefaultNoRulesFoundBehavior;
+    internal static DbContextRule DefaultNoRulesFoundBehavior => new() { IncludeUnknownSchemas = true };
 
     /// <summary> DB context name </summary>
     [DataMember(Order = 1)]
