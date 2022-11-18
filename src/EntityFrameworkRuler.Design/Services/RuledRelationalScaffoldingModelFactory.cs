@@ -76,8 +76,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseColumn column, Func<TypeScaffoldingInfo> baseCall) {
         var typeScaffoldingInfo = baseCall();
-        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new();
-
+        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? DbContextRule.DefaultNoRulesFoundBehavior;
 
         if (!TryResolveRuleFor(column, out var schemaRule, out var tableRule, out var columnRule)) return typeScaffoldingInfo;
         if (columnRule?.NewType.HasNonWhiteSpace() != true) return typeScaffoldingInfo;
@@ -102,7 +101,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         // ReSharper disable once AssignNullToNotNullAttribute
         if (table is null) return baseCall();
 
-        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRule();
+        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? DbContextRule.DefaultNoRulesFoundBehavior;
 
         dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schemaRule, out var tableRule);
 

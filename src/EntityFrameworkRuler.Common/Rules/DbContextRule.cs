@@ -10,6 +10,8 @@ namespace EntityFrameworkRuler.Rules;
 /// </summary>
 [DataContract]
 public sealed class DbContextRule : IRuleModelRoot {
+    internal static DbContextRule DefaultNoRulesFoundBehavior => DbContextRule.DefaultNoRulesFoundBehavior;
+
     /// <summary> DB context name </summary>
     [DataMember(Order = 1)]
     public string Name { get; set; }
@@ -37,6 +39,7 @@ public sealed class DbContextRule : IRuleModelRoot {
 
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     internal string FilePath { get; set; }
+
     string IRuleModelRoot.GetName() => Name.NullIfEmpty();
     IEnumerable<IClassRule> IRuleModelRoot.GetClasses() => Schemas.SelectMany(o => o.Tables);
 }

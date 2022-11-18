@@ -153,7 +153,11 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     #region Main rule gen methods
 
     private DbContextRule GetDbContextRules(EdmxParsed edmx) {
-        if (edmx?.Entities.IsNullOrEmpty() != false) return new();
+        if (edmx?.Entities.IsNullOrEmpty() != false) {
+            var noRulesFoundBehavior = DbContextRule.DefaultNoRulesFoundBehavior;
+            noRulesFoundBehavior.Name = edmx?.ContextName;
+            return noRulesFoundBehavior;
+        }
 
         var root = new DbContextRule {
             Name = edmx.ContextName,

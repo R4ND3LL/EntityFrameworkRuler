@@ -22,7 +22,9 @@ namespace EntityFrameworkRuler.Design.Services;
 public class RuledCandidateNamingService : CandidateNamingService {
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
     private readonly IOperationReporter reporter;
+
     private DbContextRule dbContextRule;
+
     //private NavigationNamingRules navigationRules;
     private readonly MethodInfo generateCandidateIdentifierMethod;
 
@@ -40,7 +42,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
     /// <summary> Name that table </summary>
     public override string GenerateCandidateIdentifier(DatabaseTable table) {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
-        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRule();
+        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? DbContextRule.DefaultNoRulesFoundBehavior;
 
 
         if (!dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule))
@@ -80,7 +82,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
     [SuppressMessage("ReSharper", "InvertIf")]
     public override string GenerateCandidateIdentifier(DatabaseColumn column) {
         if (column is null) throw new ArgumentNullException(nameof(column));
-        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRule();
+        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? DbContextRule.DefaultNoRulesFoundBehavior;
 
         if (!dbContextRule.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, out var schema, out var tableRule))
             return base.GenerateCandidateIdentifier(column);
@@ -88,7 +90,8 @@ public class RuledCandidateNamingService : CandidateNamingService {
             return base.GenerateCandidateIdentifier(column);
 
         if (columnRule?.NewName.HasNonWhiteSpace() == true) {
-            reporter?.WriteVerbosely($"RULED: Column {column.Table.Schema}.{column.Table.Name}.{columnRule.Name} property name set to {columnRule.NewName}");
+            reporter?.WriteVerbosely(
+                $"RULED: Column {column.Table.Schema}.{column.Table.Name}.{columnRule.Name} property name set to {columnRule.NewName}");
             return columnRule.NewName;
         }
 
@@ -134,7 +137,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
         Func<string> defaultEfName) {
         if (foreignKey is null) throw new ArgumentNullException(nameof(foreignKey));
         if (defaultEfName == null) throw new ArgumentNullException(nameof(defaultEfName));
-        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRule();
+        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? DbContextRule.DefaultNoRulesFoundBehavior;
 
         var fkName = foreignKey.GetConstraintName();
         var entity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
