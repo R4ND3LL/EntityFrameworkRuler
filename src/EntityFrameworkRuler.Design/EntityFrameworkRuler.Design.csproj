@@ -20,9 +20,6 @@
             <PackagePath></PackagePath>
             <Link>crown128.png</Link>
         </None>
-        <EmbeddedResource Include="..\Tests\NorthwindTestProject\CodeTemplates\EFCore\EntityTypeConfiguration.t4">
-          <Link>Resources\EntityTypeConfiguration.t4</Link>
-        </EmbeddedResource>
         <None Include="build\**\*">
             <Pack>True</Pack>
             <PackagePath>build</PackagePath>
@@ -64,6 +61,8 @@
 
     <ItemGroup>
         <EmbeddedResource Remove="nupkg\**" />
+        <None Remove="Resources\EntityTypeConfiguration.t4" />
+        <EmbeddedResource Include="Resources\EntityTypeConfiguration.t4" />
     </ItemGroup>
 
     <ItemGroup>

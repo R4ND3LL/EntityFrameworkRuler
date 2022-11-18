@@ -12,6 +12,7 @@ using Shouldly;
 using Xunit;
 using Castle.DynamicProxy;
 using EntityFrameworkRuler.Design.Extensions;
+using EntityFrameworkRuler.Extension;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 
@@ -84,6 +85,13 @@ public class RuledDesignTimeServicesTests {
         proxyObject.ShouldNotBeNull();
         mf.Create(null, null);
         intercepted.InterceptedCallCount.ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
+    public void T4ResourceLoading() {
+        var assembly = typeof(DesignTimeRuleLoader).Assembly;
+        var text = assembly.GetResourceText("EntityFrameworkRuler.Design.Resources.EntityTypeConfiguration.t4");
+        text.IsNullOrWhiteSpace().ShouldBeFalse();
     }
 }
 

@@ -67,15 +67,15 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         var rules = GetRules()?.OfType<DbContextRule>().ToArray();
         if (rules.IsNullOrEmpty()) return DbContextRule.DefaultNoRulesFoundBehavior;
         var contextName = CodeGenOptions?.ContextName?.Trim();
-        if (!contextName.HasNonWhiteSpace()) return rules![0];
-        var rule = rules!.FirstOrDefault(o => o.Name?.Trim().EqualsIgnoreCase(contextName) == true);
-        return rule ?? rules![0];
+        // ReSharper disable once InvertIf
+        if (contextName.HasNonWhiteSpace()) {
+            var rule = rules!.FirstOrDefault(o => o.Name?.Trim().EqualsIgnoreCase(contextName) == true);
+            if (rule != null) return rule;
+        }
+
+        return rules!.FirstOrDefault(o => !o.Schemas.IsNullOrEmpty()) ?? rules[0];
     }
 
-    // /// <inheritdoc />
-    // public NavigationNamingRules GetNavigationNamingRules() {
-    //     return GetRules().OfType<NavigationNamingRules>().FirstOrDefault();
-    // }
 
     /// <inheritdoc />
     public IDesignTimeRuleLoader SetCodeGenerationOptions(ModelCodeGenerationOptions options) {

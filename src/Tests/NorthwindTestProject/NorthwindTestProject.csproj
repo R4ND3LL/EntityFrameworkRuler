@@ -46,5 +46,8 @@
         <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />
     
       <Folder Include="Models" />
+        <EmbeddedResource Include="..\..\EntityFrameworkRuler.Design\Resources\EntityTypeConfiguration.t4">
+            <Link>CodeTemplates\EFCore\EntityTypeConfiguration.t42</Link>
+        </EmbeddedResource>
     </ItemGroup>
 </Project>
