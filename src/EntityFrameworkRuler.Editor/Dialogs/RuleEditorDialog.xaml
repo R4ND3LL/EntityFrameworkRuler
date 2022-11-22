@@ -96,7 +96,7 @@
 
                 <Border BorderBrush="{DynamicResource TransparentGrayBrush2}" BorderThickness="1,0,0,0" Width="1" MinHeight="16" VerticalAlignment="Stretch"  Margin="1,3,0,3" />
 
-                <Button Command="{Binding UndoCommand}" Margin="4,0,4,0" Padding="10,2,10,2" 
+                <Button Command="{Binding SaveCommand}" Margin="4,0,4,0" Padding="10,2,10,2" 
                             ToolTip="Save" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <controls:SvgImage OverrideBrush="{DynamicResource Accent1}" Source="/EntityFrameworkRuler.Editor;component/Resources/save.svg" VerticalAlignment="Center" HorizontalAlignment="Center"

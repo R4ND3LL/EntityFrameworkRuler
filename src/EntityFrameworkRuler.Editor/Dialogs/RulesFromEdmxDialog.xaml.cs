@@ -1,4 +1,5 @@
 ﻿using EntityFrameworkRuler.Generator;
+using EntityFrameworkRuler.Saver;
 
 namespace EntityFrameworkRuler.Editor.Dialogs;
 

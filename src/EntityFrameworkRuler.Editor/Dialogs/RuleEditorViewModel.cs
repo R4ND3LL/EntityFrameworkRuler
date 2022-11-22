@@ -9,6 +9,7 @@ using EntityFrameworkRuler.Editor.Models;
 using EntityFrameworkRuler.Generator;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
+using EntityFrameworkRuler.Saver;
 
 namespace EntityFrameworkRuler.Editor.Dialogs;
 
@@ -55,7 +56,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
 
             var sb = new StringBuilder();
             var hasError = false;
-            var loader = new RuleLoader(new LoaderOptions() { ProjectBasePath = value.Path });
+            var loader = new RuleLoader(new LoadOptions() { ProjectBasePath = value.Path });
             loader.OnLog += GeneratorOnLog;
             FileNameOptions ??= new RuleFileNameOptions();
             var response = await loader.LoadRulesInProjectPath(FileNameOptions).ConfigureAwait(true);
@@ -122,9 +123,32 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
         return InitializeRootModel(SelectedRuleFile);
     }
     [RelayCommand(AllowConcurrentExecutions = false)]
-    private Task Save() {
-        if (SelectedRuleFile == null) return Task.CompletedTask;
-        return InitializeRootModel(SelectedRuleFile);
+    private async Task Save() {
+        try {
+            if (SelectedRuleFile == null || RootModel == null) return;
+            var sb = new StringBuilder();
+            var hasError = false;
+            var file = SelectedRuleFile.FileInfo;
+            var path = file.Directory.FullName;
+            var saver = new RuleSaver(new SaveOptions() { ProjectBasePath = path });
+            saver.OnLog += GeneratorOnLog;
+            var response = await saver.TrySaveRules((IRuleModelRoot)RootModel.Item, path, new RuleFileNameOptions() { DbContextRulesFile = file.FullName });
+            saver.OnLog -= GeneratorOnLog;
+            if (response.Errors.Any()) {
+                MessageBox.Show(response.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Error);
+            } else {
+                // success
+                var savedPath = response.SavedRules.FirstOrDefault();
+                Debug.Assert(savedPath == file.FullName);
+            }
+
+            void GeneratorOnLog(object sender, Common.LogMessage logMessage) {
+                if (!hasError && logMessage.Type == Common.LogType.Error) hasError = true;
+                sb.AppendLine(logMessage.ToString());
+            }
+        } catch (Exception ex) {
+            MessageBox.Show(ex.Message, "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
     [RelayCommand]
     private void ClearSearch() {

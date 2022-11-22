@@ -8,10 +8,10 @@ namespace EntityFrameworkRuler;
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class EntityFrameworkRulerExtensions {
     /// <summary> Add RuleLoader services </summary>
-    public static T AddRuleLoader<T>(this T serviceCollection, LoaderOptions loaderOptions = null)
+    public static T AddRuleLoader<T>(this T serviceCollection, LoadOptions loadOptions = null)
         where T : IServiceCollection =>
         (T)serviceCollection
-            .AddSingleton(loaderOptions ?? new LoaderOptions() { ProjectBasePath = Directory.GetCurrentDirectory() })
+            .AddSingleton(loadOptions ?? new LoadOptions() { ProjectBasePath = Directory.GetCurrentDirectory() })
             .AddSingleton<IRuleLoader, RuleLoader>()
             .CoerceLoaderServiceCollection();
 

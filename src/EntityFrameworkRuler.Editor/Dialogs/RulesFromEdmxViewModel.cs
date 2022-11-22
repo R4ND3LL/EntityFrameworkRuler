@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EntityFrameworkRuler.Editor.Models;
 using EntityFrameworkRuler.Generator;
+using EntityFrameworkRuler.Saver;
 
 namespace EntityFrameworkRuler.Editor.Dialogs;
 

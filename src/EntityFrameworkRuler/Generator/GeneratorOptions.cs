@@ -1,10 +1,11 @@
 // ReSharper disable MemberCanBeInternal
 
+using EntityFrameworkRuler.Saver;
+
 namespace EntityFrameworkRuler.Generator;
 
-public sealed class GeneratorOptions {
-    public string EdmxFilePath { get; set; }
-    public string ProjectBasePath { get; set; }
+public sealed class GeneratorOptions: SaveOptions {
+    public string EdmxFilePath { get; set; } 
 
     /// <summary>  Gets or sets a value indicating whether the expected Reverse Engineered entities
     /// will use the database names directly. </summary>

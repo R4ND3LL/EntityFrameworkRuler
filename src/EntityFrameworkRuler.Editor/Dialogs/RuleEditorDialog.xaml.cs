@@ -13,7 +13,7 @@ public sealed partial class RuleEditorDialog : Window {
     private readonly RuleEditorViewModel vm;
 
     public RuleEditorDialog() : this(null, null) {
-        Theme = ThemeNames.Light;
+        Theme = ThemeNames.Dark;
     }
 
     public RuleEditorDialog(string ruleFilePath, string targetProjectPath = null) {

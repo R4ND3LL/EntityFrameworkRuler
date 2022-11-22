@@ -14,22 +14,22 @@ public class RuleLoader : RuleProcessor, IRuleLoader {
     /// <summary> Create rule Loader for making changes to project files </summary>
     /// <param name="projectBasePath">project folder containing rules and target files.</param>
     public RuleLoader(string projectBasePath)
-        : this(new LoaderOptions() {
+        : this(new LoadOptions() {
             ProjectBasePath = projectBasePath
         }) {
     }
 
     /// <summary> Create rule Loader for making changes to project files </summary>
     [ActivatorUtilitiesConstructor]
-    public RuleLoader(LoaderOptions options) {
-        Options = options ?? new LoaderOptions() { ProjectBasePath = Directory.GetCurrentDirectory() };
+    public RuleLoader(LoadOptions options) {
+        Options = options ?? new LoadOptions() { ProjectBasePath = Directory.GetCurrentDirectory() };
     }
 
 
     #region properties
 
     /// <inheritdoc />
-    public LoaderOptions Options { get; }
+    public LoadOptions Options { get; }
 
     /// <summary> The target project path containing entity models. </summary>
     public string ProjectBasePath {

@@ -5,6 +5,7 @@ using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator.EdmxModel;
 using EntityFrameworkRuler.Generator.Services;
 using EntityFrameworkRuler.Rules;
+using EntityFrameworkRuler.Saver;
 using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable UnusedMethodReturnValue.Global
@@ -17,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EntityFrameworkRuler.Generator;
 
 /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX. </summary>
-public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
+public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
     /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
     /// <param name="edmxFilePath"> The EDMX file path </param>
     /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
@@ -38,7 +39,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     /// <param name="options"> Generator options. </param>
     /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
     [ActivatorUtilitiesConstructor]
-    public RuleGenerator(GeneratorOptions options, IRulerNamingService namingService = null) {
+    public RuleGenerator(GeneratorOptions options, IRulerNamingService namingService = null) : base(options) {
         this.namingService = namingService;
         Options = options ?? throw new ArgumentNullException(nameof(options));
     }
@@ -101,58 +102,6 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
             } catch (Exception ex) {
                 response.LogError($"Error generating output for {typeof(T)}: {ex.Message}");
             }
-        }
-    }
-
-
-    /// <summary> Persist the previously generated rules to the given target path. </summary>
-    /// <param name="rules"> The rule models to save. </param>
-    /// <param name="projectBasePath"> The location to save the rule files. </param>
-    /// <param name="fileNameOptions"> Custom naming options for the rule files.  Optional. This parameter can be used to skip writing a rule file by setting that rule file to null. </param>
-    /// <returns> True if completed with no errors.  When false, see Errors collection for details. </returns>
-    /// <exception cref="Exception"></exception>
-    public async Task<SaveRulesResponse> TrySaveRules(IEnumerable<IRuleModelRoot> rules, string projectBasePath,
-        RuleFileNameOptions fileNameOptions = null) {
-        var response = new SaveRulesResponse();
-        response.OnLog += ResponseOnLog;
-        try {
-            var dir = new DirectoryInfo(projectBasePath);
-            if (!dir.Exists) {
-                response.LogError("Output folder does not exist");
-                return response;
-            }
-
-            fileNameOptions ??= new();
-
-            await TryWriteRules<DbContextRule>(
-                fileNameOptions.DbContextRulesFile.CoalesceWhiteSpace(() => new RuleFileNameOptions().DbContextRulesFile));
-
-            return response;
-
-
-            async Task TryWriteRules<T>(string fileName) where T : class, IRuleModelRoot {
-                try {
-                    if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
-                    foreach (var rulesRoot in rules?.OfType<T>()) {
-                        var name = rulesRoot.GetFinalName().NullIfWhitespace() ?? "dbcontext";
-                        fileName = fileName.Replace("<ContextName>", name, StringComparison.OrdinalIgnoreCase);
-                        var path = await WriteRules<T>(rulesRoot, fileName);
-                        response.SavedRules.Add(path);
-                        response.LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");
-                    }
-                } catch (Exception ex) {
-                    response.LogError($"Error writing rule to file {fileName}: {ex.Message}");
-                }
-            }
-
-            async Task<string> WriteRules<T>(T rulesRoot, string filename)
-                where T : class, IRuleModelRoot {
-                var path = Path.Combine(dir.FullName, filename);
-                await rulesRoot.ToJson<T>(path);
-                return path;
-            }
-        } finally {
-            response.OnLog -= ResponseOnLog;
         }
     }
 
@@ -270,6 +219,3 @@ public sealed class GenerateRulesResponse : LoggedResponse {
     }
 }
 
-public sealed class SaveRulesResponse : LoggedResponse {
-    public List<string> SavedRules { get; } = new();
-}
