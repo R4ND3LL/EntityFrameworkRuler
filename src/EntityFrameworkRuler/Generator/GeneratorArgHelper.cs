@@ -15,9 +15,25 @@ public static class GeneratorArgHelper {
             foreach (var switchArg in switchArgs) {
                 // ReSharper disable StringLiteralTypo
                 switch (switchArg) {
-                    case "nometa":
-                    case "nometadata":
-                        generatorOptions.NoMetadata = true;
+                    case "usedatabasenames":
+                    case "use-database-names":
+                    case "usedbnames":
+                        generatorOptions.UseDatabaseNames = true;
+                        break;
+                    case "nopluralize":
+                    case "no-pluralize":
+                    case "np":
+                        generatorOptions.NoPluralize = true;
+                        break;
+                    case "includeunknowns":
+                    case "include-unknowns":
+                    case "allowunknowns":
+                        generatorOptions.IncludeUnknowns = true;
+                        break;
+                    case "compact":
+                    case "compactrules":
+                    case "compact-rules":
+                        generatorOptions.CompactRules = true;
                         break;
                     default:
                         return false; // invalid arg

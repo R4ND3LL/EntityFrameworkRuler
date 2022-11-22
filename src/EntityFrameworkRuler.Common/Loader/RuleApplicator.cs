@@ -50,23 +50,37 @@ public class RuleLoader : RuleProcessor, IRuleLoader {
         try {
             if (ProjectBasePath == null) throw new ArgumentException(nameof(ProjectBasePath));
 
-            var projectBasePath = ProjectBasePath;
-            var csProjFile = projectBasePath.FindProjectFileCached();
-            if (csProjFile == null) throw new ArgumentException(nameof(ProjectBasePath));
 
-            projectBasePath = ProjectBasePath = csProjFile.Directory?.FullName ?? projectBasePath;
-            var fullProjectPath = csProjFile.FullName;
-            if (fullProjectPath == null) throw new ArgumentException("csproj not found", nameof(ProjectBasePath));
+            FileInfo[] jsonFiles = null;
+            if (ProjectBasePath.EndsWithIgnoreCase(".json")) {
+                var f = new FileInfo(ProjectBasePath);
+                if (f.Exists) {
+                    ProjectBasePath = f.Directory?.FullName ?? ProjectBasePath;
+                    jsonFiles = new[] { f };
+                } else throw new ArgumentException(nameof(ProjectBasePath));
+            }
 
-            fileNameOptions ??= new();
+            if (jsonFiles.IsNullOrEmpty()) {
+                // locate all rule files in folder
+                fileNameOptions ??= new();
+                if (fileNameOptions.DbContextRulesFile.IsNullOrWhiteSpace())
+                    return response;
 
-            if (fileNameOptions.DbContextRulesFile.IsNullOrWhiteSpace())
-                return response;
+                var projectBasePath = ProjectBasePath;
+                var csProjFile = projectBasePath.FindProjectFileCached();
+                if (csProjFile == null) throw new ArgumentException(nameof(ProjectBasePath));
 
-            var mask = fileNameOptions.DbContextRulesFile.Replace("<ContextName>", "*", StringComparison.OrdinalIgnoreCase);
+                projectBasePath = ProjectBasePath = csProjFile.Directory?.FullName ?? projectBasePath;
+                var fullProjectPath = csProjFile.FullName;
+                if (fullProjectPath == null) throw new ArgumentException("csproj not found", nameof(ProjectBasePath));
 
-            var jsonFiles = projectBasePath.FindFiles(mask, true, 2).ToArray();
-            if (jsonFiles.Length == 0) return response; // nothing to do
+                var mask = fileNameOptions.DbContextRulesFile.Replace("<ContextName>", "*", StringComparison.OrdinalIgnoreCase);
+
+                jsonFiles = projectBasePath.FindFiles(mask, true, 2).ToArray();
+                if (jsonFiles.Length == 0) return response; // nothing to do
+
+            }
+
 
             foreach (var fileInfo in jsonFiles)
                 try {

@@ -179,4 +179,23 @@ public static class RuleExtensions {
 
         return navigationRenames.Length != 1 ? null : navigationRenames[0];
     }
+
+    /// <summary> Get the rule elements within this element </summary>
+    public static IEnumerable<IRuleItem> GetChildren(this IRuleItem item) {
+        return item switch {
+            IRuleModelRoot r => r.GetSchemas(),
+            ISchemaRule sr => sr.GetClasses(),
+            IClassRule cr => cr.GetProperties(),
+            _ => Enumerable.Empty<IRuleItem>()
+        };
+    }
+    /// <summary> True if the rule element can contain child elements </summary>
+    public static bool CanHaveChildren(this IRuleItem item) {
+        return item switch {
+            IRuleModelRoot => true,
+            ISchemaRule => true,
+            IClassRule => true,
+            _ => false
+        };
+    }
 }

@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.Collections;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -65,6 +67,10 @@ internal static class ListExtensions {
         foreach (var o in list) c.Add(o);
     }
 
+    public static ObservableCollection<T> ToObservable<T>(this IEnumerable<T> c) {
+        return new ObservableCollection<T>(c);
+    }
+
 #if NETCOREAPP3_1
     /// <summary> missing in .net 3.1 </summary>
     public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> items, Func<T, TKey> property) {
@@ -93,5 +99,80 @@ internal static class ListExtensions {
         }
 
         return args;
+    }
+    /// <summary>
+    /// This will search the given collection for an items that satisfies the given expression, and return the first
+    /// index that returns true
+    /// </summary>
+    public static int IndexOf<TSource>(this IList<TSource> source, Predicate<TSource> searchFunc) {
+        for (var i = 0; i < source.Count; i++) {
+            var x = source[i];
+            if (searchFunc(x)) return i;
+        }
+
+        return -1;
+    }
+
+    /// <summary>
+    /// This will search the given collection for an items that satisfies the given expression, and return the first
+    /// index that returns true
+    /// </summary>
+    public static int IndexOf(this IList source, Predicate<object> searchFunc) {
+        for (var i = 0; i < source.Count; i++) {
+            var x = source[i];
+            if (searchFunc(x)) return i;
+        }
+
+        return -1;
+    }
+
+    /// <summary>
+    /// This will search the given collection for an items that satisfies the given expression, and return the last
+    /// index that returns true
+    /// </summary>
+    public static int LastIndexOf<TSource>(this IList<TSource> source, Predicate<TSource> searchFunc) {
+        for (var i = source.Count - 1; i >= 0; i--) {
+            var x = source[i];
+            if (searchFunc(x)) return i;
+        }
+
+        return -1;
+    }
+
+    /// <summary>
+    /// This will search the given collection for an items that satisfies the given expression, and return the last
+    /// index that returns true
+    /// </summary>
+    public static int LastIndexOf(this IList source, Predicate<object> searchFunc) {
+        for (var i = source.Count - 1; i >= 0; i--) {
+            var x = source[i];
+            if (searchFunc(x)) return i;
+        }
+
+        return -1;
+    }
+    /// <summary> add sorted routine using the native List class's BinarySearch method. Comparer is required. </summary>
+    public static int AddSortedWithComparer<T>(this List<T> list, T item, IComparer<T> comparer) {
+        if (comparer == null) throw new ArgumentNullException(nameof(comparer));
+        if (list.Count == 0) {
+            list.Add(item);
+            return 0;
+        }
+
+        if (comparer.Compare(list[^1], item) <= 0) { // greater than last
+            list.Add(item);
+            return list.Count - 1;
+        }
+
+        if (comparer.Compare(list[0], item) >= 0) { // less than first
+            list.Insert(0, item);
+            return 0;
+        }
+
+        var index = list.BinarySearch(item, comparer);
+        if (index < 0)
+            index = ~index;
+        list.Insert(index, item);
+        return index;
     }
 }

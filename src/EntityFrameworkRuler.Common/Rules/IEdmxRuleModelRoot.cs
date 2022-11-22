@@ -2,45 +2,64 @@
 
 // ReSharper disable MemberCanBePrivate.Global
 
+using System.ComponentModel;
+using System.Runtime.Serialization;
+
 namespace EntityFrameworkRuler.Rules;
 
 /// <summary> Root node of the rule model </summary>
-public interface IRuleModelRoot {
+public interface IRuleModelRoot : IRuleItem {
     /// <summary> Get rule model kind </summary>
     RuleModelKind Kind { get; }
 
-    /// <summary> The name of the model </summary>
-    string GetName();
+    /// <summary> Get schema rules </summary>
+    IEnumerable<ISchemaRule> GetSchemas();
 
     /// <summary> Get class rules </summary>
     IEnumerable<IClassRule> GetClasses();
 }
 
 /// <summary> Rule for a class/table </summary>
-public interface IClassRule {
-    /// <summary> Get old name </summary>
-    string GetOldName();
+public interface ISchemaRule : IRuleItem {
+    /// <summary> Get class rules </summary>
+    IEnumerable<IClassRule> GetClasses();
+}
 
-    /// <summary> Get new name </summary>
-    string GetNewName();
-
+/// <summary> Rule for a class/table </summary>
+public interface IClassRule : IRuleItem {
     /// <summary> Get property rules </summary>
     IEnumerable<IPropertyRule> GetProperties();
 }
 
 /// <summary> Rule for a property/column </summary>
-public interface IPropertyRule {
+public interface IPropertyRule : IRuleItem {
     /// <summary> Get name(s) to look for when making changes.  Assume Roslyn stage, after EF model generation. </summary>
     IEnumerable<string> GetCurrentNameOptions();
-
-    /// <summary> Get new name in event of name change.  Can return null if not changing.  Assume Roslyn stage, after EF model generation. </summary>
-    string GetNewName();
 
     /// <summary> Get new type in event of type change.  Can return null if not changing.  Assume Roslyn stage, after EF model generation. </summary>
     string GetNewTypeName();
 
     /// <summary> Get extra metadata about this navigation, if in fact it is a navigation. </summary>
     NavigationMetadata GetNavigationMetadata();
+
+}
+
+/// <summary> Base interface for rule model items </summary>
+public interface IRuleItem {
+    /// <summary> Get the name that we expect EF will generate for this item. </summary>
+    string GetExpectedEntityFrameworkName();
+
+    /// <summary> Gets the conceptual name of the model. That is, the name that this element should have in the final reverse engineered model. </summary>
+    string GetFinalName();
+
+    /// <summary> Gets the new name to give this element. </summary>
+    string GetNewName();
+
+    /// <summary> Sets the conceptual name of the model. That is, the name that this element should have in the final reverse engineered model. </summary>
+    void SetFinalName(string value);
+
+    /// <summary> If true, omit this item and all containing elements during the scaffolding process. Default is false. </summary>
+    bool NotMapped { get; }
 }
 
 /// <summary> Extra information about the navigation property </summary>

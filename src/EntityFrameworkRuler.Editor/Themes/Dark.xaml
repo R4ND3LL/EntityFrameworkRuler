@@ -1,0 +1,88 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                      xmlns:options="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options"
+                      xmlns:system="clr-namespace:System;assembly=System.Runtime">
+
+    <system:String x:Key="ThemeName">Dark</system:String>
+    <FontFamily x:Key="DefaultFontFamily">Segoe UI, Lucida Sans Unicode, Verdana</FontFamily>
+    <FontFamily x:Key="InputFontFamily">Consolas, Segoe UI, Lucida Sans Unicode, Verdana</FontFamily>
+    <system:Double x:Key="DefaultFontSize">12</system:Double>
+
+    <!--Colors-->
+    <Color x:Key="ColorPrimary1">#406295</Color>
+    <Color x:Key="ColorPrimary2">#2B4563</Color>
+
+    <Color x:Key="Accent1Color">#8AB5F6</Color>
+    <Color x:Key="Accent2Color">#4D91F8</Color>
+    <Color x:Key="Accent3Color">#1A4FA0</Color>
+    <Color x:Key="Accent4Color">#103264</Color>
+
+    <!--Brushes-->
+    <SolidColorBrush x:Key="BrushPrimary1" Color="{StaticResource ColorPrimary1}" />
+    <SolidColorBrush x:Key="BrushPrimary2" Color="{StaticResource ColorPrimary2}" />
+    <SolidColorBrush x:Key="Accent1" Color="{StaticResource Accent1Color}" />
+    <SolidColorBrush x:Key="Accent2" Color="{StaticResource Accent2Color}" />
+    <SolidColorBrush x:Key="Accent3" Color="{StaticResource Accent3Color}" />
+    <SolidColorBrush x:Key="Accent4" Color="{StaticResource Accent4Color}" />
+
+    <SolidColorBrush x:Key="WindowBackground" Color="#1F1F1F" />
+
+    <Color x:Key="BlackColor">#FFFFFFFF</Color>
+    <Color x:Key="WhiteColor">#202020</Color>
+
+    <Color x:Key="Gray1">#FFF9F9F9</Color>
+    <Color x:Key="Gray2">#B5B5B5</Color>
+    <Color x:Key="Gray3">#999999</Color>
+    <Color x:Key="Gray4">#8d8d8d</Color>
+    <Color x:Key="Gray5">#7D7D7D</Color>
+    <Color x:Key="Gray6">#808080</Color>
+    <Color x:Key="Gray7">#7E7E7E</Color>
+    <Color x:Key="Gray8">#454545</Color>
+    <Color x:Key="Gray9">#3F3F3F</Color>
+    <Color x:Key="Gray10">#2F2F2F</Color>
+    <SolidColorBrush x:Key="BlackBrush" Color="{StaticResource BlackColor}" options:Freeze="True" />
+    <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource WhiteColor}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="GrayBrush1" Color="{StaticResource Gray1}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush2" Color="{StaticResource Gray2}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush3" Color="{StaticResource Gray3}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush4" Color="{StaticResource Gray4}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush5" Color="{StaticResource Gray5}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush6" Color="{StaticResource Gray6}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush7" Color="{StaticResource Gray7}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush8" Color="{StaticResource Gray8}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush9" Color="{StaticResource Gray9}" options:Freeze="True" />
+    <SolidColorBrush x:Key="GrayBrush10" Color="{StaticResource Gray10}" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="TransparentGrayBrush1" Color="{StaticResource Gray1}" Opacity="0.7" options:Freeze="True" />
+    <SolidColorBrush x:Key="TransparentGrayBrush2" Color="{StaticResource Gray2}" Opacity="0.7" options:Freeze="True" />
+    <SolidColorBrush x:Key="TransparentGrayBrush3" Color="{StaticResource Gray3}" Opacity="0.7" options:Freeze="True" />
+    <SolidColorBrush x:Key="TransparentGrayBrush5" Color="{StaticResource Gray5}" Opacity="0.7" options:Freeze="True" />
+    <SolidColorBrush x:Key="TransparentGrayBrush7" Color="{StaticResource Gray7}" Opacity="0.7" options:Freeze="True" />
+    <SolidColorBrush x:Key="TransparentGrayBrush8" Color="{StaticResource Gray8}" Opacity="0.7" options:Freeze="True" />
+    <SolidColorBrush x:Key="TransparentGrayBrush10" Color="{StaticResource Gray10}" Opacity="0.7" options:Freeze="True" />
+
+    <SolidColorBrush x:Key="InputBackground" Color="#2E2E2E" />
+    <SolidColorBrush x:Key="InputBackgroundSelected" Color="Black" />
+    <SolidColorBrush x:Key="InputBackgroundHover" Color="#3e3e42" />
+    <SolidColorBrush x:Key="InputBorder" Color="#333333" />
+    <SolidColorBrush x:Key="InputBorderHover" Color="#3e3e42" />
+    <SolidColorBrush x:Key="InputText" Color="#DFDFDF" />
+    <SolidColorBrush x:Key="InputTextHover" Color="#DFDFDF" />
+    <SolidColorBrush x:Key="InputTextDisabled" Color="#717171" />
+
+    <Style TargetType="TextBlock"   BasedOn="{StaticResource {x:Type TextBlock}}">
+        <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
+    </Style>
+    <Style TargetType="Label"   BasedOn="{StaticResource {x:Type Label}}">
+        <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
+    </Style>
+    <Style TargetType="TextBox"   BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="Background" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
+    </Style>
+    <!--<Style TargetType="ComboBox"   BasedOn="{StaticResource {x:Type ComboBox}}">
+        <Setter Property="Background" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
+    </Style>-->
+</ResourceDictionary>

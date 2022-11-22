@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using EntityFrameworkRuler.Applicator.CsProjParser;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
@@ -197,12 +196,12 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
         var dirtyClassStates = new HashSet<ClassState>();
         foreach (var classRule in classRules) {
             var newClassName = classRule.GetNewName();
-            var oldClassName = classRule.GetOldName().CoalesceWhiteSpace(newClassName);
+            var oldClassName = classRule.GetExpectedEntityFrameworkName().NullIfEmpty() ?? newClassName;
             newClassName = newClassName.CoalesceWhiteSpace(oldClassName);
             if (newClassName.IsNullOrWhiteSpace()) continue; // invalid entry
 
             // first rename class if needed
-            var canRenameClass = newClassName != oldClassName;
+            var canRenameClass = newClassName.HasNonWhiteSpace() && newClassName != oldClassName;
             var classState = new ClassState(state);
             if (canRenameClass) {
                 var classActionResult =
@@ -380,11 +379,12 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
         ApplyRulesResponse response) {
         if (projectBasePath.IsNullOrEmpty()) return null;
         try {
-            var csProjFiles = PathExtensions.ResolveCsProjFiles(ref projectBasePath);
+            var csProjFiles = projectBasePath.FindCsProjFiles();
 
             Project project;
             if (!AdhocOnly) {
                 foreach (var csProjFile in csProjFiles) {
+                    if (csProjFile.Directory != null) projectBasePath = csProjFile.Directory.FullName;
                     project = await RoslynExtensions.LoadExistingProjectAsync(csProjFile.FullName, response);
                     if (project?.Documents.Any() == true) return project;
                 }

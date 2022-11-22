@@ -44,13 +44,7 @@ public static class PathExtensions {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static IEnumerable<FileInfo> FindEdmxFilesUnderPath(this string path, bool recurseSubdirectories = true,
         int maxRecursionDepth = 5) {
-        if (path.EndsWithIgnoreCase(".edmx")) {
-            var fileInfo = new FileInfo(path);
-            return new[] { fileInfo };
-        } else {
-            var dir = new DirectoryInfo(path!);
-            return dir.FindFiles("*.edmx", recurseSubdirectories: recurseSubdirectories, maxRecursionDepth: maxRecursionDepth);
-        }
+        return FindFilesUnderPath(path, "edmx", recurseSubdirectories, maxRecursionDepth);
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -69,28 +63,26 @@ public static class PathExtensions {
         return di?.Exists != true ? null : di.FullName;
     }
 
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public static IEnumerable<FileInfo> ResolveCsProjFiles(this string projectBasePath) => ResolveCsProjFiles(ref projectBasePath);
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public static IEnumerable<FileInfo> ResolveCsProjFiles(ref string projectBasePath) {
-        IEnumerable<FileInfo> csProjFiles;
-        if (projectBasePath.EndsWithIgnoreCase(".csproj")) {
-            var fileInfo = new FileInfo(projectBasePath);
-            csProjFiles = new[] { fileInfo };
-            projectBasePath = fileInfo.Directory?.FullName;
+    public static IEnumerable<FileInfo> FindCsProjFiles(this string projectBasePath, bool recurseSubdirectories = true, int maxRecursionDepth = 1) {
+        return FindFilesUnderPath(projectBasePath, "csproj", recurseSubdirectories, maxRecursionDepth);
+    }
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static IEnumerable<FileInfo> FindFilesUnderPath(this string path, string ext, bool recurseSubdirectories = true, int maxRecursionDepth = 1) {
+        if (path.EndsWithIgnoreCase($".{ext}")) {
+            var fileInfo = new FileInfo(path);
+            return new[] { fileInfo };
         } else {
-            var dir = new DirectoryInfo(projectBasePath!);
-            csProjFiles = dir.FindFiles("*.csproj");
+            var dir = new DirectoryInfo(path!);
+            return dir.FindFiles($"*.{ext}", recurseSubdirectories: recurseSubdirectories, maxRecursionDepth: maxRecursionDepth);
         }
-
-        return csProjFiles;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     internal static CsProject InspectProject(this string projectBasePath, LoggedResponse loggedResponse = null) {
         try {
-            var csProjFiles = ResolveCsProjFiles(ref projectBasePath);
+            var csProjFiles = FindCsProjFiles(projectBasePath);
             foreach (var csProjFile in csProjFiles) {
                 CsProject csProj;
                 try {

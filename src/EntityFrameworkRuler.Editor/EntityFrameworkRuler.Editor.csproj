@@ -1,31 +1,80 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>WinExe</OutputType>
-        <TargetFramework>net6.0-windows</TargetFramework>
-        <UseWPF>true</UseWPF>
-        <EnableWindowsTargeting>True</EnableWindowsTargeting>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <PackageOutputPath>./nupkg</PackageOutputPath>
-        <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
-        <RootNamespace>EntityFrameworkRuler.Editor</RootNamespace>
-        <PackageId>EntityFrameworkRuler.Editor</PackageId>
-        <PackageReadmeFile>Editor.md</PackageReadmeFile>
-        <PackageIcon>crown128.png</PackageIcon>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>True</EnableWindowsTargeting>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
+    <RootNamespace>EntityFrameworkRuler.Editor</RootNamespace>
+    <PackageId>EntityFrameworkRuler.Editor</PackageId>
+    <PackageReadmeFile>Editor.md</PackageReadmeFile>
+    <PackageIcon>crown128.png</PackageIcon>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="MinVer" Version="4.2.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-    </ItemGroup>
-    <ItemGroup>
-        <None Include="..\..\docs\Editor.md" Pack="true" PackagePath="\" />
-        <None Include="..\Resources\crown128.png">
-          <Pack>True</Pack>
-          <PackagePath></PackagePath>
-          <Link>crown128.png</Link>
-        </None>
-    </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="nupkg\**" />
+    <EmbeddedResource Remove="nupkg\**" />
+    <None Remove="nupkg\**" />
+    <Page Remove="nupkg\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\close.svg" />
+    <None Remove="Resources\convertfile.svg" />
+    <None Remove="Resources\minus16.png" />
+    <None Remove="Resources\minus48.png" />
+    <None Remove="Resources\navigation.svg" />
+    <None Remove="Resources\navigation16.png" />
+    <None Remove="Resources\open.svg" />
+    <None Remove="Resources\save.svg" />
+    <None Remove="Resources\undo.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
+    <PackageReference Include="MinVer" Version="4.2.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="PropertyTools.Wpf" Version="3.1.0" />
+    <PackageReference Include="SVGImage" Version="3.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\docs\Editor.md" Pack="true" PackagePath="\" />
+    <None Include="..\Resources\crown128.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+      <Link>crown128.png</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj" />
+    <ProjectReference Include="..\EntityFrameworkRuler\EntityFrameworkRuler.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\close.svg" />
+    <Resource Include="Resources\convertfile.svg" />
+    <Resource Include="Resources\minus16.png" />
+    <Resource Include="Resources\navigation.svg" />
+    <Resource Include="Resources\navigation16.png" />
+    <Resource Include="Resources\open.svg" />
+    <Resource Include="Resources\save.svg" />
+    <Resource Include="Resources\undo.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Dialogs\RulesFromEdmxDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <XamlRuntime>Wpf</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Behaviors\" />
+    <Folder Include="Controls\" />
+  </ItemGroup>
 </Project>

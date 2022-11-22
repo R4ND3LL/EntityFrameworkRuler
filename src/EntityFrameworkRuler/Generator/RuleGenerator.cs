@@ -28,7 +28,6 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
         bool noPluralize = false, bool useDatabaseNames = false)
         : this(new() {
             EdmxFilePath = edmxFilePath,
-            NoMetadata = noMetadata,
             NoPluralize = noPluralize,
             UseDatabaseNames = useDatabaseNames
         }, null) {
@@ -39,7 +38,7 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     /// <param name="options"> Generator options. </param>
     /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
     [ActivatorUtilitiesConstructor]
-    public RuleGenerator(GeneratorOptions options, IRulerNamingService namingService) {
+    public RuleGenerator(GeneratorOptions options, IRulerNamingService namingService = null) {
         this.namingService = namingService;
         Options = options ?? throw new ArgumentNullException(nameof(options));
     }
@@ -67,6 +66,12 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
     }
 
     #endregion
+
+    /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
+    /// Errors are monitored and added to local Errors collection. </summary>
+    public Task<GenerateRulesResponse> TryGenerateRulesAsync() {
+        return Task.Factory.StartNew(TryGenerateRules);
+    }
 
     /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
     /// Errors are monitored and added to local Errors collection. </summary>
@@ -129,9 +134,10 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                 try {
                     if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
                     foreach (var rulesRoot in rules?.OfType<T>()) {
-                        var name = rulesRoot.GetName() ?? "dbcontext";
+                        var name = rulesRoot.GetFinalName().NullIfWhitespace() ?? "dbcontext";
                         fileName = fileName.Replace("<ContextName>", name, StringComparison.OrdinalIgnoreCase);
-                        await WriteRules<T>(rulesRoot, fileName);
+                        var path = await WriteRules<T>(rulesRoot, fileName);
+                        response.SavedRules.Add(path);
                         response.LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");
                     }
                 } catch (Exception ex) {
@@ -139,10 +145,11 @@ public sealed class RuleGenerator : RuleProcessor, IRuleGenerator {
                 }
             }
 
-            Task WriteRules<T>(T rulesRoot, string filename)
+            async Task<string> WriteRules<T>(T rulesRoot, string filename)
                 where T : class, IRuleModelRoot {
                 var path = Path.Combine(dir.FullName, filename);
-                return rulesRoot.ToJson<T>(path);
+                await rulesRoot.ToJson<T>(path);
+                return path;
             }
         } finally {
             response.OnLog -= ResponseOnLog;
@@ -264,4 +271,5 @@ public sealed class GenerateRulesResponse : LoggedResponse {
 }
 
 public sealed class SaveRulesResponse : LoggedResponse {
+    public List<string> SavedRules { get; } = new();
 }

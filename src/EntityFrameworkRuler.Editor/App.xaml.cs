@@ -6,10 +6,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace EntityFrameworkRuler.Editor {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application {
-    }
+namespace EntityFrameworkRuler.Editor; 
+
+/// <summary>
+/// Interaction logic for App.xaml
+/// </summary>
+public partial class App : Application {
 }
