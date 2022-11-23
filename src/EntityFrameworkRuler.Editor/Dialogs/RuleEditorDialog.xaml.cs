@@ -12,12 +12,24 @@ namespace EntityFrameworkRuler.Editor.Dialogs;
 public sealed partial class RuleEditorDialog : Window {
     private readonly RuleEditorViewModel vm;
 
-    public RuleEditorDialog() : this(null, null) {
-        Theme = ThemeNames.Dark;
+    public RuleEditorDialog() : this(null) {
+    }
+
+    public RuleEditorDialog(ThemeNames? theme) : this(null, null) {
+        if (theme.HasValue) Theme = theme.Value;
     }
 
     public RuleEditorDialog(string ruleFilePath, string targetProjectPath = null) {
         InitializeComponent();
+#if DEBUG
+        if (targetProjectPath.IsNullOrEmpty()) {
+            var sln = Directory.GetCurrentDirectory().FindSolutionParentPath();
+            if (sln != null) {
+                sln = Path.Combine(sln, "Tests\\NorthwindTestProject\\");
+                if (Directory.Exists(sln)) targetProjectPath = sln;
+            }
+        }
+#endif
         DataContext = vm = new RuleEditorViewModel(ruleFilePath, targetProjectPath);
     }
 
@@ -27,7 +39,7 @@ public sealed partial class RuleEditorDialog : Window {
         set => AppearanceManager.Current.SelectedTheme = value;
     }
 
-    void ModelBrowserKeyDown(object sender, KeyEventArgs e) {
+    private void ModelBrowserKeyDown(object sender, KeyEventArgs e) {
         switch (e.Key) {
             case Key.F2:
             case Key.R when (Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)):
@@ -86,7 +98,7 @@ public sealed partial class RuleEditorDialog : Window {
         if (!scrollingToSelected && !scrolledOnce && vm?.RootModel?.Children?.Count > 0) {
             scrollingToSelected = true;
             try {
-                
+
                 var node = vm.RootModel.GetSelectedNode();
                 if (node == null) return;
                 var item = (TreeViewItem)ModelBrowser.ItemContainerGenerator.ContainerFromItem(node);

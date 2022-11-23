@@ -13,6 +13,7 @@
     <PackageReadmeFile>Editor.md</PackageReadmeFile>
     <PackageIcon>crown128.png</PackageIcon>
     <Nullable>disable</Nullable>
+    <ApplicationIcon>..\Resources\crown.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +26,7 @@
   <ItemGroup>
     <None Remove="Resources\close.svg" />
     <None Remove="Resources\convertfile.svg" />
+    <None Remove="Resources\error.svg" />
     <None Remove="Resources\minus16.png" />
     <None Remove="Resources\minus48.png" />
     <None Remove="Resources\navigation.svg" />
@@ -46,6 +48,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\docs\Editor.md" Pack="true" PackagePath="\" />
+    <None Include="..\Resources\crown.ico">
+      <Link>crown.ico</Link>
+    </None>
     <None Include="..\Resources\crown128.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
@@ -59,6 +64,7 @@
   <ItemGroup>
     <Resource Include="Resources\close.svg" />
     <Resource Include="Resources\convertfile.svg" />
+    <Resource Include="Resources\error.svg" />
     <Resource Include="Resources\minus16.png" />
     <Resource Include="Resources\navigation.svg" />
     <Resource Include="Resources\navigation16.png" />

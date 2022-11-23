@@ -125,7 +125,7 @@ public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
 
             var schemaRule = new SchemaRule();
             root.Schemas.Add(schemaRule);
-            schemaRule.SchemaName = grp.Key;
+            schemaRule.Name = grp.Key;
             schemaRule.UseSchemaName = false; // will append schema name to entity name
             schemaRule.IncludeUnknownTables = Options.IncludeUnknowns;
             schemaRule.IncludeUnknownViews = Options.IncludeUnknowns;

@@ -24,6 +24,7 @@
     <SolidColorBrush x:Key="Accent2" Color="{StaticResource Accent2Color}" />
     <SolidColorBrush x:Key="Accent3" Color="{StaticResource Accent3Color}" />
     <SolidColorBrush x:Key="Accent4" Color="{StaticResource Accent4Color}" />
+    <SolidColorBrush x:Key="RedTextBrush" Color="#FF4A4A" />
 
     <SolidColorBrush x:Key="WindowBackground" Color="#1F1F1F" />
 
@@ -78,6 +79,10 @@
         <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
     </Style>
     <Style TargetType="TextBox"   BasedOn="{StaticResource {x:Type TextBox}}">
+        <Setter Property="Background" Value="{DynamicResource WhiteBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
+    </Style>
+    <Style TargetType="CheckBox"   BasedOn="{StaticResource {x:Type CheckBox}}">
         <Setter Property="Background" Value="{DynamicResource WhiteBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
     </Style>

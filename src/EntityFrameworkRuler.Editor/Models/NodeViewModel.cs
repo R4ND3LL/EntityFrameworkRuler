@@ -1,25 +1,31 @@
 ﻿using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using EntityFrameworkRuler.Editor.Models;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Rules;
 
-namespace EntityFrameworkRuler.Editor.Dialogs;
+namespace EntityFrameworkRuler.Editor.Models;
 
 public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
-    public RuleNodeViewModel(RuleBase item, NodeViewModel<RuleBase> parent, TreeFilter filter = null, bool expand = true) : base(item, parent, expand, filter) {
+    public RuleNodeViewModel(RuleBase item, NodeViewModel<RuleBase> parent, TreeFilter filter = null, bool expand = true,
+        RuleValidator validator = null) : base(item,
+        parent, expand, filter) {
+        Validator = validator ?? ((RuleNodeViewModel)parent)?.Validator ?? new RuleValidator();
     }
 
+    public RuleValidator Validator { get; }
     public bool IsDbContext => Item is DbContextRule;
     public bool IsSchema => Item is SchemaRule;
     public bool IsTable => Item is TableRule;
     public bool IsColumn => Item is ColumnRule;
+
     public bool IsNavigation => Item is NavigationRule;
-    //protected override bool CanFilter() => !IsDbContext && !IsSchema;
+    [ObservableProperty] private IList<EvaluationFailure> errors;
 
     protected override ObservableCollection<NodeViewModel<RuleBase>> LoadChildren() {
         var collection = new ObservableCollection<NodeViewModel<RuleBase>>();
         var expChildren = IsDbContext || IsSchema;
-        foreach (var child in Item.GetChildren()) collection.Add(new RuleNodeViewModel((RuleBase)child, this, Filter, expChildren));
+        foreach (var child in Item.GetChildren())
+            collection.Add(new RuleNodeViewModel((RuleBase)child, this, Filter, expChildren));
         return collection;
     }
 
@@ -29,6 +35,27 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
             ((IRuleItem)Item)?.SetFinalName(value);
             OnPropertyChanged();
         }
+    }
+
+    public override IList<EvaluationFailure> Validate(bool withChildren = false) {
+        var childHasError = false;
+        var efs = new List<EvaluationFailure>();
+        foreach (var nodeViewModel in Children.Source.Cast<RuleNodeViewModel>()) {
+            if (withChildren)
+                foreach (var error in nodeViewModel.Validate(true)) {
+                    efs.Add(error);
+                }
+
+            if (nodeViewModel.HasError) childHasError = true;
+        }
+
+        foreach (var error in Validator.Validate(Item, false)) {
+            efs.Add(error);
+        }
+
+        Errors = efs;
+        HasError = childHasError || efs?.Count > 0;
+        return efs;
     }
 
     public override NodeViewModel<RuleBase> AddChild() {
@@ -50,8 +77,6 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
         base.OnEditingEnded();
         Item.OnPropertiesChanged();
     }
-
-
 }
 
 public enum TreeFilterType {
@@ -68,7 +93,9 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     public sealed partial class TreeSelection : ObservableObject {
         [ObservableProperty] private NodeViewModel<T> node;
     }
-    protected NodeViewModel(T item, NodeViewModel<T> parent, bool expand = true, TreeFilter filter = null, TreeSelection treeSelection = null) {
+
+    protected NodeViewModel(T item, NodeViewModel<T> parent, bool expand = true, TreeFilter filter = null,
+        TreeSelection treeSelection = null) {
         Item = item;
         Parent = parent;
         IsExpanded = expand;
@@ -86,6 +113,7 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     [ObservableProperty] private bool isSelected;
     [ObservableProperty] private int level;
     [ObservableProperty] private bool isEditing;
+    [ObservableProperty] private bool hasError;
     [ObservableProperty] private T item;
     [ObservableProperty] private TreeFilter filter;
     [ObservableProperty] private TreeSelection selection;
@@ -95,12 +123,13 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     // ReSharper disable once InconsistentNaming
     protected FilteredObservableCollection<NodeViewModel<T>> children;
     public FilteredObservableCollection<NodeViewModel<T>> Children => children ??= new(LoadChildren(), TheFilterPredicate);
+    public IList<NodeViewModel<T>> ChildrenUnfiltered => Children.Source;
     protected virtual bool CanFilter() => true;
 
     private bool TheFilterPredicate(NodeViewModel<T> n) {
         if (!CanFilter() || filter == null || filter.Term.IsNullOrWhiteSpace()) return true;
         return n.Children.Count > 0 || filter.FilterType switch {
-            TreeFilterType.Contains => n.Name?.Contains(filter.Term, StringComparison.OrdinalIgnoreCase) == true,
+            TreeFilterType.Contains => n.Name?.Contains((string)filter.Term, StringComparison.OrdinalIgnoreCase) == true,
             TreeFilterType.ExactMatch => n.Name?.EqualsIgnoreCase(filter.Term) == true,
             _ => n.Name?.EqualsIgnoreCase(filter.Term) == true
         };
@@ -116,22 +145,20 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     }
 
     protected virtual void OnEditingEnded() { }
-    public IEnumerable<T> ChildItems => Children?.Select(o => o.Item) ?? Enumerable.Empty<T>();
+    public IEnumerable<T> ChildItems => Children?.Select<NodeViewModel<T>, T>(o => o.Item) ?? Enumerable.Empty<T>();
 
     protected abstract ObservableCollection<NodeViewModel<T>> LoadChildren();
 
-    public virtual string Name {
-        get => null;
-        set { }
-    }
+    public virtual string Name { get => null; set { } }
 
     partial void OnIsSelectedChanged(bool value) {
         if (value) Selection.Node = this;
         else if (ReferenceEquals(Selection.Node, this)) Selection.Node = null;
     }
-    partial void OnIsExpandedChanged(bool value) {
 
+    partial void OnIsExpandedChanged(bool value) {
     }
+
     public virtual NodeViewModel<T> AddChild() => null;
 
     public void ExpandParents() {
@@ -151,16 +178,22 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
         foreach (var child in Children) {
             child.ApplyFilter();
         }
+
         Children.Refresh();
     }
+
+    public abstract IList<EvaluationFailure> Validate(bool withChildren = false);
+
     public NodeViewModel<T> GetSelectedNode() {
         if (IsSelected) return this;
         foreach (var child in Children) {
             var n = child.GetSelectedNode();
             if (n != null) return n;
         }
+
         return null;
     }
+
     public IEnumerable<NodeViewModel<T>> GetSelectedNodes() {
         if (IsSelected) yield return this;
         foreach (var child in Children) {
@@ -168,6 +201,7 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
             if (n != null) yield return n;
         }
     }
+
     public IEnumerable<NodeViewModel<T>> EnumerateParents(bool includeCurrent = true) {
         if (includeCurrent) yield return this;
         var p = parent;
@@ -176,5 +210,6 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
             p = p.parent;
         }
     }
+
     public override string ToString() => Name;
 }

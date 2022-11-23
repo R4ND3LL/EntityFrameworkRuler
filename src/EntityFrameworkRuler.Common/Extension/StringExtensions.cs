@@ -13,12 +13,12 @@ internal static class StringExtensions {
 
     /// <summary> Return true if string starts with the given string. </summary>
     [DebuggerStepThrough]
-    public static bool StartsWithIgnoreCase([NotNullWhen(true)]this string str, string str2) =>
+    public static bool StartsWithIgnoreCase([NotNullWhen(true)] this string str, string str2) =>
         str?.StartsWith(str2, StringComparison.OrdinalIgnoreCase) == true;
 
     /// <summary> Return true if string starts with the given string. </summary>
     [DebuggerStepThrough]
-    public static bool EndsWithIgnoreCase([NotNullWhen(true)]this string str, string str2) =>
+    public static bool EndsWithIgnoreCase([NotNullWhen(true)] this string str, string str2) =>
         str?.EndsWith(str2, StringComparison.OrdinalIgnoreCase) == true;
 
     /// <summary> Return null if the given value is empty.  Return the original value otherwise. </summary>
@@ -31,19 +31,19 @@ internal static class StringExtensions {
 
     /// <summary> Indicates whether the specified string is null or an System.String.Empty string. </summary>
     [DebuggerStepThrough]
-    public static bool IsNullOrEmpty([NotNullWhen(false)]this string str) { return string.IsNullOrEmpty(str); }
+    public static bool IsNullOrEmpty([NotNullWhen(false)] this string str) { return string.IsNullOrEmpty(str); }
 
     /// <summary> Indicates whether the specified string is null or an System.String.Empty string. </summary>
     [DebuggerStepThrough]
-    public static bool HasCharacters([NotNullWhen(true)]this string str) { return !string.IsNullOrEmpty(str); }
+    public static bool HasCharacters([NotNullWhen(true)] this string str) { return !string.IsNullOrEmpty(str); }
 
     /// <summary> Indicates whether a specified string is null, empty, or consists only of white-space characters. </summary>
     [DebuggerStepThrough]
-    public static bool IsNullOrWhiteSpace([NotNullWhen(false)]this string str) { return string.IsNullOrWhiteSpace(str); }
+    public static bool IsNullOrWhiteSpace([NotNullWhen(false)] this string str) { return string.IsNullOrWhiteSpace(str); }
 
     /// <summary> Indicates whether a specified string is null, empty, or consists only of white-space characters. </summary>
     [DebuggerStepThrough]
-    public static bool HasNonWhiteSpace([NotNullWhen(true)]this string str) { return !string.IsNullOrWhiteSpace(str); }
+    public static bool HasNonWhiteSpace([NotNullWhen(true)] this string str) { return !string.IsNullOrWhiteSpace(str); }
 
     /// <summary>
     /// Concatenates the members of a constructed System.Collections.Generic.IEnumerable&lt;T&gt;
@@ -91,6 +91,17 @@ internal static class StringExtensions {
         if (string.IsNullOrEmpty(str)) return false;
         for (var i = 0; i < str.Length; i++) {
             var c = str[i];
+            if (!IsValidInIdentifier(c, i == 0)) return false;
+        }
+
+        return true;
+    }
+    /// <summary> will return true if the string is a valid symbol name </summary>
+    internal static bool IsValidDbIdentifier(this string str) {
+        if (string.IsNullOrEmpty(str)) return false;
+        for (var i = 0; i < str.Length; i++) {
+            var c = str[i];
+            if (c == ' ') continue;
             if (!IsValidInIdentifier(c, i == 0)) return false;
         }
 

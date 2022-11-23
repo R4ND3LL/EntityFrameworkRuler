@@ -9,7 +9,7 @@ using System.Xml.Serialization;
 namespace EntityFrameworkRuler.Rules;
 
 /// <summary> Schema rule </summary>
-[DebuggerDisplay("Schema {SchemaName}")]
+[DebuggerDisplay("Schema {Name}")]
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1724:", Justification = "Reviewed.")]
 [DataContract]
 public sealed class SchemaRule : RuleBase, ISchemaRule {
@@ -19,9 +19,9 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
     }
 
     /// <summary> The schema name this rule applies to.  Required. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 1)]
+    [DataMember(Name = "SchemaName", EmitDefaultValue = false, IsRequired = false, Order = 1)]
     [DisplayName("Name"), Category("Mapping"), Description("The schema name this rule applies to.  Required."), Required]
-    public string SchemaName { get; set; }
+    public string Name { get; set; }
 
     /// <summary> If true, generate entities for simple many-to-many junctions rather than letting EF suppress them.  Default is false. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 2)]
@@ -84,11 +84,11 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
     /// <inheritdoc />
     protected override string GetNewName() => null;
     /// <inheritdoc />
-    protected override string GetExpectedEntityFrameworkName() => SchemaName;
+    protected override string GetExpectedEntityFrameworkName() => Name;
     /// <inheritdoc />
     protected override void SetFinalName(string value) {
-        SchemaName = value;
-        OnPropertyChanged(nameof(SchemaName));
+        Name = value;
+        OnPropertyChanged(nameof(Name));
     }
     IEnumerable<IClassRule> ISchemaRule.GetClasses() => Tables;
 }

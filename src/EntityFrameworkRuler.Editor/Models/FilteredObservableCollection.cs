@@ -9,6 +9,7 @@ namespace EntityFrameworkRuler.Editor.Models {
         private Predicate<T> filterPredicate;
         private readonly T defaultValue;
         private readonly bool isNullable;
+        public IList<T> Source => underlyingList;
 
         public FilteredObservableCollection(IList<T> underlyingList, Predicate<T> theFilterPredicate = null) {
             var t = typeof(T);
@@ -27,6 +28,7 @@ namespace EntityFrameworkRuler.Editor.Models {
         }
 
         private IComparer<T> sortComparer;
+
         public IComparer<T> SortComparer {
             get => sortComparer;
             set {
@@ -38,15 +40,22 @@ namespace EntityFrameworkRuler.Editor.Models {
                 }
             }
         }
+
         public bool IsFixedSize => false;
 
-        object IList.this[int index] { get => this[index]; set => throw new InvalidOperationException("FilteredObservableCollections are read-only"); }
+        object IList.this[int index] {
+            get => this[index];
+            set => throw new InvalidOperationException("FilteredObservableCollections are read-only");
+        }
 
         public bool IsSynchronized => false;
 
         public object SyncRoot => isFiltering ? ((ICollection)filteredList).SyncRoot : ((ICollection)underlyingList).SyncRoot;
 
-        public T this[int index] { get => isFiltering ? filteredList[index] : underlyingList[index]; set => throw new InvalidOperationException("FilteredObservableCollections are read-only"); }
+        public T this[int index] {
+            get => isFiltering ? filteredList[index] : underlyingList[index];
+            set => throw new InvalidOperationException("FilteredObservableCollections are read-only");
+        }
 
         public int Count => isFiltering ? filteredList.Count : underlyingList.Count;
 
@@ -193,6 +202,7 @@ namespace EntityFrameworkRuler.Editor.Models {
         private void RaiseCollectionChanged() {
             RaiseCollectionChanged(new(NotifyCollectionChangedAction.Reset));
         }
+
         private void RaiseCollectionChanged(NotifyCollectionChangedEventArgs args) {
             try {
                 if (IsUpdateLocked)
@@ -203,19 +213,24 @@ namespace EntityFrameworkRuler.Editor.Models {
                 // ignored
             }
         }
+
         private bool UpdateFilteredItems() {
             filteredList.Clear();
             if (!isFiltering) return false;
             var sc = SortComparer;
             if (sc != null) {
                 foreach (var underlying in underlyingList)
-                    if (filterPredicate(underlying)) filteredList.AddSortedWithComparer(underlying, sc);
+                    if (filterPredicate(underlying))
+                        filteredList.AddSortedWithComparer(underlying, sc);
             } else {
                 foreach (var underlying in underlyingList)
-                    if (filterPredicate(underlying)) filteredList.Add(underlying);
+                    if (filterPredicate(underlying))
+                        filteredList.Add(underlying);
             }
+
             return true;
         }
+
         /// <summary> update the filtering for the individual items provided. this will add/remove items as necessary, and raise change events while doing it. </summary>
         private bool UpdateFilteredItems(IEnumerable<T> itemsToUpdate) {
             if (!isFiltering) return false;
@@ -256,6 +271,7 @@ namespace EntityFrameworkRuler.Editor.Models {
                     }
                 }
             }
+
             return result;
         }
 
@@ -298,13 +314,16 @@ namespace EntityFrameworkRuler.Editor.Models {
             }
 
             return default;
+
             int AddFilterItem(T newItem) {
                 filteredList.Add(newItem);
                 return filteredList.Count - 1;
             }
+
             int AddFilterItemSorted(T newItem) {
                 return filteredList.AddSortedWithComparer(newItem, sc);
             }
+
             int RemoveFilterItem(T oldItem) {
                 var i = filteredList.IndexOf(oldItem);
                 if (i >= 0) filteredList.RemoveAt(i);
@@ -320,13 +339,16 @@ namespace EntityFrameworkRuler.Editor.Models {
         }
 
         #region lockable
+
         public bool IsUpdateLocked => updateLockCount > 0;
         private bool isChanged;
         private int updateLockCount;
+
         public void BeginUpdate() {
             if (!IsUpdateLocked) isChanged = false;
             updateLockCount++;
         }
+
         public void EndUpdate() {
             if (!IsUpdateLocked) return;
             updateLockCount--;
@@ -337,6 +359,7 @@ namespace EntityFrameworkRuler.Editor.Models {
                 // ignored
             }
         }
+
         #endregion
     }
 }

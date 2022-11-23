@@ -9,32 +9,40 @@
         xmlns:behaviors="clr-namespace:EntityFrameworkRuler.Editor.Behaviors" 
         xmlns:controls="clr-namespace:EntityFrameworkRuler.Editor.Controls"
         xmlns:converters="clr-namespace:EntityFrameworkRuler.Editor.Converters"
+        xmlns:models="clr-namespace:EntityFrameworkRuler.Editor.Models"
         mc:Ignorable="d" 
         Title="DB Context Rule Editor" Height="650" Width="950" 
         Background="{DynamicResource WindowBackground}" SnapsToDevicePixels="True"
         Foreground="{DynamicResource BlackBrush}"
         d:DataContext="{d:DesignInstance Type=dialogs:RuleEditorViewModel, IsDesignTimeCreatable=True}">
     <Window.Resources>
-        <DataTemplate DataType="{x:Type dialogs:RuleNodeViewModel}">
+        <DataTemplate DataType="{x:Type models:RuleNodeViewModel}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Image Name="Icon" Grid.Column="0" Source="/Resources/minus16.png" Visibility="Collapsed" Opacity="0.85"/>
-                <controls:SvgImage x:Name="NavIcon" OverrideBrush="{DynamicResource BlackBrush}" 
+                <controls:SvgImage Grid.Column="0" x:Name="NavIcon" OverrideBrush="{DynamicResource BlackBrush}" 
                                    Source="/EntityFrameworkRuler.Editor;component/Resources/navigation.svg" VerticalAlignment="Center" HorizontalAlignment="Center"
-                                   Width="11" Height="11"  Visibility="Collapsed" Opacity="0.5" Margin="0" Padding="0" />
-                <pt:EditableTextBlock Grid.Column="2" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                   Width="11" Height="11"  Visibility="Collapsed" Opacity="0.5" Margin="0,0,3,0" Padding="0"  />
+                
+                <controls:SvgImage Grid.Column="1" x:Name="ErrorIcon" OverrideBrush="{DynamicResource RedTextBrush}" 
+                                   Source="/EntityFrameworkRuler.Editor;component/Resources/error.svg" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                   Width="11" Height="11"  Visibility="Collapsed" Opacity="0.5" Margin="0,0,3,0" Padding="0" />
+                <pt:EditableTextBlock Name="Text" Grid.Column="2" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                       Margin="0 0 0 0"  SnapsToDevicePixels="True" Foreground="{DynamicResource InputText}" 
                                       FontFamily="Consolas, Segoe UI" FontSize="12"
                                       IsEditing="{Binding IsEditing}"/>
             </Grid>
             <DataTemplate.Triggers>
                 <DataTrigger Binding="{Binding Item.NotMapped}" Value="True">
-                    <Setter TargetName="Icon" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="Text" Property="Opacity" Value="0.85"/>
+                    <Setter TargetName="Text" Property="TextDecorations" Value="Strikethrough"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasError}" Value="True">
+                    <Setter TargetName="ErrorIcon" Property="Visibility" Value="Visible"/>
+                    <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource RedTextBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsNavigation}" Value="True">
                     <Setter TargetName="NavIcon" Property="Visibility" Value="Visible"/>
@@ -152,7 +160,7 @@
                       Foreground="{DynamicResource GrayBrush1}"
                       KeyDown="ModelBrowserKeyDown" Visibility="{Binding RootModel, Converter={x:Static converters:UiConverters.NotNullToVisible}}" >
                 <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate DataType="{x:Type dialogs:RuleNodeViewModel}" 
+                    <HierarchicalDataTemplate DataType="{x:Type models:RuleNodeViewModel}" 
                                               ItemsSource="{Binding Children}">
                         <ContentControl Content="{Binding }" />
                     </HierarchicalDataTemplate>

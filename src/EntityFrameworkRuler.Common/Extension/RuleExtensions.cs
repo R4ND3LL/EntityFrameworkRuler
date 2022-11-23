@@ -27,12 +27,12 @@ public static class RuleExtensions {
 
         if (schema.IsNullOrWhiteSpace()) {
             // default to dbo, otherwise fail
-            if (rules.Count == 1 && (rules[0].SchemaName.IsNullOrWhiteSpace() || rules[0].SchemaName == "dbo")) schemaRule = rules[0];
+            if (rules.Count == 1 && (rules[0].Name.IsNullOrWhiteSpace() || rules[0].Name == "dbo")) schemaRule = rules[0];
             else return false;
         } else {
-            schemaRule = rules.FirstOrDefault(x => x.SchemaName == schema);
+            schemaRule = rules.FirstOrDefault(x => x.Name == schema);
             // if there is only one schema, and the name is not defined, default to that
-            if (schemaRule == null && rules.Count == 1 && rules[0].SchemaName.IsNullOrWhiteSpace())
+            if (schemaRule == null && rules.Count == 1 && rules[0].Name.IsNullOrWhiteSpace())
                 schemaRule = rules[0];
         }
 
@@ -115,7 +115,7 @@ public static class RuleExtensions {
         var schemas = rules.Schemas.Where(o => o.Tables?.Count > 0);
         // use optional schema filter
         if (schema.HasNonWhiteSpace())
-            schemas = schemas.Where(o => o.SchemaName.IsNullOrEmpty() || o.SchemaName.EqualsIgnoreCase(schema));
+            schemas = schemas.Where(o => o.Name.IsNullOrEmpty() || o.Name.EqualsIgnoreCase(schema));
 
         var tables = schemas.SelectMany(o => o.Tables);
 

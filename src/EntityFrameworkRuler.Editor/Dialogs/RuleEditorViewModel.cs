@@ -22,24 +22,31 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
         } else if (targetProjectPath.IsNullOrWhiteSpace() && ruleFilePath.HasNonWhiteSpace()) {
             targetProjectPath = ruleFilePath;
         }
+
         if (targetProjectPath.HasNonWhiteSpace()) {
             if (SuggestedRuleFiles.Count == 0) FindRuleFilesNear(targetProjectPath);
         }
     }
-    [ObservableProperty]
-    private ObservableCollection<ObservableFileInfo> suggestedRuleFiles;
+
+    [ObservableProperty] private ObservableCollection<ObservableFileInfo> suggestedRuleFiles;
 
     [ObservableProperty] private RuleFileNameOptions fileNameOptions;
     [ObservableProperty] private ObservableFileInfo selectedRuleFile;
     [ObservableProperty] private DbContextRule dbContextRule;
+
     [ObservableProperty] private RuleNodeViewModel rootModel;
     //[ObservableProperty] private RuleNodeViewModel selectedNode;
 
-    public IEnumerable<RuleNodeViewModel> Root { get { if (RootModel != null) yield return RootModel; } }
+    public IEnumerable<RuleNodeViewModel> Root {
+        get {
+            if (RootModel != null) yield return RootModel;
+        }
+    }
 
     partial void OnSelectedRuleFileChanged(ObservableFileInfo value) {
         _ = InitializeRootModel(value);
     }
+
     partial void OnRootModelChanged(RuleNodeViewModel value) {
         OnPropertyChanged(nameof(Root));
         RootModel.IsSelected = true;
@@ -51,6 +58,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                 DbContextRule = null;
                 return;
             }
+
             var selected = RootModel?.Selection?.Node;
             var selectPath = selected?.EnumerateParents().Reverse().Select(o => o.Name).ToArray();
 
@@ -62,15 +70,17 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             var response = await loader.LoadRulesInProjectPath(FileNameOptions).ConfigureAwait(true);
             response.OnLog -= GeneratorOnLog;
             if (response.Errors.Any()) {
-                MessageBox.Show(response.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(response.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
+
             DbContextRule = response.Rules?.OfType<DbContextRule>().FirstOrDefault(o => o.Schemas?.Count > 0);
             if (DbContextRule == null) {
                 RootModel = null;
                 return;
             }
 
-            RootModel = new RuleNodeViewModel(DbContextRule, null, new TreeFilter(), true);
+            RootModel = new RuleNodeViewModel(DbContextRule, null, new Models.TreeFilter(), true);
 
             if (selectPath?.Length > 0) {
                 // try to maintain selection
@@ -81,6 +91,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                     if (temp == null) {
                         break;
                     }
+
                     item = temp;
                     items = temp.Children.Cast<RuleNodeViewModel>();
                 }
@@ -101,41 +112,59 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
     }
 
 
-
     private async void FindRuleFilesNear(string path) {
         try {
-            if (path.EndsWithIgnoreCase(".csproj") || path.EndsWithIgnoreCase(".edmx") || path.EndsWithIgnoreCase(".json")) path = new FileInfo(path).Directory?.FullName;
+            if (path.EndsWithIgnoreCase(".csproj") || path.EndsWithIgnoreCase(".edmx") || path.EndsWithIgnoreCase(".json"))
+                path = new FileInfo(path).Directory?.FullName;
             if (path.IsNullOrWhiteSpace()) return;
             FileNameOptions ??= new RuleFileNameOptions();
             var mask = FileNameOptions.DbContextRulesFile.Replace("<ContextName>", "*", StringComparison.OrdinalIgnoreCase);
 
             var files = await Task.Factory.StartNew(() => "G:\\!DEV\\EdmxRuler\\src\\Tests\\NorthwindTestProject\\"
-                .FindFiles(mask, true, 2))
+                    .FindFiles(mask, true, 2))
                 .ConfigureAwait(true);
             files.Select(o => new ObservableFileInfo(o)).ForAll(o => SuggestedRuleFiles.Add(o));
             if (SuggestedRuleFiles?.Count == 1) SelectedRuleFile = SuggestedRuleFiles[0];
         } catch {
         }
     }
+
     [RelayCommand(AllowConcurrentExecutions = false)]
     private Task Undo() {
         if (SelectedRuleFile == null) return Task.CompletedTask;
         return InitializeRootModel(SelectedRuleFile);
     }
+
     [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task Save() {
         try {
             if (SelectedRuleFile == null || RootModel == null) return;
+            var root = RootModel;
+            var model = root.Item;
+            var errors = root.Validate(true);
+            if (errors.Count > 0) {
+                if (errors.Count > 1) {
+                    MessageBox.Show($"Fix {errors.Count} validation errors first.", "Validation Error", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                } else {
+                    MessageBox.Show(errors[0].Msg, "Validation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+                return;
+            }
+
             var sb = new StringBuilder();
             var hasError = false;
             var file = SelectedRuleFile.FileInfo;
             var path = file.Directory.FullName;
             var saver = new RuleSaver(new SaveOptions() { ProjectBasePath = path });
             saver.OnLog += GeneratorOnLog;
-            var response = await saver.TrySaveRules((IRuleModelRoot)RootModel.Item, path, new RuleFileNameOptions() { DbContextRulesFile = file.FullName });
+            var response = await saver.TrySaveRules((IRuleModelRoot)model, path,
+                new RuleFileNameOptions() { DbContextRulesFile = file.FullName });
             saver.OnLog -= GeneratorOnLog;
             if (response.Errors.Any()) {
-                MessageBox.Show(response.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(response.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             } else {
                 // success
                 var savedPath = response.SavedRules.FirstOrDefault();
@@ -150,11 +179,13 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             MessageBox.Show(ex.Message, "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
+
     [RelayCommand]
     private void ClearSearch() {
         if (RootModel?.Filter?.Term == null) return;
         RootModel.Filter.Term = null;
     }
+
     [RelayCommand]
     private void OpenRule() {
         // Configure open file dialog box
@@ -183,6 +214,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             edmxConverter.Owner = App.Current.MainWindow;
             edmxConverter.WindowStartupLocation = WindowStartupLocation.CenterOwner;
         } catch { }
+
         var result = edmxConverter.ShowDialog();
         if (result != true) return;
         if (edmxConverter.Tag is SaveRulesResponse response && response.SavedRules.Count > 0) {
