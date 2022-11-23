@@ -2,7 +2,7 @@
 
 namespace EntityFrameworkRuler.Editor.Dialogs;
 
-public class BindingProxy : Freezable {
+public sealed class BindingProxy : Freezable {
     #region Overrides of Freezable
 
     protected override Freezable CreateInstanceCore() {

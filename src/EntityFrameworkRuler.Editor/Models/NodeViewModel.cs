@@ -33,7 +33,7 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
         get => ((IRuleItem)Item)?.GetFinalName();
         set {
             ((IRuleItem)Item)?.SetFinalName(value);
-            OnPropertyChanged();
+            OnPropertiesChanged();
         }
     }
 
@@ -75,7 +75,7 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
 
     protected override void OnEditingEnded() {
         base.OnEditingEnded();
-        Item.OnPropertiesChanged();
+        OnPropertiesChanged();
     }
 }
 
@@ -210,6 +210,9 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
             p = p.parent;
         }
     }
-
+    /// <summary> raise property changed event for all properties </summary>
+    internal virtual void OnPropertiesChanged() {
+        base.OnPropertyChanged(string.Empty);
+    }
     public override string ToString() => Name;
 }

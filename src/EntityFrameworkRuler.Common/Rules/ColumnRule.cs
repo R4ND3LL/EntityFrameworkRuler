@@ -52,7 +52,7 @@ public sealed class ColumnRule : RuleBase, IPropertyRule {
     /// <inheritdoc />
     protected override void SetFinalName(string value) {
         NewName = value;
-        OnPropertyChanged(nameof(NewName));
+        //OnPropertyChanged(nameof(NewName));
     }
 
 }

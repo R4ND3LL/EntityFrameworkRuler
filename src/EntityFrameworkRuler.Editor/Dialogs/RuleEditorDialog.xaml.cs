@@ -10,6 +10,23 @@ namespace EntityFrameworkRuler.Editor.Dialogs;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 public sealed partial class RuleEditorDialog : Window {
+    static RuleEditorDialog() {
+        EventManager.RegisterClassHandler(typeof(Window), Keyboard.GotKeyboardFocusEvent,
+            new KeyboardFocusChangedEventHandler(HandleGotKeyboardFocusEvent), true);
+        // EventManager.RegisterClassHandler(typeof(System.Windows.Controls.Primitives.Popup), Keyboard.GotKeyboardFocusEvent,
+        //     new KeyboardFocusChangedEventHandler(HandleGotKeyboardFocusEvent), true);
+    }
+
+    private static void HandleGotKeyboardFocusEvent(object sender, KeyboardFocusChangedEventArgs e) {
+        if (e.OldFocus is not DependencyObject d) return;
+        var parentWindow = Window.GetWindow(d);
+        if (parentWindow is not RuleEditorDialog re || re.vm?.RootModel == null) return;
+        var selection = re.vm?.RootModel?.GetSelectedNode();
+        if (selection == null) return;
+        selection.OnPropertiesChanged();
+        Debug.WriteLine($"All properties changed raised for {selection.Name}");
+    }
+
     private readonly RuleEditorViewModel vm;
 
     public RuleEditorDialog() : this(null) {
@@ -48,6 +65,7 @@ public sealed partial class RuleEditorDialog : Window {
                 } else if (sender is TreeView tv) {
                     if (tv.SelectedItem is RuleNodeViewModel cvm) cvm.IsEditing = true;
                 }
+
                 break;
             case Key.Delete:
                 Delete(null, null);
@@ -56,7 +74,6 @@ public sealed partial class RuleEditorDialog : Window {
     }
 
     private void Delete(object o, object o1) {
-
     }
 
 
@@ -94,11 +111,11 @@ public sealed partial class RuleEditorDialog : Window {
     private void ModelBrowserTreeItemOnLoaded(object sender, RoutedEventArgs e) { ScrollToSelected(); }
     private bool scrolledOnce;
     private bool scrollingToSelected;
+
     private void ScrollToSelected() {
         if (!scrollingToSelected && !scrolledOnce && vm?.RootModel?.Children?.Count > 0) {
             scrollingToSelected = true;
             try {
-
                 var node = vm.RootModel.GetSelectedNode();
                 if (node == null) return;
                 var item = (TreeViewItem)ModelBrowser.ItemContainerGenerator.ContainerFromItem(node);
@@ -111,6 +128,4 @@ public sealed partial class RuleEditorDialog : Window {
             }
         }
     }
-
-
 }

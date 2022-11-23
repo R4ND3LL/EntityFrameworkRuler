@@ -30,16 +30,16 @@ public sealed class CustomOperator : PropertyGridOperator {
         var items = base.CreatePropertyItems(instance, options);
 
         foreach (var item in items) {
-            if (item != null) {
-                if (item.Properties?.Count > 0 && item.ActualPropertyType != typeof(string) && typeof(IList).IsAssignableFrom(item.ActualPropertyType)) {
-                    var collections = item.Properties.Cast<PropertyDescriptor>()
-                        .Where(o => o.PropertyType == typeof(string) || typeof(IList).IsAssignableFrom(o.PropertyType)).ToArray();
-                    if (collections.Length > 0) {
-                        item.Properties = new PropertyDescriptorCollection(collections);
-                    }
+            if (item == null) continue;
+            if (item.DisplayName == "Not Mapped" && instance is DbContextRule) continue;
+            if (item.Properties?.Count > 0 && item.ActualPropertyType != typeof(string) && typeof(IList).IsAssignableFrom(item.ActualPropertyType)) {
+                var collections = item.Properties.Cast<PropertyDescriptor>()
+                    .Where(o => o.PropertyType == typeof(string) || typeof(IList).IsAssignableFrom(o.PropertyType)).ToArray();
+                if (collections.Length > 0) {
+                    item.Properties = new PropertyDescriptorCollection(collections);
                 }
-                yield return item;
             }
+            yield return item;
         }
     }
     protected override string GetDisplayName(PropertyDescriptor pd, Type declaringType) {
@@ -51,15 +51,20 @@ public sealed class CustomOperator : PropertyGridOperator {
 
     public override PropertyItem CreatePropertyItem(PropertyDescriptor pd, PropertyDescriptorCollection propertyDescriptors, object instance) {
         var item = base.CreatePropertyItem(pd, propertyDescriptors, instance);
-        if (item != null) {
-            if (pd.Name == "Multiplicity") {
-                item.ItemsSource = new string[] { "1", "0..1", "*" };
-            } else if (pd.Name == nameof(NavigationRule.Name) && pd.PropertyType == typeof(HashSet<string>)) {
-
-            } else if (pd.Name == nameof(NavigationRule.Name) && pd.PropertyType == typeof(List<string>)) {
-
-            } else if (pd.PropertyType == typeof(RuleModelKind)) {
-                return null;
+        if (item == null) return null;
+        switch (pd.Name) {
+            case "Multiplicity":
+                item.ItemsSource = new[] { "1", "0..1", "*" };
+                break;
+            case nameof(NavigationRule.Name) when pd.PropertyType == typeof(HashSet<string>):
+                break;
+            case nameof(NavigationRule.Name) when pd.PropertyType == typeof(List<string>):
+                break;
+            default: {
+                if (pd.PropertyType == typeof(RuleModelKind)) {
+                    return null;
+                }
+                break;
             }
         }
         return item;

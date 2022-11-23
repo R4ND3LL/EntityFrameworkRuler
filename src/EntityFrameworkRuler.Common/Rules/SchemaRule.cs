@@ -88,7 +88,7 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
     /// <inheritdoc />
     protected override void SetFinalName(string value) {
         Name = value;
-        OnPropertyChanged(nameof(Name));
+        //OnPropertyChanged(nameof(Name));
     }
     IEnumerable<IClassRule> ISchemaRule.GetClasses() => Tables;
 }

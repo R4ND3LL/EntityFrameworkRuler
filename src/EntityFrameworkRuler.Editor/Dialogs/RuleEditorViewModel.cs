@@ -156,7 +156,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             var sb = new StringBuilder();
             var hasError = false;
             var file = SelectedRuleFile.FileInfo;
-            var path = file.Directory.FullName;
+            var path = file.Directory?.FullName;
             var saver = new RuleSaver(new SaveOptions() { ProjectBasePath = path });
             saver.OnLog += GeneratorOnLog;
             var response = await saver.TrySaveRules((IRuleModelRoot)model, path,

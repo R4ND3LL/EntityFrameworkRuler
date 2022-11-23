@@ -58,7 +58,7 @@ public sealed class TableRule : RuleBase, IClassRule {
     /// <inheritdoc />
     protected override void SetFinalName(string value) {
         NewName = value;
-        OnPropertyChanged(nameof(NewName));
+        //OnPropertyChanged(nameof(NewName));
     }
 
     IEnumerable<IPropertyRule> IClassRule.GetProperties() {

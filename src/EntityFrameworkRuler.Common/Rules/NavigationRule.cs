@@ -60,7 +60,7 @@ public sealed class NavigationRule : RuleBase, IPropertyRule {
     /// <inheritdoc />
     protected override void SetFinalName(string value) {
         NewName = value;
-        OnPropertyChanged(nameof(NewName));
+        //OnPropertyChanged(nameof(NewName));
     }
 
     IEnumerable<string> IPropertyRule.GetCurrentNameOptions() =>
