@@ -71,7 +71,8 @@
     <SolidColorBrush x:Key="InputText" Color="#DFDFDF" />
     <SolidColorBrush x:Key="InputTextHover" Color="#DFDFDF" />
     <SolidColorBrush x:Key="InputTextDisabled" Color="#717171" />
-
+    <SolidColorBrush x:Key="InputTextSelected" Color="#d1d1d1" />
+    
     <Style TargetType="TextBlock"   BasedOn="{StaticResource {x:Type TextBlock}}">
         <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
     </Style>

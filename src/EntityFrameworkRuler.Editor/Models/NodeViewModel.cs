@@ -1,4 +1,7 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Rules;
@@ -6,10 +9,69 @@ using EntityFrameworkRuler.Rules;
 namespace EntityFrameworkRuler.Editor.Models;
 
 public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
+    private readonly List<INotifyCollectionChanged> hookedCollections;
+
     public RuleNodeViewModel(RuleBase item, NodeViewModel<RuleBase> parent, TreeFilter filter = null, bool expand = true,
         RuleValidator validator = null) : base(item,
         parent, expand, filter) {
         Validator = validator ?? ((RuleNodeViewModel)parent)?.Validator ?? new RuleValidator();
+        hookedCollections = new List<INotifyCollectionChanged>();
+        HookCollectionChanges(item);
+    }
+
+    private void HookCollectionChanges(RuleBase item) {
+        switch (item) {
+            case DbContextRule dr:
+                Hook(dr.Schemas);
+                break;
+            case SchemaRule sr:
+                Hook(sr.Tables);
+                break;
+            case TableRule tr:
+                Hook(tr.Columns);
+                Hook(tr.Navigations);
+                break;
+            case ColumnRule cr:
+                break;
+            case NavigationRule nr:
+                Hook(nr.Name);
+                break;
+        }
+
+        void Hook(IEnumerable list) {
+            if (list is not INotifyCollectionChanged cc) return;
+            cc.CollectionChanged += OnItemCollectionChanged;
+            hookedCollections.Add(cc);
+        }
+    }
+
+    private void OnItemCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
+        // validate child contents
+        var currentChildren = Item.GetChildren().ToArray();
+        var nodeChildren = Children.Source;
+        var checkAdded = e.Action.In(NotifyCollectionChangedAction.Reset, NotifyCollectionChangedAction.Add,
+            NotifyCollectionChangedAction.Replace);
+        var checkRemoved = e.Action.In(NotifyCollectionChangedAction.Reset, NotifyCollectionChangedAction.Remove,
+            NotifyCollectionChangedAction.Replace);
+        var altered = false;
+        if (checkAdded)
+            foreach (var child in currentChildren) {
+                if (nodeChildren.Any(o => ReferenceEquals(o.Item, child))) continue;
+                // doesnt exist. add it now
+                nodeChildren.Add(new RuleNodeViewModel((RuleBase)child, this, Filter, false));
+                altered = true;
+            }
+
+        if (checkRemoved) {
+            // remove any child nodes that were deleted from the underlying collection
+            var toRemove = nodeChildren.Where(o => currentChildren.All(c => !ReferenceEquals(c, o.Item))).ToArray();
+            foreach (var node in toRemove) {
+                nodeChildren.Remove(node);
+                altered = true;
+            }
+        }
+
+        if (altered) Children.Refresh();
     }
 
     public RuleValidator Validator { get; }
@@ -76,6 +138,14 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
     protected override void OnEditingEnded() {
         base.OnEditingEnded();
         OnPropertiesChanged();
+    }
+
+    public override void OnKeyboardFocusChanged() {
+        base.OnKeyboardFocusChanged();
+        OnPropertiesChanged();
+        foreach (var child in Children.Cast<RuleNodeViewModel>()) {
+            child.OnPropertyChanged(nameof(Name));
+        }
     }
 }
 
@@ -210,9 +280,13 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
             p = p.parent;
         }
     }
+
     /// <summary> raise property changed event for all properties </summary>
     internal virtual void OnPropertiesChanged() {
         base.OnPropertyChanged(string.Empty);
     }
+
+    public virtual void OnKeyboardFocusChanged() { }
+
     public override string ToString() => Name;
 }

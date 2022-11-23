@@ -1,6 +1,10 @@
 ﻿using System.Runtime.Serialization.Json;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using EntityFrameworkRuler.Rules;
+
+// ReSharper disable UnusedMember.Global
 
 // ReSharper disable MemberCanBeInternal
 // ReSharper disable MemberCanBePrivate.Global
@@ -9,6 +13,13 @@ namespace EntityFrameworkRuler.Extension;
 
 /// <summary> Json serialization helpers </summary>
 public static class JsonSerializerExtensions {
+    private static readonly JsonSerializerOptions readOptions = new() {
+        AllowTrailingCommas = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        IgnoreReadOnlyProperties = false,
+        Converters = { new ReadOnlyCollectionConverterFactory() }
+    };
+
     /// <summary> Read the json file or return new instance on failure </summary>
     /// <param name="filePath">json file path to load</param>
     /// <typeparam name="T">type to deserialize</typeparam>
@@ -25,16 +36,14 @@ public static class JsonSerializerExtensions {
     public static async Task<T> TryReadJsonFile<T>(this string filePath) where T : class {
         try {
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return null;
-            var text = await File.ReadAllTextAsync(filePath, Encoding.UTF8);
-            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(text));
-            var ser = new DataContractJsonSerializer(typeof(T));
-            var result = ser.ReadObject(ms) as T;
-            ms.Close();
+            var text = await File.ReadAllTextAsync(filePath);
+            var result = JsonSerializer.Deserialize<T>(text, readOptions);
             return result;
         } catch {
             return null;
         }
     }
+
 
     /// <summary> Serialize the given object to json text </summary>
     /// <param name="jsonModel"> object to serialize</param>
@@ -59,7 +68,11 @@ public static class JsonSerializerExtensions {
     /// <typeparam name="T"> exact type of given object </typeparam>
     public static async Task ToJson<T>(this T jsonModel, string filePath)
         where T : class {
-        var json = ToJson(jsonModel);
-        await File.WriteAllTextAsync(filePath, json, Encoding.UTF8);
+        await using var fs = File.Open(filePath, FileMode.Create);
+        using var writer = JsonReaderWriterFactory.CreateJsonWriter(fs, Encoding.UTF8, true, true, "   ");
+        var serializer = new DataContractJsonSerializer(typeof(T));
+        serializer.WriteObject(writer, jsonModel);
+        // ReSharper disable once MethodHasAsyncOverload
+        writer.Flush();
     }
 }

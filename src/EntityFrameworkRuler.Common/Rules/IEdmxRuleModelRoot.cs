@@ -2,9 +2,6 @@
 
 // ReSharper disable MemberCanBePrivate.Global
 
-using System.ComponentModel;
-using System.Runtime.Serialization;
-
 namespace EntityFrameworkRuler.Rules;
 
 /// <summary> Root node of the rule model </summary>

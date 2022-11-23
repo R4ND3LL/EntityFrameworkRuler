@@ -2,12 +2,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
-using System.Xml.Serialization;
 
 namespace EntityFrameworkRuler.Rules;
 
-/// <inheritdoc />
+/// <summary> Column rule </summary>
 [DebuggerDisplay("Col {Name} to {NewName}")]
 [DataContract]
 public sealed class ColumnRule : RuleBase, IPropertyRule {

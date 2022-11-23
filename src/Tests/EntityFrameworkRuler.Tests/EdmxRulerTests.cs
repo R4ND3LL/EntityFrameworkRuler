@@ -56,8 +56,8 @@ public sealed class EdmxRulerTests {
         prod.Columns.Count.ShouldBe(10);
         prod.Columns[0].PropertyName.ShouldBe("ProductId");
         prod.Columns[0].NewName.ShouldBe("ProductID");
-        dbContextRule.Schemas[0].Tables.ForEach(o => (o.EntityName?.IsValidSymbolName() != false).ShouldBeTrue());
-        dbContextRule.Schemas[0].Tables.ForEach(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
+        dbContextRule.Schemas[0].Tables.ForAll(o => (o.EntityName?.IsValidSymbolName() != false).ShouldBeTrue());
+        dbContextRule.Schemas[0].Tables.ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
         dbContextRule.Schemas[0].Tables.SelectMany(o => o.Columns)
             .ForAll(o => (o.PropertyName?.IsValidSymbolName() != false).ShouldBeTrue());
         dbContextRule.Schemas[0].Tables.SelectMany(o => o.Columns)

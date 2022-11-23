@@ -3,6 +3,7 @@ using PropertyTools.Wpf;
 using System.Windows.Input;
 using System.Windows.Controls;
 using EntityFrameworkRuler.Editor.Models;
+using EntityFrameworkRuler.Rules;
 
 namespace EntityFrameworkRuler.Editor.Dialogs;
 
@@ -13,8 +14,7 @@ public sealed partial class RuleEditorDialog : Window {
     static RuleEditorDialog() {
         EventManager.RegisterClassHandler(typeof(Window), Keyboard.GotKeyboardFocusEvent,
             new KeyboardFocusChangedEventHandler(HandleGotKeyboardFocusEvent), true);
-        // EventManager.RegisterClassHandler(typeof(System.Windows.Controls.Primitives.Popup), Keyboard.GotKeyboardFocusEvent,
-        //     new KeyboardFocusChangedEventHandler(HandleGotKeyboardFocusEvent), true);
+        RuleBase.Observable = true;
     }
 
     private static void HandleGotKeyboardFocusEvent(object sender, KeyboardFocusChangedEventArgs e) {
@@ -23,7 +23,7 @@ public sealed partial class RuleEditorDialog : Window {
         if (parentWindow is not RuleEditorDialog re || re.vm?.RootModel == null) return;
         var selection = re.vm?.RootModel?.GetSelectedNode();
         if (selection == null) return;
-        selection.OnPropertiesChanged();
+        selection.OnKeyboardFocusChanged();
         Debug.WriteLine($"All properties changed raised for {selection.Name}");
     }
 

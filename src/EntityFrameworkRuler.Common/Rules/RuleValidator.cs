@@ -58,18 +58,25 @@ public class RuleValidator : IRuleValidator {
                 .For(o => o.Name)
                 .Assert(s => s.IsValidSymbolName(), invalidSymbolName)
                 .Assert(s => s.Length < 200, tooLong)
+                .For(o => o.Schemas)
+                .Assert(o => o.Select(r => r.SchemaName).Where(r => r.HasCharacters()).IsDistinct(), "SchemaNames should be unique")
             ;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual Validator<SchemaRule> InitializeSchemaRuleValidator() {
         return new Validator<SchemaRule>()
-                .For(o => o.Name)
+                .For(o => o.SchemaName)
                 .Assert(s => s.IsValidDbIdentifier(), invalidSymbolName)
                 .Assert(s => s.Length < 200, tooLong)
-                .For(o => o.Namespace).Assert(o => o.IsNullOrWhiteSpace() || o.Split('.').All(p => p.IsValidSymbolName()), "Invalid namespace")
+                .For(o => o.Namespace).Assert(o => o.IsNullOrWhiteSpace() || o.Split('.').All(p => p.IsValidSymbolName()),
+                    "Invalid namespace")
                 .For(o => o.ColumnRegexPattern).Assert(o => VerifyRegEx(o))
                 .For(o => o.TableRegexPattern).Assert(o => VerifyRegEx(o))
+                .For(o => o.Tables)
+                .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Names should be unique")
+                .Assert(o => o.Select(r => r.EntityName).Where(r => r.HasCharacters()).IsDistinct(), "EntityNames should be unique")
+                .Assert(o => o.Select(r => r.NewName).Where(r => r.HasCharacters()).IsDistinct(), "NewNames should be unique")
             ;
     }
 
@@ -81,6 +88,20 @@ public class RuleValidator : IRuleValidator {
                 .Assert(s => s.Length < 200, tooLong)
                 .For(o => o.NewName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.EntityName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
+                .For(o => o.Columns)
+                .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Names should be unique")
+                .Assert(o => o.Select(r => r.PropertyName).Where(r => r.HasCharacters()).IsDistinct(), "PropertyNames should be unique")
+                .Assert(o => o.Select(r => r.NewName).Where(r => r.HasCharacters()).IsDistinct(), "NewNames should be unique")
+                .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
+                    "FinalNames should be unique")
+                .For(o => o.Navigations)
+                .Assert(o => o.Select(r => r.FirstName).Where(r => r.HasCharacters()).IsDistinct(), "Names should be unique")
+                .Assert(o => o.Select(r => r.NewName).Where(r => r.HasCharacters()).IsDistinct(), "NewNames should be unique")
+                .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
+                    "FinalNames should be unique")
+                .Assert(o => o.Where(r => r.FkName.HasCharacters())
+                        .Select(r => (r.FkName, r.IsPrincipal)).IsDistinct(),
+                    "FkNames should be unique")
             ;
     }
 
@@ -93,7 +114,8 @@ public class RuleValidator : IRuleValidator {
                 .For(o => o.NewName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.PropertyName)
                 .Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
-                .For(o => o.NewType).Assert(o => o.IsNullOrWhiteSpace() || o.Split('.').All(p => p.IsValidSymbolName()), "Invalid type name")
+                .For(o => o.NewType)
+                .Assert(o => o.IsNullOrWhiteSpace() || o.Split('.').All(p => p.IsValidSymbolName()), "Invalid type name")
             ;
     }
 

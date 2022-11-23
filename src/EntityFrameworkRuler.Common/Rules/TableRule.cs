@@ -1,16 +1,21 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Runtime.Serialization;
-using System.Text.Json.Serialization;
-using System.Xml.Serialization;
 
 namespace EntityFrameworkRuler.Rules;
 
-/// <inheritdoc />
+/// <summary> Table rule </summary>
 [DebuggerDisplay("Table {Name} to {NewName}")]
 [DataContract]
 public sealed class TableRule : RuleBase, IClassRule {
+    /// <summary> Creates a table rule </summary>
+    public TableRule() {
+        Navigations = Observable ? new ObservableCollection<NavigationRule>() : new List<NavigationRule>();
+        Columns = Observable ? new ObservableCollection<ColumnRule>() : new List<ColumnRule>();
+    }
+
     /// <summary> The raw database name of the table.  Used to locate the property during scaffolding phase.  Required. </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
     [DisplayName("DB Name"), Category("Mapping"), Description("The storage name of the table."), Required]
@@ -33,7 +38,8 @@ public sealed class TableRule : RuleBase, IClassRule {
 
     /// <summary> If true, generate properties for columns that are not identified in this table rule.  Default is false. </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 4)]
-    [DisplayName("Include Unknown Columns"), Category("Mapping"), Description("If true, generate properties for columns that are not identified in this table rule.  Default is false.")]
+    [DisplayName("Include Unknown Columns"), Category("Mapping"),
+     Description("If true, generate properties for columns that are not identified in this table rule.  Default is false.")]
     public bool IncludeUnknownColumns { get; set; }
 
     /// <summary> If true, omit this table during the scaffolding process. </summary>
@@ -44,17 +50,19 @@ public sealed class TableRule : RuleBase, IClassRule {
     /// <summary> The primitive property rules to apply to this entity. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     [DisplayName("Properties"), Category("Properties|Properties"), Description("The primitive property rules to apply to this entity.")]
-    public List<ColumnRule> Columns { get; set; } = new();
+    public IList<ColumnRule> Columns { get; private set; }
 
     /// <summary> The navigation property rules to apply to this entity. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 7)]
     [DisplayName("Navigations"), Category("Navigations|Navigations"), Description("The navigation property rules to apply to this entity.")]
-    public List<NavigationRule> Navigations { get; set; } = new();
+    public IList<NavigationRule> Navigations { get; private set; }
 
     /// <inheritdoc />
     protected override string GetNewName() => NewName.NullIfEmpty();
+
     /// <inheritdoc />
     protected override string GetExpectedEntityFrameworkName() => EntityName.NullIfEmpty() ?? Name.NullIfEmpty();
+
     /// <inheritdoc />
     protected override void SetFinalName(string value) {
         NewName = value;

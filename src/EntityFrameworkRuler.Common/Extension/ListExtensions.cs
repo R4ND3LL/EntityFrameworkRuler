@@ -63,8 +63,21 @@ internal static class ListExtensions {
         foreach (var item in sequence) action(item);
     }
 
+    public static void AddRange<T>(this IList<T> c, IEnumerable<T> list) {
+        foreach (var o in list) c.Add(o);
+    }
+
     public static void AddRange<T>(this HashSet<T> c, IEnumerable<T> list) {
         foreach (var o in list) c.Add(o);
+    }
+
+    /// <summary> return true if all items are unique </summary>
+    public static bool IsDistinct<T>(this IEnumerable<T> list) {
+        var hash = new HashSet<T>();
+        foreach (var o in list)
+            if (!hash.Add(o))
+                return false;
+        return true;
     }
 
     public static ObservableCollection<T> ToObservable<T>(this IEnumerable<T> c) {
@@ -100,6 +113,7 @@ internal static class ListExtensions {
 
         return args;
     }
+
     /// <summary>
     /// This will search the given collection for an items that satisfies the given expression, and return the first
     /// index that returns true
@@ -151,6 +165,7 @@ internal static class ListExtensions {
 
         return -1;
     }
+
     /// <summary> add sorted routine using the native List class's BinarySearch method. Comparer is required. </summary>
     public static int AddSortedWithComparer<T>(this List<T> list, T item, IComparer<T> comparer) {
         if (comparer == null) throw new ArgumentNullException(nameof(comparer));
@@ -159,12 +174,14 @@ internal static class ListExtensions {
             return 0;
         }
 
-        if (comparer.Compare(list[^1], item) <= 0) { // greater than last
+        if (comparer.Compare(list[^1], item) <= 0) {
+            // greater than last
             list.Add(item);
             return list.Count - 1;
         }
 
-        if (comparer.Compare(list[0], item) >= 0) { // less than first
+        if (comparer.Compare(list[0], item) >= 0) {
+            // less than first
             list.Insert(0, item);
             return 0;
         }

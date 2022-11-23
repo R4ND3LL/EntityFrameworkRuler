@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
@@ -6,12 +6,14 @@ using System.Xml.Serialization;
 
 namespace EntityFrameworkRuler.Rules;
 
-/// <summary>
-/// Renaming rules for primitive properties (database columns) as well as the classes themselves (tables).
-/// Navigations are not referenced in this file.
-/// </summary>
+/// <summary> Scaffolding rules for the DB context and all containing elements. </summary>
 [DataContract]
 public sealed class DbContextRule : RuleBase, IRuleModelRoot {
+    /// <summary> Creates a DB context rule </summary>
+    public DbContextRule() {
+        Schemas = Observable ? new ObservableCollection<SchemaRule>() : new List<SchemaRule>();
+    }
+
     internal static DbContextRule DefaultNoRulesFoundBehavior => new() { IncludeUnknownSchemas = true };
 
     /// <summary> DB context name of the reverse engineered model that this rule set applies to. </summary>
@@ -41,7 +43,7 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
     /// <summary> Schema rules </summary>
     [DataMember(Order = 100)]
     [DisplayName("Schemas"), Category("Schemas|Schemas"), Description("The schema rules to apply to this DB context.")]
-    public List<SchemaRule> Schemas { get; set; } = new();
+    public IList<SchemaRule> Schemas { get; private set; }
 
 
     /// <inheritdoc />

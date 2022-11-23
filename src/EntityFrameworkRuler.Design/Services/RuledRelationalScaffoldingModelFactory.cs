@@ -84,7 +84,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var clrType = designTimeRuleLoader?.TryResolveType(columnRule.NewType, typeScaffoldingInfo?.ClrType, reporter);
         if (clrType == null) return typeScaffoldingInfo;
         reporter?.WriteVerbosely(
-            $"RULED: Property {schemaRule.Name}.{tableRule.Name}.{columnRule.PropertyName} type set to {clrType.FullName}");
+            $"RULED: Property {schemaRule.SchemaName}.{tableRule.Name}.{columnRule.PropertyName} type set to {clrType.FullName}");
         // Regenerate the TypeScaffoldingInfo based on our new CLR type.
         return typeScaffoldingInfo.WithType(clrType);
     }
@@ -231,7 +231,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         foreach (var grp in foreignKeys.GroupBy(o => o.Table?.Schema)) {
             var schema = grp.Key;
             var schemaForeignKeys = grp.ToArray();
-            var schemaReference = schemas.FirstOrDefault(o => o.Name == schema);
+            var schemaReference = schemas.FirstOrDefault(o => o.SchemaName == schema);
             if (schemaReference == null) {
                 modelBuilder = baseCall(schemaForeignKeys);
                 continue;

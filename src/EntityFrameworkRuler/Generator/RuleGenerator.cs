@@ -41,12 +41,11 @@ public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
     [ActivatorUtilitiesConstructor]
     public RuleGenerator(GeneratorOptions options, IRulerNamingService namingService = null) : base(options) {
         this.namingService = namingService;
-        Options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
     #region properties
 
-    public GeneratorOptions Options { get; }
+    public new GeneratorOptions Options => (GeneratorOptions)base.Options;
 
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary> The EDMX file path </summary>
@@ -125,7 +124,7 @@ public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
 
             var schemaRule = new SchemaRule();
             root.Schemas.Add(schemaRule);
-            schemaRule.Name = grp.Key;
+            schemaRule.SchemaName = grp.Key;
             schemaRule.UseSchemaName = false; // will append schema name to entity name
             schemaRule.IncludeUnknownTables = Options.IncludeUnknowns;
             schemaRule.IncludeUnknownViews = Options.IncludeUnknowns;
@@ -152,7 +151,7 @@ public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
                     var expectedPropertyName = NamingService.GetExpectedPropertyName(property, expectedClassName);
                     if (!generateAll && (expectedPropertyName.IsNullOrWhiteSpace() ||
                                          (property.Name == expectedPropertyName && property.EnumType == null))) continue;
-                    tbl.Columns ??= new();
+                    //tbl.Columns ??= new();
                     tbl.Columns.Add(new() {
                         Name = property.DbColumnName,
                         PropertyName = expectedPropertyName == property.DbColumnName ? null : expectedPropertyName,
@@ -165,7 +164,7 @@ public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
                 }
 
                 foreach (var navigation in entity.NavigationProperties) {
-                    tbl.Navigations ??= new();
+                    //tbl.Navigations ??= new();
                     var navigationRename = new NavigationRule {
                         NewName = navigation.Name
                     };
@@ -218,4 +217,3 @@ public sealed class GenerateRulesResponse : LoggedResponse {
         rules.Add(rulesRoot);
     }
 }
-

@@ -1,9 +1,6 @@
-﻿using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using System.Xml.Linq;
 using System.Xml.Serialization;
 
 namespace EntityFrameworkRuler.Rules;
@@ -12,6 +9,9 @@ namespace EntityFrameworkRuler.Rules;
 [SuppressMessage("ReSharper", "VirtualMemberNeverOverridden.Global")]
 [DataContract]
 public abstract class RuleBase : IRuleItem {
+    // ReSharper disable once FieldCanBeMadeReadOnly.Global
+    // ReSharper disable once ConvertToConstant.Global
+    internal static bool Observable = false;
     /// <summary> Get the name that we expect EF will generate for this item. </summary>
     protected abstract string GetExpectedEntityFrameworkName();
     /// <summary> Gets the new name to give this element. </summary>

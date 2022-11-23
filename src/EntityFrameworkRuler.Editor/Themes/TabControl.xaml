@@ -182,7 +182,7 @@
     <Style   TargetType="TabItem">
         <Setter Property="Foreground" Value="{DynamicResource BlackBrush}" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="{DynamicResource Accent}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource Accent3}" />
         <Setter Property="BorderThickness" Value="0" />
         <!--  special property for header font size  -->
         <!--<Setter Property="Controls:ControlsHelper.HeaderFontSize" Value="{DynamicResource TabItemFontSize}" />-->

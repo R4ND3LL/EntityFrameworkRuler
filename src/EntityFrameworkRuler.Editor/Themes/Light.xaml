@@ -72,4 +72,5 @@
     <SolidColorBrush x:Key="InputText" Color="#333333" />
     <SolidColorBrush x:Key="InputTextHover" Color="#333333" />
     <SolidColorBrush x:Key="InputTextDisabled" Color="#6D6D6D" />
+    <SolidColorBrush x:Key="InputTextSelected" Color="#ffffff" />
 </ResourceDictionary>
