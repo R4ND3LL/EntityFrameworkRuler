@@ -1,17 +1,17 @@
 ﻿using System;
-using Microsoft.EntityFrameworkCore;
-using NorthwindTestProject.Models;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using NorthwindTestProject.Context;
+using NorthwindModel.Context;
+using NorthwindModel.Models;
 
 [assembly: DesignTimeServicesReference("EntityFrameworkRuler.Design.RuledDesignTimeServices, EntityFrameworkRuler.Design")]
 // ReSharper disable CollectionNeverUpdated.Local
 // ReSharper disable SuggestVarOrType_SimpleTypes
 // ReSharper disable PossibleNullReferenceException
 
-namespace NorthwindTestProject;
+namespace NorthwindModel;
 
 internal class Program {
     private static void Main() {

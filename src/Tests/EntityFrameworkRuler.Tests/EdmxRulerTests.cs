@@ -86,7 +86,8 @@ public sealed class EdmxRulerTests {
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
-        response.Information.Last().ShouldStartWith("16 classes renamed, 60 properties renamed, 2 property types changed across 2", Case.Insensitive);
+        response.Information.Last()
+            .ShouldStartWith("16 classes renamed, 60 properties renamed, 2 property types changed across 2", Case.Insensitive);
         elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"DbContext rules applied correctly at {elapsed}ms");
 

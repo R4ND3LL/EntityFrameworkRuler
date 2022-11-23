@@ -1,5 +1,5 @@
 // ReSharper disable CheckNamespace
-namespace NorthwindTestProject;
+namespace NorthwindModel;
 
 public enum UnitsInStockEnum : short {
     One = 1,

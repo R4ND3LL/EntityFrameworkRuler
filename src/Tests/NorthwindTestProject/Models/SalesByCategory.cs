@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace NorthwindTestProject.Models;
+﻿namespace NorthwindModel.Models;
 
 public partial class SalesByCategory
 {

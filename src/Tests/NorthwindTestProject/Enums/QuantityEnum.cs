@@ -1,6 +1,6 @@
 // ReSharper disable CheckNamespace
 
-namespace NorthwindTestProject {
+namespace NorthwindModel {
     public enum QuantityEnum : short {
         One = 1,
         Two = 2,
@@ -8,5 +8,5 @@ namespace NorthwindTestProject {
     }
 }
 
-namespace NorthwindTestProject.Models {
+namespace NorthwindModel.Models {
 }

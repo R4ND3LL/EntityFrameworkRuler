@@ -8,6 +8,7 @@
         <IsPackable>false</IsPackable>
         <!-- will copy package files to output folder -->
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <RootNamespace>NorthwindModel</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
