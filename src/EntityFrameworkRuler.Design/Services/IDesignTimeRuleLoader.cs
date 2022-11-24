@@ -9,12 +9,6 @@ public interface IDesignTimeRuleLoader {
     /// <summary> Load the respective rule info </summary>
     DbContextRule GetDbContextRules();
 
-    // /// <summary> Load the respective rule info </summary>
-    // PropertyTypeChangingRules GetPropertyTypeChangingRules();
-
-    ///// <summary> Load the respective rule info </summary>
-    //NavigationNamingRules GetNavigationNamingRules();
-
     /// <summary> Gets the ModelCodeGenerationOptions that describes the ef scaffolding context, such that rule info can be processed correctly. </summary>
     ModelCodeGenerationOptions CodeGenOptions { get; }
 

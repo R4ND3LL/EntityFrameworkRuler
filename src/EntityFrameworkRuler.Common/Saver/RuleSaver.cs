@@ -66,8 +66,9 @@ public class RuleSaver : RuleProcessor, IRuleSaver {
 
             fileNameOptions ??= new();
 
-            await TryWriteRules<DbContextRule>(
-                fileNameOptions.DbContextRulesFile.CoalesceWhiteSpace(() => new RuleFileNameOptions().DbContextRulesFile));
+            if (rules != null)
+                await TryWriteRules<DbContextRule>(
+                    fileNameOptions.DbContextRulesFile.CoalesceWhiteSpace(() => new RuleFileNameOptions().DbContextRulesFile));
 
             return response;
 
@@ -78,7 +79,7 @@ public class RuleSaver : RuleProcessor, IRuleSaver {
                     foreach (var rulesRoot in rules?.OfType<T>()) {
                         var name = rulesRoot.GetFinalName().NullIfWhitespace() ?? "dbcontext";
                         fileName = fileName.Replace("<ContextName>", name, StringComparison.OrdinalIgnoreCase);
-                        var path = await WriteRules<T>(rulesRoot, fileName);
+                        var path = await WriteRules<T>(rulesRoot, rulesRoot.GetFilePath().CoalesceWhiteSpace(fileName));
                         response.SavedRules.Add(path);
                         response.LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");
                     }

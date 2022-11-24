@@ -12,7 +12,7 @@ using ICSharpUtilities = Microsoft.EntityFrameworkCore.Scaffolding.Internal.ICSh
 namespace EntityFrameworkRuler.Design.Services;
 
 /// <summary>
-/// The purpose of this override is simply to provide the scaffolding context info to IRuleLoader, so that necessary
+/// The purpose of this override is simply to provide the scaffolding context info to IDesignTimeRuleLoader so that necessary
 /// resources are available to the other scaffolding components in this library.
 /// This is basically the first instance created during the scaffold process, so it's a good spot to pass over the
 /// context info.

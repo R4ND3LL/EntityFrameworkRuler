@@ -70,6 +70,7 @@
     <Resource Include="Resources\navigation16.png" />
     <Resource Include="Resources\open.svg" />
     <Resource Include="Resources\save.svg" />
+    <Resource Include="Resources\save2.svg" />
     <Resource Include="Resources\undo.svg" />
   </ItemGroup>
   <ItemGroup>

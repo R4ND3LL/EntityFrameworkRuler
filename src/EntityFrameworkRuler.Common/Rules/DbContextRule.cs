@@ -73,4 +73,5 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
 
     IEnumerable<ISchemaRule> IRuleModelRoot.GetSchemas() => Schemas;
     IEnumerable<IClassRule> IRuleModelRoot.GetClasses() => Schemas.SelectMany(o => o.Tables);
+     string IRuleModelRoot.GetFilePath() => FilePath;
 }

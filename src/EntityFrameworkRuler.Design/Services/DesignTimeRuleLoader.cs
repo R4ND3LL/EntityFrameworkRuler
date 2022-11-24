@@ -61,6 +61,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             .Distinct() ??
         Array.Empty<Assembly>();
 
+
     /// <inheritdoc />
     public DbContextRule GetDbContextRules() {
         // pick the rule file that matches the context name

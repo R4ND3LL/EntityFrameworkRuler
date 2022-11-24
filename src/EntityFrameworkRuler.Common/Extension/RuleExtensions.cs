@@ -189,6 +189,7 @@ public static class RuleExtensions {
             _ => Enumerable.Empty<IRuleItem>()
         };
     }
+
     /// <summary> True if the rule element can contain child elements </summary>
     public static bool CanHaveChildren(this IRuleItem item) {
         return item switch {
@@ -197,5 +198,34 @@ public static class RuleExtensions {
             IClassRule => true,
             _ => false
         };
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
+    public static bool CanIncludeTable(this DbContextRule dbContextRule,
+        SchemaRule schemaRule, TableRule tableRule, bool isView, out bool schemaIncluded) {
+        if (schemaRule == null) {
+            // schema is unknown to rule file
+            if (dbContextRule == null || dbContextRule.IncludeUnknownSchemas) {
+                schemaIncluded = true;
+                return true; // nothing to go on. include it.
+            }
+
+            schemaIncluded = false;
+            return false; // alien schema. do not generate unknown
+        }
+
+        schemaIncluded = schemaRule.Mapped;
+        if (!schemaIncluded) return false;
+        if (tableRule == null) {
+            // table is unknown to rule file
+            return isView ? schemaRule.IncludeUnknownViews : schemaRule.IncludeUnknownTables;
+        }
+
+        if (tableRule.NotMapped) return false;
+
+        // drop the table if all columns are not mapped
+        if (tableRule.IncludeUnknownColumns) return true;
+        return tableRule.Columns.Count > 0 && tableRule.Columns.Any(o => o.Mapped);
     }
 }

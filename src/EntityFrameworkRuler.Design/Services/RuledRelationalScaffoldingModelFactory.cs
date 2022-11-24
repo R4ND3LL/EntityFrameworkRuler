@@ -26,6 +26,7 @@ namespace EntityFrameworkRuler.Design.Services;
 public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, IInterceptor {
     private readonly IOperationReporter reporter;
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
+    private readonly IRuleModelUpdater ruleModelUpdater;
     private DbContextRule dbContextRule;
     private readonly RelationalScaffoldingModelFactory proxy;
     private readonly MethodInfo visitForeignKeyMethod;
@@ -36,14 +37,19 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     protected readonly HashSet<string> OmittedTables = new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected readonly HashSet<DatabaseTable> IncludedUnknownTables = new();
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected readonly HashSet<string> OmittedSchemas = new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledRelationalScaffoldingModelFactory(IServiceProvider serviceProvider,
         IOperationReporter reporter,
-        IDesignTimeRuleLoader designTimeRuleLoader) {
+        IDesignTimeRuleLoader designTimeRuleLoader,
+        IRuleModelUpdater ruleModelUpdater) {
         this.reporter = reporter;
         this.designTimeRuleLoader = designTimeRuleLoader;
+        this.ruleModelUpdater = ruleModelUpdater;
 
         // avoid runtime binding errors against EF6 by using reflection and a proxy to access the resources we need.
         // this allows more fluid compatibility with EF versions without retargeting this project.
@@ -70,7 +76,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <inheritdoc />
     public virtual IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions options) {
-        return proxy.Create(databaseModel, options);
+        var model = proxy.Create(databaseModel, options);
+        ruleModelUpdater?.OnModelCreated(model);
+        return model;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -105,35 +113,25 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schemaRule, out var tableRule);
 
-        if (schemaRule == null) {
-            if (dbContextRule == null || dbContextRule.IncludeUnknownSchemas) return baseCall(); // nothing to go on
-
-            if (OmittedSchemas.Add(table.Schema))
+        var includeTable = dbContextRule.CanIncludeTable(schemaRule, tableRule, table is DatabaseView, out var includeSchema);
+        if (!includeTable) {
+            if (!includeSchema && OmittedSchemas.Add(table.Schema))
                 reporter?.WriteInformation($"RULED: Schema {table.Schema} omitted.");
+
             OmittedTables.Add(table.GetFullName());
-            return null; // alien schema. do not generate unknown
+            if (includeSchema) reporter?.WriteInformation($"RULED: Table {table.Schema}.{table.Name} omitted.");
+
+            return null;
         }
 
-        var isView = table is DatabaseView;
-        var includeTable =
-            schemaRule.Mapped &&
-            (
-                (tableRule == null && (isView ? schemaRule.IncludeUnknownViews : schemaRule.IncludeUnknownTables))
-                ||
-                (tableRule?.Mapped == true)
-            );
-
-        // drop the table if all columns are not mapped
-        if (includeTable && tableRule?.IncludeUnknownColumns == false &&
-            (tableRule.Columns.IsNullOrEmpty() || tableRule.Columns.All(o => o.NotMapped))) includeTable = false;
+        if (tableRule == null) {
+            IncludedUnknownTables.Add(table);
+            return baseCall(); // no further customization. include default table shape
+        }
 
         var excludedColumns = new HashSet<DatabaseColumn>();
 
-        if (!includeTable) {
-            // remove ALL columns
-            foreach (var columnToRemove in table.Columns) excludedColumns.Add(columnToRemove);
-            excludedColumns.ForAll(o => table.Columns.Remove(o));
-        } else if (tableRule?.Columns?.Count > 0) // remove any NotMapped columns
+        if (tableRule.Columns?.Count > 0) // remove any NotMapped columns
             foreach (var column in tableRule.Columns.Where(o => o.NotMapped)) {
                 var columnToRemove = table.Columns.FirstOrDefault(c => c.Name.EqualsIgnoreCase(column.Name));
                 if (columnToRemove == null) continue;
@@ -141,7 +139,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 table.Columns.Remove(columnToRemove);
             }
 
-        if (includeTable && tableRule?.Columns?.Count > 0 && !tableRule.IncludeUnknownColumns) {
+        if (tableRule.Columns?.Count > 0 && !tableRule.IncludeUnknownColumns) {
             // remove any unknown columns
             foreach (var columnToRemove in table.Columns
                          .Where(o => tableRule.Columns
@@ -197,6 +195,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         foreach (var excludedColumn in excludedColumns)
             reporter?.WriteInformation($"RULED: Column {table.Schema}.{table.Name}.{excludedColumn.Name} omitted.");
+
         return baseCall();
     }
 

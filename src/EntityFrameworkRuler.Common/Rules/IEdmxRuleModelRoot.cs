@@ -1,5 +1,3 @@
-
-
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace EntityFrameworkRuler.Rules;
@@ -14,6 +12,9 @@ public interface IRuleModelRoot : IRuleItem {
 
     /// <summary> Get class rules </summary>
     IEnumerable<IClassRule> GetClasses();
+
+    /// <summary> Get the file path that this file was loaded from </summary>
+    string GetFilePath();
 }
 
 /// <summary> Rule for a class/table </summary>
@@ -38,7 +39,6 @@ public interface IPropertyRule : IRuleItem {
 
     /// <summary> Get extra metadata about this navigation, if in fact it is a navigation. </summary>
     NavigationMetadata GetNavigationMetadata();
-
 }
 
 /// <summary> Base interface for rule model items </summary>

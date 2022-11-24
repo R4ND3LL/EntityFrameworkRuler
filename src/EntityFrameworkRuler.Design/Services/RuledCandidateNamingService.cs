@@ -147,14 +147,14 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         string tableName;
         try {
-            tableName = entity.GetTableName();
+            tableName = entity.GetTableName() ?? entity.GetViewName();
         } catch {
             tableName = null;
         }
 
         string schemaName;
         try {
-            schemaName = entity.GetSchema();
+            schemaName = entity.GetSchema() ?? entity.GetViewSchema();
         } catch {
             schemaName = null;
         }

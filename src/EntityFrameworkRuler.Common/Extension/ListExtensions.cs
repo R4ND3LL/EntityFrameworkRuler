@@ -166,6 +166,24 @@ internal static class ListExtensions {
         return -1;
     }
 
+    /// <summary>
+    /// Gets the value associated with the specified key or null if it does not exist
+    /// </summary>
+    [DebuggerStepThrough]
+    public static TV TryGetValue<TK, TV>(this IDictionary<TK, TV> dict, TK key) {
+        if (dict != null && dict.TryGetValue(key, out var o)) return o;
+        return default;
+    }
+
+    /// <summary>
+    /// Gets the value associated with the specified key or null if it does not exist
+    /// </summary>
+    [DebuggerStepThrough]
+    public static TV TryGetReadOnly<TK, TV>(this IReadOnlyDictionary<TK, TV> dict, TK key) {
+        if (dict != null && dict.TryGetValue(key, out var o)) return o;
+        return default;
+    }
+
     /// <summary> add sorted routine using the native List class's BinarySearch method. Comparer is required. </summary>
     public static int AddSortedWithComparer<T>(this List<T> list, T item, IComparer<T> comparer) {
         if (comparer == null) throw new ArgumentNullException(nameof(comparer));

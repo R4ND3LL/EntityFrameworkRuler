@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -63,10 +64,11 @@ internal static class EfExtensions {
     /// <summary> Returns the table ident of the supplied entity. </summary>
     public static StoreObjectIdentifier GetStoreObjectIdentifier(this ITypeBase tb) {
         if (tb is not IEntityType entityType) return default;
-        var tableName = entityType.GetTableName();
-        var schema = entityType.GetSchema();
-        var tableIdentifier = tableName != null ? StoreObjectIdentifier.Table(tableName, schema) : default;
-        return tableIdentifier;
+        var name = entityType.GetTableName();
+        if (name != null) return StoreObjectIdentifier.Table(name, entityType.GetSchema());
+
+        name = RelationalEntityTypeExtensions.GetViewName(entityType);
+        return name == null ? default : StoreObjectIdentifier.View(name, entityType.GetViewSchema());
     }
 
     /// <summary> Returns the table ident of the supplied property. </summary>
@@ -75,11 +77,15 @@ internal static class EfExtensions {
     }
 
     /// <summary> Returns the table column name for the supplied property </summary>
-    public static string GetColumnName(this IProperty propertyType) {
+    public static string GetColumnNameUsingStoreObject(this IProperty propertyType) {
         var tb = propertyType.DeclaringType;
         var tableIdentifier = tb.GetStoreObjectIdentifier();
         if (tableIdentifier == default || string.IsNullOrEmpty(tableIdentifier.Name)) return null;
         var tableColumnName = propertyType.GetColumnName(tableIdentifier);
+        if (tableColumnName.IsNullOrEmpty()) {
+            tableColumnName = propertyType.FindAnnotation("Relational:ColumnName")?.Value as string;
+        }
+
         return tableColumnName;
     }
 
@@ -132,6 +138,14 @@ internal static class EfExtensions {
         return false;
     }
 
+    public static Multiplicity GetMultiplicity(this INavigation property) {
+        if (property == null) return Multiplicity.Unknown;
+        if (property.IsCollection) return Multiplicity.Many;
+        var props = property.ForeignKey?.Properties;
+        if (props == null || props.Count == 0) return Multiplicity.Unknown;
+        if (props.All(o => o.IsNullable)) return Multiplicity.ZeroOne;
+        return Multiplicity.One;
+    }
     // /// <summary>
     // /// True if the TypeUsage is Nullable, False otherwise.
     // /// </summary>
