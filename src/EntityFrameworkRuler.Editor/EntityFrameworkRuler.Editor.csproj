@@ -21,6 +21,16 @@
     <EmbeddedResource Remove="nupkg\**" />
     <None Remove="nupkg\**" />
     <Page Remove="nupkg\**" />
+    <Page Update="Controls\RuleEditorView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <XamlRuntime>Wpf</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Controls\RulesFromEdmxView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <XamlRuntime>Wpf</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
 
   <ItemGroup>

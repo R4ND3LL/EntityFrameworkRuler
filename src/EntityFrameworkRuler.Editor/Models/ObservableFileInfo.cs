@@ -5,7 +5,7 @@ namespace EntityFrameworkRuler.Editor.Models;
 
 public sealed partial class ObservableFileInfo : ObservableObject {
     public ObservableFileInfo(FileInfo fileInfo) {
-        this.FileInfo = fileInfo;
+        FileInfo = fileInfo;
     }
 
     [ObservableProperty] private FileInfo fileInfo;

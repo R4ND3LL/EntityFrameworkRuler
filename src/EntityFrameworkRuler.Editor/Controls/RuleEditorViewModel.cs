@@ -1,23 +1,21 @@
-﻿using System.Collections;
-using System.Collections.ObjectModel;
-using System.Linq;
+﻿using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using EntityFrameworkRuler.Editor.Dialogs;
 using EntityFrameworkRuler.Editor.Models;
-using EntityFrameworkRuler.Generator;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
 using EntityFrameworkRuler.Saver;
 
-namespace EntityFrameworkRuler.Editor.Dialogs;
+namespace EntityFrameworkRuler.Editor.Controls;
 
 public sealed partial class RuleEditorViewModel : ObservableObject {
     public RuleEditorViewModel(string ruleFilePath = null, string targetProjectPath = null) {
-        SuggestedRuleFiles = new ObservableCollection<ObservableFileInfo>();
+        SuggestedRuleFiles = new();
         if (ruleFilePath.HasNonWhiteSpace() && ruleFilePath.EndsWithIgnoreCase(".json")) {
-            SuggestedRuleFiles.Add(new ObservableFileInfo(new FileInfo(ruleFilePath.Trim())));
+            SuggestedRuleFiles.Add(new(new(ruleFilePath.Trim())));
             SelectedRuleFile = SuggestedRuleFiles[0];
         } else if (targetProjectPath.IsNullOrWhiteSpace() && ruleFilePath.HasNonWhiteSpace()) {
             targetProjectPath = ruleFilePath;
@@ -60,13 +58,13 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             }
 
             var selected = RootModel?.Selection?.Node;
-            var selectPath = selected?.EnumerateParents().Reverse().Select(o => o.Name).ToArray();
+            var selectPath = (selected?.EnumerateParents())?.Reverse().Select(o => o.Name).ToArray();
 
             var sb = new StringBuilder();
             var hasError = false;
             var loader = new RuleLoader(new LoadOptions() { ProjectBasePath = value.Path });
             loader.OnLog += GeneratorOnLog;
-            FileNameOptions ??= new RuleFileNameOptions();
+            FileNameOptions ??= new();
             var response = await loader.LoadRulesInProjectPath(FileNameOptions).ConfigureAwait(true);
             response.OnLog -= GeneratorOnLog;
             if (response.Errors.Any()) {
@@ -80,7 +78,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                 return;
             }
 
-            RootModel = new RuleNodeViewModel(DbContextRule, null, new Models.TreeFilter(), true);
+            RootModel = new(DbContextRule, null, new(), true);
 
             if (selectPath?.Length > 0) {
                 // try to maintain selection
@@ -117,7 +115,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             if (path.EndsWithIgnoreCase(".csproj") || path.EndsWithIgnoreCase(".edmx") || path.EndsWithIgnoreCase(".json"))
                 path = new FileInfo(path).Directory?.FullName;
             if (path.IsNullOrWhiteSpace()) return;
-            FileNameOptions ??= new RuleFileNameOptions();
+            FileNameOptions ??= new();
             var mask = FileNameOptions.DbContextRulesFile.Replace("<ContextName>", "*", StringComparison.OrdinalIgnoreCase);
 
             var files = await Task.Factory.StartNew(() => "G:\\!DEV\\EdmxRuler\\src\\Tests\\NorthwindTestProject\\"
@@ -160,7 +158,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             var saver = new RuleSaver(new SaveOptions() { ProjectBasePath = path });
             saver.OnLog += GeneratorOnLog;
             var response = await saver.TrySaveRules((IRuleModelRoot)model, path,
-                new RuleFileNameOptions() { DbContextRulesFile = file.FullName });
+                new() { DbContextRulesFile = file.FullName });
             saver.OnLog -= GeneratorOnLog;
             if (response.Errors.Any()) {
                 MessageBox.Show(response.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK,
@@ -202,7 +200,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
         if (result != true) return;
         // Open document
         var filename = dialog.FileName;
-        SelectedRuleFile = new ObservableFileInfo(new FileInfo(filename));
+        SelectedRuleFile = new(new(filename));
     }
 
     [RelayCommand]
@@ -211,7 +209,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
         var projectPath = rule?.FileInfo?.Directory?.FullName;
         var edmxConverter = new RulesFromEdmxDialog(null, projectPath);
         try {
-            edmxConverter.Owner = App.Current.MainWindow;
+            edmxConverter.Owner = Application.Current.MainWindow;
             edmxConverter.WindowStartupLocation = WindowStartupLocation.CenterOwner;
         } catch { }
 
@@ -221,7 +219,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             var path = response.SavedRules.FirstOrDefault(o => o.HasNonWhiteSpace());
             if (path.HasNonWhiteSpace()) {
                 SelectedRuleFile = null; // force reload
-                SelectedRuleFile = new ObservableFileInfo(new FileInfo(path));
+                SelectedRuleFile = new(new(path));
             }
         }
     }

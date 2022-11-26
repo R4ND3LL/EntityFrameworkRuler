@@ -176,7 +176,7 @@ public sealed class VisibilityInverseConverter : IValueConverter {
 public class GreaterThanConverter : IValueConverter, IMultiValueConverter {
     #region Singleton Implementation
 
-    public static GreaterThanConverter Instance { get; } = new GreaterThanConverter();
+    public static GreaterThanConverter Instance { get; } = new();
 
     #endregion
 
@@ -243,7 +243,7 @@ public sealed class DoubleValueConverter : MarkupExtension, IValueConverter {
 
 
 
-    public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) {
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
         return null;
     }
     #endregion

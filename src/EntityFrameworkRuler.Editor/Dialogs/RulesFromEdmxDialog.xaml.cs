@@ -1,4 +1,5 @@
-﻿using EntityFrameworkRuler.Generator;
+﻿using EntityFrameworkRuler.Editor.Controls;
+using EntityFrameworkRuler.Generator;
 using EntityFrameworkRuler.Saver;
 
 namespace EntityFrameworkRuler.Editor.Dialogs;
@@ -14,15 +15,16 @@ public sealed partial class RulesFromEdmxDialog {
 
     public RulesFromEdmxDialog(string edmxFilePath, string targetProjectPath = null) {
         InitializeComponent();
-        DataContext = vm = new RulesFromEdmxViewModel(edmxFilePath, targetProjectPath, OnGenerated);
+        DataContext = vm = new(edmxFilePath, targetProjectPath, OnGenerated);
     }
     public ThemeNames Theme {
         get => AppearanceManager.Current.SelectedTheme;
         set => AppearanceManager.Current.SelectedTheme = value;
     }
     private void OnGenerated(SaveRulesResponse response) {
-        this.Tag = response;
-        this.DialogResult = true;
-        this.Close();
+        Tag = response;
+        DialogResult = true;
+        Close();
     }
+
 }

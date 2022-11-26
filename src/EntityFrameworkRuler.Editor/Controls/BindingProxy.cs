@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace EntityFrameworkRuler.Editor.Dialogs;
+namespace EntityFrameworkRuler.Editor.Controls;
 
 public sealed class BindingProxy : Freezable {
     #region Overrides of Freezable

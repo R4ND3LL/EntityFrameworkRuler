@@ -7,16 +7,16 @@ using EntityFrameworkRuler.Editor.Models;
 using EntityFrameworkRuler.Generator;
 using EntityFrameworkRuler.Saver;
 
-namespace EntityFrameworkRuler.Editor.Dialogs;
+namespace EntityFrameworkRuler.Editor.Controls;
 
 internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
     private readonly Action<SaveRulesResponse> onGenerated;
 
     public RulesFromEdmxViewModel(string edmxFilePath = null, string targetProjectPath = null, Action<SaveRulesResponse> onGenerated = null) {
         this.onGenerated = onGenerated;
-        SuggestedEdmxFiles = new ObservableCollection<ObservableFileInfo>();
+        SuggestedEdmxFiles = new();
         if (edmxFilePath.HasNonWhiteSpace() && edmxFilePath.EndsWithIgnoreCase(".edmx")) {
-            SuggestedEdmxFiles.Add(new ObservableFileInfo(new FileInfo(edmxFilePath.Trim())));
+            SuggestedEdmxFiles.Add(new(new(edmxFilePath.Trim())));
             SelectedEdmxFile = SuggestedEdmxFiles[0];
         }
         if (targetProjectPath.HasNonWhiteSpace()) {
@@ -76,7 +76,7 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
         if (result != true) return;
         // Open document
         var filename = dialog.FileName;
-        SelectedEdmxFile = new ObservableFileInfo(new FileInfo(filename));
+        SelectedEdmxFile = new(new(filename));
     }
     [RelayCommand]
     private void ProjectBrowse() {

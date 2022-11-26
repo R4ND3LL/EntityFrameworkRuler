@@ -3,12 +3,12 @@ using System.ComponentModel;
 using EntityFrameworkRuler.Rules;
 using PropertyTools.Wpf;
 
-namespace EntityFrameworkRuler.Editor.Dialogs;
+namespace EntityFrameworkRuler.Editor.Controls;
 
 public sealed class CustomOperator : PropertyGridOperator {
     public CustomOperator() {
         // must change default pattern as it interferes with UseSchemaName
-        this.OptionalPattern = "Use{0}Property";
+        OptionalPattern = "Use{0}Property";
     }
 
     public override IEnumerable<Tab> CreateModel(object instance, bool isEnumerable, IPropertyGridOptions options) {
@@ -44,7 +44,7 @@ public sealed class CustomOperator : PropertyGridOperator {
                 var collections = item.Properties.Cast<PropertyDescriptor>()
                     .Where(o => o.PropertyType == typeof(string) || typeof(IList).IsAssignableFrom(o.PropertyType)).ToArray();
                 if (collections.Length > 0) {
-                    item.Properties = new PropertyDescriptorCollection(collections);
+                    item.Properties = new(collections);
                 }
             }
 

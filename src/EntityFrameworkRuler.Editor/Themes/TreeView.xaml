@@ -168,9 +168,7 @@
     </Style>
 
 
-    <Style  TargetType="{x:Type TreeViewItem}"   BasedOn="{StaticResource MyTreeViewItem}">
-
-    </Style>
+    <Style  TargetType="{x:Type TreeViewItem}"   BasedOn="{StaticResource MyTreeViewItem}" />
     <Style  TargetType="{x:Type TreeView}"   BasedOn="{StaticResource {x:Type TreeView}}">
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="ItemContainerStyle" Value="{StaticResource MyTreeViewItem}" />

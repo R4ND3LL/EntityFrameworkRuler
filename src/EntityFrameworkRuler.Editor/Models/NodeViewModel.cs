@@ -15,7 +15,7 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
         RuleValidator validator = null) : base(item,
         parent, expand, filter) {
         Validator = validator ?? ((RuleNodeViewModel)parent)?.Validator ?? new RuleValidator();
-        hookedCollections = new List<INotifyCollectionChanged>();
+        hookedCollections = new();
         HookCollectionChanges(item);
     }
 
@@ -170,11 +170,11 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
         Parent = parent;
         IsExpanded = expand;
         this.filter = filter ?? parent?.filter ?? new TreeFilter();
-        this.selection = treeSelection ?? parent?.Selection ?? new TreeSelection();
+        selection = treeSelection ?? parent?.Selection ?? new TreeSelection();
         filter.PropertyChanged += Filter_PropertyChanged;
     }
 
-    private void Filter_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e) {
+    private void Filter_PropertyChanged(object sender, PropertyChangedEventArgs e) {
         if (parent == null) ApplyFilter();
     }
 
@@ -215,7 +215,7 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     }
 
     protected virtual void OnEditingEnded() { }
-    public IEnumerable<T> ChildItems => Children?.Select<NodeViewModel<T>, T>(o => o.Item) ?? Enumerable.Empty<T>();
+    public IEnumerable<T> ChildItems => Children?.Select(o => o.Item) ?? Enumerable.Empty<T>();
 
     protected abstract ObservableCollection<NodeViewModel<T>> LoadChildren();
 
@@ -283,7 +283,7 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
 
     /// <summary> raise property changed event for all properties </summary>
     internal virtual void OnPropertiesChanged() {
-        base.OnPropertyChanged(string.Empty);
+        OnPropertyChanged(string.Empty);
     }
 
     public virtual void OnKeyboardFocusChanged() { }

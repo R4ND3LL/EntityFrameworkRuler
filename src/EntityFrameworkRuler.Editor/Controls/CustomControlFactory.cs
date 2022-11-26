@@ -3,10 +3,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
+using EntityFrameworkRuler.Editor.Dialogs;
 using PropertyTools.Wpf;
 using ColumnDefinition = PropertyTools.Wpf.ColumnDefinition;
 
-namespace EntityFrameworkRuler.Editor.Dialogs;
+namespace EntityFrameworkRuler.Editor.Controls;
 
 public sealed class CustomControlFactory : PropertyGridControlFactory {
     /// <summary>
@@ -19,7 +20,7 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
         var fe = base.CreateControl(property, options);
         if (property.Is(typeof(List<string>))) {
             if (fe is PropertyTools.Wpf.DataGrid dg) {
-                dg.ColumnDefinitions.Add(new ColumnDefinition() { Width = new GridLength(1, GridUnitType.Star) });
+                dg.ColumnDefinitions.Add(new ColumnDefinition() { Width = new(1, GridUnitType.Star) });
             }
         }
 
@@ -61,7 +62,7 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
             c.IsAutoFillEnabled = false;
             c.IsMoveAfterEnterEnabled = false;
             c.GridLineBrush = AppearanceManager.Current.GrayBrush8;
-            //dg.Operator = new 
+            //dg.Operator = new
         }
         return c;
     }

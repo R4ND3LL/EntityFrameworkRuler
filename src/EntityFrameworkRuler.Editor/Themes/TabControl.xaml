@@ -1,6 +1,5 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"   
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
-    xmlns:controls3="clr-namespace:EntityFrameworkRuler.Editor.Controls"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="clr-namespace:EntityFrameworkRuler.Editor.Converters">
 
 

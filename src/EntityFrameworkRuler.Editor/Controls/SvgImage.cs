@@ -23,12 +23,12 @@ public class SvgImage : SVGImage.SVG.SVGImage {
             return;
         }
 
-        if (newValue is not SolidColorBrush solid) throw new Exception("Brush should be solid");
+        if (newValue is not SolidColorBrush solid) throw new("Brush should be solid");
         SetOverrideColor(solid.Color);
     }
 
     private void SetOverrideColor(Color? c) {
-        base.OverrideColor = c;
+        OverrideColor = c;
         // fix bug in SVGImage where OverrideColor is not applied correctly to the render object
         var render = GetRender();
         if (render != null) {

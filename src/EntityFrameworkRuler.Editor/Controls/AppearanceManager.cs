@@ -2,14 +2,14 @@
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace EntityFrameworkRuler.Editor.Dialogs;
+namespace EntityFrameworkRuler.Editor.Controls;
 /// <summary> Predefined application themes  </summary>
 public enum ThemeNames {
     Light = 0,
     Dark = 1,
 }
 public sealed partial class AppearanceManager : ObservableObject {
-    public static AppearanceManager Current { get; private set; } = new AppearanceManager();
+    public static AppearanceManager Current { get; private set; } = new();
     private AppearanceManager() { }
 
     [ObservableProperty] private ThemeNames selectedTheme;
@@ -83,7 +83,7 @@ public sealed partial class AppearanceManager : ObservableObject {
             if (!resourceExists) return false;
 
             if (o is T t) value = t;
-            else if (o != null) throw new Exception($"{key} resource is not a {typeof(T).Name}. It is a {o.GetType().Name}");
+            else if (o != null) throw new($"{key} resource is not a {typeof(T).Name}. It is a {o.GetType().Name}");
             return true;
         } catch { return false; }
     }
@@ -101,6 +101,6 @@ public sealed partial class AppearanceManager : ObservableObject {
 }
 /// <summary>  </summary>
 public class ThemeUri {
-    public static Uri DarkUri = new Uri("/EntityFrameworkRuler.Editor;component/Themes/Dark.xaml", UriKind.Relative);
-    public static Uri LightUri = new Uri("/EntityFrameworkRuler.Editor;component/Themes/Light.xaml", UriKind.Relative);
+    public static Uri DarkUri = new("/EntityFrameworkRuler.Editor;component/Themes/Dark.xaml", UriKind.Relative);
+    public static Uri LightUri = new("/EntityFrameworkRuler.Editor;component/Themes/Light.xaml", UriKind.Relative);
 }

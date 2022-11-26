@@ -1,0 +1,99 @@
+﻿<UserControl x:Class="EntityFrameworkRuler.Editor.Controls.RulesFromEdmxView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:EntityFrameworkRuler.Editor.Controls"
+             mc:Ignorable="d" Background="#FFF0F0F0" MinHeight="250" MinWidth="500"
+             d:DataContext="{d:DesignInstance Type=controls:RulesFromEdmxViewModel, IsDesignTimeCreatable=True}">
+    <Grid VerticalAlignment="Center" Margin="10,20,10,20">
+        <StackPanel VerticalAlignment="Top" Orientation="Vertical" Grid.IsSharedSizeScope="True">
+            <Grid VerticalAlignment="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Caption" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Btn" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="EDMX file: " VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding SuggestedEdmxFiles}"
+                          DisplayMemberPath="Path"
+                          SelectedItem="{Binding SelectedEdmxFile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="2" Content="Browse" Command="{Binding EdmxBrowseCommand}" Margin="10,0,10,0"
+                        Padding="10,2,10,2" />
+            </Grid>
+            <Grid VerticalAlignment="Top" Margin="0,3,0,3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Caption" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Btn" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Target project path: " VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" Text="{Binding TargetProjectPath}" />
+                <Button Grid.Column="2" Content="Browse" Command="{Binding ProjectBrowseCommand}" Margin="10,0,10,0"
+                        Padding="10,2,10,2" />
+            </Grid>
+            <GroupBox Header="DbContext Options" Grid.IsSharedSizeScope="True" Margin="0,10,0,0">
+                <StackPanel VerticalAlignment="Top" Orientation="Vertical" Grid.IsSharedSizeScope="True">
+                    <Grid VerticalAlignment="Top" Margin="0,3,0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Caption" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Btn" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Allow scaffolding of elements unknown to the EDMX: "
+                                   VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" IsChecked="{Binding IncludeUnknowns}" />
+                    </Grid>
+                    <Grid VerticalAlignment="Top" Margin="0,3,0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Caption" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Btn" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Compact Rules: " VerticalAlignment="Center"
+                                   IsEnabled="{Binding CompactRulesEnabled}" />
+                        <CheckBox Grid.Column="1" IsChecked="{Binding CompactRules}"
+                                  IsEnabled="{Binding CompactRulesEnabled}" />
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="EF Core Scaffolding Options" Grid.IsSharedSizeScope="True" Margin="0,0,0,0"
+                      ToolTip="This should align with whatever scaffolding options you are using in order to match expected element names.">
+                <StackPanel VerticalAlignment="Top" Orientation="Vertical" Grid.IsSharedSizeScope="True">
+                    <Grid VerticalAlignment="Top" Margin="0,3,0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Caption" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Btn" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Use Database Names: " VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" IsChecked="{Binding UseDatabaseNames}" />
+                    </Grid>
+                    <Grid VerticalAlignment="Top" Margin="0,3,0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Caption" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Btn" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="No Pluralize: " VerticalAlignment="Center" />
+                        <CheckBox Grid.Column="1" IsChecked="{Binding NoPluralize}" />
+                    </Grid>
+                </StackPanel>
+            </GroupBox>
+            <Grid VerticalAlignment="Top" Margin="0,10,0,2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Caption" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="Btn" />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="1" Grid.ColumnSpan="1" Content="Generate Rules"
+                        Command="{Binding GenerateCommand}"
+                        Margin="0"
+                        Padding="10,2,10,2"
+                        TextBlock.FontWeight="Bold" TextBlock.FontSize="14" />
+            </Grid>
+        </StackPanel>
+
+    </Grid>
+</UserControl>
