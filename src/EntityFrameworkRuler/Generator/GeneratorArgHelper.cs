@@ -1,13 +1,14 @@
 ﻿using System.Linq;
+using EntityFrameworkRuler.Saver;
 
 namespace EntityFrameworkRuler.Generator;
 
 public static class GeneratorArgHelper {
-    internal static GeneratorOptions GetDefaultOptions() =>
-        TryParseArgs(Array.Empty<string>(), out var o) ? o : o ?? new GeneratorOptions();
+    internal static GenerateAndSaveOptions GetDefaultOptions() =>
+        TryParseArgs(Array.Empty<string>(), out var o) ? o : o ?? new GenerateAndSaveOptions();
 
-    internal static bool TryParseArgs(string[] argsArray, out GeneratorOptions generatorOptions) {
-        generatorOptions = new();
+    internal static bool TryParseArgs(string[] argsArray, out GenerateAndSaveOptions op) {
+        op = new();
 
         var args = argsArray.ToList().RemoveSwitchArgs(out var switchArgs);
 
@@ -18,22 +19,22 @@ public static class GeneratorArgHelper {
                     case "usedatabasenames":
                     case "use-database-names":
                     case "usedbnames":
-                        generatorOptions.UseDatabaseNames = true;
+                        op.GeneratorOptions.UseDatabaseNames = true;
                         break;
                     case "nopluralize":
                     case "no-pluralize":
                     case "np":
-                        generatorOptions.NoPluralize = true;
+                        op.GeneratorOptions.NoPluralize = true;
                         break;
                     case "includeunknowns":
                     case "include-unknowns":
                     case "allowunknowns":
-                        generatorOptions.IncludeUnknowns = true;
+                        op.GeneratorOptions.IncludeUnknowns = true;
                         break;
                     case "compact":
                     case "compactrules":
                     case "compact-rules":
-                        generatorOptions.CompactRules = true;
+                        op.GeneratorOptions.CompactRules = true;
                         break;
                     default:
                         return false; // invalid arg
@@ -46,22 +47,22 @@ public static class GeneratorArgHelper {
             // auto inspect current folder for both csproj and edmx
             var projectDir = PathExtensions.FindProjectDirUnderCurrentCached();
             if (projectDir?.FullName == null) {
-                generatorOptions.ProjectBasePath = null;
+                op.SaveOptions.ProjectBasePath = null;
                 return false;
             }
 
-            generatorOptions.ProjectBasePath = projectDir.FullName;
+            op.SaveOptions.ProjectBasePath = projectDir.FullName;
 
             var edmxFile = projectDir.FindFile("*.edmx", maxRecursionDepth: 3);
             if (edmxFile == null) return false;
 
-            generatorOptions.EdmxFilePath = edmxFile.FullName;
+            op.GeneratorOptions.EdmxFilePath = edmxFile.FullName;
             return true;
         }
 
-        generatorOptions.EdmxFilePath =
+        op.GeneratorOptions.EdmxFilePath =
             args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".edmx") == true);
-        if (generatorOptions.EdmxFilePath == null)
+        if (op.GeneratorOptions.EdmxFilePath == null)
             // inspect arg paths for edmx
             foreach (var arg in args) {
                 if (arg.IsNullOrWhiteSpace() || !Directory.Exists(arg)) continue;
@@ -71,33 +72,38 @@ public static class GeneratorArgHelper {
 
                 if (edmxFiles.Length > 1) return false;
 
-                generatorOptions.EdmxFilePath = edmxFiles[0];
+                op.GeneratorOptions.EdmxFilePath = edmxFiles[0];
                 break;
             }
 
-        if (generatorOptions.EdmxFilePath.IsNullOrEmpty() || !File.Exists(generatorOptions.EdmxFilePath)) return false;
+        if (op.GeneratorOptions.EdmxFilePath.IsNullOrEmpty() || !File.Exists(op.GeneratorOptions.EdmxFilePath)) return false;
 
-        generatorOptions.ProjectBasePath =
+        op.SaveOptions.ProjectBasePath =
             args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".edmx") == false);
-        if (generatorOptions.ProjectBasePath.IsNullOrWhiteSpace() || generatorOptions.ProjectBasePath == ".")
-            generatorOptions.ProjectBasePath = Directory.GetCurrentDirectory();
+        if (op.SaveOptions.ProjectBasePath.IsNullOrWhiteSpace() || op.SaveOptions.ProjectBasePath == ".")
+            op.SaveOptions.ProjectBasePath = Directory.GetCurrentDirectory();
 
-        if (!Directory.Exists(generatorOptions.ProjectBasePath)) {
-            if (File.Exists(generatorOptions.ProjectBasePath)) {
-                generatorOptions.ProjectBasePath = new FileInfo(generatorOptions.ProjectBasePath).Directory?.FullName;
-                if (generatorOptions.ProjectBasePath == null || !Directory.Exists(generatorOptions.ProjectBasePath))
+        if (!Directory.Exists(op.SaveOptions.ProjectBasePath)) {
+            if (File.Exists(op.SaveOptions.ProjectBasePath)) {
+                op.SaveOptions.ProjectBasePath = new FileInfo(op.SaveOptions.ProjectBasePath).Directory?.FullName;
+                if (op.SaveOptions.ProjectBasePath == null || !Directory.Exists(op.SaveOptions.ProjectBasePath))
                     return false;
             } else
                 return false;
         }
 
         var projectFiles2 =
-            Directory.GetFiles(generatorOptions.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
+            Directory.GetFiles(op.SaveOptions.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
         if (projectFiles2.Length == 0) {
-            generatorOptions.ProjectBasePath = null;
+            op.SaveOptions.ProjectBasePath = null;
             return false;
         }
 
         return true;
     }
+}
+
+public sealed class GenerateAndSaveOptions {
+    public GeneratorOptions GeneratorOptions { get; } = new();
+    public SaveOptions SaveOptions { get; } = new();
 }

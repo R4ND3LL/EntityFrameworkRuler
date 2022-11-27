@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
 
@@ -7,21 +8,30 @@ using EntityFrameworkRuler.Rules;
 namespace EntityFrameworkRuler.Applicator;
 
 public interface IRuleApplicator : IRuleLoader {
-    new ApplicatorOptions Options { get; }
-
     /// <summary> Load all rule files from the project base path and apply to the enclosed project. </summary>
-    /// <param name="fileNameOptions"> optional rule file naming options </param>
+    /// <param name="request"></param>
+    /// <returns> LoadAndApplyRulesResponse </returns>
+    Task<LoadAndApplyRulesResponse> ApplyRulesInProjectPath(LoadAndApplyOptions request);
+
+
+    /// <summary> Apply the given rules to the target project. </summary>
+    /// <param name="projectBasePath"> The target project to apply changes to. </param>
+    /// <param name="rules"> The rule models to apply </param>
     /// <returns> List of errors. </returns>
-    Task<LoadAndApplyRulesResponse> ApplyRulesInProjectPath(RuleFileNameOptions fileNameOptions = null);
+    Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(string projectBasePath, params IRuleModelRoot[] rules) {
+        return ApplyRules(projectBasePath, false, rules);
+    }
+
+    /// <summary> Apply the given rules to the target project. </summary>
+    /// <param name="projectBasePath"> The target project to apply changes to. </param>
+    /// <param name="adhocOnly"> Form an adhoc in-memory project out of the target entity model files instead of loading project directly. </param>
+    /// <param name="rules"> The rule models to apply </param>
+    /// <returns> List of errors. </returns>
+    Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(string projectBasePath, bool adhocOnly, params IRuleModelRoot[] rules) {
+        return ApplyRules(new ApplicatorOptions(projectBasePath, adhocOnly, rules));
+    }
 
     /// <summary> Apply the given rules to the target project. </summary>
     /// <returns> List of errors. </returns>
-    Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(IEnumerable<IRuleModelRoot> rules);
-
-    /// <summary> Apply the given rules to the target project. </summary>
-    /// <param name="dbContextRule"> The rules to apply. </param>
-    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <returns></returns>
-    Task<ApplyRulesResponse> ApplyRules(DbContextRule dbContextRule, string contextFolder = null, string modelsFolder = null);
+    Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(ApplicatorOptions request);
 }

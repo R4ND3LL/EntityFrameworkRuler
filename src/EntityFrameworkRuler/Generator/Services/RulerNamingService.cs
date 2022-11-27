@@ -15,28 +15,41 @@ namespace EntityFrameworkRuler.Generator.Services;
 
 public class RulerNamingService : IRulerNamingService {
     [ActivatorUtilitiesConstructor]
-    public RulerNamingService(GeneratorOptions options = null, IRulerPluralizer pluralizer = null) {
-        this.options = options ?? new GeneratorOptions();
+    // ReSharper disable once UnusedMember.Global
+    public RulerNamingService(IRulerPluralizer pluralizer) : this(pluralizer, null) { }
+
+    public RulerNamingService(IRulerPluralizer pluralizer, IPluralizerOptions options) {
         this.pluralizer = pluralizer ?? new HumanizerPluralizer();
         cSharpUtilities = new();
-        tableNamer = new CSharpUniqueNamer<EntityType>(
-            this.options.UseDatabaseNames
-                ? (t => t.Name)
-                : GenerateCandidateIdentifier,
-            cSharpUtilities,
-            this.options.NoPluralize
-                ? null
-                : this.pluralizer.Singularize);
         columnNamers = new();
+        Options = options ?? new GeneratorOptions();
     }
 
-    private readonly GeneratorOptions options;
+    private IPluralizerOptions options;
     private readonly IRulerPluralizer pluralizer;
     private readonly CSharpUtilities cSharpUtilities;
-    private readonly CSharpUniqueNamer<EntityType> tableNamer;
+    private CSharpUniqueNamer<EntityType> tableNamer;
     private readonly Dictionary<EntityType, CSharpUniqueNamer<EntityProperty>> columnNamers;
 
     public bool RelyOnEfMethodOnly { get; } = true;
+
+    public IPluralizerOptions Options {
+        get => options;
+        // ReSharper disable once PropertyCanBeMadeInitOnly.Global
+        set {
+            if (options == value) return;
+            options = value;
+            var ops = value ?? new GeneratorOptions();
+            tableNamer = new CSharpUniqueNamer<EntityType>(
+                ops.UseDatabaseNames
+                    ? t => t.Name
+                    : GenerateCandidateIdentifier,
+                cSharpUtilities,
+                ops.NoPluralize
+                    ? null
+                    : pluralizer.Singularize);
+        }
+    }
 
     public IEnumerable<string> FindCandidateNavigationNames(NavigationProperty navigation) {
         var ass = navigation.Association;
@@ -82,7 +95,7 @@ public class RulerNamingService : IRulerNamingService {
                             dependentEndNavigationPropertyName);
 
                     if (!foreignKey.IsUnique && !foreignKey.IsSelfReferencing())
-                        principalEndNavigationPropertyCandidateName = options.NoPluralize
+                        principalEndNavigationPropertyCandidateName = Options?.NoPluralize == true
                             ? principalEndNavigationPropertyCandidateName
                             : pluralizer.Pluralize(principalEndNavigationPropertyCandidateName);
 
@@ -138,7 +151,7 @@ public class RulerNamingService : IRulerNamingService {
         return column.SetExpectedEfCoreName(this, columnNamers.GetOrAddNew(table, Factory).GetName(column));
 
         CSharpUniqueNamer<EntityProperty> Factory(EntityType _) {
-            if (options.UseDatabaseNames)
+            if (Options?.UseDatabaseNames == true)
                 return new(
                     c => c.DbColumnName,
                     usedNames,

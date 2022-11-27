@@ -4,25 +4,18 @@ using EntityFrameworkRuler.Rules;
 namespace EntityFrameworkRuler.Saver;
 
 /// <summary> Rule Saver </summary>
-public interface IRuleSaver : IRuleProcessor {
-    /// <summary> Options for loading rules </summary>
-    SaveOptions Options { get; }
-
+public interface IRuleSaver : IRuleHandler {
     /// <summary> Persist the previously generated rules to the given target path. </summary>
-    /// <param name="rule"> The rule model to save. </param>
     /// <param name="projectBasePath"> The location to save the rule files. </param>
-    /// <param name="fileNameOptions"> Custom naming options for the rule files.  Optional. This parameter can be used to skip writing a rule file by setting that rule file to null. </param>
-    /// <returns> True if completed with no errors.  When false, see Errors collection for details. </returns>
-    /// <exception cref="Exception"></exception>
-    public Task<SaveRulesResponse> TrySaveRules(IRuleModelRoot rule, string projectBasePath,
-        RuleFileNameOptions fileNameOptions = null) => TrySaveRules(new[] { rule }, projectBasePath, fileNameOptions);
-
-    /// <summary> Persist the previously generated rules to the given target path. </summary>
+    /// <param name="dbContextRulesFile"> The name to use for the DB context rules file.  Default is a mask that incorporates the DB context name. Optional. </param>
     /// <param name="rules"> The rule models to save. </param>
-    /// <param name="projectBasePath"> The location to save the rule files. </param>
-    /// <param name="fileNameOptions"> Custom naming options for the rule files.  Optional. This parameter can be used to skip writing a rule file by setting that rule file to null. </param>
-    /// <returns> True if completed with no errors.  When false, see Errors collection for details. </returns>
+    /// <returns> Save Rules Response. </returns>
+    Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile = null, params IRuleModelRoot[] rules) {
+        return SaveRules(new(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile, rules: rules));
+    }
+
+    /// <summary> Persist the previously generated rules to the given target path. </summary>
+    /// <param name="request"> The save request options. </param>
     /// <exception cref="Exception"></exception>
-    Task<SaveRulesResponse> TrySaveRules(IEnumerable<IRuleModelRoot> rules, string projectBasePath,
-        RuleFileNameOptions fileNameOptions = null);
+    Task<SaveRulesResponse> SaveRules(SaveOptions request);
 }

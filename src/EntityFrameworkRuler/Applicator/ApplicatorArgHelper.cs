@@ -4,9 +4,9 @@ namespace EntityFrameworkRuler.Applicator;
 
 public static class ApplicatorArgHelper {
     internal static ApplicatorOptions GetDefaultOptions() =>
-        TryParseArgs(Array.Empty<string>(), out var o) ? o : o ?? new ApplicatorOptions();
+        TryParseArgs(Array.Empty<string>(), out var o) ? o : o ?? new LoadAndApplyOptions();
 
-    internal static bool TryParseArgs(string[] argsArray, out ApplicatorOptions applicatorOptions) {
+    internal static bool TryParseArgs(string[] argsArray, out LoadAndApplyOptions applicatorOptions) {
         applicatorOptions = new();
         var args = argsArray.ToList().RemoveSwitchArgs(out var switchArgs);
 

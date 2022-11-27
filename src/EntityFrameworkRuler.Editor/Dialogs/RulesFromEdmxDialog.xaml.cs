@@ -13,18 +13,19 @@ public sealed partial class RulesFromEdmxDialog {
     public RulesFromEdmxDialog() : this(null, null) {
     }
 
-    public RulesFromEdmxDialog(string edmxFilePath, string targetProjectPath = null) {
+    public RulesFromEdmxDialog(IRuleGenerator generator, string edmxFilePath, string targetProjectPath = null) {
         InitializeComponent();
-        DataContext = vm = new(edmxFilePath, targetProjectPath, OnGenerated);
+        DataContext = vm = new(generator, edmxFilePath, targetProjectPath, OnGenerated);
     }
+
     public ThemeNames Theme {
         get => AppearanceManager.Current.SelectedTheme;
         set => AppearanceManager.Current.SelectedTheme = value;
     }
+
     private void OnGenerated(SaveRulesResponse response) {
         Tag = response;
         DialogResult = true;
         Close();
     }
-
 }

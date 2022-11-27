@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -8,6 +9,7 @@ using EntityFrameworkRuler.Applicator;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Extension;
 using EntityFrameworkRuler.Generator;
+using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
 using Microsoft.CodeAnalysis;
 using Shouldly;
@@ -28,9 +30,9 @@ public sealed class EdmxRulerTests {
         var edmxPath = ResolveNorthwindEdmxPath();
         var logReceivedCount = 0;
         var start = DateTimeExtensions.GetTime();
-        var generator = new RuleGenerator(edmxPath);
+        var generator = new RuleGenerator();
         generator.OnLog += LogReceived;
-        var generateRulesResponse = generator.TryGenerateRules();
+        var generateRulesResponse = generator.TryGenerateRules(new GeneratorOptions(edmxPath));
         var rules = generateRulesResponse.Rules;
         var elapsed = DateTimeExtensions.GetTime() - start;
         generateRulesResponse.Errors.Count().ShouldBe(0);
@@ -78,11 +80,11 @@ public sealed class EdmxRulerTests {
 
         var csProj = ResolveNorthwindProject();
         var projBasePath = new FileInfo(csProj).Directory!.FullName;
-        var applicator = new RuleApplicator(projBasePath, adhocOnly: true);
+        IRuleApplicator applicator = new RuleApplicator();
         applicator.OnLog += LogReceived;
         start = DateTimeExtensions.GetTime();
-        ApplyRulesResponse response;
-        response = await applicator.ApplyRules(dbContextRule);
+        var responses = await applicator.ApplyRules(projBasePath, adhocOnly: true, dbContextRule);
+        var response = responses.First();
         response.Errors.Count().ShouldBeLessThanOrEqualTo(1);
         if (response.Errors.Count() == 1) response.Errors.First().ShouldStartWith("Error loading existing project");
 
@@ -108,9 +110,9 @@ public sealed class EdmxRulerTests {
     [Fact]
     public async Task ShouldLoadProjectUsingRoslynAndFindTypes() {
         var projectBasePath = ResolveNorthwindProject();
-        var state = new RuleApplicator.RoslynProjectState(new RuleApplicator(projectBasePath));
+        var state = new RuleApplicator.RoslynProjectState(new RuleApplicator());
         var response = new ApplyRulesResponse(null);
-        await state.TryLoadProjectOrFallbackOnce(projectBasePath, null, null, response);
+        await state.TryLoadProjectOrFallbackOnce(new ApplicatorOptions(projectBasePath, true), response);
         var project = state.Project;
         project.ShouldNotBeNull();
         //var ns = "NorthwindTestProject.Models";
@@ -124,7 +126,7 @@ public sealed class EdmxRulerTests {
 
         var compilation = await project.GetCompilationAsync();
         compilation.ShouldNotBeNull();
-        var type = compilation.GetTypeByMetadataName("NorthwindTestProject.Models.Product");
+        var type = compilation.GetTypeByMetadataName("NorthwindModel.Models.Product");
         var syntaxReferences2 = type?.DeclaringSyntaxReferences;
         syntaxReferences2.ShouldNotBeNull();
     }
@@ -132,8 +134,8 @@ public sealed class EdmxRulerTests {
     [Fact]
     public async Task ShouldLoadRules() {
         var start = DateTimeExtensions.GetTime();
-        var ruleApplicator = new RuleApplicator(ResolveNorthwindProject());
-        var rules = await ruleApplicator.LoadRulesInProjectPath();
+        IRuleApplicator ruleApplicator = new RuleApplicator();
+        var rules = await ruleApplicator.LoadRulesInProjectPath(ResolveNorthwindProject());
         rules.ShouldNotBeNull();
         rules.Rules.ShouldNotBeNull();
         rules.Rules.Count.ShouldBeGreaterThan(0);

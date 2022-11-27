@@ -1,4 +1,5 @@
-﻿using EntityFrameworkRuler.Common;
+﻿using System.Diagnostics.CodeAnalysis;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Rules;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,66 +10,50 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EntityFrameworkRuler.Saver;
 
 /// <summary> EF Rule Saver </summary>
-public class RuleSaver : RuleProcessor, IRuleSaver {
+[SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
+public class RuleSaver : RuleHandler, IRuleSaver {
     /// <summary> Create rule Saver for making changes to project files </summary>
-    /// <param name="projectBasePath">project folder containing rules and target files.</param>
-    public RuleSaver(string projectBasePath)
-        : this(new SaveOptions() {
-            ProjectBasePath = projectBasePath
-        }) {
-    }
+    public RuleSaver() : this(null) { }
 
     /// <summary> Create rule Saver for making changes to project files </summary>
     [ActivatorUtilitiesConstructor]
-    public RuleSaver(SaveOptions options) {
-        Options = options ?? new SaveOptions() { ProjectBasePath = Directory.GetCurrentDirectory() };
+    public RuleSaver(IRuleSerializer serializer) {
+        Serializer = serializer;
     }
 
 
     #region properties
 
-    /// <inheritdoc />
-    public SaveOptions Options { get; }
-
-    /// <summary> The target project path containing entity models. </summary>
-    public string ProjectBasePath {
-        get => Options.ProjectBasePath;
-        set => Options.ProjectBasePath = value;
-    }
+    /// <summary> The rule serialize to use while saving </summary>
+    public IRuleSerializer Serializer { get; set; }
 
     #endregion
 
-    /// <summary> Persist the previously generated rules to the given target path. </summary>
-    /// <param name="rule"> The rule model to save. </param>
-    /// <param name="projectBasePath"> The location to save the rule files. </param>
-    /// <param name="fileNameOptions"> Custom naming options for the rule files.  Optional. This parameter can be used to skip writing a rule file by setting that rule file to null. </param>
-    /// <returns> True if completed with no errors.  When false, see Errors collection for details. </returns>
-    /// <exception cref="Exception"></exception>
-    public Task<SaveRulesResponse> TrySaveRules(IRuleModelRoot rule, string projectBasePath,
-        RuleFileNameOptions fileNameOptions = null) => TrySaveRules(new[] { rule }, projectBasePath, fileNameOptions);
+
 
     /// <summary> Persist the previously generated rules to the given target path. </summary>
-    /// <param name="rules"> The rule models to save. </param>
-    /// <param name="projectBasePath"> The location to save the rule files. </param>
-    /// <param name="fileNameOptions"> Custom naming options for the rule files.  Optional. This parameter can be used to skip writing a rule file by setting that rule file to null. </param>
-    /// <returns> True if completed with no errors.  When false, see Errors collection for details. </returns>
+    /// <param name="request"> The save request options. </param>
     /// <exception cref="Exception"></exception>
-    public async Task<SaveRulesResponse> TrySaveRules(IEnumerable<IRuleModelRoot> rules, string projectBasePath,
-        RuleFileNameOptions fileNameOptions = null) {
+    public async Task<SaveRulesResponse> SaveRules(SaveOptions request) {
         var response = new SaveRulesResponse();
         response.OnLog += ResponseOnLog;
         try {
-            var dir = new DirectoryInfo(projectBasePath);
-            if (!dir.Exists) {
+            if (request == null) {
+                response.LogError("Save options are null");
+                return response;
+            }
+
+            var dir = request.ProjectBasePath.HasNonWhiteSpace() ? new DirectoryInfo(request.ProjectBasePath) : null;
+            if (dir?.Exists != true) {
                 response.LogError("Output folder does not exist");
                 return response;
             }
 
-            fileNameOptions ??= new();
+            var serializer = Serializer ?? new JsonRuleSerializer();
 
-            if (rules != null)
+            if (request.Rules != null)
                 await TryWriteRules<DbContextRule>(
-                    fileNameOptions.DbContextRulesFile.CoalesceWhiteSpace(() => new RuleFileNameOptions().DbContextRulesFile));
+                    request.DbContextRulesFile.CoalesceWhiteSpace(() => new SaveOptions().DbContextRulesFile));
 
             return response;
 
@@ -76,10 +61,10 @@ public class RuleSaver : RuleProcessor, IRuleSaver {
             async Task TryWriteRules<T>(string fileName) where T : class, IRuleModelRoot {
                 try {
                     if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
-                    foreach (var rulesRoot in rules?.OfType<T>()) {
+                    foreach (var rulesRoot in request.Rules.OfType<T>()) {
                         var name = rulesRoot.GetFinalName().NullIfWhitespace() ?? "dbcontext";
                         fileName = fileName.Replace("<ContextName>", name, StringComparison.OrdinalIgnoreCase);
-                        var path = await WriteRules<T>(rulesRoot, rulesRoot.GetFilePath().CoalesceWhiteSpace(fileName));
+                        var path = await WriteRules(rulesRoot, rulesRoot.GetFilePath().CoalesceWhiteSpace(fileName));
                         response.SavedRules.Add(path);
                         response.LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");
                     }
@@ -90,8 +75,8 @@ public class RuleSaver : RuleProcessor, IRuleSaver {
 
             async Task<string> WriteRules<T>(T rulesRoot, string filename)
                 where T : class, IRuleModelRoot {
-                var path = Path.IsPathRooted(filename) ? filename : Path.Combine(dir.FullName, filename);
-                await rulesRoot.ToJson<T>(path);
+                var path = Path.IsPathRooted(filename) ? filename : Path.Combine(dir.FullName, filename!);
+                await serializer.Serialize(rulesRoot, path);
                 return path;
             }
         } finally {

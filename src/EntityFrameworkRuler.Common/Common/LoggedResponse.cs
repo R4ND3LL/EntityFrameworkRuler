@@ -2,18 +2,38 @@
 using System.Linq;
 
 namespace EntityFrameworkRuler.Common;
+/// <summary> Response with log messages </summary>
+public interface ILoggedResponse {
+    /// <summary> Errors within the message list </summary>
+    IEnumerable<string> Errors { get; }
+
+    /// <summary> Information within the message list </summary>
+    IEnumerable<string> Information { get; }
+
+    /// <summary> Warnings within the message list </summary>
+    IEnumerable<string> Warnings { get; }
+
+    /// <summary> Get messages </summary>
+    IEnumerable<LogMessage> GetMessages();
+}
 
 /// <summary> Response with log messages </summary>
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
-public class LoggedResponse {
+public class LoggedResponse : ILoggedResponse {
     /// <summary> Log messages </summary>
     public List<LogMessage> Messages { get; } = new();
+
     /// <summary> Errors within the message list </summary>
     public IEnumerable<string> Errors => Messages.Where(o => o.Type == LogType.Error).Select(o => o.Message);
+
     /// <summary> Information within the message list </summary>
     public IEnumerable<string> Information => Messages.Where(o => o.Type == LogType.Information).Select(o => o.Message);
+
     /// <summary> Warnings within the message list </summary>
     public IEnumerable<string> Warnings => Messages.Where(o => o.Type == LogType.Warning).Select(o => o.Message);
+
+    /// <summary> Get messages </summary>
+    IEnumerable<LogMessage> ILoggedResponse.GetMessages() => Messages;
 
     internal void LogInformation(string msg) {
         Messages.Add(Raise(LogMessage.Information(msg)));
@@ -46,8 +66,10 @@ public delegate void LogMessageHandler(object sender, LogMessage logMessage);
 public enum LogType {
     /// <summary> Information </summary>
     Information = 0,
+
     /// <summary> Warning </summary>
     Warning,
+
     /// <summary> Error </summary>
     Error
 }
@@ -72,8 +94,10 @@ public struct LogMessage {
     // ReSharper disable once MemberCanBeInternal
     /// <summary> The message </summary>
     public string Message { get; set; }
+
     /// <summary> implicitly convert message to string </summary>
     public static implicit operator string(LogMessage logMessage) => logMessage.ToString();
+
     /// <summary> To string </summary>
     public override string ToString() => $"{Type}: {Message}";
 }

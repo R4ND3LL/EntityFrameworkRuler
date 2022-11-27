@@ -10,6 +10,7 @@ using EntityFrameworkRuler.Rules;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Project = Microsoft.CodeAnalysis.Project;
+using RuleLoader = EntityFrameworkRuler.Loader.RuleLoader;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -18,67 +19,63 @@ using Project = Microsoft.CodeAnalysis.Project;
 
 namespace EntityFrameworkRuler.Applicator;
 
-public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
+public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
     /// <summary> Create rule applicator for making changes to project files </summary>
-    /// <param name="projectBasePath">project folder containing rules and target files.</param>
-    /// <param name="adhocOnly"> Form an adhoc in-memory project out of the target entity model files instead of loading project directly. </param>
-    public RuleApplicator(string projectBasePath, bool adhocOnly = false)
-        : this(new() {
-            ProjectBasePath = projectBasePath,
-            AdhocOnly = adhocOnly
-        }) {
-    }
+    [ActivatorUtilitiesConstructor]
+    public RuleApplicator() : this(null) { }
 
     /// <summary> Create rule applicator for making changes to project files </summary>
     [ActivatorUtilitiesConstructor]
-    // ReSharper disable once SuggestBaseTypeForParameterInConstructor
-    public RuleApplicator(ApplicatorOptions options) : base(options) { }
-
+    public RuleApplicator(IRuleLoader loader) {
+        Loader = loader;
+    }
 
     #region properties
 
-    public new ApplicatorOptions Options => (ApplicatorOptions)base.Options;
-
-    /// <summary> Form an adhoc in-memory project out of the target entity model files instead of loading project directly. </summary>
-    public bool AdhocOnly {
-        get => Options.AdhocOnly;
-        set => Options.AdhocOnly = value;
-    }
+    public IRuleLoader Loader { get; set; }
 
     #endregion
 
+    public Task<LoadRulesResponse> LoadRulesInProjectPath(ILoadOptions request = null) {
+        var loader = Loader ?? new RuleLoader();
+        return loader.LoadRulesInProjectPath(request);
+    }
+
     /// <summary> Load all rule files from the project base path and apply to the enclosed project. </summary>
-    /// <param name="fileNameOptions"> optional rule file naming options </param>
-    /// <returns> List of errors. </returns>
-    public async Task<LoadAndApplyRulesResponse> ApplyRulesInProjectPath(RuleFileNameOptions fileNameOptions = null) {
+    /// <param name="request"></param>
+    /// <returns> LoadAndApplyRulesResponse </returns>
+    public async Task<LoadAndApplyRulesResponse> ApplyRulesInProjectPath(LoadAndApplyOptions request) {
+        var loader = Loader ?? new RuleLoader();
+        loader.OnLog += ResponseOnLog;
+        var loadRulesResponse = await LoadRulesInProjectPath(request);
         var response = new LoadAndApplyRulesResponse {
-            LoadRulesResponse = await LoadRulesInProjectPath(fileNameOptions)
+            LoadRulesResponse = loadRulesResponse
         };
-        response.OnLog += ResponseOnLog;
         try {
-            response.ApplyRulesResponses =
-                await ApplyRulesInternal(response.LoadRulesResponse.Rules);
+            if (response.LoadRulesResponse?.Rules != null)
+                response.ApplyRulesResponses = await ApplyRulesInternal(new(request.ProjectBasePath, request.AdhocOnly,
+                    response.LoadRulesResponse.Rules.ToArray()));
             return response;
         } finally {
-            response.OnLog += ResponseOnLog;
+            loader.OnLog -= ResponseOnLog;
         }
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
     /// <returns> List of errors. </returns>
-    public async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(IEnumerable<IRuleModelRoot> rules) {
-        if (rules == null) throw new ArgumentNullException(nameof(rules));
-        var responses = await ApplyRulesInternal(rules);
+    public async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(ApplicatorOptions request) {
+        if (request == null) throw new ArgumentNullException(nameof(request));
+        var responses = await ApplyRulesInternal(request);
         return responses;
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
-    private async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRulesInternal(IEnumerable<IRuleModelRoot> rules) {
-        if (rules == null) throw new ArgumentNullException(nameof(rules));
+    private async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRulesInternal(ApplicatorOptions request) {
+        if (request?.Rules == null) throw new ArgumentNullException(nameof(request));
 
         var state = new RoslynProjectState(this);
         List<ApplyRulesResponse> responses = new();
-        foreach (var rule in rules.Where(o => o != null).OrderBy(o => o.Kind)) {
+        foreach (var rule in request.Rules.Where(o => o != null).OrderBy(o => o.Kind)) {
             ApplyRulesResponse response = null;
             try {
                 if (rule == null) continue;
@@ -88,12 +85,8 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
                 try {
                     switch (rule) {
                         case DbContextRule dbContextRule:
-                            await ApplyDbContextRulesCore(dbContextRule, response, null, null, state);
+                            await ApplyDbContextRulesCore(request, dbContextRule, response, state);
                             break;
-                        // case NavigationNamingRules navigationNamingRules:
-                        //     await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace,
-                        //         response, state: state);
-                        //     break;
                         default:
                             continue;
                     }
@@ -113,54 +106,31 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
         return responses;
     }
 
-    // /// <summary> Apply the given rules to the target project. </summary>
-    // /// <param name="navigationNamingRules"> The rules to apply. </param>
-    // /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
-    // /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
-    // /// <returns></returns>
-    // public async Task<ApplyRulesResponse> ApplyRules(NavigationNamingRules navigationNamingRules,
-    //     string contextFolder = null, string modelsFolder = null) {
-    //     var response = new ApplyRulesResponse(navigationNamingRules);
-    //     response.OnLog += ResponseOnLog;
-    //     try {
-    //         await ApplyRulesCore(navigationNamingRules.Classes, navigationNamingRules.Namespace, response,
-    //             contextFolder: contextFolder,
-    //             modelsFolder: modelsFolder);
-    //     } finally {
-    //         response.OnLog -= ResponseOnLog;
-    //     }
-    //
-    //     return response;
-    // }
 
     /// <summary> Apply the given rules to the target project. </summary>
-    /// <param name="dbContextRule"> The rules to apply. </param>
-    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <returns></returns>
-    public async Task<ApplyRulesResponse> ApplyRules(DbContextRule dbContextRule,
-        string contextFolder = null, string modelsFolder = null) {
+    /// <param name="request"> The request object. Required. </param>
+    /// <param name="dbContextRule"> The rule to apply. </param>
+    /// <returns> ApplyRulesResponse </returns>
+    public async Task<ApplyRulesResponse> ApplyRules(ApplicatorOptions request, DbContextRule dbContextRule) {
         // map to class renaming
         var response = new ApplyRulesResponse(dbContextRule);
         response.OnLog += ResponseOnLog;
         try {
             var state = new RoslynProjectState(this);
-            await ApplyDbContextRulesCore(dbContextRule, response, contextFolder, modelsFolder, state);
+            await ApplyDbContextRulesCore(request, dbContextRule, response, state);
             return response;
         } finally {
             response.OnLog -= ResponseOnLog;
         }
     }
 
-    private async Task ApplyDbContextRulesCore(DbContextRule dbContextRule, ApplyRulesResponse response,
-        string contextFolder,
-        string modelsFolder, RoslynProjectState state) {
+    private async Task ApplyDbContextRulesCore(ApplicatorOptions request, DbContextRule dbContextRule, ApplyRulesResponse response,
+        RoslynProjectState state) {
         foreach (var schema in dbContextRule.Schemas) {
             var schemaResponse = new ApplyRulesResponse(null);
             schemaResponse.OnLog += ResponseOnLog;
             try {
-                await ApplyRulesCore(schema.Tables, schema.Namespace, schemaResponse, contextFolder, modelsFolder,
-                    state);
+                await ApplyRulesCore(request, schema.Tables, schema.Namespace, schemaResponse, state);
                 response.Merge(schemaResponse);
             } finally {
                 schemaResponse.OnLog -= ResponseOnLog;
@@ -169,17 +139,14 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
     }
 
     /// <summary> Apply the given rules to the target project. </summary>
+    /// <param name="request"></param>
     /// <param name="classRules"> The rules to apply. </param>
     /// <param name="namespaceName"></param>
     /// <param name="response"> The response to fill. </param>
-    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
     /// <param name="state"> Roslyn project state. Internal use only. </param>
     /// <returns></returns>
-    private async Task ApplyRulesCore(IEnumerable<IClassRule> classRules,
-        string namespaceName,
-        ApplyRulesResponse response,
-        string contextFolder = null, string modelsFolder = null, RoslynProjectState state = null) {
+    private async Task ApplyRulesCore(ApplicatorOptions request, IEnumerable<IClassRule> classRules, string namespaceName,
+        ApplyRulesResponse response, RoslynProjectState state = null) {
         string ToFullClassName(string className) {
             return namespaceName.HasNonWhiteSpace() ? $"{namespaceName}.{className}" : className;
         }
@@ -187,7 +154,7 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
         if (classRules == null) return; // nothing to do
 
         state ??= new(this);
-        await state.TryLoadProjectOrFallbackOnce(ProjectBasePath, contextFolder, modelsFolder, response);
+        await state.TryLoadProjectOrFallbackOnce(request, response);
         if (state.Project?.Documents.Any() != true) return;
 
         var propRenameCount = 0;
@@ -375,16 +342,15 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
         return;
     }
 
-    private async Task<Project> TryLoadProjectOrFallback(string projectBasePath, string contextFolder, string modelsFolder,
-        ApplyRulesResponse response) {
-        if (projectBasePath.IsNullOrEmpty()) return null;
+    private async Task<Project> TryLoadProjectOrFallback(ApplicatorOptions request, ApplyRulesResponse response) {
+        if (request == null || request.ProjectBasePath.IsNullOrEmpty()) return null;
         try {
-            var csProjFiles = projectBasePath.FindCsProjFiles();
+            var csProjFiles = request.ProjectBasePath.FindCsProjFiles();
 
             Project project;
-            if (!AdhocOnly) {
+            if (!request.AdhocOnly) {
                 foreach (var csProjFile in csProjFiles) {
-                    if (csProjFile.Directory != null) projectBasePath = csProjFile.Directory.FullName;
+                    if (csProjFile.Directory != null) request.ProjectBasePath = csProjFile.Directory.FullName;
                     project = await RoslynExtensions.LoadExistingProjectAsync(csProjFile.FullName, response);
                     if (project?.Documents.Any() == true) return project;
                 }
@@ -394,7 +360,7 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
                 response?.LogInformation("Attempting adhoc project creation...");
             }
 
-            project = TryLoadFallbackAdhocProject(projectBasePath, contextFolder, modelsFolder, response);
+            project = TryLoadFallbackAdhocProject(request, response);
             return project;
         } catch (Exception ex) {
             response?.LogError($"Error loading project: {ex.Message}");
@@ -420,15 +386,13 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
     /// This interferes with symbol identification and will result in some symbols not being renamed.  Therefore,
     /// the target project should ideally have this feature disabled: &lt;ImplicitUsings&gt;disable&lt;/ImplicitUsings&gt;
     /// </summary>
-    /// <param name="projectBasePath"> Project base path</param>
-    /// <param name="contextFolder"> Optional folder where data context is found. If provided, only cs files in the target subfolders will be loaded. </param>
-    /// <param name="modelsFolder"> Optional folder where models are found. If provided, only cs files in the target subfolders will be loaded. </param>
+    /// <param name="request"></param>
     /// <param name="response"> Errors list. </param>
     /// <returns></returns>
-    private static Project TryLoadFallbackAdhocProject(string projectBasePath, string contextFolder,
-        string modelsFolder, ApplyRulesResponse response) {
+    private static Project TryLoadFallbackAdhocProject(ApplicatorOptions request, ApplyRulesResponse response) {
         var start = DateTimeExtensions.GetTime();
-        var csProj = projectBasePath.InspectProject(response);
+        var path = request.ProjectBasePath;
+        var csProj = path.InspectProject(response);
 
         if (csProj?.ImplicitUsings.In("enabled", "enable", "true") == true) {
             // symbol renaming will likely not work correctly.
@@ -436,24 +400,26 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
                 "WARNING: ImplicitUsings is enabled on this project. Symbol renaming may not fully work due to missing reference information.");
         }
 
-        var cSharpFolders = new HashSet<string>();
-        if (contextFolder?.Length > 0 && Directory.Exists(Path.Combine(projectBasePath, contextFolder)))
-            cSharpFolders.Add(Path.Combine(projectBasePath, contextFolder));
+        if (csProj?.File?.Directory?.FullName != null) path = csProj.File.Directory.FullName;
 
-        if (modelsFolder?.Length > 0 && Directory.Exists(Path.Combine(projectBasePath, modelsFolder)))
-            cSharpFolders.Add(Path.Combine(projectBasePath, modelsFolder));
+        var cSharpFolders = new HashSet<string>();
+        if (request.ContextFolder?.Length > 0 && Directory.Exists(Path.Combine(path, request.ContextFolder)))
+            cSharpFolders.Add(Path.Combine(path, request.ContextFolder));
+
+        if (request.ModelsFolder?.Length > 0 && Directory.Exists(Path.Combine(path, request.ModelsFolder)))
+            cSharpFolders.Add(Path.Combine(path, request.ModelsFolder));
 
         if (cSharpFolders.Count == 0)
             // use project base path
-            cSharpFolders.Add(projectBasePath);
+            cSharpFolders.Add(path);
 
         var cSharpFiles = cSharpFolders
             .SelectMany(o => Directory.GetFiles(o, "*.cs", SearchOption.AllDirectories))
             .Distinct().ToList();
 
         var ignorePaths = new HashSet<string> {
-            Path.Combine(projectBasePath, "obj") + Path.DirectorySeparatorChar,
-            Path.Combine(projectBasePath, "Debug") + Path.DirectorySeparatorChar,
+            Path.Combine(path, "obj") + Path.DirectorySeparatorChar,
+            Path.Combine(path, "Debug") + Path.DirectorySeparatorChar,
         };
         var toIgnore = cSharpFiles.Where(o => ignorePaths.Any(o.StartsWithIgnoreCase)).ToList();
         toIgnore.ForEach(o => cSharpFiles.Remove(o));
@@ -472,6 +438,7 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
             if (assembly.IsDynamic) continue;
             var assemblyName = assembly.GetName();
             var name = assemblyName.Name;
+            if (name.IsNullOrEmpty()) continue;
             if (name.StartsWith("Microsoft.CodeAnalysis")) continue;
             if (name.StartsWith("MinVer")) continue;
             if (name.StartsWith("JetBrains")) continue;
@@ -514,13 +481,10 @@ public sealed class RuleApplicator : RuleLoader, IRuleApplicator {
         public Project OriginalProject { get; private set; }
         public Project Project { get; set; }
 
-        internal async Task TryLoadProjectOrFallbackOnce(string projectBasePath, string contextFolder,
-            string modelsFolder, ApplyRulesResponse response) {
+        internal async Task TryLoadProjectOrFallbackOnce(ApplicatorOptions request, ApplyRulesResponse response) {
             if (loadAttempted) return;
             loadAttempted = true;
-            OriginalProject = Project = await applicator.TryLoadProjectOrFallback(projectBasePath, contextFolder,
-                modelsFolder,
-                response);
+            OriginalProject = Project = await applicator.TryLoadProjectOrFallback(request, response);
         }
     }
 
@@ -583,28 +547,34 @@ public sealed class ApplyRulesResponse : LoggedResponse {
 }
 
 [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
-public sealed class LoadAndApplyRulesResponse : LoggedResponse {
+public sealed class LoadAndApplyRulesResponse : ILoggedResponse {
     public LoadRulesResponse LoadRulesResponse { get; internal set; }
     public IReadOnlyList<ApplyRulesResponse> ApplyRulesResponses { get; internal set; }
 
     /// <summary> return all errors in this response (including rule application responses) </summary>
-    public IEnumerable<string> GetErrors() => GetAllMessagesOfType(LogType.Error);
+    public IEnumerable<string> Errors => GetAllMessagesOfType(LogType.Error);
 
     /// <summary> return all information statements in this response (including rule application responses) </summary>
-    public IEnumerable<string> GetInformation() => GetAllMessagesOfType(LogType.Information);
+    public IEnumerable<string> Information => GetAllMessagesOfType(LogType.Information);
 
     /// <summary> return all information statements in this response (including rule application responses) </summary>
-    public IEnumerable<string> GetWarnings() => GetAllMessagesOfType(LogType.Warning);
+    public IEnumerable<string> Warnings => GetAllMessagesOfType(LogType.Warning);
 
     /// <summary> return all errors in this response (including rule application responses) </summary>
     public IEnumerable<string> GetAllMessagesOfType(LogType type) {
+        foreach (var logMessage in GetMessages().Where(o => o.Type == type))
+            yield return logMessage.Message;
+    }
+
+    /// <summary> return all errors in this response (including rule application responses) </summary>
+    public IEnumerable<LogMessage> GetMessages() {
         if (LoadRulesResponse?.Errors != null)
-            foreach (var logMessage in LoadRulesResponse.Messages.Where(o => o.Type == type))
-                yield return logMessage.Message;
+            foreach (var logMessage in LoadRulesResponse.Messages)
+                yield return logMessage;
         if (!(ApplyRulesResponses?.Count > 0)) yield break;
         foreach (var r in ApplyRulesResponses)
             if (r?.Messages != null)
-                foreach (var logMessage in r.Messages.Where(o => o.Type == type))
-                    yield return logMessage.Message;
+                foreach (var logMessage in r.Messages)
+                    yield return logMessage;
     }
 }

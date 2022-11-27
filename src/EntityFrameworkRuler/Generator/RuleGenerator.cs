@@ -18,76 +18,61 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EntityFrameworkRuler.Generator;
 
 /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX. </summary>
-public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
+public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
     /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
-    /// <param name="edmxFilePath"> The EDMX file path </param>
-    /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
-    /// <param name="noMetadata"> If true, generate rule files with no extra metadata about the entity models.  Only generate minimal change information. </param>
-    /// <param name="noPluralize"> A value indicating whether to use the pluralizer. </param>
-    /// <param name="useDatabaseNames"> A value indicating whether to use the database schema names directly. </param>
-    public RuleGenerator(string edmxFilePath, IRulerNamingService namingService = null, bool noMetadata = false,
-        bool noPluralize = false, bool useDatabaseNames = false)
-        : this(new() {
-            EdmxFilePath = edmxFilePath,
-            NoPluralize = noPluralize,
-            UseDatabaseNames = useDatabaseNames
-        }, null) {
-        this.namingService = namingService;
-    }
+    [ActivatorUtilitiesConstructor]
+    public RuleGenerator() : this(null, null, null) { }
 
     /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
-    /// <param name="options"> Generator options. </param>
     /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
+    /// <param name="edmxParser"> Service that parses an EDMX file into an object model usable for rule generation. </param>
     [ActivatorUtilitiesConstructor]
-    public RuleGenerator(GeneratorOptions options, IRulerNamingService namingService = null) : base(options) {
-        this.namingService = namingService;
+    public RuleGenerator(IRulerNamingService namingService, IEdmxParser edmxParser, IRuleSaver ruleSaver) {
+        NamingService = namingService;
+        EdmxParser = edmxParser;
+        RuleSaver = ruleSaver;
     }
 
     #region properties
-
-    public new GeneratorOptions Options => (GeneratorOptions)base.Options;
-
-    // ReSharper disable once MemberCanBePrivate.Global
-    /// <summary> The EDMX file path </summary>
-    public string EdmxFilePath {
-        get => Options.EdmxFilePath;
-        set => Options.EdmxFilePath = value;
-    }
-
-    private IRulerNamingService namingService;
 
     /// <summary>
     /// Service that decides how to name navigation properties.
     /// Similar to EF ICandidateNamingService but this one utilizes the EDMX model only.
     /// </summary>
-    public IRulerNamingService NamingService {
-        get => namingService ??= new RulerNamingService(Options, null);
-        set => namingService = value;
-    }
+    public IRulerNamingService NamingService { get; set; }
+
+    /// <summary> Service that parses an EDMX file into an object model usable for rule generation. </summary>
+    public IEdmxParser EdmxParser { get; set; }
+
+    /// <summary> Rule Saver </summary>
+    public IRuleSaver RuleSaver { get; }
 
     #endregion
 
-    /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
-    /// Errors are monitored and added to local Errors collection. </summary>
-    public Task<GenerateRulesResponse> TryGenerateRulesAsync() {
-        return Task.Factory.StartNew(TryGenerateRules);
+    public Task<SaveRulesResponse> SaveRules(SaveOptions request) {
+        var saver = RuleSaver ?? new RuleSaver();
+        return saver.SaveRules(request);
     }
+
+
 
     /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
     /// Errors are monitored and added to local Errors collection. </summary>
-    public GenerateRulesResponse TryGenerateRules() {
+    /// <param name="request"> The generation request options. </param>
+    public GenerateRulesResponse TryGenerateRules(GeneratorOptions request) {
         var response = new GenerateRulesResponse();
         response.OnLog += ResponseOnLog;
         try {
+            var edmxFilePath = request?.EdmxFilePath;
             try {
-                response.EdmxParsed ??= EdmxParser.Parse(EdmxFilePath);
+                var parser = EdmxParser ?? new EdmxParser();
+                response.EdmxParsed ??= parser.Parse(edmxFilePath);
             } catch (Exception ex) {
                 response.LogError($"Error parsing EDMX: {ex.Message}");
                 return response;
             }
 
-
-            GenerateAndAdd(GetDbContextRules);
+            GenerateAndAdd(parsed => GetDbContextRules(parsed, request));
 
             return response;
         } finally {
@@ -107,7 +92,7 @@ public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
 
     #region Main rule gen methods
 
-    private DbContextRule GetDbContextRules(EdmxParsed edmx) {
+    private DbContextRule GetDbContextRules(EdmxParsed edmx, GeneratorOptions request) {
         if (edmx?.Entities.IsNullOrEmpty() != false) {
             var noRulesFoundBehavior = DbContextRule.DefaultNoRulesFoundBehavior;
             noRulesFoundBehavior.Name = edmx?.ContextName;
@@ -116,9 +101,11 @@ public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
 
         var root = new DbContextRule {
             Name = edmx.ContextName,
-            IncludeUnknownSchemas = Options.IncludeUnknowns
+            IncludeUnknownSchemas = request.IncludeUnknowns
         };
-        var generateAll = !Options.IncludeUnknowns || !Options.CompactRules;
+        var namingService = NamingService ??= new RulerNamingService(null, request);
+
+        var generateAll = !request.IncludeUnknowns || !request.CompactRules;
         foreach (var grp in edmx.Entities.GroupBy(o => o.DbSchema)) {
             if (grp.Key.IsNullOrWhiteSpace()) continue;
 
@@ -126,18 +113,18 @@ public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
             root.Schemas.Add(schemaRule);
             schemaRule.SchemaName = grp.Key;
             schemaRule.UseSchemaName = false; // will append schema name to entity name
-            schemaRule.IncludeUnknownTables = Options.IncludeUnknowns;
-            schemaRule.IncludeUnknownViews = Options.IncludeUnknowns;
+            schemaRule.IncludeUnknownTables = request.IncludeUnknowns;
+            schemaRule.IncludeUnknownViews = request.IncludeUnknowns;
             foreach (var entity in grp.OrderBy(o => o.Name)) {
                 // if entity name is different than db, it has to go into output
                 var altered = false;
                 // Get the expected EF entity identifier based on options.. just like EF would:
-                var expectedClassName = NamingService.GetExpectedEntityTypeName(entity);
+                var expectedClassName = namingService.GetExpectedEntityTypeName(entity);
                 var tbl = new TableRule {
                     Name = entity.StorageName,
                     EntityName = entity.StorageName == expectedClassName ? null : expectedClassName,
                     NewName = entity.Name.CoalesceWhiteSpace(expectedClassName, entity.StorageName),
-                    IncludeUnknownColumns = Options.IncludeUnknowns
+                    IncludeUnknownColumns = request.IncludeUnknowns
                 };
 
                 if (tbl.Name != tbl.NewName) altered = true;
@@ -148,7 +135,7 @@ public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
                 foreach (var property in entity.Properties) {
                     // if property name is different than db, it has to go into output
                     // Get the expected EF property identifier based on options.. just like EF would:
-                    var expectedPropertyName = NamingService.GetExpectedPropertyName(property, expectedClassName);
+                    var expectedPropertyName = namingService.GetExpectedPropertyName(property, expectedClassName);
                     if (!generateAll && (expectedPropertyName.IsNullOrWhiteSpace() ||
                                          (property.Name == expectedPropertyName && property.EnumType == null))) continue;
                     //tbl.Columns ??= new();
@@ -170,7 +157,7 @@ public sealed class RuleGenerator : RuleSaver, IRuleGenerator {
                     };
 
                     navigationRename.Name
-                        .AddRange(NamingService.FindCandidateNavigationNames(navigation)
+                        .AddRange(namingService.FindCandidateNavigationNames(navigation)
                             .Where(o => o != navigation.Name));
 
                     if (navigationRename.Name.Count == 0) continue;

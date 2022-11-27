@@ -69,19 +69,18 @@ namespace EntityFrameworkRuler.Applicator.CsProjParser {
         public List<CsProjReference> References { get; set; } = new();
 
         [XmlIgnore]
-        public string FilePath { get; set; }
+        public FileInfo File { get; set; }
 
         public string GetAssemblyName() {
-            if (AssemblyName.HasNonWhiteSpace() || FilePath.IsNullOrWhiteSpace()) return AssemblyName;
-            var fileInfo = new FileInfo(FilePath);
-            var name = fileInfo.Name;
+            if (AssemblyName.HasNonWhiteSpace() || File == null || File.FullName.IsNullOrWhiteSpace()) return AssemblyName;
+            var name = File.Name;
             if (Path.HasExtension(name)) name = Path.GetFileNameWithoutExtension(name);
             return name;
         }
+
         public string FindSolutionParentPath() {
-            if (FilePath.IsNullOrWhiteSpace()) return null;
-            var fileInfo = new FileInfo(FilePath);
-            return fileInfo.Directory?.FullName?.FindSolutionParentPath();
+            if (File == null || File.FullName.IsNullOrWhiteSpace()) return null;
+            return File.Directory?.FullName?.FindSolutionParentPath();
         }
     }
 }

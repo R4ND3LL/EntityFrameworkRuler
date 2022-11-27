@@ -45,8 +45,8 @@ public class RuleModelUpdater : IRuleModelUpdater {
         UpdateDbContextRule(model, contextRules);
 
         // initialize a rule file from the current reverse engineered model
-        var saver = new RuleSaver(projectDir);
-        var response = saver.TrySaveRules(contextRules, projectDir).GetAwaiter().GetResult();
+        var saver = new RuleSaver();
+        var response = saver.SaveRules(new(projectDir, contextRules)).GetAwaiter().GetResult();
         var elapsed = DateTimeExtensions.GetTime() - start;
 
         if (response.Errors.Any()) {

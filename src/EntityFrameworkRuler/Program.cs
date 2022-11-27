@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using EntityFrameworkRuler.Applicator;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator;
+using EntityFrameworkRuler.Saver;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFrameworkRuler;
@@ -13,23 +14,20 @@ internal static class Program {
         try {
             if (args.IsNullOrEmpty() || args[0].IsNullOrWhiteSpace()) return await ShowHelpInfo();
 
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddRuler();
 
-            // .AddSingleton<ILoggerFactory>(loggerFactory)
-            // .BuildServiceProvider(validateScopes: true);
 
             var option = args[0].GetSwitchArgChar();
             switch (option) {
                 case 'g': {
                     // generate rules
-                    if (!GeneratorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var generatorArgs))
+                    if (!GeneratorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var genAndSaveOptions))
                         return await ShowHelpInfo();
 
-                    var serviceCollection = new ServiceCollection();
-                    serviceCollection.AddRuleGenerator(generatorArgs);
-
-                    await Console.Out.WriteLineAsync($" - edmx path: {generatorArgs.EdmxFilePath}")
+                    await Console.Out.WriteLineAsync($" - edmx path: {genAndSaveOptions.GeneratorOptions.EdmxFilePath}")
                         .ConfigureAwait(false);
-                    await Console.Out.WriteLineAsync($" - project base path: {generatorArgs.ProjectBasePath}")
+                    await Console.Out.WriteLineAsync($" - project base path: {genAndSaveOptions.SaveOptions.ProjectBasePath}")
                         .ConfigureAwait(false);
                     await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
 
@@ -37,14 +35,14 @@ internal static class Program {
                     var serviceProvider = serviceCollection.BuildServiceProvider();
                     var generator = serviceProvider.GetRequiredService<IRuleGenerator>();
                     generator.OnLog += MessageLogged;
-                    var response = generator.TryGenerateRules();
-                    var rules = response.Rules;
-                    await generator.TrySaveRules(rules, generatorArgs.ProjectBasePath);
+                    var response = generator.TryGenerateRules(genAndSaveOptions.GeneratorOptions);
+                    genAndSaveOptions.SaveOptions.Rules.AddRange(response.Rules);
+                    await generator.SaveRules(genAndSaveOptions.SaveOptions);
                     var elapsed = DateTimeExtensions.GetTime() - start;
                     var errorCount = response.Errors.Count();
                     if (errorCount == 0) {
                         await Console.Out
-                            .WriteLineAsync($"Successfully generated {rules.Count} rule files in {elapsed}ms")
+                            .WriteLineAsync($"Successfully generated {genAndSaveOptions.SaveOptions.Rules.Count} rule files in {elapsed}ms")
                             .ConfigureAwait(false);
                         return 0;
                     }
@@ -53,21 +51,19 @@ internal static class Program {
                 }
                 case 'a': {
                     // apply rules
-                    if (!ApplicatorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var applicatorArgs))
+                    if (!ApplicatorArgHelper.TryParseArgs(args.Skip(1).ToArray(), out var loadAndApplyOptions))
                         return await ShowHelpInfo();
-                    var serviceCollection = new ServiceCollection();
-                    serviceCollection.AddRuleApplicator(applicatorArgs);
 
-                    await Console.Out.WriteLineAsync($" - project base path: {applicatorArgs.ProjectBasePath}")
+                    await Console.Out.WriteLineAsync($" - project base path: {loadAndApplyOptions.ProjectBasePath}")
                         .ConfigureAwait(false);
                     await Console.Out.WriteLineAsync($"").ConfigureAwait(false);
                     var start = DateTimeExtensions.GetTime();
                     var serviceProvider = serviceCollection.BuildServiceProvider();
                     var applicator = serviceProvider.GetRequiredService<IRuleApplicator>();
                     applicator.OnLog += MessageLogged;
-                    var response = await applicator.ApplyRulesInProjectPath();
+                    var response = await applicator.ApplyRulesInProjectPath(loadAndApplyOptions);
                     var elapsed = DateTimeExtensions.GetTime() - start;
-                    var errorCount = response.GetErrors().Count();
+                    var errorCount = response.Errors.Count();
                     if (errorCount == 0) {
                         await Console.Out
                             .WriteLineAsync($"Successfully applied rules in {elapsed}ms")

@@ -2,17 +2,15 @@
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Xml;
 
 namespace EntityFrameworkRuler.Generator.EdmxModel;
 
-public sealed class EdmxParser : NotifyPropertyChanged {
-    public static EdmxParsed Parse(string filePath) {
-        return new EdmxParser(filePath).State;
-    }
-
-    private EdmxParser(string fileInstancePath) {
+[SuppressMessage("ReSharper", "ClassCanBeSealed.Global")]
+public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
+    public EdmxParsed Parse(string fileInstancePath) {
         State = new(fileInstancePath);
         if (!File.Exists(fileInstancePath)) throw new InvalidDataException($"Could not find file {fileInstancePath}");
 
@@ -197,6 +195,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
             .Select(o => o.Association)
             .GroupBy(o => o.Name)
             .ToDictionary(o => o.Key, o => o.First(), StringComparer.InvariantCultureIgnoreCase);
+        return State;
     }
 
     private void ResolveDesignAssociation(NavigationProperty navigation, ConceptualAssociation ass,
@@ -345,7 +344,7 @@ public sealed class EdmxParser : NotifyPropertyChanged {
 
     #region properties
 
-    private EdmxParsed State { get; }
+    private EdmxParsed State { get; set; }
     private string FilePath => State.FilePath;
     private Dictionary<string, AssociationBase> AssociationsByName => State.AssociationsByName;
     private Dictionary<string, EnumType> EnumsByName => State.EnumsByName;

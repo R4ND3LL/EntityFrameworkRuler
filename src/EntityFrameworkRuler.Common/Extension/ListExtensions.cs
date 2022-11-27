@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -8,7 +9,7 @@ namespace EntityFrameworkRuler.Extension;
 
 internal static class ListExtensions {
     [DebuggerStepThrough]
-    public static bool IsNullOrEmpty<T>(this IList<T> list) { return list == null || list.Count == 0; }
+    public static bool IsNullOrEmpty<T>([NotNullWhen(false)]this IList<T> list) { return list == null || list.Count == 0; }
 
     [DebuggerStepThrough]
     public static T TryGetElement<T>(this IList<T> list, int index)

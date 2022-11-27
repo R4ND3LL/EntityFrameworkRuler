@@ -10,15 +10,19 @@ using EntityFrameworkRuler.Saver;
 namespace EntityFrameworkRuler.Editor.Controls;
 
 internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
+    private readonly IRuleGenerator generator;
     private readonly Action<SaveRulesResponse> onGenerated;
 
-    public RulesFromEdmxViewModel(string edmxFilePath = null, string targetProjectPath = null, Action<SaveRulesResponse> onGenerated = null) {
+    public RulesFromEdmxViewModel(IRuleGenerator generator, string edmxFilePath = null, string targetProjectPath = null,
+        Action<SaveRulesResponse> onGenerated = null) {
+        this.generator = generator;
         this.onGenerated = onGenerated;
         SuggestedEdmxFiles = new();
         if (edmxFilePath.HasNonWhiteSpace() && edmxFilePath.EndsWithIgnoreCase(".edmx")) {
             SuggestedEdmxFiles.Add(new(new(edmxFilePath.Trim())));
             SelectedEdmxFile = SuggestedEdmxFiles[0];
         }
+
         if (targetProjectPath.HasNonWhiteSpace()) {
             TargetProjectPath = targetProjectPath;
             if (SuggestedEdmxFiles.Count == 0) FindEdmxFilesNear(targetProjectPath);
@@ -27,7 +31,8 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
 
     private async void FindEdmxFilesNear(string path) {
         try {
-            if (path.EndsWithIgnoreCase(".csproj") || path.EndsWithIgnoreCase(".edmx") || path.EndsWithIgnoreCase(".json")) path = new FileInfo(path).Directory?.FullName;
+            if (path.EndsWithIgnoreCase(".csproj") || path.EndsWithIgnoreCase(".edmx") || path.EndsWithIgnoreCase(".json"))
+                path = new FileInfo(path).Directory?.FullName;
             if (path.IsNullOrWhiteSpace()) return;
             var files = await path
                 .FindEdmxFilesNearProjectAsync()
@@ -40,12 +45,12 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
 
     [ObservableProperty] private ObservableCollection<ObservableFileInfo> suggestedEdmxFiles;
 
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
+    [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
     private ObservableFileInfo selectedEdmxFile;
 
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(GenerateCommand))] private string targetProjectPath;
+    [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
+    private string targetProjectPath;
+
     [ObservableProperty] private bool noPluralize;
     [ObservableProperty] private bool includeUnknowns;
     [ObservableProperty] private bool compactRules;
@@ -53,13 +58,11 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
     [ObservableProperty] private bool compactRulesEnabled;
 
 
-    partial void OnSelectedEdmxFileChanged(ObservableFileInfo? value) {
-    }
-
     partial void OnIncludeUnknownsChanged(bool value) {
         CompactRulesEnabled = value; // can only compact rules when we are including unknown elements.
         if (!CompactRulesEnabled) CompactRules = false;
     }
+
     [RelayCommand]
     private void EdmxBrowse() {
         // Configure open file dialog box
@@ -78,6 +81,7 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
         var filename = dialog.FileName;
         SelectedEdmxFile = new(new(filename));
     }
+
     [RelayCommand]
     private void ProjectBrowse() {
         // Configure open file dialog box
@@ -107,22 +111,22 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
             var hasError = false;
             var generatorOptions = new GeneratorOptions() {
                 EdmxFilePath = SelectedEdmxFile.Path,
-                ProjectBasePath = TargetProjectPath,
                 CompactRules = CompactRules,
                 IncludeUnknowns = IncludeUnknowns,
                 NoPluralize = NoPluralize,
                 UseDatabaseNames = UseDatabaseNames
             };
-            var generator = new RuleGenerator(generatorOptions);
+            var generator = this.generator ?? new RuleGenerator();
             generator.OnLog += GeneratorOnLog;
-            var response = await generator.TryGenerateRulesAsync().ConfigureAwait(true);
+            var response = await generator.TryGenerateRulesAsync(generatorOptions).ConfigureAwait(true);
 
             var rule = response.DbContextRule;
             if (rule?.Schemas?.Count > 0) {
                 // rule generated.
-                var saveResponse = await generator.TrySaveRules(response.Rules, TargetProjectPath, null);
+                var saveResponse = await generator.SaveRules(TargetProjectPath, null, response.Rules.First());
                 if (saveResponse.Errors.Any()) {
-                    MessageBox.Show(saveResponse.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(saveResponse.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
                 } else {
                     if (onGenerated == null) {
                         MessageBox.Show(sb.ToString(), "Completed successfully", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -133,7 +137,9 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
             } else {
                 MessageBox.Show(sb.ToString(), "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
+
             generator.OnLog -= GeneratorOnLog;
+
             void GeneratorOnLog(object sender, Common.LogMessage logMessage) {
                 if (!hasError && logMessage.Type == Common.LogType.Error) hasError = true;
                 sb.AppendLine(logMessage.ToString());
@@ -142,5 +148,4 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
             MessageBox.Show(ex.Message, "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
-
 }

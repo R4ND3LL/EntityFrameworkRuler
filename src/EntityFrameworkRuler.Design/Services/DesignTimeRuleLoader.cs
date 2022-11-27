@@ -16,11 +16,13 @@ namespace EntityFrameworkRuler.Design.Services;
 public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     private readonly IServiceProvider serviceProvider;
     private readonly IOperationReporter reporter;
+    private readonly IRuleLoader ruleLoader;
 
     /// <summary> Creates the rule loader </summary>
-    public DesignTimeRuleLoader(IServiceProvider serviceProvider, IOperationReporter reporter) {
+    public DesignTimeRuleLoader(IServiceProvider serviceProvider, IOperationReporter reporter, IRuleLoader ruleLoader) {
         this.serviceProvider = serviceProvider;
         this.reporter = reporter;
+        this.ruleLoader = ruleLoader;
         var reporterAssembly = reporter.GetType().Assembly;
         var assemblyName = reporterAssembly?.GetName();
         EfVersion = assemblyName?.Version;
@@ -202,10 +204,9 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
                 return null;
             }
 
-            var loader = new RuleLoader(projectFolder);
-            loader.OnLog += LoaderOnLog;
-            var loadRulesResponse = loader.LoadRulesInProjectPath().GetAwaiter().GetResult();
-            loader.OnLog -= LoaderOnLog;
+            ruleLoader.OnLog += LoaderOnLog;
+            var loadRulesResponse = ruleLoader.LoadRulesInProjectPath(new LoadOptions(projectFolder)).GetAwaiter().GetResult();
+            ruleLoader.OnLog -= LoaderOnLog;
             reporter?.WriteInformation($"EF Ruler loaded {loadRulesResponse.Rules?.Count ?? 0} rule file(s).");
             return loadRulesResponse;
         }

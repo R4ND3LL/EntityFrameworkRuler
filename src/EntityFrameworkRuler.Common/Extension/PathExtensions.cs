@@ -88,7 +88,7 @@ public static class PathExtensions {
                 try {
                     var text = File.ReadAllText(csProjFile.FullName);
                     csProj = CsProjSerializer.Deserialize(text);
-                    csProj.FilePath = csProjFile.FullName;
+                    csProj.File = csProjFile;
                 } catch (Exception ex) {
                     loggedResponse?.LogError($"Unable to parse csproj: {ex.Message}");
                     continue;

@@ -1,6 +1,10 @@
 ﻿using EntityFrameworkRuler.Applicator;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator;
+using EntityFrameworkRuler.Generator.EdmxModel;
 using EntityFrameworkRuler.Generator.Services;
+using EntityFrameworkRuler.Loader;
+using EntityFrameworkRuler.Saver;
 using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable MemberCanBeInternal
@@ -8,29 +12,20 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EntityFrameworkRuler;
 
 public static class EntityFrameworkRulerExtensions {
-    /// <summary> Add RuleGenerator services </summary>
-    public static T AddRuleGenerator<T>(this T serviceCollection, GeneratorOptions generatorOptions = null) where T : IServiceCollection =>
+    /// <summary> Add Entity Framework Ruler services </summary>
+    public static T AddRuler<T>(this T serviceCollection) where T : IServiceCollection =>
         (T)serviceCollection
-            .AddSingleton(generatorOptions ?? GeneratorArgHelper.GetDefaultOptions())
-            .AddSingleton<IRulerNamingService, RulerNamingService>()
+            .AddTransient<IRulerNamingService, RulerNamingService>()
             .AddSingleton<IRulerPluralizer, HumanizerPluralizer>()
-            .AddSingleton<IRuleGenerator, RuleGenerator>()
-            .CoerceGeneratorServiceCollection();
+            .AddTransient<IEdmxParser, EdmxParser>()
+            .AddSingleton<IRuleSerializer, JsonRuleSerializer>()
+            .AddTransient<IRuleSaver, RuleSaver>()
+            .AddTransient<IRuleLoader, RuleLoader>()
+            .AddTransient<IRuleGenerator, RuleGenerator>()
+            .AddTransient<IRuleApplicator, RuleApplicator>()
+            .CoerceServiceCollection();
 
-    /// <summary> Add RuleApplicator services </summary>
-    public static T AddRuleApplicator<T>(this T serviceCollection, ApplicatorOptions applicatorOptions = null)
-        where T : IServiceCollection =>
-        (T)serviceCollection
-            .AddSingleton(applicatorOptions ?? ApplicatorArgHelper.GetDefaultOptions())
-            .AddSingleton<IRuleApplicator, RuleApplicator>()
-            .CoerceApplicatorServiceCollection();
-
-    private static T CoerceGeneratorServiceCollection<T>(this T serviceCollection) where T : IServiceCollection {
-        // possible location of reflection based service wiring on the target project ?
-        return serviceCollection;
-    }
-
-    private static T CoerceApplicatorServiceCollection<T>(this T serviceCollection) where T : IServiceCollection {
+    private static T CoerceServiceCollection<T>(this T serviceCollection) where T : IServiceCollection {
         // possible location of reflection based service wiring on the target project ?
         return serviceCollection;
     }
