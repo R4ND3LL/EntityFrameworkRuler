@@ -35,8 +35,11 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         // public virtual string GenerateCandidateIdentifier(string originalIdentifier)
         generateCandidateIdentifierMethod = typeof(CandidateNamingService).GetMethod<string>("GenerateCandidateIdentifier");
-        if (generateCandidateIdentifierMethod == null)
-            reporter?.WriteWarning("Method not found: CandidateNamingService.GenerateCandidateIdentifier(string)");
+        if (generateCandidateIdentifierMethod == null) {
+            // this method is expected to be missing for EF 6.  If not EF 6, log a warning
+            if (designTimeRuleLoader.EfVersion?.Major != 6)
+                reporter?.WriteWarning("Method not found: CandidateNamingService.GenerateCandidateIdentifier(string)");
+        }
     }
 
     /// <summary> Name that table </summary>
