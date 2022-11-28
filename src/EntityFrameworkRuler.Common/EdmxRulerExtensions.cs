@@ -14,8 +14,8 @@ public static class EntityFrameworkRulerExtensions {
         where T : IServiceCollection =>
         (T)serviceCollection
             .AddSingleton<IRuleSerializer, JsonRuleSerializer>()
-            .AddSingleton<IRuleSaver, RuleSaver>()
-            .AddSingleton<IRuleLoader, RuleLoader>()
+            .AddTransient<IRuleSaver, RuleSaver>()
+            .AddTransient<IRuleLoader, RuleLoader>()
             .CoerceLoaderServiceCollection();
 
     private static T CoerceLoaderServiceCollection<T>(this T serviceCollection) where T : IServiceCollection {
