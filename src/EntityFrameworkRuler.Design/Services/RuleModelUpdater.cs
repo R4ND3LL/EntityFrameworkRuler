@@ -1,4 +1,5 @@
-﻿using EntityFrameworkRuler.Design.Extensions;
+﻿using System.Diagnostics.CodeAnalysis;
+using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Rules;
 using EntityFrameworkRuler.Saver;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +12,16 @@ namespace EntityFrameworkRuler.Design.Services;
 
 /// <inheritdoc />
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
+[SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class RuleModelUpdater : IRuleModelUpdater {
     private readonly IDesignTimeRuleLoader ruleLoader;
+    private readonly IRuleSaver ruleSaver;
     private readonly IOperationReporter reporter;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public RuleModelUpdater(IDesignTimeRuleLoader ruleLoader, IOperationReporter reporter) {
+    public RuleModelUpdater(IDesignTimeRuleLoader ruleLoader, IRuleSaver ruleSaver, IOperationReporter reporter) {
         this.ruleLoader = ruleLoader;
+        this.ruleSaver = ruleSaver;
         this.reporter = reporter;
     }
 
@@ -45,8 +49,8 @@ public class RuleModelUpdater : IRuleModelUpdater {
         UpdateDbContextRule(model, contextRules);
 
         // initialize a rule file from the current reverse engineered model
-        var saver = new RuleSaver();
-        var response = saver.SaveRules(new(projectDir, contextRules)).GetAwaiter().GetResult();
+        var saver = ruleSaver ?? new RuleSaver();
+        var response = saver.SaveRules(projectDir, null, contextRules).GetAwaiter().GetResult();
         var elapsed = DateTimeExtensions.GetTime() - start;
 
         if (response.Errors.Any()) {

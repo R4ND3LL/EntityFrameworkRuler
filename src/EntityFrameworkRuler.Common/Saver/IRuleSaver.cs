@@ -3,7 +3,7 @@ using EntityFrameworkRuler.Rules;
 
 namespace EntityFrameworkRuler.Saver;
 
-/// <summary> Rule Saver </summary>
+/// <summary> Service that can persist a rule model to disk </summary>
 public interface IRuleSaver : IRuleHandler {
     /// <summary> Persist the previously generated rules to the given target path. </summary>
     /// <param name="projectBasePath"> The location to save the rule files. </param>
@@ -11,7 +11,7 @@ public interface IRuleSaver : IRuleHandler {
     /// <param name="rules"> The rule models to save. </param>
     /// <returns> Save Rules Response. </returns>
     Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile = null, params IRuleModelRoot[] rules) {
-        return SaveRules(new(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile, rules: rules));
+        return SaveRules(new SaveOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile, rules: rules));
     }
 
     /// <summary> Persist the previously generated rules to the given target path. </summary>

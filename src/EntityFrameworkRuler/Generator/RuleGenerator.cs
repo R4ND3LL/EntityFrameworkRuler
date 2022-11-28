@@ -26,6 +26,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
     /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
     /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
     /// <param name="edmxParser"> Service that parses an EDMX file into an object model usable for rule generation. </param>
+    /// <param name="ruleSaver"> Service that can persist a rule model to disk </param>
     [ActivatorUtilitiesConstructor]
     public RuleGenerator(IRulerNamingService namingService, IEdmxParser edmxParser, IRuleSaver ruleSaver) {
         NamingService = namingService;
@@ -53,7 +54,6 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
         var saver = RuleSaver ?? new RuleSaver();
         return saver.SaveRules(request);
     }
-
 
 
     /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.

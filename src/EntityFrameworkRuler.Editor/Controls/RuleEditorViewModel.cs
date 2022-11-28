@@ -12,10 +12,12 @@ using EntityFrameworkRuler.Saver;
 namespace EntityFrameworkRuler.Editor.Controls;
 
 public sealed partial class RuleEditorViewModel : ObservableObject {
+    private readonly IRuleLoader loader;
     private readonly IRuleSaver saver;
 
-    public RuleEditorViewModel(IRuleSaver saver, string ruleFilePath = null, string targetProjectPath = null) {
-        this.saver = saver;
+    public RuleEditorViewModel(IRuleLoader loader, IRuleSaver saver, string ruleFilePath = null, string targetProjectPath = null) {
+        this.loader = loader ?? new RuleLoader();
+        this.saver = saver ?? new RuleSaver();
         SuggestedRuleFiles = new();
         if (ruleFilePath.HasNonWhiteSpace() && ruleFilePath.EndsWithIgnoreCase(".json")) {
             SuggestedRuleFiles.Add(new(new(ruleFilePath.Trim())));
@@ -66,7 +68,6 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
 
             var sb = new StringBuilder();
             var hasError = false;
-            var loader = new RuleLoader(); //
             loader.OnLog += GeneratorOnLog;
             var ops = LoadOptions ?? new LoadOptions(value.Path);
             var response = await loader.LoadRulesInProjectPath(ops).ConfigureAwait(true);
@@ -159,7 +160,6 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             var hasError = false;
             var file = SelectedRuleFile.FileInfo;
             var path = file.Directory?.FullName;
-            var saver = this.saver ?? new RuleSaver();
             saver.OnLog += GeneratorOnLog;
             var response = await saver.SaveRules(projectBasePath: path, file.FullName, (IRuleModelRoot)model);
             saver.OnLog -= GeneratorOnLog;

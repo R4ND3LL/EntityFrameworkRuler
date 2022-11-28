@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Controls;
 using EntityFrameworkRuler.Editor.Controls;
 using EntityFrameworkRuler.Editor.Models;
+using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
 using EntityFrameworkRuler.Saver;
 
@@ -34,11 +35,11 @@ public sealed partial class RuleEditorDialog {
     public RuleEditorDialog() : this(null) {
     }
 
-    public RuleEditorDialog(ThemeNames? theme) : this(null, null) {
+    public RuleEditorDialog(ThemeNames? theme) : this(null, null, null) {
         if (theme.HasValue) Theme = theme.Value;
     }
 
-    public RuleEditorDialog(IRuleSaver saver, string ruleFilePath, string targetProjectPath = null) {
+    public RuleEditorDialog(IRuleLoader loader, IRuleSaver saver, string ruleFilePath, string targetProjectPath = null) {
         InitializeComponent();
 #if DEBUG
         if (targetProjectPath.IsNullOrEmpty()) {
@@ -49,7 +50,7 @@ public sealed partial class RuleEditorDialog {
             }
         }
 #endif
-        DataContext = vm = new(saver, ruleFilePath, targetProjectPath);
+        DataContext = vm = new(loader, saver, ruleFilePath, targetProjectPath);
     }
 
     // ReSharper disable once MemberCanBePrivate.Global
