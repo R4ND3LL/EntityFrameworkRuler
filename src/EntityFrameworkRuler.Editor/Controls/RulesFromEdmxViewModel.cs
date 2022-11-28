@@ -117,7 +117,7 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
                 UseDatabaseNames = UseDatabaseNames
             };
             var generator = this.generator ?? new RuleGenerator();
-            generator.OnLog += GeneratorOnLog;
+            generator.Log += GeneratorOnLog;
             var response = await generator.TryGenerateRulesAsync(generatorOptions).ConfigureAwait(true);
 
             var rule = response.DbContextRule;
@@ -138,7 +138,7 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
                 MessageBox.Show(sb.ToString(), "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
 
-            generator.OnLog -= GeneratorOnLog;
+            generator.Log -= GeneratorOnLog;
 
             void GeneratorOnLog(object sender, Common.LogMessage logMessage) {
                 if (!hasError && logMessage.Type == Common.LogType.Error) hasError = true;

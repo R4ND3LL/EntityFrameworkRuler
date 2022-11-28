@@ -2,8 +2,9 @@
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Rules;
 using Microsoft.Extensions.DependencyInjection;
-// ReSharper disable ClassCanBeSealed.Global
 
+// ReSharper disable ClassCanBeSealed.Global
+// ReSharper disable CollectionNeverQueried.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable MemberCanBeInternal
@@ -31,13 +32,12 @@ public class RuleSaver : RuleHandler, IRuleSaver {
     #endregion
 
 
-
     /// <summary> Persist the previously generated rules to the given target path. </summary>
     /// <param name="request"> The save request options. </param>
     /// <exception cref="Exception"></exception>
     public async Task<SaveRulesResponse> SaveRules(SaveOptions request) {
         var response = new SaveRulesResponse();
-        response.OnLog += ResponseOnLog;
+        response.OnLog += OnResponseLog;
         try {
             if (request == null) {
                 response.LogError("Save options are null");
@@ -81,7 +81,7 @@ public class RuleSaver : RuleHandler, IRuleSaver {
                 return path;
             }
         } finally {
-            response.OnLog -= ResponseOnLog;
+            response.OnLog -= OnResponseLog;
         }
     }
 }

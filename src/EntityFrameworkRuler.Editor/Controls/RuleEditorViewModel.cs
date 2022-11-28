@@ -68,7 +68,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
 
             var sb = new StringBuilder();
             var hasError = false;
-            loader.OnLog += GeneratorOnLog;
+            loader.Log += GeneratorOnLog;
             var ops = LoadOptions ?? new LoadOptions(value.Path);
             var response = await loader.LoadRulesInProjectPath(ops).ConfigureAwait(true);
             response.OnLog -= GeneratorOnLog;
@@ -160,9 +160,9 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             var hasError = false;
             var file = SelectedRuleFile.FileInfo;
             var path = file.Directory?.FullName;
-            saver.OnLog += GeneratorOnLog;
+            saver.Log += GeneratorOnLog;
             var response = await saver.SaveRules(projectBasePath: path, file.FullName, (IRuleModelRoot)model);
-            saver.OnLog -= GeneratorOnLog;
+            saver.Log -= GeneratorOnLog;
             if (response.Errors.Any()) {
                 MessageBox.Show(response.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK,
                     MessageBoxImage.Error);

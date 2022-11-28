@@ -204,9 +204,9 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
                 return null;
             }
 
-            ruleLoader.OnLog += LoaderOnLog;
+            ruleLoader.Log += LoaderLog;
             var loadRulesResponse = ruleLoader.LoadRulesInProjectPath(new LoadOptions(projectFolder)).GetAwaiter().GetResult();
-            ruleLoader.OnLog -= LoaderOnLog;
+            ruleLoader.Log -= LoaderLog;
             reporter?.WriteInformation($"EF Ruler loaded {loadRulesResponse.Rules?.Count ?? 0} rule file(s).");
             return loadRulesResponse;
         }
@@ -215,7 +215,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         return response?.Rules ?? Enumerable.Empty<IRuleModelRoot>();
     }
 
-    private void LoaderOnLog(object sender, LogMessage msg) {
+    private void LoaderLog(object sender, LogMessage msg) {
         switch (msg.Type) {
             case LogType.Warning:
                 reporter?.WriteWarning(msg.Message);

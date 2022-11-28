@@ -46,7 +46,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
     /// <returns> LoadAndApplyRulesResponse </returns>
     public async Task<LoadAndApplyRulesResponse> ApplyRulesInProjectPath(LoadAndApplyOptions request) {
         var loader = Loader ?? new RuleLoader();
-        loader.OnLog += ResponseOnLog;
+        loader.Log += OnResponseLog;
         var loadRulesResponse = await LoadRulesInProjectPath(request);
         var response = new LoadAndApplyRulesResponse {
             LoadRulesResponse = loadRulesResponse
@@ -57,7 +57,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                     response.LoadRulesResponse.Rules.ToArray()));
             return response;
         } finally {
-            loader.OnLog -= ResponseOnLog;
+            loader.Log -= OnResponseLog;
         }
     }
 
@@ -81,7 +81,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                 if (rule == null) continue;
 
                 response = new(rule);
-                response.OnLog += ResponseOnLog;
+                response.OnLog += OnResponseLog;
                 try {
                     switch (rule) {
                         case DbContextRule dbContextRule:
@@ -91,7 +91,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                             continue;
                     }
                 } finally {
-                    response.OnLog -= ResponseOnLog;
+                    response.OnLog -= OnResponseLog;
                 }
 
                 responses.Add(response);
@@ -114,13 +114,13 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
     public async Task<ApplyRulesResponse> ApplyRules(ApplicatorOptions request, DbContextRule dbContextRule) {
         // map to class renaming
         var response = new ApplyRulesResponse(dbContextRule);
-        response.OnLog += ResponseOnLog;
+        response.OnLog += OnResponseLog;
         try {
             var state = new RoslynProjectState(this);
             await ApplyDbContextRulesCore(request, dbContextRule, response, state);
             return response;
         } finally {
-            response.OnLog -= ResponseOnLog;
+            response.OnLog -= OnResponseLog;
         }
     }
 
@@ -128,12 +128,12 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         RoslynProjectState state) {
         foreach (var schema in dbContextRule.Schemas) {
             var schemaResponse = new ApplyRulesResponse(null);
-            schemaResponse.OnLog += ResponseOnLog;
+            schemaResponse.OnLog += OnResponseLog;
             try {
                 await ApplyRulesCore(request, schema.Tables, schema.Namespace, schemaResponse, state);
                 response.Merge(schemaResponse);
             } finally {
-                schemaResponse.OnLog -= ResponseOnLog;
+                schemaResponse.OnLog -= OnResponseLog;
             }
         }
     }
@@ -454,7 +454,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
             using var workspace = cSharpFiles
                 .GetWorkspaceForFilePaths(refAssemblies)
                 .AddEntityResources();
-            var project = workspace.CurrentSolution.Projects.First();
+            var project = workspace.CurrentSolution.Projects.FirstOrDefault();
             if (project?.Documents.Any() == true) {
                 // add project references?
                 var elapsed = DateTimeExtensions.GetTime() - start;
@@ -498,7 +498,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         public bool ClassExists => classSymbol != default;
         public string ClassFullName { get; private set; }
 
-        private bool classSymbolStale = false;
+        private bool classSymbolStale;
         private INamedTypeSymbol classSymbol;
 
 

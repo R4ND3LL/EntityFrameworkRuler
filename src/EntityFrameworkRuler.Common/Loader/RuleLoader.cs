@@ -34,7 +34,7 @@ public class RuleLoader : RuleHandler, IRuleLoader {
     /// <returns> Response with loaded rules and list of errors (if any). </returns>
     public async Task<LoadRulesResponse> LoadRulesInProjectPath(ILoadOptions request) {
         var response = new LoadRulesResponse();
-        response.OnLog += ResponseOnLog;
+        response.OnLog += OnResponseLog;
         var rules = response.Rules;
         try {
             var path = request?.ProjectBasePath;
@@ -87,7 +87,7 @@ public class RuleLoader : RuleHandler, IRuleLoader {
             response.LogError($"Error: {ex.Message}");
             return response;
         } finally {
-            response.OnLog -= ResponseOnLog;
+            response.OnLog -= OnResponseLog;
         }
     }
 

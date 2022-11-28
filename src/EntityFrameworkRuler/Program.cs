@@ -34,7 +34,7 @@ internal static class Program {
                     var start = DateTimeExtensions.GetTime();
                     var serviceProvider = serviceCollection.BuildServiceProvider();
                     var generator = serviceProvider.GetRequiredService<IRuleGenerator>();
-                    generator.OnLog += MessageLogged;
+                    generator.Log += OnMessageLogged;
                     var response = generator.TryGenerateRules(genAndSaveOptions.GeneratorOptions);
                     genAndSaveOptions.SaveOptions.Rules.AddRange(response.Rules);
                     await generator.SaveRules(genAndSaveOptions.SaveOptions);
@@ -60,7 +60,7 @@ internal static class Program {
                     var start = DateTimeExtensions.GetTime();
                     var serviceProvider = serviceCollection.BuildServiceProvider();
                     var applicator = serviceProvider.GetRequiredService<IRuleApplicator>();
-                    applicator.OnLog += MessageLogged;
+                    applicator.Log += OnMessageLogged;
                     var response = await applicator.ApplyRulesInProjectPath(loadAndApplyOptions);
                     var elapsed = DateTimeExtensions.GetTime() - start;
                     var errorCount = response.Errors.Count();
@@ -89,7 +89,7 @@ internal static class Program {
     private static bool logWarning = true;
     private static bool logError = true;
 
-    private static void MessageLogged(object sender, LogMessage logMessage) {
+    private static void OnMessageLogged(object sender, LogMessage logMessage) {
         switch (logMessage.Type) {
             case LogType.Information:
                 if (!logInfo) return;

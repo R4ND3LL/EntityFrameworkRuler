@@ -31,7 +31,7 @@ public sealed class EdmxRulerTests {
         var logReceivedCount = 0;
         var start = DateTimeExtensions.GetTime();
         var generator = new RuleGenerator();
-        generator.OnLog += LogReceived;
+        generator.Log += LogReceived;
         var generateRulesResponse = generator.TryGenerateRules(new GeneratorOptions(edmxPath));
         var rules = generateRulesResponse.Rules;
         var elapsed = DateTimeExtensions.GetTime() - start;
@@ -81,7 +81,7 @@ public sealed class EdmxRulerTests {
         var csProj = ResolveNorthwindProject();
         var projBasePath = new FileInfo(csProj).Directory!.FullName;
         IRuleApplicator applicator = new RuleApplicator();
-        applicator.OnLog += LogReceived;
+        applicator.Log += LogReceived;
         start = DateTimeExtensions.GetTime();
         var responses = await applicator.ApplyRules(projBasePath, adhocOnly: true, dbContextRule);
         var response = responses.First();

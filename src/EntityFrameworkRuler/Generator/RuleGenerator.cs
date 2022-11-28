@@ -61,7 +61,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
     /// <param name="request"> The generation request options. </param>
     public GenerateRulesResponse TryGenerateRules(GeneratorOptions request) {
         var response = new GenerateRulesResponse();
-        response.OnLog += ResponseOnLog;
+        response.OnLog += OnResponseLog;
         try {
             var edmxFilePath = request?.EdmxFilePath;
             try {
@@ -76,7 +76,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
 
             return response;
         } finally {
-            response.OnLog -= ResponseOnLog;
+            response.OnLog -= OnResponseLog;
         }
 
         void GenerateAndAdd<T>(Func<EdmxParsed, T> gen) where T : class, IRuleModelRoot {
