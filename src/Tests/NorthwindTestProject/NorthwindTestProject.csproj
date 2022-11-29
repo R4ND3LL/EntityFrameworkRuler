@@ -41,6 +41,22 @@
         </Compile>
         <Compile Remove="Models\UnitsInStockEnum.cs" />
         <Compile Remove="Models\QuantityEnum.cs" />
+        <Compile Remove="Models\Alphabetical_list_of_product.cs" />
+        <Compile Remove="Models\Category_Sales_for_1997.cs" />
+        <Compile Remove="Models\Current_Product_List.cs" />
+        <Compile Remove="Models\Customer_and_Suppliers_by_City.cs" />
+        <Compile Remove="Models\Order_Detail.cs" />
+        <Compile Remove="Models\Order_Details_Extended.cs" />
+        <Compile Remove="Models\Order_Subtotal.cs" />
+        <Compile Remove="Models\Orders_Qry_Custom.cs" />
+        <Compile Remove="Models\Product_Sales_for_1997.cs" />
+        <Compile Remove="Models\Products_Above_Average_Price.cs" />
+        <Compile Remove="Models\Products_by_Category.cs" />
+        <Compile Remove="Models\RegionCustom.cs" />
+        <Compile Remove="Models\Sales_by_Category.cs" />
+        <Compile Remove="Models\Sales_Totals_by_Amount.cs" />
+        <Compile Remove="Models\Summary_of_Sales_by_Quarter.cs" />
+        <Compile Remove="Models\Summary_of_Sales_by_Year.cs" />
     </ItemGroup>
 
     <ItemGroup>
