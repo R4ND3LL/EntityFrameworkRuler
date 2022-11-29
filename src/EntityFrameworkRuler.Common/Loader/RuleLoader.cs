@@ -106,4 +106,7 @@ public class RuleLoader : RuleHandler, IRuleLoader {
 public sealed class LoadRulesResponse : LoggedResponse {
     /// <summary> The loaded rules </summary>
     public List<IRuleModelRoot> Rules { get; } = new();
+
+    /// <inheritdoc />
+    public override bool Success => base.Success && Rules.Count > 0;
 }

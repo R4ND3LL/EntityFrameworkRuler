@@ -2,6 +2,7 @@
 
 using System.Runtime.Serialization;
 using EntityFrameworkRuler.Rules;
+// ReSharper disable ClassCanBeSealed.Global
 
 namespace EntityFrameworkRuler.Saver;
 
@@ -15,11 +16,23 @@ public class SaveOptions : RuleFileNameOptions {
     public SaveOptions(string projectBasePath) : this() { ProjectBasePath = projectBasePath; }
 
     /// <summary> Creates save options </summary>
-    public SaveOptions(string projectBasePath, params IRuleModelRoot[] rules) : this(projectBasePath, null, rules) { }
+    public SaveOptions(IRuleModelRoot rule, string projectBasePath, string dbContextRulesFile = null)
+        : this(rule != null ? new[] { rule } : ArraySegment<IRuleModelRoot>.Empty, projectBasePath, dbContextRulesFile) {
+    }
 
     /// <summary> Creates save options </summary>
-    public SaveOptions(string projectBasePath, string dbContextRulesFile, params IRuleModelRoot[] rules) {
-        Rules = rules;
+    public SaveOptions(string projectBasePath, params IRuleModelRoot[] rules)
+        : this(rules, projectBasePath, null) {
+    }
+
+    /// <summary> Creates save options </summary>
+    public SaveOptions(string projectBasePath, string dbContextRulesFile, params IRuleModelRoot[] rules)
+        : this(rules, projectBasePath, dbContextRulesFile) {
+    }
+
+    /// <summary> Creates save options </summary>
+    public SaveOptions(IEnumerable<IRuleModelRoot> rules, string projectBasePath, string dbContextRulesFile) {
+        if (rules != null) Rules.AddRange(rules);
         ProjectBasePath = projectBasePath;
         if (dbContextRulesFile.HasNonWhiteSpace()) DbContextRulesFile = dbContextRulesFile;
     }

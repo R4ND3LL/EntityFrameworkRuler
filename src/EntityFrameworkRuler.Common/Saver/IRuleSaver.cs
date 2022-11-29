@@ -6,11 +6,20 @@ namespace EntityFrameworkRuler.Saver;
 /// <summary> Service that can persist a rule model to disk </summary>
 public interface IRuleSaver : IRuleHandler {
     /// <summary> Persist the previously generated rules to the given target path. </summary>
+    /// <param name="rule"> The rule model to save. </param>
     /// <param name="projectBasePath"> The location to save the rule files. </param>
     /// <param name="dbContextRulesFile"> The name to use for the DB context rules file.  Default is a mask that incorporates the DB context name. Optional. </param>
+    /// <returns> Save Rules Response. </returns>
+    Task<SaveRulesResponse> SaveRules(IRuleModelRoot rule, string projectBasePath, string dbContextRulesFile = null);
+
+    /// <summary> Persist the previously generated rules to the given target path. </summary>
+    /// <param name="projectBasePath"> The location to save the rule files. </param>
+    /// <param name="dbContextRulesFile"> The name to use for the DB context rules file.  Default is a mask that incorporates the DB context name. Optional. </param>
+    /// <param name="rule"> The rule model to save. </param>
     /// <param name="rules"> The rule models to save. </param>
     /// <returns> Save Rules Response. </returns>
-    Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile = null, params IRuleModelRoot[] rules);
+    Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile, IRuleModelRoot rule,
+        params IRuleModelRoot[] rules);
 
     /// <summary> Persist the previously generated rules to the given target path. </summary>
     /// <param name="request"> The save request options. </param>

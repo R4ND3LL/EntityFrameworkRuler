@@ -23,9 +23,16 @@ public interface IRuleApplicator : IRuleLoader {
 
     /// <summary> Apply the given rules to the target project. </summary>
     /// <param name="projectBasePath"> The target project to apply changes to. </param>
+    /// <param name="rule"> The rule models to apply </param>
+    /// <returns> ApplyRulesResponse </returns>
+    Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(string projectBasePath, IRuleModelRoot rule);
+
+    /// <summary> Apply the given rules to the target project. </summary>
+    /// <param name="projectBasePath"> The target project to apply changes to. </param>
+    /// <param name="rule"> The rule models to apply </param>
     /// <param name="rules"> The rule models to apply </param>
     /// <returns> ApplyRulesResponse </returns>
-    Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(string projectBasePath, params IRuleModelRoot[] rules);
+    Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(string projectBasePath, IRuleModelRoot rule, params IRuleModelRoot[] rules);
 
     /// <summary> Apply the given rules to the target project. </summary>
     /// <param name="projectBasePath"> The target project to apply changes to. </param>

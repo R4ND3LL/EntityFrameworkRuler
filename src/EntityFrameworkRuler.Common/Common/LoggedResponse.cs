@@ -1,9 +1,12 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
+// ReSharper disable MemberCanBePrivate.Global
+
 namespace EntityFrameworkRuler.Common;
+
 /// <summary> Response with log messages </summary>
-public interface ILoggedResponse {
+public interface ILoggedResponse : IResponse {
     /// <summary> Errors within the message list </summary>
     IEnumerable<string> Errors { get; }
 
@@ -15,11 +18,20 @@ public interface ILoggedResponse {
 
     /// <summary> Get messages </summary>
     IEnumerable<LogMessage> GetMessages();
+
+    /// <summary> Gets whether this response contains any errors </summary>
+    bool HasErrors { get; }
+}
+
+/// <summary> Response with log messages </summary>
+public interface IResponse {
+    /// <summary> Gets whether the operation completed successfully. </summary>
+    bool Success { get; }
 }
 
 /// <summary> Response with log messages </summary>
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
-public class LoggedResponse : ILoggedResponse {
+public abstract class LoggedResponse : ILoggedResponse {
     /// <summary> Log messages </summary>
     public List<LogMessage> Messages { get; } = new();
 
@@ -34,6 +46,12 @@ public class LoggedResponse : ILoggedResponse {
 
     /// <summary> Get messages </summary>
     IEnumerable<LogMessage> ILoggedResponse.GetMessages() => Messages;
+
+    /// <summary> Gets whether this response contains any errors </summary>
+    public bool HasErrors => Errors.Any();
+
+    /// <inheritdoc />
+    public virtual bool Success => !HasErrors;
 
     internal void LogInformation(string msg) {
         Messages.Add(Raise(LogMessage.Information(msg)));

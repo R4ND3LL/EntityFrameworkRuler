@@ -51,8 +51,17 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
     #endregion
 
     /// <inheritdoc />
-    public Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile = null, params IRuleModelRoot[] rules) {
-        return SaveRules(new SaveOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile, rules: rules));
+    public Task<SaveRulesResponse> SaveRules(IRuleModelRoot rule, string projectBasePath, string dbContextRulesFile = null) {
+        return SaveRules(new SaveOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile, rules: rule));
+    }
+
+    /// <inheritdoc />
+    public Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile, IRuleModelRoot rule,
+        params IRuleModelRoot[] rules) {
+        var options = new SaveOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile);
+        if (rule != null) options.Rules.Add(rule);
+        if (rules != null) options.Rules.AddRange(rules);
+        return SaveRules(options);
     }
 
     /// <inheritdoc />
@@ -205,16 +214,19 @@ public sealed class GenerateRulesResponse : LoggedResponse {
     private readonly List<IRuleModelRoot> rules = new();
 
     // ReSharper disable once MemberCanBePrivate.Global
-    /// <summary> The rules generated from the EDMX via the TryGenerateRules() call </summary>
+    /// <summary> The rules generated from the EDMX via the GenerateRules() call </summary>
     public IReadOnlyCollection<IRuleModelRoot> Rules => rules;
 
     public DbContextRule DbContextRule => rules.OfType<DbContextRule>().SingleOrDefault();
 
 
-    /// <summary> The correlated EDMX model that is read from the EDMX file during the TryGenerateRules() call </summary>
+    /// <summary> The EDMX model generated from the EDMX file during the GenerateRules() call </summary>
     public EdmxParsed EdmxParsed { get; internal set; }
 
     internal void Add<T>(T rulesRoot) where T : class, IRuleModelRoot {
         rules.Add(rulesRoot);
     }
+
+    /// <inheritdoc />
+    public override bool Success => base.Success && rules.Count > 0;
 }

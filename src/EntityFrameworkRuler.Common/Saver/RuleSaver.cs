@@ -32,8 +32,17 @@ public class RuleSaver : RuleHandler, IRuleSaver {
     #endregion
 
     /// <inheritdoc />
-    public Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile = null, params IRuleModelRoot[] rules) {
-        return SaveRules(new SaveOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile, rules: rules));
+    public Task<SaveRulesResponse> SaveRules(IRuleModelRoot rule, string projectBasePath, string dbContextRulesFile = null) {
+        return SaveRules(new SaveOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile, rules: rule));
+    }
+
+    /// <inheritdoc />
+    public Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile, IRuleModelRoot rule,
+        params IRuleModelRoot[] rules) {
+        var options = new SaveOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile);
+        if (rule != null) options.Rules.Add(rule);
+        if (rules != null) options.Rules.AddRange(rules);
+        return SaveRules(options);
     }
 
     /// <inheritdoc />
@@ -92,4 +101,7 @@ public class RuleSaver : RuleHandler, IRuleSaver {
 public sealed class SaveRulesResponse : LoggedResponse {
     /// <summary> List of file paths to the rules that were saved. </summary>
     public List<string> SavedRules { get; } = new();
+
+    /// <inheritdoc />
+    public override bool Success => base.Success && SavedRules.Count > 0;
 }

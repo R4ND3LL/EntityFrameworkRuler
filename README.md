@@ -80,8 +80,9 @@ EntityFrameworkRuler.Applicator.RuleApplicator
 #### Generate and save rules:
 ```csharp
 var generator = new RuleGenerator();
-var rules = generator.GenerateRules(edmxPath);
-await generator.SaveRules(projectBasePath);
+var response = generator.GenerateRules(edmxPath);
+if (response.Success)
+    await generator.SaveRules(response.Rules.First(), projectBasePath);
 ```
 #### Apply rules already in project path:
 ```csharp
@@ -93,15 +94,15 @@ var response = await applicator.ApplyRulesInProjectPath(projectBasePath);
 ```csharp
 var applicator = new RuleApplicator();
 var loadResponse = await applicator.LoadRulesInProjectPath(projectBasePath);
-var rules = loadResponse.Rules.OfType<DbContextRule>().First();
-var applyResponse = await applicator.ApplyRules(projectBasePath, rules);
+var applyResponse = await applicator.ApplyRules(projectBasePath, loadResponse.Rules.First());
 ```
 
-#### Customize rule file names:
+#### Customize rule file name:
 ```csharp
 var generator = new RuleGenerator();
-var rules = generator.GenerateRules(edmxPath);
-await generator.SaveRules(projectBasePath, dbContextRulesFile: "DbContextRules.json");
+var response = generator.GenerateRules(edmxPath);
+if (response.Success)
+    await generator.SaveRules(projectBasePath, dbContextRulesFile: "DbContextRules.json", response.Rules.First());
 ```
 #### Handle log activity:
 ```csharp

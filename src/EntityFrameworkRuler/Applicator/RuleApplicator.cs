@@ -70,10 +70,19 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         }
     }
 
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(string projectBasePath, IRuleModelRoot rule) {
+        var options = new ApplicatorOptions(projectBasePath, false);
+        if (rule != null) options.Rules.Add(rule);
+        return ApplyRules(options);
+    }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(string projectBasePath, params IRuleModelRoot[] rules) {
-        return ApplyRules(projectBasePath, false, rules);
+    public Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(string projectBasePath, IRuleModelRoot rule, params IRuleModelRoot[] rules) {
+        var options = new ApplicatorOptions(projectBasePath, false);
+        if (rule != null) options.Rules.Add(rule);
+        if (rules != null) options.Rules.AddRange(rules);
+        return ApplyRules(options);
     }
 
     /// <inheritdoc />
@@ -563,6 +572,9 @@ public sealed class ApplyRulesResponse : LoggedResponse {
     }
 
     public IRuleModelRoot Rule { get; internal set; }
+
+    /// <inheritdoc />
+    public override bool Success => base.Success && Rule != null;
 }
 
 [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
@@ -596,4 +608,10 @@ public sealed class LoadAndApplyRulesResponse : ILoggedResponse {
                 foreach (var logMessage in r.Messages)
                     yield return logMessage;
     }
+
+    /// <inheritdoc />
+    public bool HasErrors => Errors.Any();
+
+    /// <inheritdoc />
+    public bool Success => LoadRulesResponse?.Success == true && ApplyRulesResponses?.All(o => o.Success) == true;
 }
