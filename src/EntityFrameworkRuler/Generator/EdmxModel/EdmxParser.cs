@@ -212,7 +212,9 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
         if (inverseEndProperty == null) return;
         var inverseEntity = toEndRole?.Entity;
         var inverseNavigation =
-            inverseEntity?.NavigationProperties?.FirstOrDefault(o => o.Name == inverseEndProperty.Name);
+            inverseEntity?.NavigationProperties?.FirstOrDefault(o => o.Name == inverseEndProperty.Name)??
+            inverseEntity?.NavigationProperties?.FirstOrDefault(o => o.Relationship == navigation.Relationship)
+            ;
         if (inverseNavigation == null || navigation == inverseNavigation) return;
         // Note, for a many-to-many, there are no dependents in the end entities. Rather, the FKs are all in the junction,
         // which has no conceptual representation.  Therefore, the ScalarProperties in the mapping ends refer to the junction only.

@@ -145,13 +145,12 @@ public class RuleModelUpdater : IRuleModelUpdater {
         if (r == null) {
             var n = property.FkName;
             if (n == null) return null;
-            r = new() { FkName = n };
+            r = new() { FkName = n, IsPrincipal = property.IsPrincipal };
         }
 
         r.Name = property.Navigation.Name;
         r.NewName = property.Navigation.Name;
         r.ToEntity = property.ToEntity;
-        r.IsPrincipal = property.IsPrincipal;
         r.Multiplicity = property.Multiplicity.ToMultiplicityString();
         return r;
     }

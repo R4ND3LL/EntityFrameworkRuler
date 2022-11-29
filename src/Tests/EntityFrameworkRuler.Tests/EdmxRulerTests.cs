@@ -73,7 +73,7 @@ public sealed class EdmxRulerTests {
         fkOrdersCustomersRules.Any(o => o.NewName == "OrdersCustom").ShouldBeTrue();
 
         navigationNamingRules.ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
-        navigationNamingRules.ForAll(o => o.Name.IsValidSymbolName().ShouldBeTrue());
+        navigationNamingRules.ForAll(o => (o.Name.IsNullOrEmpty() || o.Name.IsValidSymbolName()).ShouldBeTrue());
 
         elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"Rule contents look good at {elapsed}ms");

@@ -188,7 +188,12 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                     navigationRename.ToEntity =
                         inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameIdentifier;
                     navigationRename.IsPrincipal = navigation.IsPrincipalEnd;
-
+#if DEBUG
+                    if (Debugger.IsAttached && navigationRename.FkName.IsNullOrWhiteSpace()
+                                            && (navigation.Multiplicity != Multiplicity.Many ||
+                                                navigation.InverseNavigation?.Multiplicity != Multiplicity.Many))
+                        Debugger.Break();
+#endif
                     tbl.Navigations.Add(navigationRename);
                     altered = true;
                 }

@@ -1,4 +1,4 @@
-﻿{
+{
    "Name": "NorthwindEntities",
    "PreserveCasingUsingRegex": false,
    "IncludeUnknownSchemas": false,
@@ -80,7 +80,16 @@
                      "Name": "Picture"
                   }
                ],
-               "Navigations": [ ]
+               "Navigations": [
+                  {
+                     "Name": null,
+                     "NewName": "Products",
+                     "FkName": "FK_Products_Categories",
+                     "ToEntity": "Product",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
+                  }
+               ]
             },
             {
                "Name": "Category Sales for 1997",
@@ -158,12 +167,18 @@
                ],
                "Navigations": [
                   {
-                     "Name": [
-                        "Orders"
-                     ],
+                     "Name": "Orders",
                      "NewName": "OrdersCustom",
                      "FkName": "FK_Orders_Customers",
                      "ToEntity": "Order",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
+                  },
+                  {
+                     "Name": "CustomerDemographics",
+                     "NewName": "CustomerDemographicsCustom",
+                     "FkName": "CustomerCustomerDemo",
+                     "ToEntity": "CustomerDemographic",
                      "IsPrincipal": true,
                      "Multiplicity": "*"
                   }
@@ -205,7 +220,16 @@
                      "Name": "CustomerDesc"
                   }
                ],
-               "Navigations": [ ]
+               "Navigations": [
+                  {
+                     "Name": null,
+                     "NewName": "Customers",
+                     "FkName": "CustomerCustomerDemo",
+                     "ToEntity": "Customer",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
+                  }
+               ]
             },
             {
                "Name": "Employees",
@@ -273,9 +297,7 @@
                ],
                "Navigations": [
                   {
-                     "Name": [
-                        "InverseReportsToNavigation"
-                     ],
+                     "Name": "InverseReportsToNavigation",
                      "NewName": "EmployeesCustom",
                      "FkName": "FK_Employees_Employees",
                      "ToEntity": "Employee",
@@ -283,21 +305,25 @@
                      "Multiplicity": "*"
                   },
                   {
-                     "Name": [
-                        "ReportsToNavigation"
-                     ],
+                     "Name": "ReportsToNavigation",
                      "NewName": "EmployeeOneCustom",
                      "FkName": "FK_Employees_Employees",
                      "ToEntity": "Employee",
                      "Multiplicity": "0..1"
                   },
                   {
-                     "Name": [
-                        "OrdersNavigation"
-                     ],
+                     "Name": "OrdersNavigation",
                      "NewName": "Orders",
                      "FkName": "FK_Orders_Employees",
                      "ToEntity": "Order",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
+                  },
+                  {
+                     "Name": null,
+                     "NewName": "Territories",
+                     "FkName": "EmployeeTerritories",
+                     "ToEntity": "Territory",
                      "IsPrincipal": true,
                      "Multiplicity": "*"
                   }
@@ -457,27 +483,21 @@
                ],
                "Navigations": [
                   {
-                     "Name": [
-                        "CustomerNavigation"
-                     ],
+                     "Name": "CustomerNavigation",
                      "NewName": "Customer",
                      "FkName": "FK_Orders_Customers",
                      "ToEntity": "Customer",
                      "Multiplicity": "0..1"
                   },
                   {
-                     "Name": [
-                        "Employee"
-                     ],
+                     "Name": "Employee",
                      "NewName": "CustomEmployee",
                      "FkName": "FK_Orders_Employees",
                      "ToEntity": "Employee",
                      "Multiplicity": "0..1"
                   },
                   {
-                     "Name": [
-                        "OrderDetails"
-                     ],
+                     "Name": "OrderDetails",
                      "NewName": "OrderDetailsCustom",
                      "FkName": "FK_Order_Details_Orders",
                      "ToEntity": "Order_Detail",
@@ -485,9 +505,7 @@
                      "Multiplicity": "*"
                   },
                   {
-                     "Name": [
-                        "ShipViaNavigation"
-                     ],
+                     "Name": "ShipViaNavigation",
                      "NewName": "CustomShipper",
                      "FkName": "FK_Orders_Shippers",
                      "ToEntity": "Shipper",
@@ -524,18 +542,14 @@
                ],
                "Navigations": [
                   {
-                     "Name": [
-                        "Order"
-                     ],
+                     "Name": "Order",
                      "NewName": "OrderCustom",
                      "FkName": "FK_Order_Details_Orders",
                      "ToEntity": "Order",
                      "Multiplicity": "1"
                   },
                   {
-                     "Name": [
-                        "Product"
-                     ],
+                     "Name": "Product",
                      "NewName": "ProductCustom",
                      "FkName": "FK_Order_Details_Products",
                      "ToEntity": "Product",
@@ -716,18 +730,14 @@
                ],
                "Navigations": [
                   {
-                     "Name": [
-                        "Category"
-                     ],
+                     "Name": "Category",
                      "NewName": "CategoryCustom",
                      "FkName": "FK_Products_Categories",
                      "ToEntity": "Category",
                      "Multiplicity": "0..1"
                   },
                   {
-                     "Name": [
-                        "OrderDetails"
-                     ],
+                     "Name": "OrderDetails",
                      "NewName": "Order_Details",
                      "FkName": "FK_Order_Details_Products",
                      "ToEntity": "Order_Detail",
@@ -735,9 +745,7 @@
                      "Multiplicity": "*"
                   },
                   {
-                     "Name": [
-                        "SupplierNavigation"
-                     ],
+                     "Name": "SupplierNavigation",
                      "NewName": "Supplier",
                      "FkName": "FK_Products_Suppliers",
                      "ToEntity": "Supplier",
@@ -821,9 +829,7 @@
                ],
                "Navigations": [
                   {
-                     "Name": [
-                        "Territories"
-                     ],
+                     "Name": "Territories",
                      "NewName": "TerritoriesCustom",
                      "FkName": "FK_Territories_Region",
                      "ToEntity": "Territory",
@@ -900,9 +906,7 @@
                ],
                "Navigations": [
                   {
-                     "Name": [
-                        "Orders"
-                     ],
+                     "Name": "Orders",
                      "NewName": "OrdersCustom",
                      "FkName": "FK_Orders_Shippers",
                      "ToEntity": "Order",
@@ -998,9 +1002,7 @@
                ],
                "Navigations": [
                   {
-                     "Name": [
-                        "Products"
-                     ],
+                     "Name": "Products",
                      "NewName": "ProductsCustom",
                      "FkName": "FK_Products_Suppliers",
                      "ToEntity": "Product",
@@ -1065,13 +1067,19 @@
                ],
                "Navigations": [
                   {
-                     "Name": [
-                        "Region"
-                     ],
+                     "Name": "Region",
                      "NewName": "RegionCustom",
                      "FkName": "FK_Territories_Region",
                      "ToEntity": "RegionCustom",
                      "Multiplicity": "1"
+                  },
+                  {
+                     "Name": null,
+                     "NewName": "Employees",
+                     "FkName": "EmployeeTerritories",
+                     "ToEntity": "Employee",
+                     "IsPrincipal": true,
+                     "Multiplicity": "*"
                   }
                ]
             }

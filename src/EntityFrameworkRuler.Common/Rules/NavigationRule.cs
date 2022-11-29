@@ -8,7 +8,7 @@ using System.Xml.Serialization;
 namespace EntityFrameworkRuler.Rules;
 
 /// <summary> Navigation rule </summary>
-[DebuggerDisplay("Nav {FirstName} to {NewName} FkName={FkName} IsPrincipal={IsPrincipal}")]
+[DebuggerDisplay("Nav {Name} to {NewName} FkName={FkName} IsPrincipal={IsPrincipal}")]
 [DataContract]
 public sealed class NavigationRule : RuleBase, IPropertyRule {
     /// <summary> Creates a navigation rule </summary>
@@ -67,7 +67,7 @@ public sealed class NavigationRule : RuleBase, IPropertyRule {
         //OnPropertyChanged(nameof(NewName));
     }
 
-    IEnumerable<string> IPropertyRule.GetCurrentNameOptions() => new[] { Name.CoalesceWhiteSpace(NewName) };
+    IEnumerable<string> IPropertyRule.GetCurrentNameOptions() => new[] { Name };
 
     string IPropertyRule.GetNewTypeName() => null;
 
