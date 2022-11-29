@@ -1,7 +1,7 @@
 ﻿using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Rules;
 using Microsoft.Extensions.DependencyInjection;
-
+// ReSharper disable ClassCanBeSealed.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable MemberCanBeInternal

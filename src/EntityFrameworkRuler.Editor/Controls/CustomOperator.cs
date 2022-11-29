@@ -68,10 +68,6 @@ public sealed class CustomOperator : PropertyGridOperator {
             case "Multiplicity":
                 item.ItemsSource = new[] { "1", "0..1", "*" };
                 break;
-            case nameof(NavigationRule.Name) when pd.PropertyType == typeof(HashSet<string>):
-                break;
-            case nameof(NavigationRule.Name) when pd.PropertyType == typeof(List<string>):
-                break;
             default: {
                 if (pd.PropertyType == typeof(RuleModelKind)) {
                     return null;

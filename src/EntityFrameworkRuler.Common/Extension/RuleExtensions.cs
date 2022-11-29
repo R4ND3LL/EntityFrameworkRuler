@@ -160,7 +160,7 @@ public static class RuleExtensions {
             }
 
             var efName = defaultEfName();
-            navigationRenames = tableRule.Navigations.Where(o => o.Name?.Count > 0 && o.Name.Contains(efName))
+            navigationRenames = tableRule.Navigations.Where(o => o.Name.HasNonWhiteSpace() && o.Name.EqualsIgnoreCase(efName))
                 .ToArray();
             if (navigationRenames.Length == 0) return null; // expected EF name resolution failed to
         }

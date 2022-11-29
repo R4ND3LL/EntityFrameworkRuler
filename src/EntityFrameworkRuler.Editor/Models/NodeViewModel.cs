@@ -34,7 +34,6 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
             case ColumnRule cr:
                 break;
             case NavigationRule nr:
-                Hook(nr.Name);
                 break;
         }
 

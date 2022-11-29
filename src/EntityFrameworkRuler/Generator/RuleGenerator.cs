@@ -9,7 +9,6 @@ using EntityFrameworkRuler.Saver;
 using Microsoft.Extensions.DependencyInjection;
 
 // ReSharper disable UnusedMethodReturnValue.Global
-
 // ReSharper disable UnusedMember.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -161,7 +160,6 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                     var expectedPropertyName = namingService.GetExpectedPropertyName(property, expectedClassName);
                     if (!generateAll && (expectedPropertyName.IsNullOrWhiteSpace() ||
                                          (property.Name == expectedPropertyName && property.EnumType == null))) continue;
-                    //tbl.Columns ??= new();
                     tbl.Columns.Add(new() {
                         Name = property.DbColumnName,
                         PropertyName = expectedPropertyName == property.DbColumnName ? null : expectedPropertyName,
@@ -174,18 +172,13 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                 }
 
                 foreach (var navigation in entity.NavigationProperties) {
-                    //tbl.Navigations ??= new();
                     var navigationRename = new NavigationRule {
-                        NewName = navigation.Name
+                        NewName = navigation.Name,
+                        Name = namingService.FindCandidateNavigationNames(navigation)
+                            .FirstOrDefault(o => o != navigation.Name)
                     };
 
-                    navigationRename.Name
-                        .AddRange(namingService.FindCandidateNavigationNames(navigation)
-                            .Where(o => o != navigation.Name));
-
-                    if (navigationRename.Name.Count == 0) continue;
-
-                    //if (navigationRename.Name.Any(o => o.Contains("Inverse"))) Debugger.Break();
+                    if (!generateAll && navigationRename.Name.IsNullOrWhiteSpace()) continue;
 
                     // fill in other metadata
                     var inverseNav = navigation.InverseNavigation;

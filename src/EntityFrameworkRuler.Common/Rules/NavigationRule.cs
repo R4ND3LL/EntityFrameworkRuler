@@ -12,23 +12,16 @@ namespace EntityFrameworkRuler.Rules;
 [DataContract]
 public sealed class NavigationRule : RuleBase, IPropertyRule {
     /// <summary> Creates a navigation rule </summary>
-    public NavigationRule() {
-        Name = Observable ? new ObservableCollection<string>() : new List<string>(2);
-    }
+    public NavigationRule() { }
 
     /// <summary>
-    /// Gets or sets the name alternatives to look for when identifying this property.
-    /// Used in navigation renaming since prediction of the reverse engineered name can be difficult.
-    /// This way, for example, the user can supply options using the concatenated form like "Fk+Navigation(s)"
-    /// as well as the basic pluralized form.
+    /// Gets or sets the expected EF generated name given to this navigation property.
+    /// Used in navigation renaming via Roslyn where the existing code property has to be located and renamed.
     /// </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
-    [DisplayName("Expected Name(s)"), Category("Mapping"),
-     Description("Gets or sets the name alternatives to look for when identifying this property.")]
-    public IList<string> Name { get; private set; }
-
-    [IgnoreDataMember, JsonIgnore, XmlIgnore]
-    internal string FirstName => Name?.FirstOrDefault();
+    [DisplayName("Expected Name"), Category("Mapping"),
+     Description("The expected EF generated name for the navigation property.")]
+    public string Name { get; set; }
 
     /// <summary> New name of property. Optional. </summary>
     [DataMember(Order = 2)]
@@ -66,7 +59,7 @@ public sealed class NavigationRule : RuleBase, IPropertyRule {
     protected override string GetNewName() => NewName.NullIfEmpty();
 
     /// <inheritdoc />
-    protected override string GetExpectedEntityFrameworkName() => Name?.FirstOrDefault(o => o.HasNonWhiteSpace());
+    protected override string GetExpectedEntityFrameworkName() => Name.NullIfWhitespace();
 
     /// <inheritdoc />
     protected override void SetFinalName(string value) {
@@ -74,8 +67,7 @@ public sealed class NavigationRule : RuleBase, IPropertyRule {
         //OnPropertyChanged(nameof(NewName));
     }
 
-    IEnumerable<string> IPropertyRule.GetCurrentNameOptions() =>
-        Name?.Where(o => o.HasNonWhiteSpace()).Distinct() ?? Array.Empty<string>();
+    IEnumerable<string> IPropertyRule.GetCurrentNameOptions() => new[] { Name.CoalesceWhiteSpace(NewName) };
 
     string IPropertyRule.GetNewTypeName() => null;
 

@@ -148,7 +148,7 @@ public class RuleModelUpdater : IRuleModelUpdater {
             r = new() { FkName = n };
         }
 
-        if (r.Name.Count == 0) r.Name.Add(property.Navigation.Name);
+        r.Name = property.Navigation.Name;
         r.NewName = property.Navigation.Name;
         r.ToEntity = property.ToEntity;
         r.IsPrincipal = property.IsPrincipal;

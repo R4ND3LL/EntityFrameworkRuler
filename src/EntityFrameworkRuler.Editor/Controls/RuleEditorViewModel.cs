@@ -27,22 +27,19 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
         }
 
         if (targetProjectPath.HasNonWhiteSpace()) {
-            LoadOptions = new(targetProjectPath);
+            //LoadOptions = new(targetProjectPath);
             if (SuggestedRuleFiles.Count == 0) FindRuleFilesNear(targetProjectPath);
         }
     }
 
     [ObservableProperty] private ObservableCollection<ObservableFileInfo> suggestedRuleFiles;
-
-    [ObservableProperty] private LoadOptions loadOptions;
     [ObservableProperty] private ObservableFileInfo selectedRuleFile;
     [ObservableProperty] private DbContextRule dbContextRule;
-
     [ObservableProperty] private RuleNodeViewModel rootModel;
-    //[ObservableProperty] private RuleNodeViewModel selectedNode;
 
     public IEnumerable<RuleNodeViewModel> Root {
         get {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (RootModel != null) yield return RootModel;
         }
     }
@@ -69,7 +66,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             var sb = new StringBuilder();
             var hasError = false;
             loader.Log += GeneratorOnLog;
-            var ops = LoadOptions ?? new LoadOptions(value.Path);
+            var ops = new LoadOptions(value.Path);
             var response = await loader.LoadRulesInProjectPath(ops).ConfigureAwait(true);
             response.Log -= GeneratorOnLog;
             if (response.Errors.Any()) {
@@ -120,7 +117,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             if (path.EndsWithIgnoreCase(".csproj") || path.EndsWithIgnoreCase(".edmx") || path.EndsWithIgnoreCase(".json"))
                 path = new FileInfo(path).Directory?.FullName;
             if (path.IsNullOrWhiteSpace()) return;
-            var ops = LoadOptions ?? new LoadOptions(path);
+            var ops = new LoadOptions(path);
             var mask = ops.DbContextRulesFile.Replace("<ContextName>", "*", StringComparison.OrdinalIgnoreCase);
 
             var files = await Task.Factory.StartNew(() => path
@@ -183,6 +180,8 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
 
     [RelayCommand]
     private void ClearSearch() {
+        // ReSharper disable once ConstantConditionalAccessQualifier
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         if (RootModel?.Filter?.Term == null) return;
         RootModel.Filter.Term = null;
     }
@@ -203,7 +202,11 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
         if (result != true) return;
         // Open document
         var filename = dialog.FileName;
-        SelectedRuleFile = new(new(filename));
+
+        var observableFileInfo = new ObservableFileInfo(new(filename));
+        if (SuggestedRuleFiles.All(o => !string.Equals(o.Path, observableFileInfo.Path, StringComparison.OrdinalIgnoreCase)))
+            SuggestedRuleFiles.Add(observableFileInfo);
+        SelectedRuleFile = observableFileInfo;
     }
 
     [RelayCommand]

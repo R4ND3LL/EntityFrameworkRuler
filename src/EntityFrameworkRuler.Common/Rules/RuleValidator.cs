@@ -95,7 +95,7 @@ public class RuleValidator : IRuleValidator {
                 .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
                     "FinalNames should be unique")
                 .For(o => o.Navigations)
-                .Assert(o => o.Select(r => r.FirstName).Where(r => r.HasCharacters()).IsDistinct(), "Names should be unique")
+                //.Assert(o => o.Select(r => r.FirstName).Where(r => r.HasCharacters()).IsDistinct(), "Names should be unique")
                 .Assert(o => o.Select(r => r.NewName).Where(r => r.HasCharacters()).IsDistinct(), "NewNames should be unique")
                 .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
                     "FinalNames should be unique")
@@ -123,7 +123,7 @@ public class RuleValidator : IRuleValidator {
     protected virtual Validator<NavigationRule> InitializeNavigationRuleValidator() {
         return new Validator<NavigationRule>()
                 .For(o => o.Name)
-                .Assert(s => s.All(p => p.IsValidSymbolName() && p.Length < 300), invalidSymbolName)
+                .Assert(s => s.IsValidSymbolName() && s.Length < 300, invalidSymbolName)
                 .For(o => o.NewName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.ToEntity).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.FkName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)

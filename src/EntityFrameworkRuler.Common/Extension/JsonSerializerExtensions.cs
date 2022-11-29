@@ -17,7 +17,7 @@ public static class JsonSerializerExtensions {
         AllowTrailingCommas = true,
         ReadCommentHandling = JsonCommentHandling.Skip,
         IgnoreReadOnlyProperties = false,
-        Converters = { new ReadOnlyCollectionConverterFactory() }
+        Converters = { new ReadOnlyCollectionConverterFactory(), new NavigationConverterFactory() }
     };
 
     /// <summary> Read the json file or return new instance on failure </summary>
