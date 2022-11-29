@@ -118,7 +118,7 @@ internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
             };
             var generator = this.generator ?? new RuleGenerator();
             generator.Log += GeneratorOnLog;
-            var response = await generator.TryGenerateRulesAsync(generatorOptions).ConfigureAwait(true);
+            var response = await generator.GenerateRulesAsync(generatorOptions).ConfigureAwait(true);
 
             var rule = response.DbContextRule;
             if (rule?.Schemas?.Count > 0) {

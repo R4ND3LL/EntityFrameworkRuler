@@ -51,10 +51,10 @@ public class LoggedResponse : ILoggedResponse {
         Messages.AddRange(src.Messages);
     }
 
-    internal event LogMessageHandler OnLog;
+    internal event LogMessageHandler Log;
 
     private LogMessage Raise(LogMessage msg) {
-        OnLog?.Invoke(this, msg);
+        Log?.Invoke(this, msg);
         return msg;
     }
 }

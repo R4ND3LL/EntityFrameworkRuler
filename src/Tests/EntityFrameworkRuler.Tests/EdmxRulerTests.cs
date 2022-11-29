@@ -32,7 +32,7 @@ public sealed class EdmxRulerTests {
         var start = DateTimeExtensions.GetTime();
         var generator = new RuleGenerator();
         generator.Log += LogReceived;
-        var generateRulesResponse = generator.TryGenerateRules(new GeneratorOptions(edmxPath));
+        var generateRulesResponse = generator.GenerateRules(new GeneratorOptions(edmxPath));
         var rules = generateRulesResponse.Rules;
         var elapsed = DateTimeExtensions.GetTime() - start;
         generateRulesResponse.Errors.Count().ShouldBe(0);
@@ -172,6 +172,41 @@ public sealed class EdmxRulerTests {
         var path = Path.Combine(dir.FullName, $"NorthwindTestProject{Path.DirectorySeparatorChar}NorthwindTestProject.csproj");
         File.Exists(path).ShouldBeTrue();
         return path;
+    }
+
+    private static async Task SampleCode() {
+        var edmxPath = ResolveNorthwindEdmxPath();
+        var projectBasePath = ResolveNorthwindProject();
+        {
+// Generate and save rules:
+            var generator = new RuleGenerator();
+            var rules = generator.GenerateRules(edmxPath);
+            await generator.SaveRules(projectBasePath);
+        }
+        {
+// Apply rules already in project path:
+            var applicator = new RuleApplicator();
+            var response = await applicator.ApplyRulesInProjectPath(projectBasePath);
+        }
+        {
+// More control over which rules are applied:
+            var applicator = new RuleApplicator();
+            var loadResponse = await applicator.LoadRulesInProjectPath(projectBasePath);
+            var rules = loadResponse.Rules.OfType<DbContextRule>().First();
+            var applyResponse = await applicator.ApplyRules(projectBasePath, rules);
+        }
+        {
+// Customize rule file names:
+            var generator = new RuleGenerator();
+            var rules = generator.GenerateRules(edmxPath);
+            await generator.SaveRules(projectBasePath, dbContextRulesFile: "DbContextRules.json");
+        }
+        {
+// Handle log activity:
+            var applicator = new RuleApplicator();
+            applicator.Log += (sender, message) => Console.WriteLine(message);
+            var response = await applicator.ApplyRulesInProjectPath(projectBasePath);
+        }
     }
 
     private void Log(string msg) {

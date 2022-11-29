@@ -38,7 +38,9 @@ public class ApplicatorOptions {
 
 [DataContract]
 public sealed class LoadAndApplyOptions : ApplicatorOptions, ILoadOptions {
-    public LoadAndApplyOptions() => DbContextRulesFile = RuleFileNameOptions.DefaultDbContextRulesFile;
+    public LoadAndApplyOptions(string projectBasePath = null, bool adhocOnly = false) : base(projectBasePath, adhocOnly) {
+        DbContextRulesFile = RuleFileNameOptions.DefaultDbContextRulesFile;
+    }
 
     /// <summary> The name to use for the DB context rules file.  Default is a mask that incorporates the DB context name. </summary>
     [DataMember]

@@ -31,13 +31,15 @@ public class RuleSaver : RuleHandler, IRuleSaver {
 
     #endregion
 
+    /// <inheritdoc />
+    public Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile = null, params IRuleModelRoot[] rules) {
+        return SaveRules(new SaveOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile, rules: rules));
+    }
 
-    /// <summary> Persist the previously generated rules to the given target path. </summary>
-    /// <param name="request"> The save request options. </param>
-    /// <exception cref="Exception"></exception>
+    /// <inheritdoc />
     public async Task<SaveRulesResponse> SaveRules(SaveOptions request) {
         var response = new SaveRulesResponse();
-        response.OnLog += OnResponseLog;
+        response.Log += OnResponseLog;
         try {
             if (request == null) {
                 response.LogError("Save options are null");
@@ -81,7 +83,7 @@ public class RuleSaver : RuleHandler, IRuleSaver {
                 return path;
             }
         } finally {
-            response.OnLog -= OnResponseLog;
+            response.Log -= OnResponseLog;
         }
     }
 }

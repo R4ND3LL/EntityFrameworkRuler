@@ -65,7 +65,7 @@ This assumes that you have executed the [ef dbcontext scaffold](https://learn.mi
 ```
 EntityFrameworkRuler.Generator.RuleGenerator
 ```
-### To Apply rules to an EF Core model, use the following class:
+### To Apply rules to an existing EF Core model, use the following class:
 ```
 EntityFrameworkRuler.Applicator.RuleApplicator
 ```
@@ -73,37 +73,33 @@ EntityFrameworkRuler.Applicator.RuleApplicator
 
 #### Generate and save rules:
 ```csharp
-var generator = new RuleGenerator(edmxPath);  
-var rules = generator.TryGenerateRules();  
-await generator.TrySaveRules(projectBasePath);
+var generator = new RuleGenerator();
+var rules = generator.GenerateRules(edmxPath);
+await generator.SaveRules(projectBasePath);
 ```
 #### Apply rules already in project path:
 ```csharp
-var applicator = new RuleApplicator(projectBasePath);  
-var response = await applicator.ApplyRulesInProjectPath();
+var applicator = new RuleApplicator();
+var response = await applicator.ApplyRulesInProjectPath(projectBasePath);
 ```
 
 #### More control over which rules are applied:
 ```csharp
-var applicator = new RuleApplicator(projectBasePath);  
-var loadResponse = await applicator.LoadRulesInProjectPath();  
+var applicator = new RuleApplicator();
+var loadResponse = await applicator.LoadRulesInProjectPath(projectBasePath);
 var rules = loadResponse.Rules.OfType<DbContextRule>().First();
-var applyResponse = await applicator.ApplyRules(rules);
+var applyResponse = await applicator.ApplyRules(projectBasePath, rules);
 ```
 
 #### Customize rule file names:
 ```csharp
-var generator = new RuleGenerator(edmxPath);  
-var rules = generator.TryGenerateRules();  
-await generator.TrySaveRules(projectBasePath,  
-    new RuleFileNameOptions() {  
-        DbContextRulesFile = "DbContextRules.json" 
-  }  
-);
+var generator = new RuleGenerator();
+var rules = generator.GenerateRules(edmxPath);
+await generator.SaveRules(projectBasePath, dbContextRulesFile: "DbContextRules.json");
 ```
 #### Handle log activity:
 ```csharp
-var applicator = new RuleApplicator(projectBasePath);  
-applicator.OnLog += (sender, message) => Console.WriteLine(message);
-var response = await applicator.ApplyRulesInProjectPath();
+var applicator = new RuleApplicator();
+applicator.Log += (sender, message) => Console.WriteLine(message);
+var response = await applicator.ApplyRulesInProjectPath(projectBasePath);
 ```

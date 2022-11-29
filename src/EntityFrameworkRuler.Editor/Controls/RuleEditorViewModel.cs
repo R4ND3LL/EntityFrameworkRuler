@@ -71,7 +71,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             loader.Log += GeneratorOnLog;
             var ops = LoadOptions ?? new LoadOptions(value.Path);
             var response = await loader.LoadRulesInProjectPath(ops).ConfigureAwait(true);
-            response.OnLog -= GeneratorOnLog;
+            response.Log -= GeneratorOnLog;
             if (response.Errors.Any()) {
                 MessageBox.Show(response.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK,
                     MessageBoxImage.Error);

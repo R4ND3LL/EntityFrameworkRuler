@@ -17,9 +17,7 @@ public interface IRuleGenerator : IRuleSaver {
     /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
     /// Errors are monitored and added to local Errors collection. </summary>
     /// <param name="request"> The generation request options. </param>
-    public Task<GenerateRulesResponse> TryGenerateRulesAsync(GeneratorOptions request) {
-        return Task.Factory.StartNew(() => TryGenerateRules(request));
-    }
+    Task<GenerateRulesResponse> GenerateRulesAsync(GeneratorOptions request);
 
     /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
     /// Errors are monitored and added to local Errors collection. </summary>
@@ -32,13 +30,11 @@ public interface IRuleGenerator : IRuleSaver {
     /// <param name="compactRules"> Include only rules for things that differ from their default Reverse Engineered state.
     /// Default is false.  Only respected when IncludeUnknowns is true.
     /// If IncludeUnknowns is false, then all rules must appear in the output in order to identify what should be excluded. </param>
-    GenerateRulesResponse TryGenerateRules(string edmxFilePath, bool useDatabaseNames = false, bool noPluralize = false,
-        bool includeUnknowns = false, bool compactRules = false) {
-        return TryGenerateRules(new(edmxFilePath, useDatabaseNames, noPluralize, includeUnknowns, compactRules));
-    }
+    GenerateRulesResponse GenerateRules(string edmxFilePath, bool useDatabaseNames = false, bool noPluralize = false,
+        bool includeUnknowns = false, bool compactRules = false);
 
     /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
     /// Errors are monitored and added to local Errors collection. </summary>
     /// <param name="request"> The generation request options. </param>
-    GenerateRulesResponse TryGenerateRules(GeneratorOptions request);
+    GenerateRulesResponse GenerateRules(GeneratorOptions request);
 }

@@ -50,18 +50,32 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
 
     #endregion
 
+    /// <inheritdoc />
+    public Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile = null, params IRuleModelRoot[] rules) {
+        return SaveRules(new SaveOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile, rules: rules));
+    }
+
+    /// <inheritdoc />
     public Task<SaveRulesResponse> SaveRules(SaveOptions request) {
         var saver = RuleSaver ?? new RuleSaver();
         return saver.SaveRules(request);
     }
 
+    /// <inheritdoc />
+    public Task<GenerateRulesResponse> GenerateRulesAsync(GeneratorOptions request) {
+        return Task.Factory.StartNew(() => GenerateRules(request));
+    }
 
-    /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX.
-    /// Errors are monitored and added to local Errors collection. </summary>
-    /// <param name="request"> The generation request options. </param>
-    public GenerateRulesResponse TryGenerateRules(GeneratorOptions request) {
+    /// <inheritdoc />
+    public GenerateRulesResponse GenerateRules(string edmxFilePath, bool useDatabaseNames = false, bool noPluralize = false,
+        bool includeUnknowns = false, bool compactRules = false) {
+        return GenerateRules(new(edmxFilePath, useDatabaseNames, noPluralize, includeUnknowns, compactRules));
+    }
+
+    /// <inheritdoc />
+    public GenerateRulesResponse GenerateRules(GeneratorOptions request) {
         var response = new GenerateRulesResponse();
-        response.OnLog += OnResponseLog;
+        response.Log += OnResponseLog;
         try {
             var edmxFilePath = request?.EdmxFilePath;
             try {
@@ -76,7 +90,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
 
             return response;
         } finally {
-            response.OnLog -= OnResponseLog;
+            response.Log -= OnResponseLog;
         }
 
         void GenerateAndAdd<T>(Func<EdmxParsed, T> gen) where T : class, IRuleModelRoot {

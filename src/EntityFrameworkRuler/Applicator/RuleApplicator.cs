@@ -36,14 +36,23 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
 
     #endregion
 
+    /// <inheritdoc />
+    public Task<LoadRulesResponse> LoadRulesInProjectPath(string projectBasePath, string dbContextRulesFile = null) {
+        return LoadRulesInProjectPath(new LoadOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile));
+    }
+
+    /// <inheritdoc />
     public Task<LoadRulesResponse> LoadRulesInProjectPath(ILoadOptions request = null) {
         var loader = Loader ?? new RuleLoader();
         return loader.LoadRulesInProjectPath(request);
     }
 
-    /// <summary> Load all rule files from the project base path and apply to the enclosed project. </summary>
-    /// <param name="request"></param>
-    /// <returns> LoadAndApplyRulesResponse </returns>
+    /// <inheritdoc />
+    public Task<LoadAndApplyRulesResponse> ApplyRulesInProjectPath(string projectBasePath, bool adhocOnly = false) {
+        return ApplyRulesInProjectPath(new LoadAndApplyOptions(projectBasePath, adhocOnly));
+    }
+
+    /// <inheritdoc />
     public async Task<LoadAndApplyRulesResponse> ApplyRulesInProjectPath(LoadAndApplyOptions request) {
         var loader = Loader ?? new RuleLoader();
         loader.Log += OnResponseLog;
@@ -61,8 +70,18 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         }
     }
 
-    /// <summary> Apply the given rules to the target project. </summary>
-    /// <returns> List of errors. </returns>
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(string projectBasePath, params IRuleModelRoot[] rules) {
+        return ApplyRules(projectBasePath, false, rules);
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(string projectBasePath, bool adhocOnly, params IRuleModelRoot[] rules) {
+        return ApplyRules(new ApplicatorOptions(projectBasePath, adhocOnly, rules));
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<ApplyRulesResponse>> ApplyRules(ApplicatorOptions request) {
         if (request == null) throw new ArgumentNullException(nameof(request));
         var responses = await ApplyRulesInternal(request);
@@ -81,7 +100,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                 if (rule == null) continue;
 
                 response = new(rule);
-                response.OnLog += OnResponseLog;
+                response.Log += OnResponseLog;
                 try {
                     switch (rule) {
                         case DbContextRule dbContextRule:
@@ -91,7 +110,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                             continue;
                     }
                 } finally {
-                    response.OnLog -= OnResponseLog;
+                    response.Log -= OnResponseLog;
                 }
 
                 responses.Add(response);
@@ -114,13 +133,13 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
     public async Task<ApplyRulesResponse> ApplyRules(ApplicatorOptions request, DbContextRule dbContextRule) {
         // map to class renaming
         var response = new ApplyRulesResponse(dbContextRule);
-        response.OnLog += OnResponseLog;
+        response.Log += OnResponseLog;
         try {
             var state = new RoslynProjectState(this);
             await ApplyDbContextRulesCore(request, dbContextRule, response, state);
             return response;
         } finally {
-            response.OnLog -= OnResponseLog;
+            response.Log -= OnResponseLog;
         }
     }
 
@@ -128,12 +147,12 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         RoslynProjectState state) {
         foreach (var schema in dbContextRule.Schemas) {
             var schemaResponse = new ApplyRulesResponse(null);
-            schemaResponse.OnLog += OnResponseLog;
+            schemaResponse.Log += OnResponseLog;
             try {
                 await ApplyRulesCore(request, schema.Tables, schema.Namespace, schemaResponse, state);
                 response.Merge(schemaResponse);
             } finally {
-                schemaResponse.OnLog -= OnResponseLog;
+                schemaResponse.Log -= OnResponseLog;
             }
         }
     }

@@ -28,13 +28,15 @@ public class RuleLoader : RuleHandler, IRuleLoader {
 
     #endregion
 
+    /// <inheritdoc />
+    public Task<LoadRulesResponse> LoadRulesInProjectPath(string projectBasePath, string dbContextRulesFile = null) {
+        return LoadRulesInProjectPath(new LoadOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile));
+    }
 
-    /// <summary> Load all rule files from the project base path and apply to the enclosed project. </summary>
-    /// <param name="request"> The load request options. </param>
-    /// <returns> Response with loaded rules and list of errors (if any). </returns>
+    /// <inheritdoc />
     public async Task<LoadRulesResponse> LoadRulesInProjectPath(ILoadOptions request) {
         var response = new LoadRulesResponse();
-        response.OnLog += OnResponseLog;
+        response.Log += OnResponseLog;
         var rules = response.Rules;
         try {
             var path = request?.ProjectBasePath;
@@ -87,7 +89,7 @@ public class RuleLoader : RuleHandler, IRuleLoader {
             response.LogError($"Error: {ex.Message}");
             return response;
         } finally {
-            response.OnLog -= OnResponseLog;
+            response.Log -= OnResponseLog;
         }
     }
 

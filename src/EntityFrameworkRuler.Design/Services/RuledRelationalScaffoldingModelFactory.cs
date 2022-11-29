@@ -37,9 +37,6 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     protected readonly HashSet<string> OmittedTables = new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    protected readonly HashSet<DatabaseTable> IncludedUnknownTables = new();
-
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected readonly HashSet<string> OmittedSchemas = new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -124,10 +121,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             return null;
         }
 
-        if (tableRule == null) {
-            IncludedUnknownTables.Add(table);
-            return baseCall(); // no further customization. include default table shape
-        }
+        if (tableRule == null) return baseCall(); // no further customization. include default table shape
 
         var excludedColumns = new HashSet<DatabaseColumn>();
 

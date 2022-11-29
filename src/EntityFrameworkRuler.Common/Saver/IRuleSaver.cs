@@ -10,9 +10,7 @@ public interface IRuleSaver : IRuleHandler {
     /// <param name="dbContextRulesFile"> The name to use for the DB context rules file.  Default is a mask that incorporates the DB context name. Optional. </param>
     /// <param name="rules"> The rule models to save. </param>
     /// <returns> Save Rules Response. </returns>
-    Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile = null, params IRuleModelRoot[] rules) {
-        return SaveRules(new SaveOptions(projectBasePath: projectBasePath, dbContextRulesFile: dbContextRulesFile, rules: rules));
-    }
+    Task<SaveRulesResponse> SaveRules(string projectBasePath, string dbContextRulesFile = null, params IRuleModelRoot[] rules);
 
     /// <summary> Persist the previously generated rules to the given target path. </summary>
     /// <param name="request"> The save request options. </param>

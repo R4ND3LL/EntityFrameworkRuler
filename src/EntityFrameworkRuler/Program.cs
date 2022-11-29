@@ -35,7 +35,7 @@ internal static class Program {
                     var serviceProvider = serviceCollection.BuildServiceProvider();
                     var generator = serviceProvider.GetRequiredService<IRuleGenerator>();
                     generator.Log += OnMessageLogged;
-                    var response = generator.TryGenerateRules(genAndSaveOptions.GeneratorOptions);
+                    var response = generator.GenerateRules(genAndSaveOptions.GeneratorOptions);
                     genAndSaveOptions.SaveOptions.Rules.AddRange(response.Rules);
                     await generator.SaveRules(genAndSaveOptions.SaveOptions);
                     var elapsed = DateTimeExtensions.GetTime() - start;
