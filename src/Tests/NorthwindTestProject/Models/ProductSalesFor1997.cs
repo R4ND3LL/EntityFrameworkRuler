@@ -1,4 +1,7 @@
-﻿namespace NorthwindModel.Models;
+﻿using System;
+using System.Collections.Generic;
+
+namespace NorthwindModel.Models;
 
 public partial class ProductSalesFor1997
 {

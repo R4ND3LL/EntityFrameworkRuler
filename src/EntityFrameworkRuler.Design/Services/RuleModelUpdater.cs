@@ -57,7 +57,8 @@ public class RuleModelUpdater : IRuleModelUpdater {
             reporter?.WriteError($"Failed to save rule file: {response.Errors.First()}");
         } else if (response.SavedRules.Count > 0) {
             var fn = Path.GetFileName(response.SavedRules[0]);
-            reporter?.WriteInformation($"Updated {fn} in {elapsed}ms");
+            var action = contextRules.FilePath.IsNullOrWhiteSpace() ? "Created" : "Updated";
+            reporter?.WriteInformation($"{action} {fn} in {elapsed}ms");
         }
     }
 
