@@ -1,6 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator.EdmxModel;
 using EntityFrameworkRuler.Generator.Services;

@@ -2,9 +2,13 @@
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
+// ReSharper disable MemberCanBePrivate.Global
+
+#pragma warning disable CS1591
 
 namespace EntityFrameworkRuler.Generator.EdmxModel;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 [DataContract]
 public abstract class NotifyPropertyChanged : INotifyPropertyChanged {
     /// <summary>

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFrameworks>net472;net6.0-windows</TargetFrameworks>
     <UseWPF>true</UseWPF>
     <EnableWindowsTargeting>True</EnableWindowsTargeting>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -69,7 +69,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj" />
-    <ProjectReference Include="..\EntityFrameworkRuler\EntityFrameworkRuler.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\close.svg" />

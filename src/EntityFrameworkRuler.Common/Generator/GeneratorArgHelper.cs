@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using EntityFrameworkRuler.Saver;
+﻿using EntityFrameworkRuler.Saver;
 
 namespace EntityFrameworkRuler.Generator;
 
@@ -103,7 +102,11 @@ public static class GeneratorArgHelper {
     }
 }
 
+/// <summary> Generate and save options </summary>
 public sealed class GenerateAndSaveOptions {
+    /// <summary> Generator options </summary>
     public GeneratorOptions GeneratorOptions { get; } = new();
+
+    /// <summary> Save options </summary>
     public SaveOptions SaveOptions { get; } = new();
 }

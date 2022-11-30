@@ -200,7 +200,7 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     private bool TheFilterPredicate(NodeViewModel<T> n) {
         if (!CanFilter() || filter == null || filter.Term.IsNullOrWhiteSpace()) return true;
         return n.Children.Count > 0 || filter.FilterType switch {
-            TreeFilterType.Contains => n.Name?.Contains((string)filter.Term, StringComparison.OrdinalIgnoreCase) == true,
+            TreeFilterType.Contains => n.Name?.ContainsIgnoreCase(filter.Term) == true,
             TreeFilterType.ExactMatch => n.Name?.EqualsIgnoreCase(filter.Term) == true,
             _ => n.Name?.EqualsIgnoreCase(filter.Term) == true
         };

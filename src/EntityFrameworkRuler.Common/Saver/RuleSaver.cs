@@ -75,7 +75,7 @@ public class RuleSaver : RuleHandler, IRuleSaver {
                     if (fileName.IsNullOrWhiteSpace()) return; // file skipped by user
                     foreach (var rulesRoot in request.Rules.OfType<T>()) {
                         var name = rulesRoot.GetFinalName().NullIfWhitespace() ?? "dbcontext";
-                        fileName = fileName.Replace("<ContextName>", name, StringComparison.OrdinalIgnoreCase);
+                        fileName = fileName.ApplyContextNameMask(name);
                         var path = await WriteRules(rulesRoot, rulesRoot.GetFilePath().CoalesceWhiteSpace(fileName));
                         response.SavedRules.Add(path);
                         response.LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");

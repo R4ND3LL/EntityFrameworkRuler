@@ -1,12 +1,10 @@
-﻿using System.Threading.Tasks;
-using EntityFrameworkRuler.Common;
-using EntityFrameworkRuler.Generator.Services;
-using EntityFrameworkRuler.Rules;
+﻿using EntityFrameworkRuler.Generator.Services;
 using EntityFrameworkRuler.Saver;
 
 // ReSharper disable MemberCanBeInternal
 namespace EntityFrameworkRuler.Generator;
 
+/// <summary> Rule generator </summary>
 public interface IRuleGenerator : IRuleSaver {
     /// <summary>
     /// Service that decides how to name navigation properties.

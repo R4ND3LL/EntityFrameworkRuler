@@ -10,6 +10,7 @@ using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+#pragma warning disable CS1591
 
 namespace EntityFrameworkRuler.Generator.EdmxModel;
 
@@ -255,6 +256,7 @@ public class StorageFunction {
     public string BuiltIn { get; set; }
 
     [XmlAttribute(AttributeName = "NiladicFunction")]
+    // ReSharper disable once IdentifierTypo
     public string NiladicFunction { get; set; }
 
     [XmlAttribute(AttributeName = "IsComposable")]

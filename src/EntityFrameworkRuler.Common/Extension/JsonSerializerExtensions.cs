@@ -36,7 +36,12 @@ public static class JsonSerializerExtensions {
     public static async Task<T> TryReadJsonFile<T>(this string filePath) where T : class {
         try {
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return null;
+#if NETSTANDARD2_0
+            if (filePath.Length == int.MaxValue) await Task.Delay(0);
+            var text = File.ReadAllText(filePath);
+#else
             var text = await File.ReadAllTextAsync(filePath);
+#endif
             var result = JsonSerializer.Deserialize<T>(text, readOptions);
             return result;
         } catch {
@@ -68,7 +73,10 @@ public static class JsonSerializerExtensions {
     /// <typeparam name="T"> exact type of given object </typeparam>
     public static async Task ToJson<T>(this T jsonModel, string filePath)
         where T : class {
-        await using var fs = File.Open(filePath, FileMode.Create);
+#if !NETSTANDARD2_0
+        await
+#endif
+        using var fs = File.Open(filePath, FileMode.Create);
         using var writer = JsonReaderWriterFactory.CreateJsonWriter(fs, Encoding.UTF8, true, true, "   ");
         var serializer = new DataContractJsonSerializer(typeof(T));
         serializer.WriteObject(writer, jsonModel);

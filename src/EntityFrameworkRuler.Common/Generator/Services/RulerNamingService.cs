@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator.EdmxModel;
 using EntityFrameworkRuler.Rules;

@@ -1,6 +1,7 @@
 ﻿using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Rules;
 using Microsoft.Extensions.DependencyInjection;
+
 // ReSharper disable ClassCanBeSealed.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -61,7 +62,7 @@ public class RuleLoader : RuleHandler, IRuleLoader {
 
                 path = csProjFile.Directory?.FullName ?? path;
 
-                var mask = request.DbContextRulesFile.Replace("<ContextName>", "*", StringComparison.OrdinalIgnoreCase);
+                var mask = request.DbContextRulesFile.ApplyContextNameMask("*");
 
                 jsonFiles = path.FindFiles(mask, true, 2).ToArray();
                 if (jsonFiles.Length == 0) return response; // nothing to do

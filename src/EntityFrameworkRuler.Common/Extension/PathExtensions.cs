@@ -65,11 +65,14 @@ public static class PathExtensions {
 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public static IEnumerable<FileInfo> FindCsProjFiles(this string projectBasePath, bool recurseSubdirectories = true, int maxRecursionDepth = 1) {
+    public static IEnumerable<FileInfo> FindCsProjFiles(this string projectBasePath, bool recurseSubdirectories = true,
+        int maxRecursionDepth = 1) {
         return FindFilesUnderPath(projectBasePath, "csproj", recurseSubdirectories, maxRecursionDepth);
     }
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public static IEnumerable<FileInfo> FindFilesUnderPath(this string path, string ext, bool recurseSubdirectories = true, int maxRecursionDepth = 1) {
+    public static IEnumerable<FileInfo> FindFilesUnderPath(this string path, string ext, bool recurseSubdirectories = true,
+        int maxRecursionDepth = 1) {
         if (path.EndsWithIgnoreCase($".{ext}")) {
             var fileInfo = new FileInfo(path);
             return new[] { fileInfo };
@@ -199,8 +202,12 @@ public static class PathExtensions {
     internal static IEnumerable<FileInfo> FindFiles(this DirectoryInfo info, string searchPattern, bool recurseSubdirectories = true,
         int maxRecursionDepth = 1) {
         if (info?.Exists != true) return Enumerable.Empty<FileInfo>();
-
+#if NETSTANDARD2_0
         return info.EnumerateFiles(searchPattern,
+            recurseSubdirectories && maxRecursionDepth > 0 ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+#else
+        return info.EnumerateFiles(searchPattern,
+
             new EnumerationOptions() {
                 IgnoreInaccessible = true,
                 RecurseSubdirectories = recurseSubdirectories,
@@ -210,5 +217,6 @@ public static class PathExtensions {
 #endif
                 MatchCasing = MatchCasing.CaseInsensitive
             });
+#endif
     }
 }

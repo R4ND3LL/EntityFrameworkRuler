@@ -3,13 +3,15 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Xml;
+// ReSharper disable RemoveRedundantBraces
 
 namespace EntityFrameworkRuler.Generator.EdmxModel;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 [SuppressMessage("ReSharper", "ClassCanBeSealed.Global")]
 public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
+    /// <inheritdoc />
     public EdmxParsed Parse(string fileInstancePath) {
         State = new(fileInstancePath);
         if (!File.Exists(fileInstancePath)) throw new InvalidDataException($"Could not find file {fileInstancePath}");
@@ -312,6 +314,7 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
 
     #region edmx editing
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public void SetNavPropName(string entityname, string propname, string newNavPropName) {
         ReplaceXmlAttributeValueByIndex(FilePath,
             $"descendant::edm:Schema/edm:EntityType[@Name='{entityname}']/edm:NavigationProperty[@Name='{propname}']",

@@ -1,12 +1,13 @@
 // ReSharper disable MemberCanBeInternal
 
-using EntityFrameworkRuler.Saver;
-
 namespace EntityFrameworkRuler.Generator;
 
+/// <summary> Generator options </summary>
 public sealed class GeneratorOptions : IPluralizerOptions {
+    /// <summary> Creates Generator options </summary>
     public GeneratorOptions() { }
 
+    /// <summary> Creates Generator options </summary>
     public GeneratorOptions(string edmxFilePath, bool useDatabaseNames = false, bool noPluralize = false, bool includeUnknowns = false,
         bool compactRules = false) {
         EdmxFilePath = edmxFilePath;
@@ -37,6 +38,7 @@ public sealed class GeneratorOptions : IPluralizerOptions {
     public bool CompactRules { get; set; }
 }
 
+/// <summary> Pluralizer options </summary>
 public interface IPluralizerOptions {
     /// <summary>  Gets or sets a value indicating whether the expected Reverse Engineered entities
     /// will use the database names directly. </summary>

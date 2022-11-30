@@ -109,7 +109,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                 path = new FileInfo(path).Directory?.FullName;
             if (path.IsNullOrWhiteSpace()) return;
             var ops = new LoadOptions(path);
-            var mask = ops.DbContextRulesFile.Replace("<ContextName>", "*", StringComparison.OrdinalIgnoreCase);
+            var mask = ops.DbContextRulesFile.ApplyContextNameMask("*");
 
             var files = await Task.Factory.StartNew(() => path
                     .FindFiles(mask, true, 2))

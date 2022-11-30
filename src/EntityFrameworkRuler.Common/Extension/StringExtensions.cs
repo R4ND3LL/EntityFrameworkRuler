@@ -3,6 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
+using EntityFrameworkRuler.Rules;
 
 namespace EntityFrameworkRuler.Extension;
 
@@ -10,6 +12,17 @@ internal static class StringExtensions {
     /// <summary> Return true if strings are equal. </summary>
     [DebuggerStepThrough]
     public static bool EqualsIgnoreCase(this string str, string str2) => string.Equals(str, str2, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary> Return true if strings are equal. </summary>
+    [DebuggerStepThrough]
+    public static bool ContainsIgnoreCase(this string str, string str2) {
+        if (str2.IsNullOrEmpty()) return false;
+#if NETSTANDARD2_0
+        return str?.ToLower()?.Contains(str2.ToLower()) == true;
+#else
+        return str?.Contains(str2, StringComparison.OrdinalIgnoreCase) == true;
+#endif
+    }
 
     /// <summary> Return true if string starts with the given string. </summary>
     [DebuggerStepThrough]
@@ -86,6 +99,21 @@ internal static class StringExtensions {
             : str;
     }
 
+    [DebuggerStepThrough]
+    public static string ReplaceIgnoreCase(this string str, string from, string to) {
+        str = Regex.Replace(str, from, to, RegexOptions.IgnoreCase);
+        return str;
+    }
+
+    public static string ApplyContextNameMask(this string fileName, string name) {
+#if NETSTANDARD2_0
+        fileName = fileName.ReplaceIgnoreCase("<ContextName>", name);
+#else
+        fileName = fileName.Replace("<ContextName>", name, StringComparison.OrdinalIgnoreCase);
+#endif
+        return fileName;
+    }
+
     /// <summary> will return true if the string is a valid symbol name </summary>
     internal static bool IsValidSymbolName(this string str) {
         if (string.IsNullOrEmpty(str)) return false;
@@ -96,6 +124,7 @@ internal static class StringExtensions {
 
         return true;
     }
+
     /// <summary> will return true if the string is a valid symbol name </summary>
     internal static bool IsValidDbIdentifier(this string str) {
         if (string.IsNullOrEmpty(str)) return false;

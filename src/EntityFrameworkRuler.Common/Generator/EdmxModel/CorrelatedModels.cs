@@ -1,8 +1,9 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Linq;
 using EntityFrameworkRuler.Generator.Services;
 using EntityFrameworkRuler.Rules;
+
+#pragma warning disable CS1591
 
 // ReSharper disable InvertIf
 // ReSharper disable MemberCanBeInternal
@@ -10,6 +11,7 @@ using EntityFrameworkRuler.Rules;
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 namespace EntityFrameworkRuler.Generator.EdmxModel;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class Schema : NotifyPropertyChanged {
     public Schema(ConceptualSchema conceptualSchema, StorageSchema storageSchema) {
         ConceptualSchema = conceptualSchema ?? throw new ArgumentNullException(nameof(conceptualSchema));
@@ -25,7 +27,7 @@ public sealed class Schema : NotifyPropertyChanged {
     public IList<AssociationBase> Associations { get; } = new ObservableCollection<AssociationBase>();
     public override string ToString() { return $"Schema: {Namespace}"; }
 }
-
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class EntityType : NotifyPropertyChanged {
     public EntityType(ConceptualEntityType conceptualEntityType, Schema schema) {
         ConceptualEntity = conceptualEntityType ?? throw new ArgumentNullException(nameof(conceptualEntityType));
@@ -136,14 +138,14 @@ internal readonly struct NamingCache<T> {
         this.value = value;
     }
 
-    public IRulerNamingService Owner { get; init; }
+    public IRulerNamingService Owner { get; }
     private readonly T value;
 
     public T GetValue(IRulerNamingService current) {
         return ReferenceEquals(current, Owner) ? value : default;
     }
 }
-
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 [DebuggerDisplay("{Name}")]
 public class EntityPropertyBase : NotifyPropertyChanged {
     public EntityPropertyBase(EntityType e, IPropertyRef conceptualProperty) {
@@ -158,7 +160,7 @@ public class EntityPropertyBase : NotifyPropertyChanged {
     public IPropertyRef ConceptualProperty { get; }
     public string EntityName => Entity?.Name;
 }
-
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class EntityProperty : EntityPropertyBase {
     public EntityProperty(EntityType conceptualEntity, ConceptualProperty conceptualProperty) : base(conceptualEntity,
         conceptualProperty) {
@@ -207,7 +209,7 @@ public sealed class EntityProperty : EntityPropertyBase {
 
     public override string ToString() { return $"Prop: {Name}"; }
 }
-
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class NavigationProperty : EntityPropertyBase {
     public NavigationProperty(EntityType conceptualEntity, ConceptualNavigationProperty conceptualProperty)
         : base(conceptualEntity, conceptualProperty) {
@@ -349,7 +351,7 @@ public abstract class AssociationBase : NotifyPropertyChanged {
 
     public override string ToString() { return $"Association: {Name}"; }
 }
-
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class EnumTypeMember : NotifyPropertyChanged {
     public EnumTypeMember(ConceptualEnumMember conceptualEnumMember) {
         ConceptualEnumMember = conceptualEnumMember;
@@ -366,7 +368,7 @@ public sealed class EnumTypeMember : NotifyPropertyChanged {
 
     public override string ToString() { return $"Enum Member: {Name} ({Value})"; }
 }
-
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class EnumType : NotifyPropertyChanged {
     public EnumType(ConceptualEnumType conceptualEnumType, Schema schema) {
         ConceptualEnumType = conceptualEnumType;
@@ -394,7 +396,7 @@ public sealed class EnumType : NotifyPropertyChanged {
 
     public override string ToString() { return $"EnumType: {Name} (Ext: {ExternalTypeName})"; }
 }
-
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class EndRole : NotifyPropertyChanged {
     public EndRole(ConceptualAssociation conceptualAssociation, ConceptualEnd conceptualEnd, EntityType entityType) {
         ConceptualAssociation = conceptualAssociation;

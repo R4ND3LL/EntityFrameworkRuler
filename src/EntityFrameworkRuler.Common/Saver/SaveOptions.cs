@@ -17,7 +17,7 @@ public class SaveOptions : RuleFileNameOptions {
 
     /// <summary> Creates save options </summary>
     public SaveOptions(IRuleModelRoot rule, string projectBasePath, string dbContextRulesFile = null)
-        : this(rule != null ? new[] { rule } : ArraySegment<IRuleModelRoot>.Empty, projectBasePath, dbContextRulesFile) {
+        : this(rule != null ? new[] { rule } : Array.Empty<IRuleModelRoot>(), projectBasePath, dbContextRulesFile) {
     }
 
     /// <summary> Creates save options </summary>
