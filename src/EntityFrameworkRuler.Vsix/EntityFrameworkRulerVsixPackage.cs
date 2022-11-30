@@ -24,6 +24,7 @@ namespace EntityFrameworkRuler.Vsix {
     /// </remarks>
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [Guid(EntityFrameworkRulerVsixPackage.PackageGuidString)]
+    [ProvideMenuResource("Menus.ctmenu", 1)]
     public sealed class EntityFrameworkRulerVsixPackage : AsyncPackage
     {
          /// <summary>
@@ -45,6 +46,8 @@ namespace EntityFrameworkRuler.Vsix {
         // When initialized asynchronously, the current thread may be a background thread at this point.
         // Do any initialization that requires the UI thread after switching to the UI thread.
         await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+        await EntityFrameworkRuler.Vsix.GenerateRulesFromEdmxCommand.InitializeAsync(this);
+        await EntityFrameworkRuler.Vsix.EditRulesCommand.InitializeAsync(this);
     }
 
     #endregion
