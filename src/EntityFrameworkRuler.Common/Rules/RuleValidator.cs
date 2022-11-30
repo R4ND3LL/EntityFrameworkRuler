@@ -123,7 +123,7 @@ public class RuleValidator : IRuleValidator {
     protected virtual Validator<NavigationRule> InitializeNavigationRuleValidator() {
         return new Validator<NavigationRule>()
                 .For(o => o.Name)
-                .Assert(s => s.IsValidSymbolName() && s.Length < 300, invalidSymbolName)
+                .Assert(s => s.IsNullOrWhiteSpace() || (s.IsValidSymbolName() && s.Length < 300), invalidSymbolName)
                 .For(o => o.NewName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.ToEntity).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.FkName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)

@@ -175,7 +175,7 @@
                      "Multiplicity": "*"
                   },
                   {
-                     "Name": "CustomerDemographics",
+                     "Name": "CustomerTypes",
                      "NewName": "CustomerDemographicsCustom",
                      "FkName": "CustomerCustomerDemo",
                      "ToEntity": "CustomerDemographic",

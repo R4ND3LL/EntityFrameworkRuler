@@ -63,12 +63,8 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             var selected = RootModel?.Selection?.Node;
             var selectPath = (selected?.EnumerateParents())?.Reverse().Select(o => o.Name).ToArray();
 
-            var sb = new StringBuilder();
-            var hasError = false;
-            loader.Log += GeneratorOnLog;
             var ops = new LoadOptions(value.Path);
             var response = await loader.LoadRulesInProjectPath(ops).ConfigureAwait(true);
-            response.Log -= GeneratorOnLog;
             if (response.Errors.Any()) {
                 MessageBox.Show(response.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -100,11 +96,6 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                     item.ExpandParents();
                     item.IsSelected = true;
                 }
-            }
-
-            void GeneratorOnLog(object sender, Common.LogMessage logMessage) {
-                if (!hasError && logMessage.Type == Common.LogType.Error) hasError = true;
-                sb.AppendLine(logMessage.ToString());
             }
         } catch (Exception ex) {
             MessageBox.Show(ex.Message, "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -147,19 +138,15 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                     MessageBox.Show($"Fix {errors.Count} validation errors first.", "Validation Error", MessageBoxButton.OK,
                         MessageBoxImage.Error);
                 } else {
-                    MessageBox.Show(errors[0].Msg, "Validation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show(errors[0].Message, "Validation Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
 
                 return;
             }
 
-            var sb = new StringBuilder();
-            var hasError = false;
             var file = SelectedRuleFile.FileInfo;
             var path = file.Directory?.FullName;
-            saver.Log += GeneratorOnLog;
             var response = await saver.SaveRules(projectBasePath: path, file.FullName, (IRuleModelRoot)model);
-            saver.Log -= GeneratorOnLog;
             if (response.Errors.Any()) {
                 MessageBox.Show(response.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -167,11 +154,6 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                 // success
                 var savedPath = response.SavedRules.FirstOrDefault();
                 Debug.Assert(savedPath == file.FullName);
-            }
-
-            void GeneratorOnLog(object sender, Common.LogMessage logMessage) {
-                if (!hasError && logMessage.Type == Common.LogType.Error) hasError = true;
-                sb.AppendLine(logMessage.ToString());
             }
         } catch (Exception ex) {
             MessageBox.Show(ex.Message, "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Error);

@@ -81,6 +81,7 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
 
     public bool IsNavigation => Item is NavigationRule;
     [ObservableProperty] private IList<EvaluationFailure> errors;
+    [ObservableProperty] private EvaluationFailure firstError;
 
     protected override ObservableCollection<NodeViewModel<RuleBase>> LoadChildren() {
         var collection = new ObservableCollection<NodeViewModel<RuleBase>>();
@@ -101,13 +102,13 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
     public override IList<EvaluationFailure> Validate(bool withChildren = false) {
         var childHasError = false;
         var efs = new List<EvaluationFailure>();
-        foreach (var nodeViewModel in Children.Source.Cast<RuleNodeViewModel>()) {
+        foreach (var childNode in Children.Source.Cast<RuleNodeViewModel>()) {
             if (withChildren)
-                foreach (var error in nodeViewModel.Validate(true)) {
+                foreach (var error in childNode.Validate(true)) {
                     efs.Add(error);
                 }
 
-            if (nodeViewModel.HasError) childHasError = true;
+            if (childNode.HasError) childHasError = true;
         }
 
         foreach (var error in Validator.Validate(Item, false)) {
@@ -115,7 +116,8 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
         }
 
         Errors = efs;
-        HasError = childHasError || efs?.Count > 0;
+        HasError = childHasError || efs.Count > 0;
+        FirstError = efs.FirstOrDefault();
         return efs;
     }
 

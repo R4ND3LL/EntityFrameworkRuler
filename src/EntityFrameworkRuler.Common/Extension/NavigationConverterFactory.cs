@@ -40,9 +40,9 @@ internal sealed class NavigationConverterFactory : JsonConverterFactory {
                     Action<NavigationRule, object> adder = null;
                     Type propertyType = null;
                     if (x.Property.CanWrite && x.Property.GetSetMethod() != null) {
-                        if (x.Property.Name != "Name") {
+                        propertyType = x.Property.PropertyType;
+                        if (x.Property.Name !=nameof(NavigationRule.Name)) {
                             // default deserialization
-                            propertyType = x.Property.PropertyType;
                             setter = Expression.Lambda<Action<NavigationRule, object>>(
                                     Expression.Assign(
                                         Expression.Property(tParam, x.Property),
@@ -52,7 +52,6 @@ internal sealed class NavigationConverterFactory : JsonConverterFactory {
                                 .Compile();
                         } else {
                             // custom collection deserialization
-                            propertyType = x.Property.PropertyType;
                             adder = NameFromList;
                         }
                     }
@@ -100,6 +99,8 @@ internal sealed class NavigationConverterFactory : JsonConverterFactory {
 
                                 handler.Adder!(item, JsonSerializer.Deserialize(ref reader, handler.PropertyType, options));
                             }
+                        if (reader.TokenType == JsonTokenType.String)
+                            handler.Adder!(item, JsonSerializer.Deserialize(ref reader, handler.PropertyType, options));
                         else
                             reader.Skip();
                     }

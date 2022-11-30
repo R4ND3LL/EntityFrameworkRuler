@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -148,6 +149,7 @@ public interface IValidator {
 }
 
 /// <summary> Validator error. </summary>
+[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public sealed class EvaluationFailure {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public object Instance { get; }
@@ -159,12 +161,12 @@ public sealed class EvaluationFailure {
     public object Value { get; }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public string Msg { get; }
+    public string Message { get; }
 
-    internal EvaluationFailure(object instance, string property, object value, string msg) {
+    internal EvaluationFailure(object instance, string property, object value, string message) {
         Instance = instance;
         Property = property;
         Value = value;
-        Msg = msg;
+        Message = message;
     }
 }
