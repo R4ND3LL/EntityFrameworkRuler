@@ -1,7 +1,9 @@
 ﻿using EntityFrameworkRuler.Saver;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace EntityFrameworkRuler.Generator;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class GeneratorArgHelper {
     internal static GenerateAndSaveOptions GetDefaultOptions() =>
         TryParseArgs(Array.Empty<string>(), out var o) ? o : o ?? new GenerateAndSaveOptions();

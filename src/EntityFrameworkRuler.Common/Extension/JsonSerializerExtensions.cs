@@ -73,8 +73,11 @@ public static class JsonSerializerExtensions {
     /// <typeparam name="T"> exact type of given object </typeparam>
     public static async Task ToJson<T>(this T jsonModel, string filePath)
         where T : class {
+        if (filePath.IsNullOrWhiteSpace()) throw new ArgumentNullException(nameof(filePath));
 #if !NETSTANDARD2_0
         await
+#else
+        if (filePath.Length == int.MaxValue) await Task.Delay(0);
 #endif
         using var fs = File.Open(filePath, FileMode.Create);
         using var writer = JsonReaderWriterFactory.CreateJsonWriter(fs, Encoding.UTF8, true, true, "   ");

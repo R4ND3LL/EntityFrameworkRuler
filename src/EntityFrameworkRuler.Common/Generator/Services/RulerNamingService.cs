@@ -12,11 +12,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFrameworkRuler.Generator.Services;
 
+/// <inheritdoc />
 public class RulerNamingService : IRulerNamingService {
+    /// <summary> Creates a Ruler Naming Service </summary>
+    /// <param name="pluralizer"></param>
     [ActivatorUtilitiesConstructor]
     // ReSharper disable once UnusedMember.Global
     public RulerNamingService(IRulerPluralizer pluralizer) : this(pluralizer, null) { }
 
+    /// <summary> Creates a Ruler Naming Service </summary>
     public RulerNamingService(IRulerPluralizer pluralizer, IPluralizerOptions options) {
         this.pluralizer = pluralizer ?? new HumanizerPluralizer();
         cSharpUtilities = new();
@@ -30,8 +34,10 @@ public class RulerNamingService : IRulerNamingService {
     private CSharpUniqueNamer<EntityType> tableNamer;
     private readonly Dictionary<EntityType, CSharpUniqueNamer<EntityProperty>> columnNamers;
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public bool RelyOnEfMethodOnly { get; } = true;
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public IPluralizerOptions Options {
         get => options;
         // ReSharper disable once PropertyCanBeMadeInitOnly.Global
@@ -50,6 +56,7 @@ public class RulerNamingService : IRulerNamingService {
         }
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public IEnumerable<string> FindCandidateNavigationNames(NavigationProperty navigation) {
         var ass = navigation.Association;
 
@@ -133,12 +140,14 @@ public class RulerNamingService : IRulerNamingService {
         }
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string GetExpectedEntityTypeName(EntityType entity) {
         var v = entity.GetExpectedEfCoreName(this);
         if (v != null) return v;
         return entity.SetExpectedEfCoreName(this, tableNamer.GetName(entity));
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string GetExpectedPropertyName(EntityProperty column, string expectedEntityTypeName = null) {
         var v = column.GetExpectedEfCoreName(this);
         if (v != null) return v;
@@ -165,7 +174,10 @@ public class RulerNamingService : IRulerNamingService {
     }
 
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string GenerateCandidateIdentifier(EntityType originalTable) => originalTable.StorageNameIdentifier;
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string GenerateCandidateIdentifier(EntityProperty originalColumn) => originalColumn.DbColumnNameIdentifier;
 
     /// <summary> Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService </summary>
@@ -187,7 +199,7 @@ public class RulerNamingService : IRulerNamingService {
             foreignKey.PrincipalEntity.GetReferencingForeignKeys()
                 .Where(fk => foreignKey.DependentEntity == fk.DependentEntity);
 
-        return allForeignKeysBetweenDependentAndPrincipal?.Count() > 1
+        return allForeignKeysBetweenDependentAndPrincipal.Count() > 1
             ? GetExpectedEntityTypeName(foreignKey.DependentEntity)
               + dependentEndNavigationPropertyName
             : GetExpectedEntityTypeName(foreignKey.DependentEntity);

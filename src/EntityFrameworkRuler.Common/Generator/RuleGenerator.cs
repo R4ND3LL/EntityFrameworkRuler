@@ -206,6 +206,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
     #endregion
 }
 
+/// <summary> Generate rules response </summary>
 public sealed class GenerateRulesResponse : LoggedResponse {
     private readonly List<IRuleModelRoot> rules = new();
 
@@ -213,6 +214,7 @@ public sealed class GenerateRulesResponse : LoggedResponse {
     /// <summary> The rules generated from the EDMX via the GenerateRules() call </summary>
     public IReadOnlyCollection<IRuleModelRoot> Rules => rules;
 
+    /// <summary> The generated DB context rule model </summary>
     public DbContextRule DbContextRule => rules.OfType<DbContextRule>().SingleOrDefault();
 
 
