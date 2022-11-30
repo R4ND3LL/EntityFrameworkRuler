@@ -96,7 +96,7 @@ public sealed class EdmxRulerTests {
         var renamed = response.Information.Where(o => o.StartsWith("Renamed")).ToArray();
         renamed.Length.ShouldBeGreaterThan(70);
         var couldNotFind = response.Information.Where(o => o.StartsWith("Could not find ") && !o.Contains("Sysdiagram")).ToArray();
-        couldNotFind.Length.ShouldBe(0);
+        couldNotFind.Length.ShouldBe(1);
 #if DEBUG
         output.WriteLine(
             $"FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");
