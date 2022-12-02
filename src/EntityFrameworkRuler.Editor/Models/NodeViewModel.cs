@@ -85,7 +85,7 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
 
     protected override ObservableCollection<NodeViewModel<RuleBase>> LoadChildren() {
         var collection = new ObservableCollection<NodeViewModel<RuleBase>>();
-        var expChildren = IsDbContext || IsSchema;
+        var expChildren = IsDbContext;
         foreach (var child in Item.GetChildren())
             collection.Add(new RuleNodeViewModel((RuleBase)child, this, Filter, expChildren));
         return collection;

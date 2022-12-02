@@ -159,8 +159,8 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="Search: " />
-                <TextBox Grid.Column="1"
+                <TextBlock Text="Search: "  VerticalAlignment="Center"/>
+                <TextBox Grid.Column="1" Padding="0" Margin="0" MinHeight="18"
                          Text="{Binding RootModel.Filter.Term, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Delay=600}" />
                 <Button Grid.Column="2" Command="{Binding ClearSearchCommand}" Padding="0" Margin="0"
                         Visibility="{Binding RootModel.Filter.Term, Converter={x:Static converters:UiConverters.NotNullToVisible} }">

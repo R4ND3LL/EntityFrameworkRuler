@@ -38,7 +38,7 @@ public sealed partial class RuleEditorDialog {
 
     public RuleEditorDialog(ThemeNames? theme) : this(null, null, null) {
         if (theme.HasValue) Theme = theme.Value;
-        else if (!Theme.HasValue) Theme = ThemeNames.Light;
+        else if (!Theme.HasValue) Theme = ThemeNames.Dark;
     }
 
     public RuleEditorDialog(IRuleLoader loader, IRuleSaver saver, string ruleFilePath, string targetProjectPath = null) {

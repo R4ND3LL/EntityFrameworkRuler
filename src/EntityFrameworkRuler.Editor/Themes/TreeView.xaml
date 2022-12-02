@@ -28,9 +28,8 @@
                             Background="Transparent"
                             Padding="5,5,5,5" >
                         <Path x:Name="ExpandPath" 
-                              Stroke="{DynamicResource BlackBrush}"
                               Fill="{DynamicResource BlackBrush}"
-                              StrokeThickness="1" 
+                              StrokeThickness="0" 
                               Data="{StaticResource TreeArrow}" UseLayoutRounding="True" SnapsToDevicePixels="True">
                             <Path.RenderTransform>
                                 <RotateTransform Angle="135"
@@ -41,8 +40,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="ExpandPath" Property="Stroke"
-                                    Value="{DynamicResource Accent2}"/>
+                            <Setter TargetName="ExpandPath" Property="Fill" Value="{DynamicResource Accent2}"/>
                         </Trigger>
 
                         <Trigger Property="IsChecked" Value="True">
@@ -146,7 +144,7 @@
                                 <Condition Property="IsSelected" Value="True" />
                                 <Condition Property="Selector.IsSelectionActive" Value="False" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource GrayBrush8}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource GrayBrush5}"/>
                             <Setter Property="Foreground" Value="{DynamicResource InputText}" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>

@@ -3,8 +3,11 @@
 >
 
     <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/EntityFrameworkRuler.Editor;component/Themes/Button.xaml" />
         <ResourceDictionary Source="/EntityFrameworkRuler.Editor;component/Themes/ComboBox.xaml" />
+        <ResourceDictionary Source="/EntityFrameworkRuler.Editor;component/Themes/ContextMenu.xaml" />
         <ResourceDictionary Source="/EntityFrameworkRuler.Editor;component/Themes/DataGrid.xaml" />
+        <ResourceDictionary Source="/EntityFrameworkRuler.Editor;component/Themes/GroupBox.xaml" />
         <ResourceDictionary Source="/EntityFrameworkRuler.Editor;component/Themes/TabControl.xaml" />
         <ResourceDictionary Source="/EntityFrameworkRuler.Editor;component/Themes/TreeView.xaml" />
         <ResourceDictionary Source="/EntityFrameworkRuler.Editor;component/Themes/ToolTip.xaml" />

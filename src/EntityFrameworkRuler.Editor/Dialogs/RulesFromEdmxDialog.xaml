@@ -6,6 +6,8 @@
         xmlns:controls="clr-namespace:EntityFrameworkRuler.Editor.Controls"
         mc:Ignorable="d"
         ShowInTaskbar="False" ResizeMode="CanResize" 
+        Background="{DynamicResource WindowBackground}" SnapsToDevicePixels="True"
+        Foreground="{DynamicResource BlackBrush}"
         Title="Generate DB Context Rules from EDMX" MinHeight="250" Width="800" SizeToContent="Height">
     <controls:RulesFromEdmxView />
 </Window>

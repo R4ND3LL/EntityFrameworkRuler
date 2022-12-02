@@ -95,6 +95,9 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                 if (item != null) {
                     item.ExpandParents();
                     item.IsSelected = true;
+                } else {
+                    RootModel.IsExpanded = true;
+                    RootModel.Children.ForAll(o => o.IsExpanded = true);
                 }
             }
         } catch (Exception ex) {

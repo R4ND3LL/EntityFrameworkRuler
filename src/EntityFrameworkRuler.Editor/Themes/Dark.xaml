@@ -7,6 +7,9 @@
     <FontFamily x:Key="DefaultFontFamily">Segoe UI, Lucida Sans Unicode, Verdana</FontFamily>
     <FontFamily x:Key="InputFontFamily">Consolas, Segoe UI, Lucida Sans Unicode, Verdana</FontFamily>
     <system:Double x:Key="DefaultFontSize">12</system:Double>
+    <system:Double x:Key="Header1FontSize">16</system:Double>
+    <system:Double x:Key="Header2FontSize">15</system:Double>
+    <system:Double x:Key="Header3FontSize">14</system:Double>
 
     <!--Colors-->
     <Color x:Key="ColorPrimary1">#406295</Color>

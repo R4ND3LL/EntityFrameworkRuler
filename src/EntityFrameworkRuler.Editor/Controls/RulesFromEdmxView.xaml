@@ -4,7 +4,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:controls="clr-namespace:EntityFrameworkRuler.Editor.Controls"
-             mc:Ignorable="d" Background="#FFF0F0F0" MinHeight="250" MinWidth="500"
+             mc:Ignorable="d" MinHeight="250" MinWidth="500"
+             Background="{DynamicResource WindowBackground}" SnapsToDevicePixels="True"
+             Foreground="{DynamicResource BlackBrush}"
              d:DataContext="{d:DesignInstance Type=controls:RulesFromEdmxViewModel, IsDesignTimeCreatable=True}">
     <Grid VerticalAlignment="Center" Margin="10,20,10,20">
         <StackPanel VerticalAlignment="Top" Orientation="Vertical" Grid.IsSharedSizeScope="True">
@@ -16,12 +18,13 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="EDMX file: " VerticalAlignment="Center" />
                 <ComboBox Grid.Column="1" ItemsSource="{Binding SuggestedEdmxFiles}"
+                          VerticalContentAlignment="Center" VerticalAlignment="Center" MinHeight="24"
                           DisplayMemberPath="Path"
                           SelectedItem="{Binding SelectedEdmxFile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Grid.Column="2" Content="Browse" Command="{Binding EdmxBrowseCommand}" Margin="10,0,10,0"
+                <Button Grid.Column="2" Content="Browse" Command="{Binding EdmxBrowseCommand}" Margin="10,0,0,0"
                         Padding="10,2,10,2" />
             </Grid>
-            <Grid VerticalAlignment="Top" Margin="0,3,0,3">
+            <Grid VerticalAlignment="Top" Margin="0,8,0,3">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Caption" />
                     <ColumnDefinition Width="*" />
@@ -29,8 +32,8 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Target project path: " VerticalAlignment="Center" />
                 <TextBox Grid.Column="1" Text="{Binding TargetProjectPath}" />
-                <Button Grid.Column="2" Content="Browse" Command="{Binding ProjectBrowseCommand}" Margin="10,0,10,0"
-                        Padding="10,2,10,2" />
+                <Button Grid.Column="2" Content="Browse" Command="{Binding ProjectBrowseCommand}" Margin="10,0,0,0"
+                        Padding="10,2,10,2" VerticalContentAlignment="Center" VerticalAlignment="Center" MinHeight="24" />
             </Grid>
             <GroupBox Header="DbContext Options" Grid.IsSharedSizeScope="True" Margin="0,10,0,0">
                 <StackPanel VerticalAlignment="Top" Orientation="Vertical" Grid.IsSharedSizeScope="True">
@@ -91,7 +94,7 @@
                         Command="{Binding GenerateCommand}"
                         Margin="0"
                         Padding="10,2,10,2"
-                        TextBlock.FontWeight="Bold" TextBlock.FontSize="14" />
+                        TextBlock.FontWeight="SemiBold" TextBlock.FontSize="14" />
             </Grid>
         </StackPanel>
 

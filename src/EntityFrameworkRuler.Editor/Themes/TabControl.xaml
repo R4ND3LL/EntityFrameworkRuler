@@ -38,7 +38,7 @@
                                 SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}">
                             <ContentPresenter x:Name="PART_SelectedContentHost"  Focusable="False"  
                                               Margin="{TemplateBinding Padding}"
-                                              ContentSource="SelectedContent"
+                                              ContentSource="SelectedContent" 
                                               SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                         </Border>
                     </Grid>
@@ -100,8 +100,8 @@
                                                        Padding="{TemplateBinding Padding}"
                                                        Foreground="{TemplateBinding Foreground}"
                                                        FontFamily="Segoe UI"
-                                                       FontSize="{TemplateBinding FontSize}"
-                                                       FontWeight="Bold" FontStretch="Expanded"
+                                                       FontSize="{DynamicResource Header2FontSize}"
+                                                       FontWeight="SemiBold" FontStretch="Expanded"
                                                        Margin="10,4,10,0"
                                                        Content="{TemplateBinding Header}"
                                                        ContentStringFormat="{TemplateBinding HeaderStringFormat}"
