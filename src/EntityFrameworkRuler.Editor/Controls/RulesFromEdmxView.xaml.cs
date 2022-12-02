@@ -8,7 +8,7 @@ namespace EntityFrameworkRuler.Editor.Controls;
 public sealed partial class RulesFromEdmxView {
     public RulesFromEdmxView() => InitializeComponent();
 
-    public ThemeNames Theme {
+    public ThemeNames? Theme {
         get => AppearanceManager.Current.SelectedTheme;
         set => AppearanceManager.Current.SelectedTheme = value;
     }

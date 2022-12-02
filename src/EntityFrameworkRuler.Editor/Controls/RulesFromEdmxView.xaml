@@ -87,7 +87,7 @@
                     <ColumnDefinition Width="Auto" SharedSizeGroup="Btn" />
                 </Grid.ColumnDefinitions>
 
-                <Button Grid.Column="1" Grid.ColumnSpan="1" Content="Generate Rules"
+                <Button Grid.Column="1" Content="Generate Rules"
                         Command="{Binding GenerateCommand}"
                         Margin="0"
                         Padding="10,2,10,2"

@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <Extern href="stdidcmd.h"/>
+  <Extern href="vsshlids.h"/>
+  <Include href="KnownImageIds.vsct"/>
+  <Include href="VSGlobals.vsct"/>
+
+  <Commands package="EntityFrameworkRuler">
+    <Groups>
+      <Group guid="EntityFrameworkRuler" id="MyMenuGroup" priority="0x0600">
+                <Parent guid="VSMainMenu" id="Tools"/>
+      </Group>
+    </Groups>
+
+    <!--This section defines the elements the user can interact with, like a menu command or a button
+        or combo box in a toolbar. -->
+    <Buttons>
+      <Button guid="EntityFrameworkRuler" id="EditRulesCommand" priority="0x0100" type="Button">
+        <Parent guid="EntityFrameworkRuler" id="MyMenuGroup" />
+        <Icon guid="ImageCatalogGuid" id="ValidationRule" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <Strings>
+          <ButtonText>Edit Rules !!!!!!!!!!!!!!!</ButtonText>
+          <LocCanonicalName>.EntityFrameworkRuler.EditRulesCommand</LocCanonicalName>
+        </Strings>
+      </Button>
+      <Button guid="EntityFrameworkRuler" id="ConvertEdmxToRulesCommand" priority="0x0100" type="Button">
+        <Parent guid="EntityFrameworkRuler" id="MyMenuGroup" />
+        <Icon guid="ImageCatalogGuid" id="NewRule" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <Strings>
+          <ButtonText>Convert EDMX to Rules !!!!!!!!!!!!!!!</ButtonText>
+          <LocCanonicalName>.EntityFrameworkRuler.ConvertEdmxToRulesCommand</LocCanonicalName>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <Symbols>
+    <GuidSymbol name="EntityFrameworkRuler" value="{bb8971ac-b841-4110-a51d-6981b05d11d2}">
+      <IDSymbol name="MyMenuGroup" value="0x0001" />
+      <IDSymbol name="EditRulesCommand" value="0x0100" />
+      <IDSymbol name="ConvertEdmxToRulesCommand" value="0x0200" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

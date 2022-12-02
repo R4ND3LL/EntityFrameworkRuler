@@ -11,7 +11,7 @@
              xmlns:models="clr-namespace:EntityFrameworkRuler.Editor.Models"
              mc:Ignorable="d"
              Height="650" Width="950"
-             Background="{DynamicResource UserControlBackground}" SnapsToDevicePixels="True"
+             Background="{DynamicResource WindowBackground}" SnapsToDevicePixels="True"
              Foreground="{DynamicResource BlackBrush}"
              d:DataContext="{d:DesignInstance Type=controls:RuleEditorViewModel, IsDesignTimeCreatable=True}">
     <UserControl.Resources>
@@ -71,7 +71,7 @@
 
                 <Button x:Name="OpenButton" VerticalAlignment="Center">
                     <Button.Resources>
-                        <controls:BindingProxy x:Key="proxy" Data="{Binding}" />
+                        <controls:BindingProxy x:Key="Proxy" Data="{Binding}" />
                     </Button.Resources>
                     <b:Interaction.Behaviors>
                         <behaviors:DropDownButtonBehavior />
@@ -93,7 +93,7 @@
                     </Button.Content>
                     <Button.ContextMenu>
                         <ContextMenu Opened="ContextMenu_Opened"
-                                     DataContext="{Binding Data, Source={StaticResource proxy}}">
+                                     DataContext="{Binding Data, Source={StaticResource Proxy}}">
                             <MenuItem Header="Open..." Command="{Binding OpenRuleCommand}" />
                             <Separator />
                         </ContextMenu>

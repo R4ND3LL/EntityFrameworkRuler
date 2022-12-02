@@ -30,7 +30,7 @@ public sealed partial class RuleEditorView {
     public RuleEditorView() => InitializeComponent();
 
     // ReSharper disable once MemberCanBePrivate.Global
-    public ThemeNames Theme {
+    public ThemeNames? Theme {
         get => AppearanceManager.Current.SelectedTheme;
         set => AppearanceManager.Current.SelectedTheme = value;
     }

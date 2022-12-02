@@ -9,7 +9,7 @@ using EntityFrameworkRuler.Saver;
 
 namespace EntityFrameworkRuler.Editor.Controls;
 
-internal sealed partial class RulesFromEdmxViewModel : ObservableObject {
+public sealed partial class RulesFromEdmxViewModel : ObservableObject {
     private readonly IRuleGenerator generator;
     private readonly Action<SaveRulesResponse> onGenerated;
 

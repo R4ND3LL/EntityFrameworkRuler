@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:EntityFrameworkRuler.Editor.Controls"
         mc:Ignorable="d"
-        ShowInTaskbar="False" ResizeMode="CanResize" Background="#FFF0F0F0"
+        ShowInTaskbar="False" ResizeMode="CanResize" 
         Title="Generate DB Context Rules from EDMX" MinHeight="250" Width="800" SizeToContent="Height">
     <controls:RulesFromEdmxView />
 </Window>

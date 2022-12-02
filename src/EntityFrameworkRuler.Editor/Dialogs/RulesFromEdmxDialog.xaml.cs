@@ -1,6 +1,7 @@
 ﻿using EntityFrameworkRuler.Editor.Controls;
 using EntityFrameworkRuler.Generator;
 using EntityFrameworkRuler.Saver;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace EntityFrameworkRuler.Editor.Dialogs;
 
@@ -8,17 +9,19 @@ namespace EntityFrameworkRuler.Editor.Dialogs;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 public sealed partial class RulesFromEdmxDialog {
-    private readonly RulesFromEdmxViewModel vm;
+    public RulesFromEdmxViewModel ViewModel { get; }
 
-    public RulesFromEdmxDialog() : this(null, null) {
+    public RulesFromEdmxDialog(ThemeNames? theme) : this(null, null) {
+        if (theme.HasValue) Theme = theme.Value;
+        else if (!Theme.HasValue) Theme = ThemeNames.Light;
     }
 
     public RulesFromEdmxDialog(IRuleGenerator generator, string edmxFilePath, string targetProjectPath = null) {
         InitializeComponent();
-        DataContext = vm = new(generator, edmxFilePath, targetProjectPath, OnGenerated);
+        DataContext = ViewModel = new(generator, edmxFilePath, targetProjectPath, OnGenerated);
     }
 
-    public ThemeNames Theme {
+    public ThemeNames? Theme {
         get => AppearanceManager.Current.SelectedTheme;
         set => AppearanceManager.Current.SelectedTheme = value;
     }

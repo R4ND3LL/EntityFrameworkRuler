@@ -7,6 +7,7 @@ using EntityFrameworkRuler.Editor.Models;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
 using EntityFrameworkRuler.Saver;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace EntityFrameworkRuler.Editor.Dialogs;
 
@@ -23,20 +24,21 @@ public sealed partial class RuleEditorDialog {
     private static void HandleGotKeyboardFocusEvent(object sender, KeyboardFocusChangedEventArgs e) {
         if (e.OldFocus is not DependencyObject d) return;
         var parentWindow = GetWindow(d);
-        if (parentWindow is not RuleEditorDialog re || re.vm?.RootModel == null) return;
-        var selection = re.vm?.RootModel?.GetSelectedNode();
+        if (parentWindow is not RuleEditorDialog re || re.ViewModel?.RootModel == null) return;
+        var selection = re.ViewModel?.RootModel?.GetSelectedNode();
         if (selection == null) return;
         selection.OnKeyboardFocusChanged();
         Debug.WriteLine($"All properties changed raised for {selection.Name}");
     }
 
-    private readonly RuleEditorViewModel vm;
+    public RuleEditorViewModel ViewModel { get; }
 
     public RuleEditorDialog() : this(null) {
     }
 
     public RuleEditorDialog(ThemeNames? theme) : this(null, null, null) {
         if (theme.HasValue) Theme = theme.Value;
+        else if (!Theme.HasValue) Theme = ThemeNames.Light;
     }
 
     public RuleEditorDialog(IRuleLoader loader, IRuleSaver saver, string ruleFilePath, string targetProjectPath = null) {
@@ -50,11 +52,11 @@ public sealed partial class RuleEditorDialog {
             }
         }
 #endif
-        DataContext = vm = new(loader, saver, ruleFilePath, targetProjectPath);
+        DataContext = ViewModel = new(loader, saver, ruleFilePath, targetProjectPath);
     }
 
     // ReSharper disable once MemberCanBePrivate.Global
-    public ThemeNames Theme {
+    public ThemeNames? Theme {
         get => AppearanceManager.Current.SelectedTheme;
         set => AppearanceManager.Current.SelectedTheme = value;
     }

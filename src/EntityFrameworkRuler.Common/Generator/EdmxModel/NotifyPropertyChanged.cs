@@ -42,7 +42,9 @@ public abstract class NotifyPropertyChanged : INotifyPropertyChanged {
     protected bool SetProperty<T>(ref T storage, T value, Expression<Func<T>> expression) {
         return SetProperty(ref storage, value, expression, null);
     }
-
+    protected bool SetProperty<T>(ref T storage, T value, Action<T, T> changedCallback, [CallerMemberName] string propertyName = null) {
+        return SetProperty(ref storage, value, o => changedCallback?.Invoke(o, value), propertyName);
+    }
 
     protected void RaisePropertyChanged<T>(Expression<Func<T>> expression) {
         RaisePropertyChanged(GetPropertyName(expression));
