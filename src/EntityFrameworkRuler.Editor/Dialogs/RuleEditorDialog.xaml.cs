@@ -14,46 +14,13 @@ namespace EntityFrameworkRuler.Editor.Dialogs;
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public sealed partial class RuleEditorDialog : IRuleEditorDialog {
-    static RuleEditorDialog() {
-        EventManager.RegisterClassHandler(typeof(Window), Keyboard.GotKeyboardFocusEvent,
-            new KeyboardFocusChangedEventHandler(HandleGotKeyboardFocusEvent), true);
-        RuleBase.Observable = true;
-    }
-
-    private static void HandleGotKeyboardFocusEvent(object sender, KeyboardFocusChangedEventArgs e) {
-        if (e.OldFocus is not DependencyObject d) return;
-        var parentWindow = GetWindow(d);
-        if (parentWindow is not RuleEditorDialog re || re.ViewModel?.RootModel == null) return;
-        var selection = re.ViewModel?.RootModel?.GetSelectedNode();
-        if (selection == null) return;
-        selection.OnKeyboardFocusChanged();
-        Debug.WriteLine($"All properties changed raised for {selection.Name}");
-    }
-
+public sealed partial class RuleEditorDialog : Window, IRuleEditorDialog {
     public RuleEditorViewModel ViewModel { get; }
 
-    public RuleEditorDialog() : this(null) {
-    }
-
-    public RuleEditorDialog(ThemeNames? theme) : this(null, null, null) {
-        if (theme.HasValue) Theme = theme.Value;
-        else if (!Theme.HasValue) Theme = ThemeNames.Dark;
-    }
-
-    public RuleEditorDialog(IRuleLoader loader, IRuleSaver saver, string ruleFilePath, string targetProjectPath = null) {
-        InitializeComponent();
-#if DEBUG
-        if (targetProjectPath.IsNullOrEmpty()) {
-            var sln = Directory.GetCurrentDirectory().FindSolutionParentPath();
-            if (sln != null) {
-                sln = Path.Combine(sln, "Tests\\NorthwindTestProject\\");
-                if (Directory.Exists(sln)) targetProjectPath = sln;
-            }
-        }
-#endif
-        DataContext = ViewModel = new(loader, saver, ruleFilePath, targetProjectPath);
-        this.Show();
+    public RuleEditorDialog(RuleEditorViewModel vm) { 
+        InitializeComponent(); 
+        DataContext = ViewModel = vm;
+        if (!Theme.HasValue) Theme = ThemeNames.Light;
     }
 
     // ReSharper disable once MemberCanBePrivate.Global

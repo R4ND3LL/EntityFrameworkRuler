@@ -8,17 +8,23 @@ using EntityFrameworkRuler.Editor.Models;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
 using EntityFrameworkRuler.Saver;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFrameworkRuler.Editor.Controls;
 
 public sealed partial class RuleEditorViewModel : ObservableObject {
+    private readonly IServiceProvider serviceProvider;
     private readonly IRuleLoader loader;
     private readonly IRuleSaver saver;
 
-    public RuleEditorViewModel(IRuleLoader loader, IRuleSaver saver, string ruleFilePath = null, string targetProjectPath = null) {
+    public RuleEditorViewModel(IServiceProvider serviceProvider, IRuleLoader loader, IRuleSaver saver) {
+        this.serviceProvider = serviceProvider;
         this.loader = loader ?? new RuleLoader();
         this.saver = saver ?? new RuleSaver();
         SuggestedRuleFiles = new();
+    }
+
+    public void SetContext(string ruleFilePath = null, string targetProjectPath = null) {
         if (ruleFilePath.HasNonWhiteSpace() && ruleFilePath.EndsWithIgnoreCase(".json")) {
             SuggestedRuleFiles.Add(new(new(ruleFilePath.Trim())));
             SelectedRuleFile = SuggestedRuleFiles[0];
@@ -31,7 +37,6 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             if (SuggestedRuleFiles.Count == 0) FindRuleFilesNear(targetProjectPath);
         }
     }
-
     [ObservableProperty] private ObservableCollection<ObservableFileInfo> suggestedRuleFiles;
     [ObservableProperty] private ObservableFileInfo selectedRuleFile;
     [ObservableProperty] private DbContextRule dbContextRule;
@@ -108,7 +113,10 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
 
     private async void FindRuleFilesNear(string path) {
         try {
-            if (path.EndsWithIgnoreCase(".csproj") || path.EndsWithIgnoreCase(".edmx") || path.EndsWithIgnoreCase(".json"))
+            if (path.EndsWithIgnoreCase(".csproj") ||
+                path.EndsWithIgnoreCase(".vbproj") ||
+                path.EndsWithIgnoreCase(".edmx") ||
+                path.EndsWithIgnoreCase(".json"))
                 path = new FileInfo(path).Directory?.FullName;
             if (path.IsNullOrWhiteSpace()) return;
             var ops = new LoadOptions(path);
@@ -196,22 +204,24 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
 
     [RelayCommand]
     private void ConvertEdmx() {
-        var rule = SelectedRuleFile ?? SuggestedRuleFiles.FirstOrDefault(o => o.Path.HasNonWhiteSpace() && o.FileInfo.Exists);
-        var projectPath = rule?.FileInfo?.Directory?.FullName;
-        var edmxConverter = new RulesFromEdmxDialog(null, null, projectPath);
         try {
+            var rule = SelectedRuleFile ?? SuggestedRuleFiles.FirstOrDefault(o => o.Path.HasNonWhiteSpace() && o.FileInfo.Exists);
+            var projectPath = rule?.FileInfo?.Directory?.FullName;
+
+            var edmxConverter = serviceProvider.GetRequiredService<IRulesFromEdmxDialog>();
+            edmxConverter.ViewModel.SetContext(null, projectPath);
             edmxConverter.Owner = Application.Current.MainWindow;
             edmxConverter.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        } catch { }
 
-        var result = edmxConverter.ShowDialog();
-        if (result != true) return;
-        if (edmxConverter.Tag is SaveRulesResponse response && response.SavedRules.Count > 0) {
-            var path = response.SavedRules.FirstOrDefault(o => o.HasNonWhiteSpace());
-            if (path.HasNonWhiteSpace()) {
-                SelectedRuleFile = null; // force reload
-                SelectedRuleFile = new(new(path));
+            var result = edmxConverter.ShowDialog();
+            if (result != true) return;
+            if (edmxConverter.Tag is SaveRulesResponse response && response.SavedRules.Count > 0) {
+                var path = response.SavedRules.FirstOrDefault(o => o.HasNonWhiteSpace());
+                if (path.HasNonWhiteSpace()) {
+                    SelectedRuleFile = null; // force reload
+                    SelectedRuleFile = new(new(path));
+                }
             }
-        }
+        } catch { }
     }
 }

@@ -93,14 +93,14 @@ public static class PathExtensions {
                     csProj = CsProjSerializer.Deserialize(text);
                     csProj.File = csProjFile;
                 } catch (Exception ex) {
-                    loggedResponse?.LogError($"Unable to parse csproj: {ex.Message}");
+                    loggedResponse?.LogError($"Unable to parse proj: {ex.Message}");
                     continue;
                 }
 
                 return csProj;
             }
         } catch (Exception ex) {
-            loggedResponse?.LogError($"Unable to read csproj: {ex.Message}");
+            loggedResponse?.LogError($"Unable to read proj: {ex.Message}");
         }
 
         return new();
@@ -123,7 +123,7 @@ public static class PathExtensions {
     /// <summary> Locate the csproj file under the provided directory.  This operation is cached. </summary>
     internal static FileInfo FindProjectFileCached(this string dir) {
         if (dir.IsNullOrWhiteSpace()) return null;
-        if (dir.EndsWithIgnoreCase(".csproj")) {
+        if (dir.EndsWithIgnoreCase(".csproj") || dir.EndsWithIgnoreCase(".vbproj")) {
             var fileInfo = new FileInfo(dir);
             return fileInfo;
         }
@@ -157,7 +157,7 @@ public static class PathExtensions {
     }
 
     /// <summary> Locate the csproj file under the provided directory.  This operation is cached. </summary>
-    internal static FileInfo FindProjectFileCached(this DirectoryInfo info) => FindFileCached(info, "*.csproj");
+    internal static FileInfo FindProjectFileCached(this DirectoryInfo info) => FindFileCached(info, "*.csproj") ?? FindFileCached(info, "*.vbproj");
 
     /// <summary> Locate the edmx file under the provided directory.  This operation is cached. </summary>
     internal static FileInfo FindEdmxFileCached(this DirectoryInfo info) => FindFileCached(info, "*.edmx");

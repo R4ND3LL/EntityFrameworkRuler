@@ -16,12 +16,19 @@ using EntityFrameworkRuler.Extensions;
 using System.Collections.Generic;
 using EntityFrameworkRuler.Editor.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio;
 
 namespace EntityFrameworkRuler {
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration(Vsix.Name, Vsix.Description, Vsix.Version)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [Guid(PackageGuids.EntityFrameworkRulerString)]
+    [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
+    [ProvideUIContextRule(PackageGuids.uiContextSupportedFilesString,
+        name: "Supported Files",
+        expression: "Json | Edmx",
+        termNames: new[] { "Json", "Edmx" },
+        termValues: new[] { "HierSingleSelectionName:.json$", "HierSingleSelectionName:.edmx$" })]
     [ProvideBindingPath]
     public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
         internal static IServiceProvider ServiceProvider { get; private set; }
@@ -35,14 +42,18 @@ namespace EntityFrameworkRuler {
         }
 
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress) {
-            VsixExtensions.VsixAssemblyResolver.RedirectAssembly();
-            if (!System.Diagnostics.Debugger.IsAttached)
-                System.Diagnostics.Debugger.Launch();
-            await this.RegisterCommandsAsync();
+            try {
+                VsixExtensions.VsixAssemblyResolver.RedirectAssembly();
+                if (!System.Diagnostics.Debugger.IsAttached)
+                    System.Diagnostics.Debugger.Launch();
+                await this.RegisterCommandsAsync();
 
-            await GetThemeInfo();
+                await GetThemeInfo();
 
-            ServiceProvider ??= CreateServiceProvider();
+                ServiceProvider ??= CreateServiceProvider();
+            } catch (Exception ex) {
+                await ex.LogAsync();
+            }
         }
 
         private async Task GetThemeInfo() {
@@ -72,16 +83,20 @@ namespace EntityFrameworkRuler {
 
             } catch (Exception ex) {
                 Debug.WriteLine($"GetThemeInfo error: {ex.Message}");
+                await ex.LogAsync();
             }
         }
 
 
         private IServiceProvider CreateServiceProvider() {
-            var services = new ServiceCollection();
-            services.AddRulerCommon();
-            services.AddTransient<IRuleEditorDialog, EntityFrameworkRuler.ToolWindows.RuleEditorDialog>();
-            services.AddTransient<IRulesFromEdmxDialog, EntityFrameworkRuler.ToolWindows.RulesFromEdmxDialog>();
+            var services = new ServiceCollection()
+                .AddRulerCommon()
+                .AddTransient<RuleEditorViewModel, RuleEditorViewModel>()
+                .AddTransient<RulesFromEdmxViewModel, RulesFromEdmxViewModel>()
+                .AddTransient<IRuleEditorDialog, RuleEditorDialog>()
+                .AddTransient<IRulesFromEdmxDialog, RulesFromEdmxDialog>();
             return services.BuildServiceProvider();
+
         }
     }
 }

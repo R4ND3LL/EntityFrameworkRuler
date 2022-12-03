@@ -1,5 +1,4 @@
-﻿using EntityFrameworkRuler.Applicator;
-using EntityFrameworkRuler.Common;
+﻿using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator;
 using EntityFrameworkRuler.Generator.EdmxModel;
 using EntityFrameworkRuler.Generator.Services;
@@ -11,21 +10,20 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFrameworkRuler;
 
-public static class EntityFrameworkRulerExtensions {
-    /// <summary> Add Entity Framework Ruler services </summary>
-    public static T AddRuler<T>(this T serviceCollection) where T : IServiceCollection =>
-        (T)serviceCollection
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+public static class DependencyInjectionCommon {
+    /// <summary> Add RuleLoader services from EntityFrameworkRuler.Common only </summary>
+    public static IServiceCollection AddRulerCommon(this IServiceCollection serviceCollection)
+        => serviceCollection
+            .AddSingleton<IRuleSerializer, JsonRuleSerializer>()
             .AddTransient<IRulerNamingService, RulerNamingService>()
             .AddSingleton<IRulerPluralizer, HumanizerPluralizer>()
             .AddTransient<IEdmxParser, EdmxParser>()
-            .AddSingleton<IRuleSerializer, JsonRuleSerializer>()
             .AddTransient<IRuleSaver, RuleSaver>()
             .AddTransient<IRuleLoader, RuleLoader>()
-            .AddTransient<IRuleGenerator, RuleGenerator>()
-            .AddTransient<IRuleApplicator, RuleApplicator>()
-            .CoerceServiceCollection();
+            .AddTransient<IRuleGenerator, RuleGenerator>();
 
-    private static T CoerceServiceCollection<T>(this T serviceCollection) where T : IServiceCollection {
+    private static IServiceCollection CoerceLoaderServiceCollection(this IServiceCollection serviceCollection) {
         // possible location of reflection based service wiring on the target project ?
         return serviceCollection;
     }

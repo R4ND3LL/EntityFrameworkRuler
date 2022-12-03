@@ -5,8 +5,8 @@ using System.Xml.XPath;
 namespace EntityFrameworkRuler.Applicator.CsProjParser;
 
 internal static class CsProjSerializer {
-    public static CsProject Deserialize(string csprojContent) {
-        var doc = XDocument.Parse(csprojContent);
+    public static CsProject Deserialize(string projContent) {
+        var doc = XDocument.Parse(projContent);
         var csProj = new CsProject();
 
         foreach (var propertyGroup in doc.XPathSelectElements("//PropertyGroup")) {

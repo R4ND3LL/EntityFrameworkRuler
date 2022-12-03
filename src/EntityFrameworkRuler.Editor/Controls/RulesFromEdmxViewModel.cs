@@ -11,13 +11,15 @@ namespace EntityFrameworkRuler.Editor.Controls;
 
 public sealed partial class RulesFromEdmxViewModel : ObservableObject {
     private readonly IRuleGenerator generator;
-    private readonly Action<SaveRulesResponse> onGenerated;
+    public Action<SaveRulesResponse> OnGenerated { get; set; }
 
-    public RulesFromEdmxViewModel(IRuleGenerator generator, string edmxFilePath = null, string targetProjectPath = null,
-        Action<SaveRulesResponse> onGenerated = null) {
+    public RulesFromEdmxViewModel(IRuleGenerator generator) {
         this.generator = generator;
-        this.onGenerated = onGenerated;
         SuggestedEdmxFiles = new();
+    }
+
+    public void SetContext(string edmxFilePath = null, string targetProjectPath = null, Action<SaveRulesResponse> onGenerated = null) {
+        if (onGenerated != null) OnGenerated = onGenerated;
         if (edmxFilePath.HasNonWhiteSpace() && edmxFilePath.EndsWithIgnoreCase(".edmx")) {
             SuggestedEdmxFiles.Add(new(new(edmxFilePath.Trim())));
             SelectedEdmxFile = SuggestedEdmxFiles[0];
@@ -31,7 +33,10 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
 
     private async void FindEdmxFilesNear(string path) {
         try {
-            if (path.EndsWithIgnoreCase(".csproj") || path.EndsWithIgnoreCase(".edmx") || path.EndsWithIgnoreCase(".json"))
+            if (path.EndsWithIgnoreCase(".csproj") ||
+                path.EndsWithIgnoreCase(".vbproj") ||
+                path.EndsWithIgnoreCase(".edmx") ||
+                path.EndsWithIgnoreCase(".json"))
                 path = new FileInfo(path).Directory?.FullName;
             if (path.IsNullOrWhiteSpace()) return;
             var files = await path
@@ -45,10 +50,12 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
 
     [ObservableProperty] private ObservableCollection<ObservableFileInfo> suggestedEdmxFiles;
 
-    [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
     private ObservableFileInfo selectedEdmxFile;
 
-    [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
     private string targetProjectPath;
 
     [ObservableProperty] private bool noPluralize;
@@ -88,7 +95,7 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
         var dialog = new Microsoft.Win32.OpenFileDialog {
             FileName = "Document", // Default file name
             DefaultExt = ".csproj", // Default file extension
-            Filter = "Project (.csproj)|*.csproj",
+            Filter = "Project (.csproj)|*.csproj;*.vbproj",
             Title = "Select a target EF Core project" // Filter files by extension
         };
         // Show open file dialog box
@@ -128,10 +135,10 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
                     MessageBox.Show(saveResponse.Errors.Join(Environment.NewLine), "Something went wrong", MessageBoxButton.OK,
                         MessageBoxImage.Error);
                 } else {
-                    if (onGenerated == null) {
+                    if (OnGenerated == null) {
                         MessageBox.Show(sb.ToString(), "Completed successfully", MessageBoxButton.OK, MessageBoxImage.Information);
                     } else {
-                        onGenerated?.Invoke(saveResponse);
+                        OnGenerated?.Invoke(saveResponse);
                     }
                 }
             } else {

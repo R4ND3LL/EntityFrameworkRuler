@@ -35,15 +35,18 @@ public static class ApplicatorArgHelper {
             return true;
         }
 
-        var csProjFile = args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".csproj") == true);
+        var csProjFile =
+            args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".csproj") == true) ??
+            args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".vbproj") == true);
 
         if (csProjFile != null && File.Exists(csProjFile)) {
             applicatorOptions.ProjectBasePath = new FileInfo(csProjFile).Directory?.FullName;
             return applicatorOptions.ProjectBasePath != null;
         }
 
-        applicatorOptions.ProjectBasePath = args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".csproj") == false
-                                                                     && Directory.Exists(o));
+        applicatorOptions.ProjectBasePath =
+            args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".csproj") == false && Directory.Exists(o)) ??
+            args.FirstOrDefault(o => o?.EndsWithIgnoreCase(".vbproj") == false && Directory.Exists(o));
         if (applicatorOptions == null || applicatorOptions.ProjectBasePath.IsNullOrEmpty()) return false;
 
         var projectDir2 = new DirectoryInfo(applicatorOptions.ProjectBasePath!);

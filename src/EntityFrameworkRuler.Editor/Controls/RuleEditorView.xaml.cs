@@ -11,6 +11,7 @@ namespace EntityFrameworkRuler.Editor.Controls;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 public sealed partial class RuleEditorView {
+
     static RuleEditorView() {
         EventManager.RegisterClassHandler(typeof(Window), Keyboard.GotKeyboardFocusEvent,
             new KeyboardFocusChangedEventHandler(HandleGotKeyboardFocusEvent), true);

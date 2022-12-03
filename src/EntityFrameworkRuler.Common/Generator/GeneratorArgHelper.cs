@@ -95,6 +95,10 @@ public static class GeneratorArgHelper {
 
         var projectFiles2 =
             Directory.GetFiles(op.SaveOptions.ProjectBasePath, "*.csproj", SearchOption.TopDirectoryOnly);
+        if (projectFiles2.Length == 0)
+            projectFiles2 =
+                Directory.GetFiles(op.SaveOptions.ProjectBasePath, "*.vbproj", SearchOption.TopDirectoryOnly);
+
         if (projectFiles2.Length == 0) {
             op.SaveOptions.ProjectBasePath = null;
             return false;

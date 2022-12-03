@@ -9,14 +9,11 @@ namespace EntityFrameworkRuler.ToolWindows {
     public sealed partial class RulesFromEdmxDialog : DialogWindow, IRulesFromEdmxDialog {
         public RulesFromEdmxViewModel ViewModel { get; }
 
-        public RulesFromEdmxDialog(ThemeNames? theme = null) : this(null, null) {
-            if (theme.HasValue) Theme = theme.Value;
-            else if (!Theme.HasValue) Theme = ThemeNames.Light;
-        }
-
-        public RulesFromEdmxDialog(IRuleGenerator generator, string edmxFilePath, string targetProjectPath = null) {
+        public RulesFromEdmxDialog(RulesFromEdmxViewModel vm) {
             InitializeComponent();
-            DataContext = ViewModel = new(generator, edmxFilePath, targetProjectPath, OnGenerated);
+            DataContext = ViewModel = vm;
+            vm.OnGenerated = OnGenerated;
+            if (!Theme.HasValue) Theme = ThemeNames.Light;
         }
 
         public ThemeNames? Theme {
