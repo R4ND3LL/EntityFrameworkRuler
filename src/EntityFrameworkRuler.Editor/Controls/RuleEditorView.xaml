@@ -15,48 +15,67 @@
              Foreground="{DynamicResource BlackBrush}"
              d:DataContext="{d:DesignInstance Type=controls:RuleEditorViewModel, IsDesignTimeCreatable=True}">
     <UserControl.Resources>
-        <DataTemplate DataType="{x:Type models:RuleNodeViewModel}">
-            <Grid Name="Grid">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <controls:SvgImage Grid.Column="0" x:Name="NavIcon" OverrideBrush="{DynamicResource BlackBrush}"
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/EntityFrameworkRuler.Editor;component/Themes/TreeView.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <DataTemplate DataType="{x:Type models:RuleNodeViewModel}">
+                <Grid Name="Grid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <controls:SvgImage Grid.Column="0" x:Name="NavIcon" OverrideBrush="{DynamicResource BlackBrush}"
                                    Source="/EntityFrameworkRuler.Editor;component/Resources/navigation.svg"
                                    VerticalAlignment="Center" HorizontalAlignment="Center"
-                                   Width="11" Height="11" Visibility="Collapsed" Opacity="0.5" Margin="0,0,3,0"
+                                   Width="12" Height="12" Visibility="Visible" Opacity="0.7" Margin="0,0,4,0"
                                    Padding="0" />
 
-                <controls:SvgImage Grid.Column="1" x:Name="ErrorIcon" OverrideBrush="{DynamicResource RedTextBrush}"
-                                   Source="/EntityFrameworkRuler.Editor;component/Resources/error.svg"
-                                   VerticalAlignment="Center" HorizontalAlignment="Center"
-                                   Width="11" Height="11" Visibility="Collapsed" Opacity="0.5" Margin="0,0,3,0"
-                                   Padding="0" />
-                <pt:EditableTextBlock Name="Text" Grid.Column="2"
+                    <pt:EditableTextBlock Name="Text" Grid.Column="1"
                                       Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                       Margin="0 0 0 0" SnapsToDevicePixels="True"
                                       Foreground="{DynamicResource InputText}"
                                       FontFamily="Consolas, Segoe UI" FontSize="12"
                                       IsEditing="{Binding IsEditing}" />
-            </Grid>
-            <DataTemplate.Triggers>
-                <DataTrigger Binding="{Binding Item.NotMapped}" Value="True">
-                    <Setter TargetName="Text" Property="Opacity" Value="0.85" />
-                    <Setter TargetName="Text" Property="TextDecorations" Value="Strikethrough" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding HasError}" Value="True">
-                    <Setter TargetName="ErrorIcon" Property="Visibility" Value="Visible" />
-                    <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource RedTextBrush}" />
-                    <Setter TargetName="Grid" Property="ToolTip" Value="{Binding FirstError.Message}" />
-                </DataTrigger>
-                <DataTrigger Binding="{Binding IsNavigation}" Value="True">
-                    <Setter TargetName="NavIcon" Property="Visibility" Value="Visible" />
-                </DataTrigger>
-            </DataTemplate.Triggers>
-        </DataTemplate>
-        <controls:CustomControlFactory x:Key="CustomControlFactory" />
-        <controls:CustomOperator x:Key="CustomOperator" />
+
+                    <controls:SvgImage Grid.Column="2" x:Name="ErrorIcon" OverrideBrush="{DynamicResource RedTextBrush}"
+                                       Source="/EntityFrameworkRuler.Editor;component/Resources/error.svg"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       Width="11" Height="11" Visibility="Collapsed" Opacity="0.5" Margin="4,0,0,0"
+                                       Padding="0" />
+                </Grid>
+                <DataTemplate.Triggers>
+                    <DataTrigger Binding="{Binding Item.NotMapped}" Value="True">
+                        <Setter TargetName="Text" Property="Opacity" Value="0.85" />
+                        <Setter TargetName="Text" Property="TextDecorations" Value="Strikethrough" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding HasError}" Value="True">
+                        <Setter TargetName="ErrorIcon" Property="Visibility" Value="Visible" />
+                        <Setter TargetName="Text" Property="Foreground" Value="{DynamicResource RedTextBrush}" />
+                        <Setter TargetName="Grid" Property="ToolTip" Value="{Binding FirstError.Message}" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsDbContext}" Value="True">
+                        <Setter TargetName="NavIcon" Property="Source" Value="/EntityFrameworkRuler.Editor;component/Resources/database.svg" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsSchema}" Value="True">
+                        <Setter TargetName="NavIcon" Property="Source" Value="/EntityFrameworkRuler.Editor;component/Resources/schema.svg" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsTable}" Value="True">
+                        <Setter TargetName="NavIcon" Property="Source" Value="/EntityFrameworkRuler.Editor;component/Resources/file-tree.svg" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsColumn}" Value="True">
+                        <Setter TargetName="NavIcon" Property="Source" Value="/EntityFrameworkRuler.Editor;component/Resources/wrench.svg" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding IsNavigation}" Value="True">
+                        <Setter TargetName="NavIcon" Property="Source" Value="/EntityFrameworkRuler.Editor;component/Resources/swap.svg" />
+                    </DataTrigger>
+                </DataTemplate.Triggers>
+            </DataTemplate>
+            <controls:CustomControlFactory x:Key="CustomControlFactory" />
+            <controls:CustomOperator x:Key="CustomOperator" />
+        </ResourceDictionary>
+
     </UserControl.Resources>
     <Grid VerticalAlignment="Stretch" Margin="10,0,10,20">
         <Grid.RowDefinitions>
@@ -178,6 +197,7 @@
                       Background="{DynamicResource GrayBrush10}"
                       Foreground="{DynamicResource GrayBrush1}"
                       KeyDown="ModelBrowserKeyDown"
+                      ItemContainerStyle="{StaticResource MyTreeViewItem}" 
                       Visibility="{Binding RootModel, Converter={x:Static converters:UiConverters.NotNullToVisible}}">
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type models:RuleNodeViewModel}"

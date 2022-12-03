@@ -17,6 +17,7 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
         Validator = validator ?? ((RuleNodeViewModel)parent)?.Validator ?? new RuleValidator();
         hookedCollections = new();
         HookCollectionChanges(item);
+        HookCollectionChanges(item);
     }
 
     private void HookCollectionChanges(RuleBase item) {
@@ -72,14 +73,23 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
 
         if (altered) Children.Refresh();
     }
+    protected override void OnItemChanged() {
+        base.OnItemChanged();
+        var i = Item;
+        IsDbContext = i is DbContextRule;
+        IsSchema = i is SchemaRule;
+        IsTable = i is TableRule;
+        IsColumn = i is ColumnRule;
+        IsNavigation = i is NavigationRule;
+    }
 
     public RuleValidator Validator { get; }
-    public bool IsDbContext => Item is DbContextRule;
-    public bool IsSchema => Item is SchemaRule;
-    public bool IsTable => Item is TableRule;
-    public bool IsColumn => Item is ColumnRule;
+    [ObservableProperty] private bool isDbContext;
+    [ObservableProperty] private bool isSchema;
+    [ObservableProperty] private bool isTable;
+    [ObservableProperty] private bool isColumn;
+    [ObservableProperty] private bool isNavigation;
 
-    public bool IsNavigation => Item is NavigationRule;
     [ObservableProperty] private IList<EvaluationFailure> errors;
     [ObservableProperty] private EvaluationFailure firstError;
 
@@ -205,6 +215,9 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
             _ => n.Name?.EqualsIgnoreCase(filter.Term) == true
         };
     }
+
+    partial void OnItemChanged(T value) { OnItemChanged(); }
+    protected virtual void OnItemChanged() { }
 
     public void Detach() {
         Parent.Children.Remove(this);

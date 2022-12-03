@@ -32,7 +32,7 @@ namespace EntityFrameworkRuler.ToolWindows {
             DataContext = ViewModel = new(loader, saver, ruleFilePath, targetProjectPath);
             if (!Theme.HasValue) Theme = ThemeNames.Light;
         }
-
+     
         // ReSharper disable once MemberCanBePrivate.Global
         public ThemeNames? Theme {
             get => AppearanceManager.Current.SelectedTheme;

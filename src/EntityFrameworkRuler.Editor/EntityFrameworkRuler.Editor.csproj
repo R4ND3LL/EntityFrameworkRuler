@@ -14,9 +14,13 @@
     <PackageIcon>crown128.png</PackageIcon>
     <Nullable>disable</Nullable>
     <ApplicationIcon>..\Resources\crown.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="app.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Remove="nupkg\**" />
     <EmbeddedResource Remove="nupkg\**" />
     <None Remove="nupkg\**" />
@@ -36,14 +40,21 @@
   <ItemGroup>
     <None Remove="Resources\close.svg" />
     <None Remove="Resources\convertfile.svg" />
+    <None Remove="Resources\database.svg" />
     <None Remove="Resources\error.svg" />
+    <None Remove="Resources\file-tree.svg" />
+    <None Remove="Resources\key.svg" />
     <None Remove="Resources\minus16.png" />
     <None Remove="Resources\minus48.png" />
     <None Remove="Resources\navigation.svg" />
     <None Remove="Resources\navigation16.png" />
     <None Remove="Resources\open.svg" />
     <None Remove="Resources\save.svg" />
+    <None Remove="Resources\schema.svg" />
+    <None Remove="Resources\swap-circle.svg" />
+    <None Remove="Resources\swap.svg" />
     <None Remove="Resources\undo.svg" />
+    <None Remove="Resources\wrench.svg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -73,14 +84,21 @@
   <ItemGroup>
     <Resource Include="Resources\close.svg" />
     <Resource Include="Resources\convertfile.svg" />
+    <Resource Include="Resources\database.svg" />
     <Resource Include="Resources\error.svg" />
+    <Resource Include="Resources\file-tree.svg" />
+    <Resource Include="Resources\key.svg" />
     <Resource Include="Resources\minus16.png" />
     <Resource Include="Resources\navigation.svg" />
     <Resource Include="Resources\navigation16.png" />
     <Resource Include="Resources\open.svg" />
     <Resource Include="Resources\save.svg" />
     <Resource Include="Resources\save2.svg" />
+    <Resource Include="Resources\schema.svg" />
+    <Resource Include="Resources\swap.svg" />
+    <Resource Include="Resources\swap-circle.svg" />
     <Resource Include="Resources\undo.svg" />
+    <Resource Include="Resources\wrench.svg" />
   </ItemGroup>
   <ItemGroup>
     <Page Update="Dialogs\RulesFromEdmxDialog.xaml">

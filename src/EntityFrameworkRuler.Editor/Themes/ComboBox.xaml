@@ -1,5 +1,10 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"  
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--<ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/EntityFrameworkRuler.Editor;component/Themes/Light.xaml"/>
+    </ResourceDictionary.MergedDictionaries>-->
+
     <Geometry x:Key="DownArrowGeometry">M 0 0 L 3.5 4 L 7 0 Z</Geometry>
 
     <Style TargetType="ComboBoxItem"   BasedOn="{StaticResource {x:Type ComboBoxItem}}">
@@ -17,17 +22,17 @@
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         Padding="{TemplateBinding Padding}"
-                        SnapsToDevicePixels="true">
+                        SnapsToDevicePixels="True">
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                       SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsHighlighted" Value="true">
+                        <Trigger Property="IsHighlighted" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Accent2}"/>
                             <Setter Property="Foreground" Value="{DynamicResource InputTextHover}"/>
                         </Trigger>
-                        <Trigger Property="IsEnabled" Value="false">
+                        <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="{DynamicResource InputTextDisabled}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -37,8 +42,8 @@
     </Style>
 
     <Style x:Key="ComboBoxEditableTextBox" TargetType="{x:Type TextBox}">
-        <Setter Property="OverridesDefaultStyle" Value="true"/>
-        <Setter Property="AllowDrop" Value="true"/>
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="AllowDrop" Value="True"/>
         <Setter Property="MinWidth" Value="0"/>
         <Setter Property="MinHeight" Value="0"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -47,20 +52,20 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TextBox}">
-                    <ScrollViewer x:Name="PART_ContentHost" Background="Transparent" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                    <ScrollViewer x:Name="PART_ContentHost" Background="Transparent" Focusable="False" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
     <ControlTemplate x:Key="ComboBoxEditableTemplate" TargetType="{x:Type ComboBox}">
-        <Grid Name="MainGrid" SnapsToDevicePixels="true">
+        <Grid Name="MainGrid" SnapsToDevicePixels="True">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition MinWidth="{DynamicResource {x:Static SystemParameters.VerticalScrollBarWidthKey}}" Width="0"/>
             </Grid.ColumnDefinitions>
             <Popup Name="PART_Popup"
-                   AllowsTransparency="true"
+                   AllowsTransparency="True"
                    Grid.ColumnSpan="2"
                    Placement="Bottom"
                    Margin="1"
@@ -91,7 +96,7 @@
                     </Border>
                 </Grid>
             </Popup>
-            <ToggleButton Grid.ColumnSpan="2" IsTabStop="False" Focusable="False"
+            <ToggleButton Grid.ColumnSpan="2" Grid.Column="0" IsTabStop="False" Focusable="False"
                           Background="{TemplateBinding Background}"
                           BorderBrush="{TemplateBinding BorderBrush}"
                           BorderThickness="{TemplateBinding BorderThickness}"
@@ -99,13 +104,13 @@
                           Padding="0,0,0,10"/>
 
             <Path Name="Arrow"
-                  Grid.ColumnSpan="2"
+                  Grid.ColumnSpan="2" Grid.Column="0"
                   Margin="3,1,8,0"
                   Fill="{TemplateBinding Foreground}"
-                  Data="{DynamicResource DownArrowGeometry}"
+                  Data="{StaticResource DownArrowGeometry}"
                   HorizontalAlignment="Right"
                   VerticalAlignment="Center" IsHitTestVisible="False"/>
-            <TextBox x:Name="PART_EditableTextBox"
+            <TextBox Grid.Column="0" x:Name="PART_EditableTextBox"
                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
                      IsReadOnly="{Binding IsReadOnly, RelativeSource={RelativeSource TemplatedParent}}"
                      Margin="{TemplateBinding Padding}"
@@ -114,26 +119,26 @@
                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
         </Grid>
         <ControlTemplate.Triggers>
-            <Trigger Property="HasItems" Value="false">
+            <Trigger Property="HasItems" Value="False">
                 <Setter TargetName="DropDownBorder" Property="Height" Value="95"/>
             </Trigger>
-            <Trigger Property="IsEnabled" Value="false">
+            <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Foreground" Value="{DynamicResource InputTextDisabled}"/>
             </Trigger>
-            <Trigger Property="IsMouseOver" Value="true">
+            <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Background" Value="{DynamicResource InputBackgroundHover}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource InputBorderHover}" />
             </Trigger>
-            <Trigger Property="IsFocused" Value="true">
+            <Trigger Property="IsFocused" Value="True">
                 <Setter Property="BorderBrush" Value="{DynamicResource Accent2}" />
             </Trigger>
-            <Trigger SourceName="PART_EditableTextBox" Property="IsFocused" Value="true">
+            <Trigger SourceName="PART_EditableTextBox" Property="IsFocused" Value="True">
                 <Setter Property="BorderBrush" Value="{DynamicResource Accent2}" />
             </Trigger>
-            <Trigger Property="IsGrouping" Value="true">
-                <Setter Property="ScrollViewer.CanContentScroll" Value="false"/>
+            <Trigger Property="IsGrouping" Value="True">
+                <Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
             </Trigger>
-            <Trigger SourceName="DropDownScrollViewer" Property="ScrollViewer.CanContentScroll" Value="false" >
+            <Trigger SourceName="DropDownScrollViewer" Property="ScrollViewer.CanContentScroll" Value="False" >
                 <Setter TargetName="OpaqueRect" 
                         Property="Canvas.Top" 
                         Value="{Binding ElementName=DropDownScrollViewer, Path=VerticalOffset}" />
@@ -153,20 +158,20 @@
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
         <Setter Property="Padding" Value="7,3,8,3"/>
-        <Setter Property="ScrollViewer.CanContentScroll" Value="true"/>
+        <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
         <Setter Property="ScrollViewer.PanningMode" Value="Both"/>
         <Setter Property="Stylus.IsFlicksEnabled" Value="False"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ComboBox}">
-                    <Grid Name="MainGrid" SnapsToDevicePixels="true">
+                    <Grid Name="MainGrid" SnapsToDevicePixels="True">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition MinWidth="{DynamicResource {x:Static SystemParameters.VerticalScrollBarWidthKey}}" Width="0"/>
                         </Grid.ColumnDefinitions>
                         <Popup Name="PART_Popup"
-                               AllowsTransparency="true"
+                               AllowsTransparency="True"
                                Grid.ColumnSpan="2"
                                Placement="Bottom"
                                Margin="1"
@@ -197,7 +202,7 @@
                                 </Border>
                             </Grid>
                         </Popup>
-                        <ToggleButton Grid.ColumnSpan="2"  IsTabStop="False" Focusable="False"
+                        <ToggleButton Grid.ColumnSpan="2" Grid.Column="0" IsTabStop="False" Focusable="False"
                                       Background="{TemplateBinding Background}"
                                       BorderBrush="{TemplateBinding BorderBrush}"
                                       BorderThickness="{TemplateBinding BorderThickness}"
@@ -205,14 +210,14 @@
                                       Padding="0,0,0,10"/>
 
                         <Path Name="Arrow"
-                              Grid.ColumnSpan="2"
+                              Grid.ColumnSpan="2" Grid.Column="0"
                               Margin="3,1,8,0"
                               Fill="{TemplateBinding Foreground}"
-                              Data="{DynamicResource DownArrowGeometry}"
+                              Data="{StaticResource DownArrowGeometry}"
                               HorizontalAlignment="Right"
                               VerticalAlignment="Center" IsHitTestVisible="False"/>
 
-                        <ContentPresenter IsHitTestVisible="false"
+                        <ContentPresenter Grid.Column="0" IsHitTestVisible="False"
                                           Margin="{TemplateBinding Padding}"
                                           Content="{TemplateBinding SelectionBoxItem}"
                                           ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
@@ -221,26 +226,28 @@
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        
+                        <!--<TextBlock Text="TEST" Foreground="Green" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center"/>-->
 
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="HasItems" Value="false">
+                        <Trigger Property="HasItems" Value="False">
                             <Setter TargetName="DropDownBorder" Property="Height" Value="95"/>
                         </Trigger>
-                        <Trigger Property="IsEnabled" Value="false">
+                        <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="{DynamicResource InputTextDisabled}"/>
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="true">
+                        <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Background" Value="{DynamicResource InputBackgroundHover}" />
                             <Setter Property="BorderBrush" Value="{DynamicResource InputBorderHover}" />
                         </Trigger>
-                        <Trigger Property="IsFocused" Value="true">
+                        <Trigger Property="IsFocused" Value="True">
                             <Setter Property="BorderBrush" Value="{DynamicResource Accent2}" />
                         </Trigger>
-                        <Trigger Property="IsGrouping" Value="true">
-                            <Setter Property="ScrollViewer.CanContentScroll" Value="false"/>
+                        <Trigger Property="IsGrouping" Value="True">
+                            <Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
                         </Trigger>
-                        <Trigger SourceName="DropDownScrollViewer" Property="ScrollViewer.CanContentScroll" Value="false" >
+                        <Trigger SourceName="DropDownScrollViewer" Property="ScrollViewer.CanContentScroll" Value="False" >
                             <Setter TargetName="OpaqueRect" 
                                     Property="Canvas.Top" 
                                     Value="{Binding ElementName=DropDownScrollViewer, Path=VerticalOffset}" />
@@ -253,8 +260,8 @@
             </Setter.Value>
         </Setter>
         <Style.Triggers>
-            <Trigger Property="IsEditable" Value="true">
-                <Setter Property="IsTabStop" Value="false"/>
+            <Trigger Property="IsEditable" Value="True">
+                <Setter Property="IsTabStop" Value="False"/>
                 <Setter Property="Padding" Value="3"/>
                 <Setter Property="Template" Value="{StaticResource ComboBoxEditableTemplate}"/>
             </Trigger>

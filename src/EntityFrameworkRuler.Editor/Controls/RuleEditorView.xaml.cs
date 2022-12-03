@@ -35,6 +35,8 @@ public sealed partial class RuleEditorView {
         set => AppearanceManager.Current.SelectedTheme = value;
     }
 
+    public TreeView TreeView => ModelBrowser;
+
     private void ModelBrowserKeyDown(object sender, KeyEventArgs e) {
         switch (e.Key) {
             case Key.F2:
