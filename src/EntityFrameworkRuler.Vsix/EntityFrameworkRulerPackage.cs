@@ -14,6 +14,8 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using EntityFrameworkRuler.Extensions;
 using System.Collections.Generic;
+using EntityFrameworkRuler.Editor.Dialogs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFrameworkRuler {
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
@@ -22,6 +24,7 @@ namespace EntityFrameworkRuler {
     [Guid(PackageGuids.EntityFrameworkRulerString)]
     [ProvideBindingPath]
     public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
+        internal static IServiceProvider ServiceProvider { get; private set; }
         private readonly Type[] dependencies;
 
         public EntityFrameworkRulerPackage() {
@@ -30,6 +33,7 @@ namespace EntityFrameworkRuler {
                 typeof(System.ComponentModel.DataAnnotations.MaxLengthAttribute),
             };
         }
+
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress) {
             VsixExtensions.VsixAssemblyResolver.RedirectAssembly();
             if (!System.Diagnostics.Debugger.IsAttached)
@@ -37,6 +41,8 @@ namespace EntityFrameworkRuler {
             await this.RegisterCommandsAsync();
 
             await GetThemeInfo();
+
+            ServiceProvider ??= CreateServiceProvider();
         }
 
         private async Task GetThemeInfo() {
@@ -67,6 +73,15 @@ namespace EntityFrameworkRuler {
             } catch (Exception ex) {
                 Debug.WriteLine($"GetThemeInfo error: {ex.Message}");
             }
+        }
+
+
+        private IServiceProvider CreateServiceProvider() {
+            var services = new ServiceCollection();
+            services.AddRulerCommon();
+            services.AddTransient<IRuleEditorDialog, EntityFrameworkRuler.ToolWindows.RuleEditorDialog>();
+            services.AddTransient<IRulesFromEdmxDialog, EntityFrameworkRuler.ToolWindows.RulesFromEdmxDialog>();
+            return services.BuildServiceProvider();
         }
     }
 }
