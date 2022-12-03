@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using EntityFrameworkRuler.Editor.Controls;
+using EntityFrameworkRuler.Editor.Dialogs;
 using EntityFrameworkRuler.Extension;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Saver;
@@ -7,7 +8,7 @@ using Microsoft.VisualStudio.PlatformUI;
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace EntityFrameworkRuler.ToolWindows {
-    public sealed partial class RuleEditorDialog : DialogWindow {
+    public sealed partial class RuleEditorDialog : DialogWindow, IRuleEditorDialog {
         public RuleEditorViewModel ViewModel { get; }
 
         public RuleEditorDialog() : this(null) {

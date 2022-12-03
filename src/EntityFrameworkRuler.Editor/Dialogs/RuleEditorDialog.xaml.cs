@@ -14,7 +14,7 @@ namespace EntityFrameworkRuler.Editor.Dialogs;
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public sealed partial class RuleEditorDialog {
+public sealed partial class RuleEditorDialog : IRuleEditorDialog {
     static RuleEditorDialog() {
         EventManager.RegisterClassHandler(typeof(Window), Keyboard.GotKeyboardFocusEvent,
             new KeyboardFocusChangedEventHandler(HandleGotKeyboardFocusEvent), true);
@@ -53,6 +53,7 @@ public sealed partial class RuleEditorDialog {
         }
 #endif
         DataContext = ViewModel = new(loader, saver, ruleFilePath, targetProjectPath);
+        this.Show();
     }
 
     // ReSharper disable once MemberCanBePrivate.Global
@@ -61,3 +62,4 @@ public sealed partial class RuleEditorDialog {
         set => AppearanceManager.Current.SelectedTheme = value;
     }
 }
+

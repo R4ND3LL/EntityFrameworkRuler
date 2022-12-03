@@ -1,11 +1,12 @@
 ﻿using EntityFrameworkRuler.Editor.Controls;
+using EntityFrameworkRuler.Editor.Dialogs;
 using EntityFrameworkRuler.Generator;
 using EntityFrameworkRuler.Saver;
 using Microsoft.VisualStudio.PlatformUI;
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace EntityFrameworkRuler.ToolWindows {
-    public sealed partial class RulesFromEdmxDialog : DialogWindow {
+    public sealed partial class RulesFromEdmxDialog : DialogWindow, IRulesFromEdmxDialog {
         public RulesFromEdmxViewModel ViewModel { get; }
 
         public RulesFromEdmxDialog(ThemeNames? theme = null) : this(null, null) {

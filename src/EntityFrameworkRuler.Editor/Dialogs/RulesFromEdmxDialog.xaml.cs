@@ -8,7 +8,7 @@ namespace EntityFrameworkRuler.Editor.Dialogs;
 /// <summary>
 /// Interaction logic for MainWindow.xaml
 /// </summary>
-public sealed partial class RulesFromEdmxDialog {
+public sealed partial class RulesFromEdmxDialog : IRulesFromEdmxDialog {
     public RulesFromEdmxViewModel ViewModel { get; }
 
     public RulesFromEdmxDialog(ThemeNames? theme) : this(null, null) {
@@ -32,3 +32,4 @@ public sealed partial class RulesFromEdmxDialog {
         Close();
     }
 }
+

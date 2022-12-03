@@ -10,7 +10,8 @@
              xmlns:converters="clr-namespace:EntityFrameworkRuler.Editor.Converters"
              xmlns:models="clr-namespace:EntityFrameworkRuler.Editor.Models"
              mc:Ignorable="d"
-             Height="650" Width="950"
+             MinHeight="450" MinWidth="550"
+             d:Height="650" d:Width="950"
              Background="{DynamicResource WindowBackground}" SnapsToDevicePixels="True"
              Foreground="{DynamicResource BlackBrush}"
              d:DataContext="{d:DesignInstance Type=controls:RuleEditorViewModel, IsDesignTimeCreatable=True}">
