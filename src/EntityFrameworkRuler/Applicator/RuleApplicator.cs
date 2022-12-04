@@ -21,12 +21,11 @@ namespace EntityFrameworkRuler.Applicator;
 
 public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
     /// <summary> Create rule applicator for making changes to project files </summary>
-    [ActivatorUtilitiesConstructor]
-    public RuleApplicator() : this(null) { }
+    public RuleApplicator() : this(null, null) { }
 
     /// <summary> Create rule applicator for making changes to project files </summary>
     [ActivatorUtilitiesConstructor]
-    public RuleApplicator(IRuleLoader loader) {
+    public RuleApplicator(IRuleLoader loader, IMessageLogger logger) : base(logger) {
         Loader = loader;
     }
 
@@ -108,7 +107,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
             try {
                 if (rule == null) continue;
 
-                response = new(rule);
+                response = new ApplyRulesResponse(rule, Logger);
                 response.Log += OnResponseLog;
                 try {
                     switch (rule) {
@@ -125,7 +124,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                 responses.Add(response);
             } catch (Exception ex) {
                 Console.WriteLine(ex);
-                response ??= new(rule);
+                response ??= new(rule, Logger);
                 response.LogError($"Error processing {rule}: {ex.Message}");
                 responses.Add(response);
             }
@@ -141,7 +140,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
     /// <returns> ApplyRulesResponse </returns>
     public async Task<ApplyRulesResponse> ApplyRules(ApplicatorOptions request, DbContextRule dbContextRule) {
         // map to class renaming
-        var response = new ApplyRulesResponse(dbContextRule);
+        var response = new ApplyRulesResponse(dbContextRule, Logger);
         response.Log += OnResponseLog;
         try {
             var state = new RoslynProjectState(this);
@@ -155,7 +154,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
     private async Task ApplyDbContextRulesCore(ApplicatorOptions request, DbContextRule dbContextRule, ApplyRulesResponse response,
         RoslynProjectState state) {
         foreach (var schema in dbContextRule.Schemas) {
-            var schemaResponse = new ApplyRulesResponse(null);
+            var schemaResponse = new ApplyRulesResponse(null, Logger);
             schemaResponse.Log += OnResponseLog;
             try {
                 await ApplyRulesCore(request, schema.Tables, schema.Namespace, schemaResponse, state);
@@ -567,7 +566,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
 }
 
 public sealed class ApplyRulesResponse : LoggedResponse {
-    internal ApplyRulesResponse(IRuleModelRoot ruleModelRoot) {
+    internal ApplyRulesResponse(IRuleModelRoot ruleModelRoot, IMessageLogger logger) : base(logger) {
         Rule = ruleModelRoot;
     }
 
@@ -611,6 +610,8 @@ public sealed class LoadAndApplyRulesResponse : ILoggedResponse {
 
     /// <inheritdoc />
     public bool HasErrors => Errors.Any();
+
+    public IMessageLogger Logger { get => null; set { } }
 
     /// <inheritdoc />
     public bool Success => LoadRulesResponse?.Success == true && ApplyRulesResponses?.All(o => o.Success) == true;

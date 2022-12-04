@@ -16,7 +16,8 @@ public static class DependencyInjection {
     public static T AddRuler<T>(this T serviceCollection) where T : IServiceCollection =>
         (T)serviceCollection
             .AddRulerCommon()
+            .AddSingleton<IMessageLogger, ConsoleMessageLogger>()
             .AddTransient<IRuleApplicator, RuleApplicator>();
 
-    
+
 }

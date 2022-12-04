@@ -18,6 +18,7 @@ public static class DependencyInjectionCommon {
             .AddSingleton<IRuleSerializer, JsonRuleSerializer>()
             .AddTransient<IRulerNamingService, RulerNamingService>()
             .AddSingleton<IRulerPluralizer, HumanizerPluralizer>()
+            .AddSingleton<IMessageLogger>(NullMessageLogger.Instance)
             .AddTransient<IEdmxParser, EdmxParser>()
             .AddTransient<IRuleSaver, RuleSaver>()
             .AddTransient<IRuleLoader, RuleLoader>()

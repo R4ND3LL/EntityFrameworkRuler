@@ -16,6 +16,6 @@ using EntityFrameworkRuler;
 [assembly: AssemblyVersion(Vsix.Version)]
 [assembly: AssemblyFileVersion(Vsix.Version)]
 
-namespace EntityFrameworkRuler.Properties {
-    public class IsExternalInit { }
-}
+namespace EntityFrameworkRuler.Properties; 
+
+public class IsExternalInit { }

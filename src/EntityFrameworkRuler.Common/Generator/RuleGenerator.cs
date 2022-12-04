@@ -17,15 +17,15 @@ namespace EntityFrameworkRuler.Generator;
 /// <summary> Generate rules from an EDMX such that they can be applied to a Reverse Engineered Entity Framework model to achieve the same structure as in the EDMX. </summary>
 public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
     /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
-    [ActivatorUtilitiesConstructor]
-    public RuleGenerator() : this(null, null, null) { }
+    public RuleGenerator() : this(null, null, null, null) { }
 
     /// <summary> Create rule generator for deriving entity structure rules from an EDMX </summary>
     /// <param name="namingService"> Service that decides how to name navigation properties.  Similar to EF ICandidateNamingService but this one utilizes the EDMX model only. </param>
     /// <param name="edmxParser"> Service that parses an EDMX file into an object model usable for rule generation. </param>
     /// <param name="ruleSaver"> Service that can persist a rule model to disk </param>
+    /// <param name="logger"> Response logger </param>
     [ActivatorUtilitiesConstructor]
-    public RuleGenerator(IRulerNamingService namingService, IEdmxParser edmxParser, IRuleSaver ruleSaver) {
+    public RuleGenerator(IRulerNamingService namingService, IEdmxParser edmxParser, IRuleSaver ruleSaver, IMessageLogger logger) : base(logger) {
         NamingService = namingService;
         EdmxParser = edmxParser;
         RuleSaver = ruleSaver;
@@ -80,7 +80,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
 
     /// <inheritdoc />
     public GenerateRulesResponse GenerateRules(GeneratorOptions request) {
-        var response = new GenerateRulesResponse();
+        var response = new GenerateRulesResponse(Logger);
         response.Log += OnResponseLog;
         try {
             var edmxFilePath = request?.EdmxFilePath;
@@ -210,6 +210,9 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
 public sealed class GenerateRulesResponse : LoggedResponse {
     private readonly List<IRuleModelRoot> rules = new();
 
+    /// <inheritdoc />
+    public GenerateRulesResponse(IMessageLogger logger) : base(logger) { }
+
     // ReSharper disable once MemberCanBePrivate.Global
     /// <summary> The rules generated from the EDMX via the GenerateRules() call </summary>
     public IReadOnlyCollection<IRuleModelRoot> Rules => rules;
@@ -227,4 +230,6 @@ public sealed class GenerateRulesResponse : LoggedResponse {
 
     /// <inheritdoc />
     public override bool Success => base.Success && rules.Count > 0;
+
+
 }

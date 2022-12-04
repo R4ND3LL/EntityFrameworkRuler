@@ -2,7 +2,7 @@
    "Name": "NorthwindEntities",
    "PreserveCasingUsingRegex": false,
    "IncludeUnknownSchemas": false,
-   "SplitEntityTypeConfigurations": true,
+   "SplitEntityTypeConfigurations": false,
    "Schemas": [
       {
          "SchemaName": "dbo",
@@ -175,7 +175,7 @@
                      "Multiplicity": "*"
                   },
                   {
-                     "Name": "CustomerTypes",
+                     "Name": "CustomerDemographics",
                      "NewName": "CustomerDemographicsCustom",
                      "FkName": "CustomerCustomerDemo",
                      "ToEntity": "CustomerDemographic",

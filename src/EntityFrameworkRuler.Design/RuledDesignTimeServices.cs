@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Design.Services;
 using Microsoft.EntityFrameworkCore.Design;
@@ -38,7 +39,8 @@ namespace EntityFrameworkRuler.Design {
                 .AddSingleton<IDesignTimeRuleLoader, DesignTimeRuleLoader>()
                 .AddSingleton<IRuleModelUpdater, RuleModelUpdater>()
                 //.TryAddSingletonEnumerable<IModelCodeGenerator, RuledTemplatedModelGenerator>()
-                .AddRulerCommon();
+                .AddRulerCommon()
+                .AddSingleton<IMessageLogger, ConsoleMessageLogger>();
         }
     }
 }

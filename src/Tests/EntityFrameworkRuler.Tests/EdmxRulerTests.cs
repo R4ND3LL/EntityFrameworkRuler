@@ -111,7 +111,7 @@ public sealed class EdmxRulerTests {
     public async Task ShouldLoadProjectUsingRoslynAndFindTypes() {
         var projectBasePath = ResolveNorthwindProject();
         var state = new RuleApplicator.RoslynProjectState(new RuleApplicator());
-        var response = new ApplyRulesResponse(null);
+        var response = new ApplyRulesResponse(null, NullMessageLogger.Instance);
         await state.TryLoadProjectOrFallbackOnce(new ApplicatorOptions(projectBasePath, true), response);
         var project = state.Project;
         project.ShouldNotBeNull();
@@ -178,32 +178,32 @@ public sealed class EdmxRulerTests {
         var edmxPath = ResolveNorthwindEdmxPath();
         var projectBasePath = ResolveNorthwindProject();
         {
-// Generate and save rules:
+            // Generate and save rules:
             var generator = new RuleGenerator();
             var response = generator.GenerateRules(edmxPath);
             if (response.Success)
                 await generator.SaveRules(response.Rules.First(), projectBasePath);
         }
         {
-// Apply rules already in project path:
+            // Apply rules already in project path:
             var applicator = new RuleApplicator();
             var response = await applicator.ApplyRulesInProjectPath(projectBasePath);
         }
         {
-// More control over which rules are applied:
+            // More control over which rules are applied:
             var applicator = new RuleApplicator();
             var loadResponse = await applicator.LoadRulesInProjectPath(projectBasePath);
             var applyResponse = await applicator.ApplyRules(projectBasePath, loadResponse.Rules.First());
         }
         {
-// Customize rule file name:
+            // Customize rule file name:
             var generator = new RuleGenerator();
             var response = generator.GenerateRules(edmxPath);
             if (response.Success)
                 await generator.SaveRules(projectBasePath, dbContextRulesFile: "DbContextRules.json", response.Rules.First());
         }
         {
-// Handle log activity:
+            // Handle log activity:
             var applicator = new RuleApplicator();
             applicator.Log += (sender, message) => Console.WriteLine(message);
             var response = await applicator.ApplyRulesInProjectPath(projectBasePath);

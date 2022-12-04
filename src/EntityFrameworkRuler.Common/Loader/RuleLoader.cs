@@ -13,11 +13,11 @@ namespace EntityFrameworkRuler.Loader;
 /// <summary> EF Rule loader </summary>
 public class RuleLoader : RuleHandler, IRuleLoader {
     /// <summary> Create rule Loader for making changes to project files </summary>
-    public RuleLoader() : this(null) { }
+    public RuleLoader() : this(null, null) { }
 
     /// <summary> Create rule Loader for making changes to project files </summary>
     [ActivatorUtilitiesConstructor]
-    public RuleLoader(IRuleSerializer serializer) {
+    public RuleLoader(IRuleSerializer serializer, IMessageLogger logger) : base(logger) {
         Serializer = serializer;
     }
 
@@ -26,6 +26,7 @@ public class RuleLoader : RuleHandler, IRuleLoader {
 
     /// <summary> The rule serialize to use while loading </summary>
     public IRuleSerializer Serializer { get; set; }
+
 
     #endregion
 
@@ -36,7 +37,7 @@ public class RuleLoader : RuleHandler, IRuleLoader {
 
     /// <inheritdoc />
     public async Task<LoadRulesResponse> LoadRulesInProjectPath(ILoadOptions request) {
-        var response = new LoadRulesResponse();
+        var response = new LoadRulesResponse(Logger);
         response.Log += OnResponseLog;
         var rules = response.Rules;
         try {
@@ -105,6 +106,7 @@ public class RuleLoader : RuleHandler, IRuleLoader {
 
 /// <summary> Response for load rules operation </summary>
 public sealed class LoadRulesResponse : LoggedResponse {
+    public LoadRulesResponse(IMessageLogger logger):base(logger) { }
     /// <summary> The loaded rules </summary>
     public List<IRuleModelRoot> Rules { get; } = new();
 

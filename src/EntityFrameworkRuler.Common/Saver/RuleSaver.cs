@@ -15,11 +15,11 @@ namespace EntityFrameworkRuler.Saver;
 [SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 public class RuleSaver : RuleHandler, IRuleSaver {
     /// <summary> Create rule Saver for making changes to project files </summary>
-    public RuleSaver() : this(null) { }
+    public RuleSaver() : this(null, null) { }
 
     /// <summary> Create rule Saver for making changes to project files </summary>
     [ActivatorUtilitiesConstructor]
-    public RuleSaver(IRuleSerializer serializer) {
+    public RuleSaver(IRuleSerializer serializer, IMessageLogger logger) : base(logger) {
         Serializer = serializer;
     }
 
@@ -47,7 +47,7 @@ public class RuleSaver : RuleHandler, IRuleSaver {
 
     /// <inheritdoc />
     public async Task<SaveRulesResponse> SaveRules(SaveOptions request) {
-        var response = new SaveRulesResponse();
+        var response = new SaveRulesResponse(Logger);
         response.Log += OnResponseLog;
         try {
             if (request == null) {
@@ -99,9 +99,14 @@ public class RuleSaver : RuleHandler, IRuleSaver {
 
 /// <summary> Response for save rules operation </summary>
 public sealed class SaveRulesResponse : LoggedResponse {
+    /// <inheritdoc />
+    public SaveRulesResponse(IMessageLogger logger) : base(logger) { }
+
     /// <summary> List of file paths to the rules that were saved. </summary>
     public List<string> SavedRules { get; } = new();
 
     /// <inheritdoc />
     public override bool Success => base.Success && SavedRules.Count > 0;
+
+
 }

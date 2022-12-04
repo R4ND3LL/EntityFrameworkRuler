@@ -211,7 +211,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             return loadRulesResponse;
         }
 
-        response ??= Fetch() ?? new LoadRulesResponse();
+        response ??= Fetch() ?? new LoadRulesResponse(NullMessageLogger.Instance);
         return response?.Rules ?? Enumerable.Empty<IRuleModelRoot>();
     }
 

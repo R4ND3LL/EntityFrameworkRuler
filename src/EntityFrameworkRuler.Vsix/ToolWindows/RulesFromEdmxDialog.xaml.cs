@@ -4,26 +4,26 @@ using EntityFrameworkRuler.Saver;
 using Microsoft.VisualStudio.PlatformUI;
 // ReSharper disable MemberCanBePrivate.Global
 
-namespace EntityFrameworkRuler.ToolWindows {
-    public sealed partial class RulesFromEdmxDialog : DialogWindow, IRulesFromEdmxDialog {
-        public RulesFromEdmxViewModel ViewModel { get; }
+namespace EntityFrameworkRuler.ToolWindows; 
 
-        public RulesFromEdmxDialog(RulesFromEdmxViewModel vm) {
-            InitializeComponent();
-            DataContext = ViewModel = vm;
-            vm.OnGenerated = OnGenerated;
-            if (!Theme.HasValue) Theme = ThemeNames.Light;
-        }
+public sealed partial class RulesFromEdmxDialog : DialogWindow, IRulesFromEdmxDialog {
+    public RulesFromEdmxViewModel ViewModel { get; }
 
-        public ThemeNames? Theme {
-            get => AppearanceManager.Current.SelectedTheme;
-            set => AppearanceManager.Current.SelectedTheme = value;
-        }
+    public RulesFromEdmxDialog(RulesFromEdmxViewModel vm) {
+        InitializeComponent();
+        DataContext = ViewModel = vm;
+        vm.OnGenerated = OnGenerated;
+        if (!Theme.HasValue) Theme = ThemeNames.Light;
+    }
 
-        private void OnGenerated(SaveRulesResponse response) {
-            Tag = response;
-            DialogResult = true;
-            Close();
-        }
+    public ThemeNames? Theme {
+        get => AppearanceManager.Current.SelectedTheme;
+        set => AppearanceManager.Current.SelectedTheme = value;
+    }
+
+    private void OnGenerated(SaveRulesResponse response) {
+        Tag = response;
+        DialogResult = true;
+        Close();
     }
 }

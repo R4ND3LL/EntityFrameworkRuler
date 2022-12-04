@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Editor.Controls;
 using EntityFrameworkRuler.Editor.Dialogs;
 using Microsoft.Extensions.DependencyInjection;

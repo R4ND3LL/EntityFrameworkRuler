@@ -1,60 +1,19 @@
-﻿using System.Linq;
-using EntityFrameworkRuler.Editor.Dialogs;
-using EnvDTE;
-using EnvDTE80;
+﻿using EntityFrameworkRuler.Editor.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace EntityFrameworkRuler.Commands {
-    [Command(PackageIds.ConvertEdmxToRulesCommand)]
-    internal sealed class ConvertEdmxToRulesCommand : BaseCommand<ConvertEdmxToRulesCommand> {
-        protected override async Task ExecuteAsync(OleMenuCmdEventArgs e) {
-            try {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+namespace EntityFrameworkRuler.Commands; 
 
-                var item = await VS.Solutions.GetActiveItemAsync();
-                if (item == null || item.Type.NotIn(SolutionItemType.PhysicalFile)) return;
-                if (!IsEdmxFile(item.Text)) return;
-                var edmxPath = item.FullPath;
+[Command(PackageIds.ConvertEdmxToRulesCommand)]
+internal sealed class ConvertEdmxToRulesCommand : RulerBaseCommand<ConvertEdmxToRulesCommand> {
+    public ConvertEdmxToRulesCommand() {
+        SupportedFiles.Add(".edmx");
+    }
 
-                var dialog = EntityFrameworkRulerPackage.ServiceProvider.GetRequiredService<IRulesFromEdmxDialog>();
-                dialog.ViewModel.SetContext(edmxPath);
-                dialog.ShowDialog();
-            } catch (Exception ex) {
-                await ex.LogAsync();
-            }
-            //await VS.MessageBox.ShowWarningAsync("Convert Edmx To Rules", "Button clicked");
-        }
-        protected override async void BeforeQueryStatus(EventArgs e) {
-            try {
-                Command.Visible = CanShow();
-            } catch (Exception ex) {
-                Command.Visible = false;
-            }
-#if DEBUG
-            Debug.WriteLine($"ConvertEdmxToRulesCommand Visible={Command.Visible}");
-#endif
-        }
-        private IServiceProvider ServiceProvider => Package;
-        public static readonly HashSet<string> SupportedFiles = new(new[] { ".edmx" }, StringComparer.OrdinalIgnoreCase);
-
-        private bool CanShow() {
-            if (!ThreadHelper.CheckAccess()) return false;
-            var dte = ServiceProvider.GetService(typeof(DTE)) as DTE2;
-            var item = dte?.SelectedItems?.Item(1)?.ProjectItem;
-            if (item == null) return false;
-            var fileExtension = Path.GetExtension(item.Name);
-            // Show the button only if a supported file is selected
-            return SupportedFiles.Contains(fileExtension);
-        }
-        //private async Task<bool> CanShowForRuleFile2() {
-        //    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-        //    var item = await VS.Solutions.GetActiveItemAsync();
-        //    if (item == null || item.Type.NotIn(SolutionItemType.PhysicalFile)) return false;
-        //    return IsEdmxFile(item.Text);
-        //}
-        private static bool IsEdmxFile(string itemName) {
-            return itemName?.EndsWithIgnoreCase(".edmx") == true;
-        }
+    protected override Task ExecuteAsyncCore(OleMenuCmdEventArgs oleMenuCmdEventArgs, SolutionItem item) {
+        var edmxPath = item.FullPath;
+        var dialog = EntityFrameworkRulerPackage.ServiceProvider.GetRequiredService<IRulesFromEdmxDialog>();
+        dialog.ViewModel.SetContext(edmxPath);
+        dialog.ShowDialog();
+        return Task.CompletedTask;
     }
 }

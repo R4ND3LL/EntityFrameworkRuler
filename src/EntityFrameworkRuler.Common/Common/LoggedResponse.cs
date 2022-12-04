@@ -21,6 +21,9 @@ public interface ILoggedResponse : IResponse {
 
     /// <summary> Gets whether this response contains any errors </summary>
     bool HasErrors { get; }
+
+    /// <summary> Logger service to pipe messages to at runtime. </summary>
+    IMessageLogger Logger { get; set; }
 }
 
 /// <summary> Response with log messages </summary>
@@ -32,6 +35,11 @@ public interface IResponse {
 /// <summary> Response with log messages </summary>
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
 public abstract class LoggedResponse : ILoggedResponse {
+    /// <summary> Creates a logged response </summary>
+    protected LoggedResponse(IMessageLogger logger) {
+        Logger = logger;
+    }
+
     /// <summary> Log messages </summary>
     public List<LogMessage> Messages { get; } = new();
 
@@ -49,6 +57,9 @@ public abstract class LoggedResponse : ILoggedResponse {
 
     /// <summary> Gets whether this response contains any errors </summary>
     public bool HasErrors => Errors.Any();
+
+    /// <inheritdoc />
+    public IMessageLogger Logger { get; set; }
 
     /// <inheritdoc />
     public virtual bool Success => !HasErrors;
@@ -71,8 +82,10 @@ public abstract class LoggedResponse : ILoggedResponse {
 
     internal event LogMessageHandler Log;
 
-    private LogMessage Raise(LogMessage msg) {
+    /// <summary> Raise event for logged message </summary>
+    protected virtual LogMessage Raise(LogMessage msg) {
         Log?.Invoke(this, msg);
+        if (Logger is { } l && l.MinimumLevel <= msg.Type) l.Write(msg);
         return msg;
     }
 }
