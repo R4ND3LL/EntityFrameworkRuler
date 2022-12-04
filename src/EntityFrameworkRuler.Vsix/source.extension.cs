@@ -12,7 +12,7 @@ namespace EntityFrameworkRuler
         public const string Description = @"Adds design-time customization of the EF Core reverse engineered model including property naming, EDMX upgrade support, and more.";
         public const string Language = "en-US";
         public const string Version = "1.0";
-        public const string Author = "Mark Randell";
-        public const string Tags = "Entity Framework Core EF Data EntityFramework EntityFrameworkCore EFCore EDMX efruler";
+        public const string Author = "Randell";
+        public const string Tags = "Entity Framework Core EF Data EntityFramework EntityFrameworkCore EFCore EDMX efruler scaffolding";
     }
 }

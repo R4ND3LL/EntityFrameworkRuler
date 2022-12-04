@@ -76,6 +76,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\RuleEditorPreview.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="App.config" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
@@ -83,7 +87,9 @@
       <LastGenOutput>source.extension.cs</LastGenOutput>
     </None>
     <Content Include="Resources\crown.ico" />
-    <Content Include="Resources\crown128.png" />
+    <Content Include="Resources\crown128.png">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="Resources\crown16.png" />
   </ItemGroup>
   <ItemGroup>
