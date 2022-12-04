@@ -15,7 +15,7 @@ internal static class Program {
             if (args.IsNullOrEmpty() || args[0].IsNullOrWhiteSpace()) return await ShowHelpInfo();
 
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddRuler();
+            serviceCollection.AddRulerCli();
 
 
             var option = args[0].GetSwitchArgChar();
@@ -34,8 +34,7 @@ internal static class Program {
                     var start = DateTimeExtensions.GetTime();
                     var serviceProvider = serviceCollection.BuildServiceProvider();
                     var generator = serviceProvider.GetRequiredService<IRuleGenerator>();
-                    generator.Log += OnMessageLogged;
-                    var response = generator.GenerateRules(genAndSaveOptions.GeneratorOptions);
+                    var response = await generator.GenerateRulesAsync(genAndSaveOptions.GeneratorOptions);
                     genAndSaveOptions.SaveOptions.Rules.AddRange(response.Rules);
                     await generator.SaveRules(genAndSaveOptions.SaveOptions);
                     var elapsed = DateTimeExtensions.GetTime() - start;
@@ -60,7 +59,6 @@ internal static class Program {
                     var start = DateTimeExtensions.GetTime();
                     var serviceProvider = serviceCollection.BuildServiceProvider();
                     var applicator = serviceProvider.GetRequiredService<IRuleApplicator>();
-                    applicator.Log += OnMessageLogged;
                     var response = await applicator.ApplyRulesInProjectPath(loadAndApplyOptions);
                     var elapsed = DateTimeExtensions.GetTime() - start;
                     var errorCount = response.Errors.Count();
@@ -82,32 +80,6 @@ internal static class Program {
             await Console.Out.WriteLineAsync($"Unexpected error: {ex.Message}").ConfigureAwait(false);
             return 1;
         }
-    }
-
-
-    private static bool logInfo = true;
-    private static bool logWarning = true;
-    private static bool logError = true;
-
-    private static void OnMessageLogged(object sender, LogMessage logMessage) {
-        switch (logMessage.Type) {
-            case LogType.Information:
-                if (!logInfo) return;
-                Console.Out.Write("Info: ");
-                break;
-            case LogType.Warning:
-                if (!logWarning) return;
-                Console.Out.Write("Warning: ");
-                break;
-            case LogType.Error:
-                if (!logError) return;
-                Console.Out.Write("Error: ");
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(logMessage.Type), logMessage.Type, null);
-        }
-
-        Console.Out.WriteLine(logMessage.Message);
     }
 
 

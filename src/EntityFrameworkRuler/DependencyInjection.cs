@@ -13,7 +13,7 @@ namespace EntityFrameworkRuler;
 
 public static class DependencyInjection {
     /// <summary> Add Entity Framework Ruler services </summary>
-    public static T AddRuler<T>(this T serviceCollection) where T : IServiceCollection =>
+    public static T AddRulerCli<T>(this T serviceCollection) where T : IServiceCollection =>
         (T)serviceCollection
             .AddRulerCommon()
             .AddSingleton<IMessageLogger, ConsoleMessageLogger>()

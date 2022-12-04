@@ -106,6 +106,7 @@ public class RuleLoader : RuleHandler, IRuleLoader {
 
 /// <summary> Response for load rules operation </summary>
 public sealed class LoadRulesResponse : LoggedResponse {
+    /// <inheritdoc />
     public LoadRulesResponse(IMessageLogger logger):base(logger) { }
     /// <summary> The loaded rules </summary>
     public List<IRuleModelRoot> Rules { get; } = new();
