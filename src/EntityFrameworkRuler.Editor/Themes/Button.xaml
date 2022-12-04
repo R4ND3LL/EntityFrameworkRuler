@@ -3,7 +3,7 @@
 
     <Style x:Key="{x:Type Button}" TargetType="{x:Type Button}"  BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="FontFamily" Value="{DynamicResource DefaultFontFamily}"/>
-        <Setter Property="FontSize" Value="{DynamicResource DefaultFontSize}" /> 
+        <Setter Property="FontSize" Value="{DynamicResource DefaultFontSize}" />
         <Setter Property="Background" Value="{DynamicResource GrayBrush9}" />
         <Setter Property="Foreground" Value="{DynamicResource BlackBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource Accent4}"/>
@@ -97,6 +97,7 @@
             </Trigger>
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Foreground" Value="{DynamicResource GrayBrush2}" />
+                <Setter Property="Opacity" Value="0.75" />
             </Trigger>
         </Style.Triggers>
     </Style>

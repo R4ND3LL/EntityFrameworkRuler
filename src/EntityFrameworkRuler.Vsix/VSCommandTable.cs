@@ -17,9 +17,6 @@ namespace EntityFrameworkRuler
 
         public const string crown16String = "7c7e8f76-0081-4ede-9fe8-e66be992310c";
         public static Guid crown16 = new Guid(crown16String);
-
-        public const string uiContextSupportedFilesString = "24551deb-f034-43e9-a279-0e541241687e";
-        public static Guid uiContextSupportedFiles = new Guid(uiContextSupportedFilesString);
     }
     /// <summary>
     /// Helper class that encapsulates all CommandIDs uses across VS Package.

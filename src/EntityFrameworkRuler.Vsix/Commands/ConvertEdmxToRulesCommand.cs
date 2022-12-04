@@ -1,15 +1,8 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Controls;
+﻿using System.Linq;
 using EntityFrameworkRuler.Editor.Dialogs;
-using EntityFrameworkRuler.Extension;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.Extensions.DependencyInjection;
-using RulesFromEdmxDialog = EntityFrameworkRuler.ToolWindows.RulesFromEdmxDialog;
 
 namespace EntityFrameworkRuler.Commands {
     [Command(PackageIds.ConvertEdmxToRulesCommand)]
@@ -37,6 +30,9 @@ namespace EntityFrameworkRuler.Commands {
             } catch (Exception ex) {
                 Command.Visible = false;
             }
+#if DEBUG
+            Debug.WriteLine($"ConvertEdmxToRulesCommand Visible={Command.Visible}");
+#endif
         }
         private IServiceProvider ServiceProvider => Package;
         public static readonly HashSet<string> SupportedFiles = new(new[] { ".edmx" }, StringComparer.OrdinalIgnoreCase);

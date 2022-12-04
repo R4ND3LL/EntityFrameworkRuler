@@ -8,6 +8,10 @@
         Title="DB Context Rule Editor" Height="650" Width="950" 
         Background="{DynamicResource WindowBackground}" SnapsToDevicePixels="True"
         Foreground="{DynamicResource BlackBrush}"
-        d:DataContext="{d:DesignInstance Type=controls:RuleEditorViewModel, IsDesignTimeCreatable=True}">
+        d:DataContext="{d:DesignInstance Type=controls:RuleEditorViewModel, IsDesignTimeCreatable=False}"
+        ShowInTaskbar="True"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterOwner"
+        >
     <controls:RuleEditorView/>
 </Window>

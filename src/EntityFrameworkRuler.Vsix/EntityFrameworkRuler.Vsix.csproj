@@ -17,7 +17,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>EntityFrameworkRuler</RootNamespace>
-    <AssemblyName>EntityFrameworkRuler</AssemblyName>
+    <AssemblyName>EntityFrameworkRuler.Vsix</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
     <UseCodebase>true</UseCodebase>
@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="Commands\ConvertEdmxToRulesCommand.cs" />
     <Compile Include="Extensions\VsixExtensions.cs" />
+    <Compile Include="GlobalUsings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\EditRulesCommand.cs" />
     <Compile Include="EntityFrameworkRulerPackage.cs" />
@@ -79,17 +80,10 @@
       <Generator>VsixManifestGenerator</Generator>
       <LastGenOutput>source.extension.cs</LastGenOutput>
     </None>
-    <Resource Include="Resources\crown.ico" />
-    <Resource Include="Resources\crown128.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\crown16.png" />
-    <Resource Include="Resources\crown48.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Resources\Icon.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
+    <Content Include="Resources\crown.ico" />
+    <Content Include="Resources\crown128.png" />
+    <Content Include="Resources\crown16.png" />
+    <Content Include="Resources\crown48.png" />
   </ItemGroup>
   <ItemGroup>
     <VSCTCompile Include="VSCommandTable.vsct">

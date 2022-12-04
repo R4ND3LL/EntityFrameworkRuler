@@ -19,6 +19,7 @@ public interface IDialog {
     Window Owner { get; set; }
     WindowStartupLocation WindowStartupLocation { get; set; }
     object Tag { get; set; }
+    bool ShowInTaskbar { get; set; }
 
 }
 

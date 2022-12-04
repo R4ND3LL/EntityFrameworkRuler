@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:EntityFrameworkRuler.Editor.Controls"
         mc:Ignorable="d"
-        ShowInTaskbar="False" ResizeMode="CanResize" 
+        ShowInTaskbar="True" ResizeMode="CanResize" WindowStartupLocation="CenterOwner"
         Background="{DynamicResource WindowBackground}" SnapsToDevicePixels="True"
         Foreground="{DynamicResource BlackBrush}"
-        Title="Generate DB Context Rules from EDMX" MinHeight="250" Width="800" SizeToContent="Height">
+        Title="Generate DB Context Rules from EDMX" MinHeight="250" Width="800" SizeToContent="Height"
+>
     <controls:RulesFromEdmxView />
 </Window>

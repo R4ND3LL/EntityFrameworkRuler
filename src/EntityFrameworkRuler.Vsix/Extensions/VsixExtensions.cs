@@ -2,7 +2,6 @@
 using Microsoft.Internal.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.Reflection;
-using System.Diagnostics;
 using System.Linq;
 
 namespace EntityFrameworkRuler.Extensions;
@@ -47,6 +46,7 @@ public static class VsixExtensions {
             try {
                 assembly = Assembly.Load(requestedAssembly.Name);
             } catch (Exception ex) {
+                Debug.WriteLine("AssemblyResolve error: " + ex.Message);
             }
             AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
             return assembly;

@@ -1,6 +1,5 @@
 ﻿using EntityFrameworkRuler.Editor.Controls;
 using EntityFrameworkRuler.Editor.Dialogs;
-using EntityFrameworkRuler.Generator;
 using EntityFrameworkRuler.Saver;
 using Microsoft.VisualStudio.PlatformUI;
 // ReSharper disable MemberCanBePrivate.Global

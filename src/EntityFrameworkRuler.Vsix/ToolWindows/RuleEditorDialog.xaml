@@ -8,11 +8,13 @@
                         xmlns:controls="clr-namespace:EntityFrameworkRuler.Editor.Controls;assembly=EntityFrameworkRuler.Editor"
                         toolkit:Themes.UseVsTheme="True"
                         mc:Ignorable="d"
-                        Height="650" Width="950" 
+                        Title="DB Context Rule Editor" Height="650" Width="950" 
+                        ShowInTaskbar="True" ResizeMode="CanResize" WindowStartupLocation="CenterOwner"
                         Background="{DynamicResource WindowBackground}" SnapsToDevicePixels="True"
                         Foreground="{DynamicResource BlackBrush}"
-                        d:DataContext="{d:DesignInstance Type=controls:RuleEditorViewModel, IsDesignTimeCreatable=True}">
-
-    <controls:RuleEditorView Name="View" />
+                        
+                        d:DataContext="{d:DesignInstance Type=controls:RuleEditorViewModel, IsDesignTimeCreatable=False}">
+    <!--Icon="/EntityFrameworkRuler.Vsix;component/Resources/crown.ico"-->
+    <controls:RuleEditorView />
 
 </platform:DialogWindow>

@@ -1,13 +1,7 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using EntityFrameworkRuler.Editor.Dialogs;
-using EntityFrameworkRuler.Extension;
-using EntityFrameworkRuler.ToolWindows;
+﻿using EntityFrameworkRuler.Editor.Dialogs;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.Shell.Interop;
 
 namespace EntityFrameworkRuler.Commands {
     [Command(PackageIds.EditRulesCommand)]
@@ -24,8 +18,9 @@ namespace EntityFrameworkRuler.Commands {
                 var projectPath = project?.FullPath;
                 if (projectPath?.Length > 0) projectPath = Path.GetDirectoryName(project?.FullPath);
                 var dialog = EntityFrameworkRulerPackage.ServiceProvider.GetRequiredService<IRuleEditorDialog>();
+                dialog.ShowInTaskbar = true;
                 dialog.ViewModel.SetContext(rulesPath, projectPath);
-                dialog.ShowDialog();
+                dialog.Show();
             } catch (Exception ex) {
                 await ex.LogAsync();
             }
@@ -38,6 +33,10 @@ namespace EntityFrameworkRuler.Commands {
                 Command.Visible = false;
                 ex.Log();
             }
+#if DEBUG
+            Debug.WriteLine($"EditRulesCommand Visible={Command.Visible}");
+#endif
+
         }
         private IServiceProvider ServiceProvider => Package;
         public static readonly HashSet<string> SupportedFiles = new(new[] { ".json" }, StringComparer.OrdinalIgnoreCase);

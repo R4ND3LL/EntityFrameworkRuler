@@ -2,18 +2,14 @@
 global using Microsoft.VisualStudio.Shell;
 global using System;
 global using Task = System.Threading.Tasks.Task;
+using System.Linq;
 using EntityFrameworkRuler.Editor.Controls;
 using EntityFrameworkRuler.Editor.Extensions;
 using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell.Interop;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Windows.Controls;
-using System.Windows.Media;
 using EntityFrameworkRuler.Extensions;
-using System.Collections.Generic;
 using EntityFrameworkRuler.Editor.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio;
@@ -24,11 +20,12 @@ namespace EntityFrameworkRuler {
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [Guid(PackageGuids.EntityFrameworkRulerString)]
     [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExistsAndFullyLoaded_string, PackageAutoLoadFlags.BackgroundLoad)]
-    [ProvideUIContextRule(PackageGuids.uiContextSupportedFilesString,
-        name: "Supported Files",
-        expression: "Json | Edmx",
-        termNames: new[] { "Json", "Edmx" },
-        termValues: new[] { "HierSingleSelectionName:.json$", "HierSingleSelectionName:.edmx$" })]
+    //[ProvideAutoLoad(PackageGuids.UIContextGuidString, PackageAutoLoadFlags.BackgroundLoad)]
+    //[ProvideUIContextRule(PackageGuids.UIContextGuidString,
+    //    name: "Supported Files",
+    //    expression: "Json | Edmx",
+    //    termNames: new[] { "Json", "Edmx" },
+    //    termValues: new[] { "HierSingleSelectionName:.json$", "HierSingleSelectionName:.edmx$" })]
     [ProvideBindingPath]
     public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
         internal static IServiceProvider ServiceProvider { get; private set; }
@@ -43,6 +40,9 @@ namespace EntityFrameworkRuler {
 
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress) {
             try {
+#if DEBUG
+                Enumerable.Range(0, 10).ForAll(o => Debug.WriteLine($"EntityFrameworkRulerPackage INITIALIZING"));
+#endif
                 VsixExtensions.VsixAssemblyResolver.RedirectAssembly();
                 if (!System.Diagnostics.Debugger.IsAttached)
                     System.Diagnostics.Debugger.Launch();
@@ -93,10 +93,9 @@ namespace EntityFrameworkRuler {
                 .AddRulerCommon()
                 .AddTransient<RuleEditorViewModel, RuleEditorViewModel>()
                 .AddTransient<RulesFromEdmxViewModel, RulesFromEdmxViewModel>()
-                .AddTransient<IRuleEditorDialog, RuleEditorDialog>()
-                .AddTransient<IRulesFromEdmxDialog, RulesFromEdmxDialog>();
+                .AddTransient<IRuleEditorDialog, EntityFrameworkRuler.ToolWindows.RuleEditorDialog>()
+                .AddTransient<IRulesFromEdmxDialog, EntityFrameworkRuler.ToolWindows.RulesFromEdmxDialog>();
             return services.BuildServiceProvider();
-
         }
     }
 }
