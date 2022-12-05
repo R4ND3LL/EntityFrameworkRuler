@@ -24,9 +24,9 @@ jobs:
       with:
         dotnet-version: 7.0.x      
     - name: Restore dependencies
-      run: dotnet restore src
+      run: dotnet restore src/EntityFrameworkRuler.sln
     - name: Test Build
-      run: dotnet build src --configuration Debug --no-restore 
+      run: dotnet build src/EntityFrameworkRuler.sln --configuration Debug --no-restore 
     - name: Test Design
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --verbosity normal
     - name: Test CLI
@@ -53,7 +53,7 @@ jobs:
         path: ./src/EntityFrameworkRuler.Editor/nupkg
         
     - name: Release Build
-      run: dotnet build src --configuration Release --no-restore 
+      run: dotnet build src/EntityFrameworkRuler.sln --configuration Release --no-restore 
     - name: Create NuGet package
       run: dotnet pack --configuration Release --no-build --no-restore src
     - name: Publish Common package to NuGet

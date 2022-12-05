@@ -80,6 +80,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <None Include="..\..\docs\Vsix.md">
+      <Link>Vsix.md</Link>
+    </None>
     <None Include="App.config" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="EntityFrameworkRuler.d1e5b312-e52d-4421-addb-8889510e7944" Version="1.0" Language="en-US" Publisher="Randell" />
+        <Identity Id="EntityFrameworkRuler.d1e5b312-e52d-4421-addb-8889510e7944" Version="1.0.1" Language="en-US" Publisher="Randell" />
         <DisplayName>Entity Framework Ruler</DisplayName>
         <Description xml:space="preserve">Adds design-time customization of the EF Core reverse engineered model including property naming, EDMX upgrade support, and more.</Description>
         <MoreInfo>https://github.com/R4ND3LL/EntityFrameworkRuler</MoreInfo>
