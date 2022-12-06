@@ -27,7 +27,6 @@ public class RuleLoader : RuleHandler, IRuleLoader {
     /// <summary> The rule serialize to use while loading </summary>
     public IRuleSerializer Serializer { get; set; }
 
-
     #endregion
 
     /// <inheritdoc />
@@ -97,17 +96,21 @@ public class RuleLoader : RuleHandler, IRuleLoader {
 
     private static async Task<T> TryReadRules<T>(FileInfo jsonFile, LoggedResponse loggedResponse, IRuleSerializer ruleSerializer)
         where T : class, new() {
-        var rules = await ruleSerializer.TryDeserializeFile<T>(jsonFile.FullName);
-        if (rules != null) return rules;
-        loggedResponse.LogError($"Unable to open {jsonFile.Name}");
-        return null;
+        try {
+            var rules = await ruleSerializer.Deserialize<T>(jsonFile.FullName);
+            return rules;
+        } catch (Exception ex) {
+            loggedResponse?.LogError($"Unable to open {jsonFile.Name}: {ex.Message}");
+            return null;
+        }
     }
 }
 
 /// <summary> Response for load rules operation </summary>
 public sealed class LoadRulesResponse : LoggedResponse {
     /// <inheritdoc />
-    public LoadRulesResponse(IMessageLogger logger):base(logger) { }
+    public LoadRulesResponse(IMessageLogger logger) : base(logger) { }
+
     /// <summary> The loaded rules </summary>
     public List<IRuleModelRoot> Rules { get; } = new();
 

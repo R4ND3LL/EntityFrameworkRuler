@@ -11,5 +11,5 @@ public interface IRuleSerializer {
     /// <param name="filePath">json file path to load</param>
     /// <typeparam name="T">type to deserialize</typeparam>
     /// <returns>deserialized type or null</returns>
-    Task<T> TryDeserializeFile<T>(string filePath) where T : class, new();
+    Task<T> Deserialize<T>(string filePath) where T : class, new();
 }

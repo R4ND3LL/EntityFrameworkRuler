@@ -20,33 +20,20 @@ public static class JsonSerializerExtensions {
         Converters = { new ReadOnlyCollectionConverterFactory(), new NavigationConverterFactory() }
     };
 
-    /// <summary> Read the json file or return new instance on failure </summary>
-    /// <param name="filePath">json file path to load</param>
-    /// <typeparam name="T">type to deserialize</typeparam>
-    /// <returns>deserialized type</returns>
-    public static async Task<T> TryReadJsonFileOrNew<T>(this string filePath)
-        where T : class, new() {
-        return await TryReadJsonFile<T>(filePath) ?? new T();
-    }
-
     /// <summary> Read the json file or return NULL on failure </summary>
     /// <param name="filePath">json file path to load</param>
     /// <typeparam name="T">type to deserialize</typeparam>
     /// <returns>deserialized type or null</returns>
-    public static async Task<T> TryReadJsonFile<T>(this string filePath) where T : class {
-        try {
-            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return null;
+    public static async Task<T> ReadJsonFile<T>(this string filePath) where T : class {
+        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return null;
 #if NETSTANDARD2_0
-            if (filePath.Length == int.MaxValue) await Task.Delay(0);
-            var text = File.ReadAllText(filePath);
+        if (filePath.Length == int.MaxValue) await Task.Delay(0); // just to make async method happy
+        var text = File.ReadAllText(filePath);
 #else
-            var text = await File.ReadAllTextAsync(filePath);
+        var text = await File.ReadAllTextAsync(filePath);
 #endif
-            var result = JsonSerializer.Deserialize<T>(text, readOptions);
-            return result;
-        } catch {
-            return null;
-        }
+        var result = JsonSerializer.Deserialize<T>(text, readOptions);
+        return result;
     }
 
 
@@ -71,7 +58,7 @@ public static class JsonSerializerExtensions {
     /// <param name="jsonModel"> object to serialize</param>
     /// <param name="filePath"> target path to write serialized json string </param>
     /// <typeparam name="T"> exact type of given object </typeparam>
-    public static async Task ToJson<T>(this T jsonModel, string filePath)
+    public static async Task WriteJsonFile<T>(this T jsonModel, string filePath)
         where T : class {
         if (filePath.IsNullOrWhiteSpace()) throw new ArgumentNullException(nameof(filePath));
 #if !NETSTANDARD2_0
@@ -79,7 +66,8 @@ public static class JsonSerializerExtensions {
 #else
         if (filePath.Length == int.MaxValue) await Task.Delay(0);
 #endif
-        using var fs = File.Open(filePath, FileMode.Create);
+            using var fs = File.Open(filePath, FileMode.Create);
+        // ReSharper disable once UseAwaitUsing
         using var writer = JsonReaderWriterFactory.CreateJsonWriter(fs, Encoding.UTF8, true, true, "   ");
         var serializer = new DataContractJsonSerializer(typeof(T));
         serializer.WriteObject(writer, jsonModel);

@@ -12,7 +12,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v3
@@ -22,11 +22,20 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 7.0.x      
+        dotnet-version: 7.0.x
+        
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1.1.3        
+        
     - name: Restore dependencies
       run: dotnet restore src/EntityFrameworkRuler.sln
+      
+      
     - name: Test Build
-      run: dotnet build src/EntityFrameworkRuler.sln --configuration Debug --no-restore 
+      #run: dotnet build src/EntityFrameworkRuler.sln --configuration Debug --no-restore
+      run: msbuild ./src/EntityFrameworkRuler.sln /property:Configuration=Debug /t:Rebuild /p:RestorePackages=false
+      working-directory: src      
+      
     - name: Test Design
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --verbosity normal
     - name: Test CLI
@@ -53,7 +62,10 @@ jobs:
         path: ./src/EntityFrameworkRuler.Editor/nupkg
         
     - name: Release Build
-      run: dotnet build src/EntityFrameworkRuler.sln --configuration Release --no-restore 
+      #run: dotnet build src/EntityFrameworkRuler.sln --configuration Release --no-restore
+      run: msbuild ./src/EntityFrameworkRuler.sln /property:Configuration=Release /t:Rebuild /p:RestorePackages=false
+      working-directory: src
+    
     - name: Create NuGet package
       run: dotnet pack --configuration Release --no-build --no-restore src
     - name: Publish Common package to NuGet

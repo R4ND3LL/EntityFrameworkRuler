@@ -1,5 +1,4 @@
 ﻿using System.Threading.Tasks;
-using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
 
