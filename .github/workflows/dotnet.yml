@@ -10,7 +10,7 @@ on:
     branches: [ "main" ]
 
 env:
-  VERSION: 1.0.${{ github.run_number }}
+  VSIXVERSION: 1.0.${{ github.run_number }}
 
 jobs:
   build:
@@ -61,10 +61,10 @@ jobs:
 #      run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_TOKEN }}
 #      working-directory: nupkg
  
-    - name: Set VSIX Version ${{ env.Version }}
+    - name: Set VSIX Version ${{ env.VSIXVERSION }}
       uses: cezarypiatek/VsixVersionAction@1.0
       with:
-        version: ${{ env.Version }}
+        version: ${{ env.VSIXVERSION }}
         vsix-manifest-file: 'src\EntityFrameworkRuler.Vsix\source.extension.vsixmanifest'
 
     - name: Restore VSIX Project
@@ -76,7 +76,7 @@ jobs:
       working-directory: src
  
     - name: Move VSIX
-      run: mv src/EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler-${{ env.VSIXVERSION }}.vsix
+      run: mv src/EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix
         
     - name: Publish VSIX artifacts
       uses: actions/upload-artifact@v2
@@ -89,6 +89,6 @@ jobs:
     - name: Publish VSIX to Marketplace 
       uses: cezarypiatek/VsixPublisherAction@0.1
       with:
-        extension-file: 'EntityFrameworkRuler-${{ env.VSIXVERSION }}.vsix'
+        extension-file: 'EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix'
         publish-manifest-file: 'src\EntityFrameworkRuler.Vsix\publishManifest.json'
         personal-access-code: ${{ secrets.VSIX_TOKEN }}      
