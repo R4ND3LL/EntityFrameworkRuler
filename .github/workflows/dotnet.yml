@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  VERSION: 1.0.${{ github.run_number }}
+
 jobs:
   build:
 
@@ -17,7 +20,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        fetch-depth: 0
+        fetch-depth: 0 # required by MinVer to determine the version correctly
         
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
@@ -28,18 +31,18 @@ jobs:
       uses: microsoft/setup-msbuild@v1.1.3        
         
     - name: Restore dependencies
-      run: dotnet restore src/EntityFrameworkRuler.sln
+      run: dotnet restore src/EntityFrameworkRuler.sln --v:m
       
       
     - name: Test Build
-      #run: dotnet build src/EntityFrameworkRuler.sln --configuration Debug --no-restore
-      run: msbuild EntityFrameworkRuler.sln /property:Configuration=Debug /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
+      run: dotnet build EntityFrameworkRuler.sln --configuration Debug --no-restore --v:q
+      # run: msbuild EntityFrameworkRuler.sln /property:Configuration=Debug /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
       working-directory: src      
       
     - name: Test Design
-      run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --verbosity normal
+      run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --v:m
     - name: Test CLI
-      run: dotnet test ./src/Tests/EntityFrameworkRuler.Tests --no-build --verbosity normal
+      run: dotnet test ./src/Tests/EntityFrameworkRuler.Tests --no-build --v:m
       
     - name: Remove EntityFrameworkRuler.Common/nupkg
       uses: JesseTG/rm@v1.0.3
@@ -62,8 +65,8 @@ jobs:
         path: ./src/EntityFrameworkRuler.Editor/nupkg
         
     - name: Release Build
-      #run: dotnet build src/EntityFrameworkRuler.sln --configuration Release --no-restore
-      run: msbuild EntityFrameworkRuler.sln /property:Configuration=ReleaseVsix /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
+      run: dotnet build src/EntityFrameworkRuler.sln --configuration Release --no-restore --v:q
+      # run: msbuild EntityFrameworkRuler.sln /property:Configuration=Release /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
       working-directory: src
     
     - name: Create NuGet package
@@ -86,4 +89,31 @@ jobs:
       env:
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
       run: dotnet nuget push --source https://api.nuget.org/v3/index.json ./src/EntityFrameworkRuler.Editor/nupkg/*.nupkg -k $NUGET_AUTH_TOKEN --skip-duplicate      
+
+    - name: Set VSIX Version
+      uses: cezarypiatek/VsixVersionAction@1.0
+      with:
+        version: ${{ env.Version }}
+        vsix-manifest-file: 'src\EntityFrameworkRuler.Vsix\source.extension.vsixmanifest'
+
+    - name: Build VSIX
+      run: msbuild EntityFrameworkRuler.Vsix.csproj /property:Configuration=ReleaseVsix /t:Rebuild /p:RestorePackages=true /consoleloggerparameters:ErrorsOnly -m
+      working-directory: src/EntityFrameworkRuler.Vsix
+
+    - name: Move VSIX
+      run: mv src/EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler-${{ env.VSIXVERSION }}.vsix
         
+    - name: Publish VSIX artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: Vsix-Artifacts
+        path: |
+          *.vsix
+          docs/Vsix.md
+          
+#    - name: Publish VSIX to Marketplace
+#      uses: cezarypiatek/VsixPublisherAction@0.1
+#      with:
+#        extension-file: 'EntityFrameworkRuler-${{ env.VSIXVERSION }}.vsix'
+#        publish-manifest-file: 'src\EntityFrameworkRuler.Vsix\publishManifest.json'
+#        personal-access-code: ${{ secrets.VS_PUBLISHER_ACCESS_TOKEN }}          
