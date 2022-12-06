@@ -33,7 +33,7 @@ jobs:
       
     - name: Test Build
       #run: dotnet build src/EntityFrameworkRuler.sln --configuration Debug --no-restore
-      run: msbuild ./src/EntityFrameworkRuler.sln /property:Configuration=Debug /t:Rebuild /p:RestorePackages=false
+      run: msbuild EntityFrameworkRuler.sln /property:Configuration=Debug /t:Rebuild /p:RestorePackages=false
       working-directory: src      
       
     - name: Test Design
@@ -63,7 +63,7 @@ jobs:
         
     - name: Release Build
       #run: dotnet build src/EntityFrameworkRuler.sln --configuration Release --no-restore
-      run: msbuild ./src/EntityFrameworkRuler.sln /property:Configuration=Release /t:Rebuild /p:RestorePackages=false
+      run: msbuild EntityFrameworkRuler.sln /property:Configuration=Release /t:Rebuild /p:RestorePackages=false
       working-directory: src
     
     - name: Create NuGet package
