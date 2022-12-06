@@ -83,7 +83,7 @@ jobs:
         vsix-manifest-file: 'src\EntityFrameworkRuler.Vsix\source.extension.vsixmanifest'
 
     - name: Build VSIX
-      run: msbuild EntityFrameworkRuler.Vsix.csproj /property:Configuration=ReleaseVsix /t:Rebuild /p:RestorePackages=true /consoleloggerparameters:ErrorsOnly -m
+      run: msbuild EntityFrameworkRuler.Vsix.csproj /property:Configuration=Release /t:Rebuild /p:RestorePackages=true /consoleloggerparameters:ErrorsOnly -m
       working-directory: src/EntityFrameworkRuler.Vsix
 
     - name: Move VSIX
