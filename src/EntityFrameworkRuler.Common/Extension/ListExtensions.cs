@@ -7,9 +7,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace EntityFrameworkRuler.Extension;
 
-internal static class ListExtensions {
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+public static class ListExtensions {
     [DebuggerStepThrough]
-    public static bool IsNullOrEmpty<T>([NotNullWhen(false)]this IList<T> list) { return list == null || list.Count == 0; }
+    public static bool IsNullOrEmpty<T>([NotNullWhen(false)] this IList<T> list) { return list == null || list.Count == 0; }
 
     [DebuggerStepThrough]
     public static T TryGetElement<T>(this IList<T> list, int index)

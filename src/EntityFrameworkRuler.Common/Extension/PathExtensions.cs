@@ -180,8 +180,8 @@ public static class PathExtensions {
         }
     }
 
-
-    internal static FileInfo FindFile(this string path, string searchPattern, bool recurseSubdirectories = true,
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static FileInfo FindFile(this string path, string searchPattern, bool recurseSubdirectories = true,
         int maxRecursionDepth = 1, Predicate<FileInfo> predicate = null) =>
         FindFile(new DirectoryInfo(path), searchPattern, recurseSubdirectories, maxRecursionDepth, predicate);
 
@@ -194,15 +194,15 @@ public static class PathExtensions {
             return null;
         }
     }
-
-    internal static IEnumerable<FileInfo> FindFiles(this string path, string searchPattern, bool recurseSubdirectories = true,
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static IEnumerable<FileInfo> FindFiles(this string path, string searchPattern, bool recurseSubdirectories = true,
         int maxRecursionDepth = 1) =>
         FindFiles(new DirectoryInfo(path), searchPattern, recurseSubdirectories, maxRecursionDepth);
 
     internal static IEnumerable<FileInfo> FindFiles(this DirectoryInfo info, string searchPattern, bool recurseSubdirectories = true,
         int maxRecursionDepth = 1) {
         if (info?.Exists != true) return Enumerable.Empty<FileInfo>();
-#if NETSTANDARD2_0 || NET48
+#if LEGACY
         return info.EnumerateFiles(searchPattern,
             recurseSubdirectories && maxRecursionDepth > 0 ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
 #else

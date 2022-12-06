@@ -26,7 +26,7 @@ public static class JsonSerializerExtensions {
     /// <returns>deserialized type or null</returns>
     public static async Task<T> ReadJsonFile<T>(this string filePath) where T : class {
         if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath)) return null;
-#if NETSTANDARD2_0 || NET48
+#if LEGACY
         if (filePath.Length == int.MaxValue) await Task.Delay(0); // just to make async method happy
         var text = File.ReadAllText(filePath);
 #else
@@ -61,7 +61,7 @@ public static class JsonSerializerExtensions {
     public static async Task WriteJsonFile<T>(this T jsonModel, string filePath)
         where T : class {
         if (filePath.IsNullOrWhiteSpace()) throw new ArgumentNullException(nameof(filePath));
-#if !NETSTANDARD2_0 && !NET48
+#if !LEGACY
         await
 #else
         if (filePath.Length == int.MaxValue) await Task.Delay(0);

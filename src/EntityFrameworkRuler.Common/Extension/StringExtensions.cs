@@ -8,7 +8,8 @@ using EntityFrameworkRuler.Rules;
 
 namespace EntityFrameworkRuler.Extension;
 
-internal static class StringExtensions {
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+public static class StringExtensions {
     /// <summary> Return true if strings are equal. </summary>
     [DebuggerStepThrough]
     public static bool EqualsIgnoreCase(this string str, string str2) => string.Equals(str, str2, StringComparison.OrdinalIgnoreCase);
@@ -17,7 +18,7 @@ internal static class StringExtensions {
     [DebuggerStepThrough]
     public static bool ContainsIgnoreCase(this string str, string str2) {
         if (str2.IsNullOrEmpty()) return false;
-#if NETSTANDARD2_0 || NET48
+#if LEGACY
         return str?.ToLower()?.Contains(str2.ToLower()) == true;
 #else
         return str?.Contains(str2, StringComparison.OrdinalIgnoreCase) == true;
@@ -106,7 +107,7 @@ internal static class StringExtensions {
     }
 
     public static string ApplyContextNameMask(this string fileName, string name) {
-#if NETSTANDARD2_0 || NET48
+#if LEGACY
         fileName = fileName.ReplaceIgnoreCase("<ContextName>", name);
 #else
         fileName = fileName.Replace("<ContextName>", name, StringComparison.OrdinalIgnoreCase);
