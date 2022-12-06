@@ -65,7 +65,7 @@ jobs:
         path: ./src/EntityFrameworkRuler.Editor/nupkg
         
     - name: Release Build
-      run: dotnet build src/EntityFrameworkRuler.sln --configuration Release --no-restore --v:q
+      run: dotnet build EntityFrameworkRuler.sln --configuration Release --no-restore --v:q
       # run: msbuild EntityFrameworkRuler.sln /property:Configuration=Release /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
       working-directory: src
     
