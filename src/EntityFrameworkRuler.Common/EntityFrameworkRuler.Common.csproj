@@ -44,9 +44,9 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>EntityFrameworkRuler</_Parameter1>
     </AssemblyAttribute>
-    <!--<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>EntityFrameworkRuler.Design</_Parameter1>
-    </AssemblyAttribute>-->
+    </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>EntityFrameworkRuler.Design.Tests</_Parameter1>
     </AssemblyAttribute>

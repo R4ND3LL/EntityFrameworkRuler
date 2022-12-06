@@ -1,10 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using EntityFrameworkRuler.Rules;
+
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace EntityFrameworkRuler.Extension;
 
@@ -19,7 +19,7 @@ public static class StringExtensions {
     public static bool ContainsIgnoreCase(this string str, string str2) {
         if (str2.IsNullOrEmpty()) return false;
 #if LEGACY
-        return str?.ToLower()?.Contains(str2.ToLower()) == true;
+        return str?.ToLower().Contains(str2.ToLower()) == true;
 #else
         return str?.Contains(str2, StringComparison.OrdinalIgnoreCase) == true;
 #endif
@@ -86,7 +86,7 @@ public static class StringExtensions {
     [DebuggerStepThrough]
     public static string CoalesceWhiteSpace(this string str, params string[] strings) {
         return string.IsNullOrWhiteSpace(str)
-            ? (strings?.Length > 0 ? strings.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)) : null)
+            ? strings?.Length > 0 ? strings.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s)) : null
             : str;
     }
 
@@ -94,18 +94,20 @@ public static class StringExtensions {
     [DebuggerStepThrough]
     public static string CoalesceWhiteSpace(this string str, params Func<string>[] strings) {
         return string.IsNullOrWhiteSpace(str)
-            ? (strings?.Length > 0
+            ? strings?.Length > 0
                 ? strings.Select(o => o?.Invoke()).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))
-                : null)
+                : null
             : str;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [DebuggerStepThrough]
     public static string ReplaceIgnoreCase(this string str, string from, string to) {
         str = Regex.Replace(str, from, to, RegexOptions.IgnoreCase);
         return str;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static string ApplyContextNameMask(this string fileName, string name) {
 #if LEGACY
         fileName = fileName.ReplaceIgnoreCase("<ContextName>", name);
@@ -215,6 +217,7 @@ public static class StringExtensions {
         }
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static (string namespaceName, string name) SplitNamespaceAndName(this string fullName) {
         if (fullName.IsNullOrEmpty()) return default;
 

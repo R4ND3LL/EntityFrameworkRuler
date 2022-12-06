@@ -1,4 +1,5 @@
-﻿using EntityFrameworkRuler.Design.Services;
+﻿using System.Diagnostics.CodeAnalysis;
+using EntityFrameworkRuler.Design.Services;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Shouldly;
@@ -6,7 +7,9 @@ using Xunit;
 
 namespace EntityFrameworkRuler.Design.Tests;
 
-public class EfPluralizerTests {
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+[SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
+public sealed class EfPluralizerTests {
     [Fact]
     public void Pluralize_works()
         => Assert.Equal("Tests", new RuledPluralizer().Pluralize("Test"));

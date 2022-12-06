@@ -9,9 +9,11 @@ namespace EntityFrameworkRuler.Extension;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class ListExtensions {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [DebuggerStepThrough]
     public static bool IsNullOrEmpty<T>([NotNullWhen(false)] this IList<T> list) { return list == null || list.Count == 0; }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [DebuggerStepThrough]
     public static T TryGetElement<T>(this IList<T> list, int index)
         where T : class {
@@ -60,15 +62,17 @@ public static class ListExtensions {
     //
     //     return rules;
     // }
-
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static void ForAll<T>(this IEnumerable<T> sequence, Action<T> action) {
         foreach (var item in sequence) action(item);
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static void AddRange<T>(this IList<T> c, IEnumerable<T> list) {
         foreach (var o in list) c.Add(o);
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static void AddRange<T>(this HashSet<T> c, IEnumerable<T> list) {
         foreach (var o in list) c.Add(o);
     }
@@ -82,6 +86,7 @@ public static class ListExtensions {
         return true;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static ObservableCollection<T> ToObservable<T>(this IEnumerable<T> c) {
         return new ObservableCollection<T>(c);
     }
@@ -92,10 +97,12 @@ public static class ListExtensions {
         return items.GroupBy(property).Select(x => x.First());
     }
 #endif
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static TValue GetOrAddNew<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key) where TValue : new() {
         return GetOrAddNew<TKey, TValue>(source, key, _ => new());
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static TValue GetOrAddNew<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key, Func<TKey, TValue> valueFactory) {
         if (source.TryGetValue(key, out var value)) return value;
         source.Add(key, value = valueFactory(key));

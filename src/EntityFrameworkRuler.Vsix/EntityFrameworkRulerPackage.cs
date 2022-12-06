@@ -69,6 +69,7 @@ public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
     }
 
     private static bool themeInitialized = false;
+
     private async Task GetThemeInfoAsync() {
         if (themeInitialized) return;
         try {
@@ -76,24 +77,27 @@ public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
             lock (this) {
                 if (themeInitialized) return;
                 themeInitialized = true;
+#pragma warning disable VSTHRD103
                 var shell5 = GetService(typeof(SVsUIShell)) as IVsUIShell5;
+#pragma warning restore VSTHRD103
                 Debug.Assert(shell5 != null, "failed to get IVsUIShell5");
+                if (shell5 != null) {
+                    var map = new Dictionary<ThemeResourceKey, ResourceKeys> {
+                        { EnvironmentColors.ToolWindowBackgroundColorKey, ResourceKeys.WindowBackground },
+                        { EnvironmentColors.ToolWindowTextColorKey, ResourceKeys.InputText },
+                    };
 
-                var map = new Dictionary<ThemeResourceKey, ResourceKeys> {
-                    { EnvironmentColors.ToolWindowBackgroundColorKey, ResourceKeys.WindowBackground },
-                    { EnvironmentColors.ToolWindowTextColorKey, ResourceKeys.InputText },
-                };
+                    var backColor = shell5.GetThemedWPFColor(EnvironmentColors.DarkColorKey);
+                    var foreColor = shell5.GetThemedWPFColor(EnvironmentColors.PanelTextColorKey);
+                    var isLight = backColor.GetBrightness() > foreColor.GetBrightness();
 
-                var backColor = shell5.GetThemedWPFColor(EnvironmentColors.DarkColorKey);
-                var foreColor = shell5.GetThemedWPFColor(EnvironmentColors.PanelTextColorKey);
-                var isLight = backColor.GetBrightness() > foreColor.GetBrightness();
-
-                AppearanceManager.Current.SelectedTheme = isLight ? ThemeNames.Light : ThemeNames.Dark;
-                //return;
-                foreach (var kvp in map) {
-                    var b = VSColorTheme.GetThemedColor(kvp.Key).ToMediaColor();
-                    var isSet = AppearanceManager.Current.TrySetResourceValue(kvp.Value, b.ToBrush());
-                    Debug.Assert(isSet);
+                    AppearanceManager.Current.SelectedTheme = isLight ? ThemeNames.Light : ThemeNames.Dark;
+                    //return;
+                    foreach (var kvp in map) {
+                        var b = VSColorTheme.GetThemedColor(kvp.Key).ToMediaColor();
+                        var isSet = AppearanceManager.Current.TrySetResourceValue(kvp.Value, b.ToBrush());
+                        Debug.Assert(isSet);
+                    }
                 }
             }
         } catch (Exception ex) {
@@ -113,13 +117,16 @@ public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
         return services.BuildServiceProvider();
     }
 }
+
 /// <summary> This is a workaround for the runtime error where Annotations assembly can't be loaded when deserializing the json model </summary>
 internal static class VsixAssemblyResolver {
     static VsixAssemblyResolver() {
         AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
     }
+
     private static readonly HashSet<string> skip = new(new[] { "EntityFrameworkRuler.Common.XmlSerializers" });
     public static void RedirectAssembly() { }
+
     private static Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args) {
         var requestedAssembly = new AssemblyName(args.Name);
         Assembly assembly = null;
@@ -130,8 +137,8 @@ internal static class VsixAssemblyResolver {
         } catch (Exception ex) {
             Debug.WriteLine("AssemblyResolve error: " + ex.Message);
         }
+
         AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
         return assembly;
     }
-
 }

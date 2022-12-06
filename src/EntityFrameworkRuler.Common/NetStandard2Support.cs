@@ -222,7 +222,7 @@ namespace System {
 }
 
 namespace System.Runtime.CompilerServices {
-    internal static class RuntimeHelpers {
+    internal static class RuntimeHelpersOBSOLETE {
         /// <summary>
         /// Slices the specified array using the specified range.
         /// </summary>

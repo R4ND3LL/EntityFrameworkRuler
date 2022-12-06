@@ -67,10 +67,14 @@ jobs:
         version: ${{ env.Version }}
         vsix-manifest-file: 'src\EntityFrameworkRuler.Vsix\source.extension.vsixmanifest'
 
+    - name: Restore VSIX Project
+      run: msbuild /t:restore EntityFrameworkRuler.Vsix.csproj
+      working-directory: src/EntityFrameworkRuler.Vsix
+      
     - name: Build VSIX
       run: msbuild EntityFrameworkRuler.sln /property:Configuration=ReleaseVsix /p:RestorePackages=True /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
       working-directory: src
-
+ 
     - name: Move VSIX
       run: mv src/EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler-${{ env.VSIXVERSION }}.vsix
         

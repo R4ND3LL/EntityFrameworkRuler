@@ -1,4 +1,5 @@
-﻿using EnvDTE;
+﻿using System.Diagnostics.CodeAnalysis;
+using EnvDTE;
 using EnvDTE80;
 
 namespace EntityFrameworkRuler.Commands;
@@ -25,15 +26,15 @@ internal abstract class RulerBaseCommand<T> : BaseCommand<T> where T : class, ne
                 var fileExtension = Path.GetExtension(item.Name);
                 if (!SupportedFiles.Contains(fileExtension)) return;
             }
-            await ExecuteAsyncCore(e, item);
+            await ExecuteCoreAsync(e, item);
         } catch (Exception ex) {
             await ex.LogAsync();
         }
     }
 
-    protected abstract Task ExecuteAsyncCore(OleMenuCmdEventArgs oleMenuCmdEventArgs, SolutionItem solutionItem);
+    protected abstract Task ExecuteCoreAsync(OleMenuCmdEventArgs oleMenuCmdEventArgs, SolutionItem solutionItem);
 
-    protected override async void BeforeQueryStatus(EventArgs e) {
+    protected override void BeforeQueryStatus(EventArgs e) {
         try {
             Command.Visible = CanShow();
         } catch (Exception ex) {
@@ -45,6 +46,7 @@ internal abstract class RulerBaseCommand<T> : BaseCommand<T> where T : class, ne
 #endif
     }
 
+    [SuppressMessage("Usage", "VSTHRD010:Invoke single-threaded types on Main thread")]
     private bool CanShow() {
         if (!ThreadHelper.CheckAccess()) return false;
         var dte = VsServiceProvider.GetService(typeof(DTE)) as DTE2;

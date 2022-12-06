@@ -7,9 +7,9 @@
   <!--This header contains the command ids for the menus provided by the shell. -->
   <Extern href="vsshlids.h" />
 
-  <!--<Include href="KnownImageIds.vsct"/>
-  <Include href="VSGlobals.vsct"/>-->
-
+  <!--<Include href="KnownImageIds.vsct"/>-->
+  <Include href="VSGlobals.vsct"/>
+  
   <Commands package="EntityFrameworkRuler">
     <Groups>
       <Group guid="EntityFrameworkRuler" id="MyMenuGroup" priority="0x0600">

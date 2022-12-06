@@ -6,7 +6,7 @@ namespace EntityFrameworkRuler;
 internal sealed class VsixMessageLogger : IMessageLogger {
     private const string paneTitle = "Extensions";
     private static readonly Guid extensionsPaneGuid = new("1780E60C-EE25-482B-AC77-CBA91891C420");
-    private static OutputWindowPane? pane;
+    private static OutputWindowPane pane;
 
     /// <inheritdoc />
     public LogType MinimumLevel { get; set; } = LogType.Information;
@@ -39,17 +39,16 @@ internal sealed class VsixMessageLogger : IMessageLogger {
     }
 
 
-    /// <summary> Log the message to the Output Window asynchronously. </summary> 
+    /// <summary> Log the message to the Output Window asynchronously. </summary>
     private static async Task LogAsync(string message) {
         try {
             if (pane == null)
                 await EnsurePaneAsync();
 
-            if (pane != null) {
+            if (pane != null)
                 await pane.WriteLineAsync(message);
-            } else {
+            else
                 System.Diagnostics.Debug.WriteLine(message);
-            }
         } catch (Exception ex) {
             System.Diagnostics.Debug.WriteLine(message);
             System.Diagnostics.Debug.WriteLine(ex);
@@ -61,13 +60,12 @@ internal sealed class VsixMessageLogger : IMessageLogger {
             // Try and get the Extensions pane and if it doesn't exist then create it.
             pane = await VS.Windows.GetOutputWindowPaneAsync(extensionsPaneGuid);
 
-            if (pane == null) {
+            if (pane == null)
                 try {
                     pane = await VS.Windows.CreateOutputWindowPaneAsync(paneTitle);
                 } catch (Exception ex) {
                     System.Diagnostics.Debug.WriteLine(ex);
                 }
-            }
         }
 
         System.Diagnostics.Debug.Assert(pane != null);

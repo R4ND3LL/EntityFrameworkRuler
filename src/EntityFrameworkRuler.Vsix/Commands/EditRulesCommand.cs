@@ -9,7 +9,7 @@ internal sealed class EditRulesCommand : RulerBaseCommand<EditRulesCommand> {
         SupportedFiles.Add(".json");
     }
 
-    protected override Task ExecuteAsyncCore(OleMenuCmdEventArgs oleMenuCmdEventArgs, SolutionItem item) {
+    protected override Task ExecuteCoreAsync(OleMenuCmdEventArgs oleMenuCmdEventArgs, SolutionItem item) {
         var rulesPath = item.FullPath;
         var project = item.FindParent(SolutionItemType.Project);
         var projectPath = project?.FullPath;
