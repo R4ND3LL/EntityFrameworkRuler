@@ -55,7 +55,7 @@ jobs:
  
     
     - name: Create NuGet packages
-      run: dotnet pack --configuration Release --no-build --no-restore .\src\EntityFrameworkRuler.sln --output .\nupgk 
+      run: dotnet pack --configuration Release --no-build --no-restore .\src\EntityFrameworkRuler.sln --output .\nupkg 
       
     - name: Publish Common package to NuGet
       env:
