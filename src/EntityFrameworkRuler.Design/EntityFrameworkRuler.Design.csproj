@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
@@ -24,12 +24,12 @@
             <Pack>True</Pack>
             <PackagePath>build</PackagePath>
         </None>
-        <None Include="..\..\docs\Design.md" Pack="true" PackagePath="\"/>
+        <None Include="..\..\docs\Design.md" Pack="true" PackagePath="\" />
 
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Castle.Core" Version="5.1.0"/>
+        <PackageReference Include="Castle.Core" Version="5.1.0" />
         <PackageReference Include="MinVer" Version="4.2.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -53,20 +53,20 @@
 
     <!--    <ItemGroup Condition="'$(Configuration)'=='Release'">-->
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Remove="nupkg\**"/>
+        <Compile Remove="nupkg\**" />
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Remove="nupkg\**"/>
-        <None Remove="Resources\EntityTypeConfiguration.t4"/>
-        <EmbeddedResource Include="Resources\EntityTypeConfiguration.t4"/>
+        <EmbeddedResource Remove="nupkg\**" />
+        <None Remove="Resources\EntityTypeConfiguration.t4" />
+        <EmbeddedResource Include="Resources\EntityTypeConfiguration.t4" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj"/>
+        <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj" />
     </ItemGroup>
 </Project>

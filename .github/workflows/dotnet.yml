@@ -33,7 +33,7 @@ jobs:
       
     - name: Test Build
       #run: dotnet build src/EntityFrameworkRuler.sln --configuration Debug --no-restore
-      run: msbuild EntityFrameworkRuler.sln /property:Configuration=Debug /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly
+      run: msbuild EntityFrameworkRuler.sln /property:Configuration=Debug /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
       working-directory: src      
       
     - name: Test Design
@@ -63,11 +63,13 @@ jobs:
         
     - name: Release Build
       #run: dotnet build src/EntityFrameworkRuler.sln --configuration Release --no-restore
-      run: msbuild EntityFrameworkRuler.sln /property:Configuration=Release /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly
+      run: msbuild EntityFrameworkRuler.sln /property:Configuration=ReleaseVsix /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
       working-directory: src
     
     - name: Create NuGet package
-      run: dotnet pack --configuration Release --no-build --no-restore src
+      run: dotnet pack --configuration Release --no-build --no-restore EntityFrameworkRuler.sln
+      working-directory: src
+      
     - name: Publish Common package to NuGet
       env:
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
