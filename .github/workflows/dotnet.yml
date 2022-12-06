@@ -43,52 +43,36 @@ jobs:
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --v:m
     - name: Test CLI
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Tests --no-build --v:m
-      
-    - name: Remove EntityFrameworkRuler.Common/nupkg
-      uses: JesseTG/rm@v1.0.3
-      with:
-        path: ./src/EntityFrameworkRuler.Common/nupkg
         
-    - name: Remove EntityFrameworkRuler/nupkg
+    - name: Remove nupkg folder
       uses: JesseTG/rm@v1.0.3
       with:
-        path: ./src/EntityFrameworkRuler/nupkg
-        
-    - name: Remove EntityFrameworkRuler.Design/nupkg
-      uses: JesseTG/rm@v1.0.3
-      with:
-        path: ./src/EntityFrameworkRuler.Design/nupkg
-        
-    - name: Remove EntityFrameworkRuler.Editor/nupkg
-      uses: JesseTG/rm@v1.0.3
-      with:
-        path: ./src/EntityFrameworkRuler.Editor/nupkg
+        path: ./nupkg
         
     - name: Release Build
-      run: dotnet build EntityFrameworkRuler.sln --configuration Release --no-restore --v:q
+      run: dotnet build .\src\EntityFrameworkRuler.sln --configuration Release --no-restore --v:q
       # run: msbuild EntityFrameworkRuler.sln /property:Configuration=Release /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
-      working-directory: src
+ 
     
-    - name: Create NuGet package
-      run: dotnet pack --configuration Release --no-build --no-restore EntityFrameworkRuler.sln
-      working-directory: src
+    - name: Create NuGet packages
+      run: dotnet pack --configuration Release --no-build --no-restore .\src\EntityFrameworkRuler.sln --output .\nupgk 
       
     - name: Publish Common package to NuGet
       env:
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
-      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler.Common\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN --skip-duplicate
-    - name: Publish CLI package to NuGet
-      env:
-        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
-      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN  --skip-duplicate      
-    - name: Publish Design package to NuGet
-      env:
-        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
-      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler.Design\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN --skip-duplicate      
-    - name: Publish Editor package to NuGet
-      env:
-        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
-      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler.Editor\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN --skip-duplicate      
+      run: dotnet nuget push --source https://api.nuget.org/v3/index.json .\nupkg\*.nupkg --skip-duplicate --api-key $NUGET_AUTH_TOKEN
+#    - name: Publish CLI package to NuGet
+#      env:
+#        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
+#      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN  --skip-duplicate      
+#    - name: Publish Design package to NuGet
+#      env:
+#        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
+#      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler.Design\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN --skip-duplicate      
+#    - name: Publish Editor package to NuGet
+#      env:
+#        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
+#      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler.Editor\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN --skip-duplicate      
 
     - name: Set VSIX Version
       uses: cezarypiatek/VsixVersionAction@1.0
@@ -112,8 +96,10 @@ jobs:
           docs/Vsix.md
           
     - name: Publish VSIX to Marketplace
+      env:
+        VSIX_AUTH_TOKEN: ${{ secrets.VSIX_TOKEN }}
       uses: cezarypiatek/VsixPublisherAction@0.1
       with:
         extension-file: 'EntityFrameworkRuler-${{ env.VSIXVERSION }}.vsix'
         publish-manifest-file: 'src\EntityFrameworkRuler.Vsix\publishManifest.json'
-        personal-access-code: ${{ secrets.VSIX_TOKEN }}          
+        personal-access-code: $VSIX_AUTH_TOKEN          
