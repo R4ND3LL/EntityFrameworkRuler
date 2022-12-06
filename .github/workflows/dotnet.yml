@@ -57,25 +57,10 @@ jobs:
     - name: Create NuGet packages
       run: dotnet pack --configuration Release --no-build --no-restore .\src\EntityFrameworkRuler.sln --output .\nupkg 
       
-    - name: Publish Common package to NuGet
-      env:
-        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
+    - name: Publish Common package to NuGet 
       run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_TOKEN }}
       working-directory: nupkg
-      
-      #    - name: Publish CLI package to NuGet
-#      env:
-#        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
-#      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN  --skip-duplicate      
-#    - name: Publish Design package to NuGet
-#      env:
-#        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
-#      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler.Design\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN --skip-duplicate      
-#    - name: Publish Editor package to NuGet
-#      env:
-#        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
-#      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler.Editor\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN --skip-duplicate      
-
+ 
     - name: Set VSIX Version
       uses: cezarypiatek/VsixVersionAction@1.0
       with:
@@ -97,11 +82,9 @@ jobs:
           *.vsix
           docs/Vsix.md
           
-    - name: Publish VSIX to Marketplace
-      env:
-        VSIX_AUTH_TOKEN: ${{ secrets.VSIX_TOKEN }}
+    - name: Publish VSIX to Marketplace 
       uses: cezarypiatek/VsixPublisherAction@0.1
       with:
         extension-file: 'EntityFrameworkRuler-${{ env.VSIXVERSION }}.vsix'
         publish-manifest-file: 'src\EntityFrameworkRuler.Vsix\publishManifest.json'
-        personal-access-code: $VSIX_AUTH_TOKEN          
+        personal-access-code: ${{ secrets.VSIX_TOKEN }}      
