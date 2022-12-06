@@ -60,8 +60,10 @@ jobs:
     - name: Publish Common package to NuGet
       env:
         NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
-      run: dotnet nuget push --source https://api.nuget.org/v3/index.json .\nupkg\*.nupkg --skip-duplicate --api-key $NUGET_AUTH_TOKEN
-#    - name: Publish CLI package to NuGet
+      run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_TOKEN }}
+      working-directory: nupkg
+      
+      #    - name: Publish CLI package to NuGet
 #      env:
 #        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
 #      run: dotnet nuget push --source https://api.nuget.org/v3/index.json src\EntityFrameworkRuler\nupkg\*.nupkg --api-key $NUGET_AUTH_TOKEN  --skip-duplicate      
