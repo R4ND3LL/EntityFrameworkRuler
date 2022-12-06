@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD2_0
+﻿#if NETSTANDARD2_0 || NET48
 using System.Runtime.CompilerServices;
 // ReSharper disable RedundantIfElseBlock
 // ReSharper disable MemberCanBePrivate.Global

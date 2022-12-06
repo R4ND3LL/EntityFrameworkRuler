@@ -17,7 +17,7 @@ internal static class StringExtensions {
     [DebuggerStepThrough]
     public static bool ContainsIgnoreCase(this string str, string str2) {
         if (str2.IsNullOrEmpty()) return false;
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NET48
         return str?.ToLower()?.Contains(str2.ToLower()) == true;
 #else
         return str?.Contains(str2, StringComparison.OrdinalIgnoreCase) == true;
@@ -106,7 +106,7 @@ internal static class StringExtensions {
     }
 
     public static string ApplyContextNameMask(this string fileName, string name) {
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NET48
         fileName = fileName.ReplaceIgnoreCase("<ContextName>", name);
 #else
         fileName = fileName.Replace("<ContextName>", name, StringComparison.OrdinalIgnoreCase);

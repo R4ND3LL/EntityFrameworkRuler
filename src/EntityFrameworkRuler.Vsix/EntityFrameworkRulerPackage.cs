@@ -47,6 +47,9 @@ public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
             Enumerable.Range(0, 5).ForAll(o => Debug.WriteLine($"EntityFrameworkRulerPackage INITIALIZING"));
 #endif
             await this.RegisterCommandsAsync();
+
+            var n = DependencyInjectionCommon.AddRulerCommon(null);
+            Debug.Assert(n == null);
         } catch (Exception ex) {
             await ex.LogAsync();
         }
@@ -101,8 +104,7 @@ public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
 
 
     private static IServiceProvider CreateServiceProvider() {
-        var services = new ServiceCollection()
-            .AddRulerCommon()
+        var services = DependencyInjectionCommon.AddRulerCommon(new ServiceCollection())
             .AddSingleton<IMessageLogger, VsixMessageLogger>()
             .AddTransient<RuleEditorViewModel, RuleEditorViewModel>()
             .AddTransient<RulesFromEdmxViewModel, RulesFromEdmxViewModel>()

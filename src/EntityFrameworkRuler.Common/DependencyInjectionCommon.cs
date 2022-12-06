@@ -14,7 +14,7 @@ namespace EntityFrameworkRuler;
 public static class DependencyInjectionCommon {
     /// <summary> Add RuleLoader services from EntityFrameworkRuler.Common only </summary>
     public static IServiceCollection AddRulerCommon(this IServiceCollection serviceCollection)
-        => serviceCollection
+        => serviceCollection?
             .AddSingleton<IRuleSerializer, JsonRuleSerializer>()
             .AddTransient<IRulerNamingService, RulerNamingService>()
             .AddSingleton<IRulerPluralizer, HumanizerPluralizer>()

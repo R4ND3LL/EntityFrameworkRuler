@@ -57,9 +57,9 @@ jobs:
     - name: Create NuGet packages
       run: dotnet pack --configuration Release --no-build --no-restore .\src\EntityFrameworkRuler.sln --output .\nupkg 
       
-    - name: Publish Common package to NuGet 
-      run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_TOKEN }}
-      working-directory: nupkg
+#    - name: Publish Common package to NuGet 
+#      run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_TOKEN }}
+#      working-directory: nupkg
  
     - name: Set VSIX Version ${{ env.Version }}
       uses: cezarypiatek/VsixVersionAction@1.0
@@ -68,7 +68,7 @@ jobs:
         vsix-manifest-file: 'src\EntityFrameworkRuler.Vsix\source.extension.vsixmanifest'
 
     - name: Build VSIX
-      run: msbuild EntityFrameworkRuler.sln /property:Configuration=ReleaseVsix /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
+      run: msbuild EntityFrameworkRuler.sln /property:Configuration=ReleaseVsix /p:RestorePackages=True /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
       working-directory: src
 
     - name: Move VSIX

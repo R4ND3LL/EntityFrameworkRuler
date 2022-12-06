@@ -1,9 +1,9 @@
-﻿<platform:DialogWindow  x:Class="EntityFrameworkRuler.ToolWindows.RuleEditorDialog"
+﻿<platformUi:DialogWindow  x:Class="EntityFrameworkRuler.ToolWindows.RuleEditorDialog"
                         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                        xmlns:platform="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+                        xmlns:platformUi="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
                         xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"
                         xmlns:controls="clr-namespace:EntityFrameworkRuler.Editor.Controls;assembly=EntityFrameworkRuler.Editor"
                         toolkit:Themes.UseVsTheme="True"
@@ -17,4 +17,4 @@
     <!--Icon="/EntityFrameworkRuler.Vsix;component/Resources/crown.ico"-->
     <controls:RuleEditorView />
 
-</platform:DialogWindow>
+</platformUi:DialogWindow>

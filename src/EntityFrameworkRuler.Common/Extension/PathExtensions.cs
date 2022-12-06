@@ -202,7 +202,7 @@ public static class PathExtensions {
     internal static IEnumerable<FileInfo> FindFiles(this DirectoryInfo info, string searchPattern, bool recurseSubdirectories = true,
         int maxRecursionDepth = 1) {
         if (info?.Exists != true) return Enumerable.Empty<FileInfo>();
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NET48
         return info.EnumerateFiles(searchPattern,
             recurseSubdirectories && maxRecursionDepth > 0 ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
 #else
