@@ -61,15 +61,15 @@ jobs:
       run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_TOKEN }}
       working-directory: nupkg
  
-    - name: Set VSIX Version
+    - name: Set VSIX Version ${{ env.Version }}
       uses: cezarypiatek/VsixVersionAction@1.0
       with:
         version: ${{ env.Version }}
         vsix-manifest-file: 'src\EntityFrameworkRuler.Vsix\source.extension.vsixmanifest'
 
     - name: Build VSIX
-      run: msbuild EntityFrameworkRuler.Vsix.csproj /property:Configuration=Release /t:Rebuild /p:RestorePackages=true /consoleloggerparameters:ErrorsOnly -m
-      working-directory: src/EntityFrameworkRuler.Vsix
+      run: msbuild EntityFrameworkRuler.sln /property:Configuration=ReleaseVsix /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
+      working-directory: src
 
     - name: Move VSIX
       run: mv src/EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler-${{ env.VSIXVERSION }}.vsix
