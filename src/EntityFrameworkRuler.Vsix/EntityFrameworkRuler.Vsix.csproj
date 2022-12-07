@@ -36,8 +36,8 @@
     <StartAction>Program</StartAction>
     <StartProgram Condition="'$(DevEnvDir)' != ''">$(DevEnvDir)devenv.exe</StartProgram>
     <StartArguments>/rootsuffix Exp</StartArguments>
-<!--    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>-->
-<!--    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>-->
+    <!--    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>-->
+    <!--    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>-->
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -91,6 +91,7 @@
       <Link>Vsix.md</Link>
     </None>
     <None Include="App.config" />
+    <None Include="PublishManifest.json" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>
