@@ -12,14 +12,7 @@
   ],
   "categories": [ "Data", "Modeling" ], // The categories of the extension. Between 1 and 3 categories are required.
   "identity": {
-    "internalName": "EF-Ruler",
-    "tags": [
-      "EDMX",
-      "EF",
-      "EFCore",
-      "Entity Framework",
-      "Scaffolding"
-    ]
+    "internalName": "EF-Ruler"
   },
   "overview": "..\\..\\docs\\Vsix.md",
   "priceCategory": "free",

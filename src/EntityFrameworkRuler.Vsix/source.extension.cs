@@ -13,6 +13,6 @@ namespace EntityFrameworkRuler
         public const string Language = "en-US";
         public const string Version = "1.0.1";
         public const string Author = "Randell";
-        public const string Tags = "Entity Framework Core EF Data EntityFramework EntityFrameworkCore EFCore EDMX efruler scaffolding";
+        public const string Tags = "Entity Framework EF EFCore EDMX scaffolding Data";
     }
 }

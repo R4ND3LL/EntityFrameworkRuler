@@ -7,7 +7,7 @@
         <MoreInfo>https://github.com/R4ND3LL/EntityFrameworkRuler</MoreInfo>
         <Icon>Resources\crown128.png</Icon>
         <PreviewImage>Resources\RuleEditorPreview.png</PreviewImage>
-        <Tags>Entity Framework Core EF Data EntityFramework EntityFrameworkCore EFCore EDMX efruler scaffolding</Tags>
+        <Tags>Entity Framework EF EFCore EDMX scaffolding Data</Tags>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">
