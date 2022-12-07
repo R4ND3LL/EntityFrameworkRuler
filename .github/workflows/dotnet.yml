@@ -68,17 +68,17 @@ jobs:
         vsix-manifest-file: 'src\EntityFrameworkRuler.Vsix\source.extension.vsixmanifest'
 
     - name: Restore VSIX Project
-      run: msbuild /t:restore EntityFrameworkRuler.Vsix.csproj
+      run: msbuild /t:restore EntityFrameworkRuler.Vsix.csproj /verbosity:minimal
       working-directory: src/EntityFrameworkRuler.Vsix
       
-    - name: Build VSIX ${{ env.VSIXVERSION }}
+    - name: Build VSIX
       run: msbuild EntityFrameworkRuler.sln /property:Configuration=ReleaseVsix /p:RestorePackages=True /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
       working-directory: src
  
     - name: Move VSIX
       run: mv src/EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix
         
-    - name: Publish VSIX ${{ env.VSIXVERSION }} artifacts
+    - name: Publish VSIX artifacts
       uses: actions/upload-artifact@v2
       with:
         name: Vsix-Artifacts
@@ -87,7 +87,7 @@ jobs:
           docs/Vsix.md
           
       #https://github.com/marketplace/actions/vsix-publisher
-    - name: Publish VSIX ${{ env.VSIXVERSION }} to Marketplace 
+    - name: Publish VSIX to Marketplace 
       uses: cezarypiatek/VsixPublisherAction@0.2
       with:
         extension-file: 'EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix'
