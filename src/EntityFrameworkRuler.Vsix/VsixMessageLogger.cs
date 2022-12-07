@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Text;
 using EntityFrameworkRuler.Common;
 
 namespace EntityFrameworkRuler;
@@ -40,18 +41,21 @@ internal sealed class VsixMessageLogger : IMessageLogger {
 
 
     /// <summary> Log the message to the Output Window asynchronously. </summary>
-    private static async Task LogAsync(string message) {
+    internal static async Task LogAsync(string message) {
         try {
             if (pane == null)
                 await EnsurePaneAsync();
 
-            if (pane != null)
+            if (pane != null) {
                 await pane.WriteLineAsync(message);
-            else
-                System.Diagnostics.Debug.WriteLine(message);
+#if DEBUG
+                Debug.WriteLine(message);
+#endif
+            } else
+                Debug.WriteLine(message);
         } catch (Exception ex) {
-            System.Diagnostics.Debug.WriteLine(message);
-            System.Diagnostics.Debug.WriteLine(ex);
+            Debug.WriteLine(message);
+            Debug.WriteLine(ex);
         }
     }
 
@@ -64,10 +68,10 @@ internal sealed class VsixMessageLogger : IMessageLogger {
                 try {
                     pane = await VS.Windows.CreateOutputWindowPaneAsync(paneTitle);
                 } catch (Exception ex) {
-                    System.Diagnostics.Debug.WriteLine(ex);
+                    Debug.WriteLine(ex);
                 }
         }
 
-        System.Diagnostics.Debug.Assert(pane != null);
+        Debug.Assert(pane != null);
     }
 }

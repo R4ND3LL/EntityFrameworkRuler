@@ -9,8 +9,8 @@ namespace EntityFrameworkRuler;
 public static class DependencyInjection {
     /// <summary> Add Entity Framework Ruler services </summary>
     public static T AddRulerCli<T>(this T serviceCollection) where T : IServiceCollection =>
-        (T)serviceCollection
-            .AddRulerCommon()
+        (T)serviceCollection?
+            .AddRuler()
             .AddSingleton<IMessageLogger, ConsoleMessageLogger>()
             .AddTransient<IRuleApplicator, RuleApplicator>();
 

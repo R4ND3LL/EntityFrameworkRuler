@@ -9,20 +9,25 @@ namespace EntityFrameworkRuler.Rules;
 [SuppressMessage("ReSharper", "VirtualMemberNeverOverridden.Global")]
 [DataContract]
 public abstract class RuleBase : IRuleItem {
-    // ReSharper disable once FieldCanBeMadeReadOnly.Global
-    // ReSharper disable once ConvertToConstant.Global
-    internal static bool Observable = false;
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static bool Observable = false;
+
     /// <summary> Get the name that we expect EF will generate for this item. </summary>
     protected abstract string GetExpectedEntityFrameworkName();
+
     /// <summary> Gets the new name to give this element. </summary>
     protected abstract string GetNewName();
 
     /// <summary> Sets the conceptual name of the model. That is, the name that this element should have in the final reverse engineered model. </summary>
     protected abstract void SetFinalName(string value);
+
     /// <summary> If true, omit this column during the scaffolding process. </summary>
     public abstract bool NotMapped { get; set; }
+
+    /// <summary> If false, omit this column during the scaffolding process. </summary>
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
-    internal bool Mapped => !NotMapped;
+    public bool Mapped => !NotMapped;
+
     string IRuleItem.GetExpectedEntityFrameworkName() => GetExpectedEntityFrameworkName();
     string IRuleItem.GetNewName() => GetNewName();
     string IRuleItem.GetFinalName() => GetNewName().NullIfWhitespace() ?? GetExpectedEntityFrameworkName();

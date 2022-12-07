@@ -1,4 +1,5 @@
-﻿using EntityFrameworkRuler.Editor.Dialogs;
+﻿using System.IO;
+using EntityFrameworkRuler.Editor.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFrameworkRuler.Commands; 
@@ -10,8 +11,8 @@ internal sealed class EditRulesCommand : RulerBaseCommand<EditRulesCommand> {
     }
 
     protected override Task ExecuteCoreAsync(OleMenuCmdEventArgs oleMenuCmdEventArgs, SolutionItem item) {
-        var rulesPath = item.FullPath;
-        var project = item.FindParent(SolutionItemType.Project);
+        var rulesPath = item?.FullPath;
+        var project = item?.FindParent(SolutionItemType.Project);
         var projectPath = project?.FullPath;
         if (projectPath?.Length > 0) projectPath = Path.GetDirectoryName(projectPath);
         var dialog = EntityFrameworkRulerPackage.ServiceProvider.GetRequiredService<IRuleEditorDialog>();

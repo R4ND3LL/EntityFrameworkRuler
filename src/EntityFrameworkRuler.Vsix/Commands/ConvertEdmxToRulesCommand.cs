@@ -10,7 +10,7 @@ internal sealed class ConvertEdmxToRulesCommand : RulerBaseCommand<ConvertEdmxTo
     }
 
     protected override Task ExecuteCoreAsync(OleMenuCmdEventArgs oleMenuCmdEventArgs, SolutionItem item) {
-        var edmxPath = item.FullPath;
+        var edmxPath = item?.FullPath;
         var dialog = EntityFrameworkRulerPackage.ServiceProvider.GetRequiredService<IRulesFromEdmxDialog>();
         dialog.ViewModel.SetContext(edmxPath);
         dialog.ShowDialog();

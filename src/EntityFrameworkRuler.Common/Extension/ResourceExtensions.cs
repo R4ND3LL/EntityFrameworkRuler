@@ -6,9 +6,9 @@ using System.Reflection;
 namespace EntityFrameworkRuler.Extension;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-internal static class ResourceExtensions {
+public static class ResourceExtensions {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    internal static IEnumerable<string> GetEntityResourceDocuments(this Assembly assembly) {
+    public static IEnumerable<string> GetEntityResourceDocuments(this Assembly assembly) {
         return GetResourceDocuments(assembly, "Applicator.EntityResources");
     }
 

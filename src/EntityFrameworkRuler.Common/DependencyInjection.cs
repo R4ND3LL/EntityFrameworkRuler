@@ -6,14 +6,12 @@ using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Saver;
 using Microsoft.Extensions.DependencyInjection;
 
-// ReSharper disable MemberCanBeInternal
-
 namespace EntityFrameworkRuler;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-public static class DependencyInjectionCommon {
+public static class DependencyInjection {
     /// <summary> Add RuleLoader services from EntityFrameworkRuler.Common only </summary>
-    public static IServiceCollection AddRulerCommon(this IServiceCollection serviceCollection)
+    public static IServiceCollection AddRuler(this IServiceCollection serviceCollection)
         => serviceCollection?
             .AddSingleton<IRuleSerializer, JsonRuleSerializer>()
             .AddTransient<IRulerNamingService, RulerNamingService>()

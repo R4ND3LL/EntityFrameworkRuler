@@ -82,12 +82,12 @@ public class RuleLoader : RuleHandler, IRuleLoader {
                     }
                 } catch (Exception ex) {
                     Console.WriteLine(ex);
-                    response.LogError($"Error processing {fileInfo.Name}: {ex.Message}");
+                    response.GetInternals().LogError($"Error processing {fileInfo.Name}: {ex.Message}");
                 }
 
             return response;
         } catch (Exception ex) {
-            response.LogError($"Error: {ex.Message}");
+            response.GetInternals().LogError($"Error: {ex.Message}");
             return response;
         } finally {
             response.Log -= OnResponseLog;
@@ -100,7 +100,7 @@ public class RuleLoader : RuleHandler, IRuleLoader {
             var rules = await ruleSerializer.Deserialize<T>(jsonFile.FullName);
             return rules;
         } catch (Exception ex) {
-            loggedResponse?.LogError($"Unable to open {jsonFile.Name}: {ex.Message}");
+            loggedResponse?.GetInternals().LogError($"Unable to open {jsonFile.Name}: {ex.Message}");
             return null;
         }
     }

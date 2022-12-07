@@ -110,7 +110,7 @@ public static class ListExtensions {
     }
 
     /// <summary> remove items from the list that are program arg switches, but append those to the outbound switchArgs </summary>
-    internal static List<string> RemoveSwitchArgs(this List<string> args, out List<string> switchArgs) {
+    public static List<string> RemoveSwitchArgs(this List<string> args, out List<string> switchArgs) {
         switchArgs = new();
         for (var i = args.Count - 1; i >= 0; i--) {
             var arg = args[i];

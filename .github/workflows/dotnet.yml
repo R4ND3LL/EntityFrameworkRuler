@@ -57,9 +57,9 @@ jobs:
     - name: Create NuGet packages
       run: dotnet pack --configuration Release --no-build --no-restore .\src\EntityFrameworkRuler.sln --output .\nupkg 
       
-#    - name: Publish Common package to NuGet 
-#      run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_TOKEN }}
-#      working-directory: nupkg
+    - name: Publish Packages to NuGet 
+      run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_TOKEN }}
+      working-directory: nupkg
  
     - name: Set VSIX Version ${{ env.VSIXVERSION }}
       uses: cezarypiatek/VsixVersionAction@1.0
@@ -86,7 +86,7 @@ jobs:
           *.vsix
           docs/Vsix.md
           
-      #https://github.com/marketplace/actions/vsix-publisher
+      # https://github.com/marketplace/actions/vsix-publisher
     - name: Publish VSIX to Marketplace 
       uses: cezarypiatek/VsixPublisherAction@0.2
       with:

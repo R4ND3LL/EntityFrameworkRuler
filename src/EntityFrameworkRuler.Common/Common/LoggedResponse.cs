@@ -34,7 +34,7 @@ public interface IResponse {
 
 /// <summary> Response with log messages </summary>
 [SuppressMessage("ReSharper", "MemberCanBeInternal")]
-public abstract class LoggedResponse : ILoggedResponse {
+public abstract class LoggedResponse : ILoggedResponse, IInternals<ILoggedResponseInternal>, ILoggedResponseInternal {
     /// <summary> Creates a logged response </summary>
     protected LoggedResponse(IMessageLogger logger) {
         Logger = logger;
@@ -64,23 +64,25 @@ public abstract class LoggedResponse : ILoggedResponse {
     /// <inheritdoc />
     public virtual bool Success => !HasErrors;
 
-    internal void LogInformation(string msg) {
+    ILoggedResponseInternal IInternals<ILoggedResponseInternal>.Instance=> this;
+
+    void ILoggedResponseInternal.LogInformation(string msg) {
         Messages.Add(Raise(LogMessage.Information(msg)));
     }
 
-    internal void LogWarning(string msg) {
+    void ILoggedResponseInternal.LogWarning(string msg) {
         Messages.Add(Raise(LogMessage.Warning(msg)));
     }
 
-    internal void LogError(string msg) {
+    void ILoggedResponseInternal.LogError(string msg) {
         Messages.Add(Raise(LogMessage.Error(msg)));
     }
 
-    internal void Merge(LoggedResponse src) {
+    void ILoggedResponseInternal.Merge(LoggedResponse src) {
         Messages.AddRange(src.Messages);
     }
-
-    internal event LogMessageHandler Log;
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public event LogMessageHandler Log;
 
     /// <summary> Raise event for logged message </summary>
     protected virtual LogMessage Raise(LogMessage msg) {
@@ -88,6 +90,17 @@ public abstract class LoggedResponse : ILoggedResponse {
         if (Logger is { } l && l.MinimumLevel <= msg.Type) l.Write(msg);
         return msg;
     }
+}
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+public interface ILoggedResponseInternal : ILoggedResponse {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    void LogInformation(string msg);
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    void LogWarning(string msg);
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    void LogError(string msg);
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    void Merge(LoggedResponse src);
 }
 
 /// <summary> Log message handler signature </summary>

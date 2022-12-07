@@ -88,7 +88,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                 var parser = EdmxParser ?? new EdmxParser();
                 response.EdmxParsed ??= parser.Parse(edmxFilePath);
             } catch (Exception ex) {
-                response.LogError($"Error parsing EDMX: {ex.Message}");
+                response.GetInternals().LogError($"Error parsing EDMX: {ex.Message}");
                 return response;
             }
 
@@ -104,7 +104,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                 var rulesRoot = gen(response.EdmxParsed);
                 response.Add(rulesRoot);
             } catch (Exception ex) {
-                response.LogError($"Error generating output for {typeof(T)}: {ex.Message}");
+                response.GetInternals().LogError($"Error generating output for {typeof(T)}: {ex.Message}");
             }
         }
     }

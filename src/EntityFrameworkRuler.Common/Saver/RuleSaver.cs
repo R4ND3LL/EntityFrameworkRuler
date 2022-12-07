@@ -51,13 +51,13 @@ public class RuleSaver : RuleHandler, IRuleSaver {
         response.Log += OnResponseLog;
         try {
             if (request == null) {
-                response.LogError("Save options are null");
+                response.GetInternals().LogError("Save options are null");
                 return response;
             }
 
             var dir = request.ProjectBasePath.HasNonWhiteSpace() ? new DirectoryInfo(request.ProjectBasePath) : null;
             if (dir?.Exists != true) {
-                response.LogError("Output folder does not exist");
+                response.GetInternals().LogError("Output folder does not exist");
                 return response;
             }
 
@@ -78,10 +78,10 @@ public class RuleSaver : RuleHandler, IRuleSaver {
                         fileName = fileName.ApplyContextNameMask(name);
                         var path = await WriteRules(rulesRoot, rulesRoot.GetFilePath().CoalesceWhiteSpace(fileName));
                         response.SavedRules.Add(path);
-                        response.LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");
+                        response.GetInternals().LogInformation($"{rulesRoot.Kind} rule file written to {fileName}");
                     }
                 } catch (Exception ex) {
-                    response.LogError($"Error writing rule to file {fileName}: {ex.Message}");
+                    response.GetInternals().LogError($"Error writing rule to file {fileName}: {ex.Message}");
                 }
             }
 

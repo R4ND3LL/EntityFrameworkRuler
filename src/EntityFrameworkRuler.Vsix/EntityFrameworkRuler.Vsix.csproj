@@ -13,6 +13,10 @@
   <PropertyGroup>
     <ApplicationIcon>Resources\crown.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\key.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -60,7 +64,6 @@
     <Compile Include="Commands\ConvertEdmxToRulesCommand.cs" />
     <Compile Include="Commands\RulerBaseCommand.cs" />
     <Compile Include="Extensions\VsixExtensions.cs" />
-    <Compile Include="GlobalUsings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\EditRulesCommand.cs" />
     <Compile Include="EntityFrameworkRulerPackage.cs" />
@@ -126,7 +129,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Community.VisualStudio.VSCT" Version="16.0.29.6" PrivateAssets="all" />
-    <PackageReference Include="Community.VisualStudio.Toolkit.17" Version="17.0.482" ExcludeAssets="Runtime">
+    <PackageReference Include="Community.VisualStudio.Toolkit.17" Version="17.0.486" ExcludeAssets="Runtime">
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection">
@@ -156,7 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj">
-      <Project>{A4BA3A4A-AB05-4E92-9B40-E7BD5B7247E0}</Project>
+      <Project>{a4ba3a4a-ab05-4e92-9b40-e7bd5b7247e0}</Project>
       <Name>EntityFrameworkRuler.Common</Name>
     </ProjectReference>
     <ProjectReference Include="..\EntityFrameworkRuler.Editor\EntityFrameworkRuler.Editor.csproj">

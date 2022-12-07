@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
-using EntityFrameworkRuler.Applicator.CsProjParser;
 using EntityFrameworkRuler.Common;
+using EntityFrameworkRuler.CsProjParser;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -83,7 +83,7 @@ public static class PathExtensions {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    internal static CsProject InspectProject(this string projectBasePath, LoggedResponse loggedResponse = null) {
+    public static CsProject InspectProject(this string projectBasePath, ILoggedResponseInternal loggedResponse = null) {
         try {
             var csProjFiles = FindCsProjFiles(projectBasePath);
             foreach (var csProjFile in csProjFiles) {
@@ -107,13 +107,13 @@ public static class PathExtensions {
     }
 
     /// <summary> Get the project folder under the current directory.  This operation is cached. </summary>
-    internal static DirectoryInfo FindProjectDirUnderCurrentCached() {
+    public static DirectoryInfo FindProjectDirUnderCurrentCached() {
         var file = FindProjectFileUnderCurrentCached();
         return file?.Directory;
     }
 
     /// <summary> Get the first project file under the current directory.  This operation is cached. </summary>
-    internal static FileInfo FindProjectFileUnderCurrentCached() {
+    public static FileInfo FindProjectFileUnderCurrentCached() {
         var dir = Directory.GetCurrentDirectory();
         if (dir.IsNullOrWhiteSpace()) return null;
         var csproj = dir.FindProjectFileCached();
@@ -157,7 +157,7 @@ public static class PathExtensions {
     }
 
     /// <summary> Locate the csproj file under the provided directory.  This operation is cached. </summary>
-    internal static FileInfo FindProjectFileCached(this DirectoryInfo info) => FindFileCached(info, "*.csproj") ?? FindFileCached(info, "*.vbproj");
+    public static FileInfo FindProjectFileCached(this DirectoryInfo info) => FindFileCached(info, "*.csproj") ?? FindFileCached(info, "*.vbproj");
 
     /// <summary> Locate the edmx file under the provided directory.  This operation is cached. </summary>
     internal static FileInfo FindEdmxFileCached(this DirectoryInfo info) => FindFileCached(info, "*.edmx");

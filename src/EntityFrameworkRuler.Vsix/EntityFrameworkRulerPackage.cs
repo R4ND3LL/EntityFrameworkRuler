@@ -2,6 +2,8 @@
 global using Microsoft.VisualStudio.Shell;
 global using System;
 global using Task = System.Threading.Tasks.Task;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using EntityFrameworkRuler.Editor.Controls;
 using EntityFrameworkRuler.Editor.Extensions;
@@ -15,6 +17,12 @@ using EntityFrameworkRuler.Editor.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio;
 using System.Reflection;
+using EntityFrameworkRuler.Extension;
+using EntityFrameworkRuler.Generator;
+using EntityFrameworkRuler.Generator.EdmxModel;
+using EntityFrameworkRuler.Generator.Services;
+using EntityFrameworkRuler.Loader;
+using EntityFrameworkRuler.Saver;
 
 namespace EntityFrameworkRuler;
 
@@ -47,11 +55,14 @@ public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
             Enumerable.Range(0, 5).ForAll(o => Debug.WriteLine($"EntityFrameworkRulerPackage INITIALIZING"));
 #endif
             await this.RegisterCommandsAsync();
-
-            var n = DependencyInjectionCommon.AddRulerCommon(null);
-            Debug.Assert(n == null);
+#if DEBUG
+            var commonAssembly = typeof(LoadOptions).Assembly;
+            var ver = commonAssembly?.GetName()?.Version;
+            await VsixMessageLogger.LogAsync($"Common assembly v{ver} loaded");
+#endif
         } catch (Exception ex) {
             await ex.LogAsync();
+            await VS.MessageBox.ShowErrorAsync("Failed to initialize: " + ex.Message);
         }
     }
 
@@ -60,11 +71,15 @@ public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
 #if DEBUG
             Enumerable.Range(0, 5).ForAll(o => Debug.WriteLine($"EntityFrameworkRulerPackage INITIALIZING ACTUAL RULER RESOURCES"));
 #endif
+            //var n = DependencyInjection.AddRuler(null);
+            //Debug.Assert(n == null);
+
             VsixAssemblyResolver.RedirectAssembly();
             if (!themeInitialized) await GetThemeInfoAsync();
             ServiceProvider ??= CreateServiceProvider();
         } catch (Exception ex) {
             await ex.LogAsync();
+            await VS.MessageBox.ShowErrorAsync("Failed to initialize Ruler: " + ex.Message);
         }
     }
 
@@ -108,8 +123,15 @@ public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
 
 
     private static IServiceProvider CreateServiceProvider() {
-        var services = DependencyInjectionCommon.AddRulerCommon(new ServiceCollection())
+        var services = new ServiceCollection()
+            .AddSingleton<IRuleSerializer, JsonRuleSerializer>()
+            .AddTransient<IRulerNamingService, RulerNamingService>()
+            .AddSingleton<IRulerPluralizer, HumanizerPluralizer>()
             .AddSingleton<IMessageLogger, VsixMessageLogger>()
+            .AddTransient<IEdmxParser, EdmxParser>()
+            .AddTransient<IRuleSaver, RuleSaver>()
+            .AddTransient<IRuleLoader, RuleLoader>()
+            .AddTransient<IRuleGenerator, RuleGenerator>()
             .AddTransient<RuleEditorViewModel, RuleEditorViewModel>()
             .AddTransient<RulesFromEdmxViewModel, RulesFromEdmxViewModel>()
             .AddTransient<IRuleEditorDialog, EntityFrameworkRuler.ToolWindows.RuleEditorDialog>()

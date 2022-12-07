@@ -125,7 +125,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
             } catch (Exception ex) {
                 Console.WriteLine(ex);
                 response ??= new(rule, Logger);
-                response.LogError($"Error processing {rule}: {ex.Message}");
+                response.GetInternals().LogError($"Error processing {rule}: {ex.Message}");
                 responses.Add(response);
             }
         }
@@ -158,7 +158,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
             schemaResponse.Log += OnResponseLog;
             try {
                 await ApplyRulesCore(request, schema.Tables, schema.Namespace, schemaResponse, state);
-                response.Merge(schemaResponse);
+                response.GetInternals().Merge(schemaResponse);
             } finally {
                 schemaResponse.Log -= OnResponseLog;
             }
@@ -183,7 +183,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         state ??= new(this);
         await state.TryLoadProjectOrFallbackOnce(request, response);
         if (state.Project?.Documents.Any() != true) return;
-
+        var responseInternal = response.GetInternals();
         var propRenameCount = 0;
         var classRenameCount = 0;
         var typeMapCount = 0;
@@ -207,16 +207,16 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                     classState.ClassSymbol = classActionResult.ClassSymbol;
                     classRenameCount++;
                     dirtyClassStates.Add(classState);
-                    response.LogInformation($"Renamed class {oldClassName} to {newClassName}");
+                    responseInternal.LogInformation($"Renamed class {oldClassName} to {newClassName}");
                 } else {
                     // property processing may still work if the class is found under the new name
                     classState.ClassSymbol = (await state.Project.FindClassesByName(namespaceName, newClassName))
                         .FirstOrDefault();
                     if (classState.ClassExists) {
-                        response.LogInformation(
+                        responseInternal.LogInformation(
                             $"Class already exists with target name: {ToFullClassName(newClassName)}");
                     } else {
-                        response.LogInformation($"Could not find class {ToFullClassName(oldClassName)}");
+                        responseInternal.LogInformation($"Could not find class {ToFullClassName(oldClassName)}");
                         continue;
                     }
                 }
@@ -226,7 +226,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
             }
 
             if (!classState.ClassExists) {
-                response.LogInformation($"Could not find class {ToFullClassName(newClassName)}");
+                responseInternal.LogInformation($"Could not find class {ToFullClassName(newClassName)}");
                 continue;
             }
 
@@ -266,17 +266,17 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                         ProjectUpdated(propertyActionResult);
                         propRenameCount++;
                         propertyExists = true;
-                        response.LogInformation(
+                        responseInternal.LogInformation(
                             $"Renamed property {newClassName}.{fromNames[i]} to {newPropName}");
                     } else {
                         // further processing may still work if the property is found under the new name
                         var currentClassSymbol = await classState.GetClassSymbol();
                         propertyExists = await currentClassSymbol.PropertyExists(newPropName);
                         if (propertyExists.Value)
-                            response.LogInformation(
+                            responseInternal.LogInformation(
                                 $"Property already exists with target name: {newClassName}.{newPropName}");
                         else {
-                            response.LogInformation(
+                            responseInternal.LogInformation(
                                 $"Could not find property {ToFullClassName(newClassName)}.{string.Join("/", fromNames)}");
                             continue;
                         }
@@ -293,7 +293,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                 }
 
                 if (propertyExists != true) {
-                    response.LogInformation($"Could not find property {ToFullClassName(newClassName)}.{newPropName}");
+                    responseInternal.LogInformation($"Could not find property {ToFullClassName(newClassName)}.{newPropName}");
                     continue;
                 }
 
@@ -315,14 +315,14 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                         // documents have been mutated. update reference to project:
                         ProjectUpdated(propertyActionResult);
                         typeMapCount++;
-                        response.LogInformation(
+                        responseInternal.LogInformation(
                             $"Updated property {newClassName}.{currentNames[i]} type to {newType}");
                     } else {
                         // should not arrive here because logic above confirms that the property exists
 #if DEBUG
                         if (Debugger.IsAttached) Debugger.Break();
 #endif
-                        response.LogInformation(
+                        responseInternal.LogInformation(
                             $"Could not find property {ToFullClassName(newClassName)}.{string.Join(", ", currentNames)}");
                     }
                 }
@@ -332,7 +332,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         }
 
         if (classRenameCount == 0 && propRenameCount == 0 && typeMapCount == 0) {
-            response.LogInformation("No changes made");
+            responseInternal.LogInformation("No changes made");
             return;
         }
 
@@ -365,7 +365,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         }
 
         sb.Append($" across {saved} files");
-        response.LogInformation(sb.ToString());
+        responseInternal.LogInformation(sb.ToString());
         return;
     }
 
@@ -382,15 +382,15 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
                     if (project?.Documents.Any() == true) return project;
                 }
 
-                response?.LogInformation("Direct project load failed. Attempting adhoc project creation...");
+                response?.GetInternals().LogInformation("Direct project load failed. Attempting adhoc project creation...");
             } else {
-                response?.LogInformation("Attempting adhoc project creation...");
+                response?.GetInternals().LogInformation("Attempting adhoc project creation...");
             }
 
             project = TryLoadFallbackAdhocProject(request, response);
             return project;
         } catch (Exception ex) {
-            response?.LogError($"Error loading project: {ex.Message}");
+            response?.GetInternals().LogError($"Error loading project: {ex.Message}");
             return null;
         }
     }
@@ -420,10 +420,11 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         var start = DateTimeExtensions.GetTime();
         var path = request.ProjectBasePath;
         var csProj = path.InspectProject(response);
+        var responseInternal = response?.GetInternals();
 
         if (csProj?.ImplicitUsings.In("enabled", "enable", "true") == true) {
             // symbol renaming will likely not work correctly.
-            response?.LogInformation(
+            responseInternal?.LogInformation(
                 "WARNING: ImplicitUsings is enabled on this project. Symbol renaming may not fully work due to missing reference information.");
         }
 
@@ -452,7 +453,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         toIgnore.ForEach(o => cSharpFiles.Remove(o));
 
         if (cSharpFiles.Count == 0) {
-            response?.LogError("No .cs files found");
+            responseInternal?.LogError("No .cs files found");
             return null;
         }
 
@@ -485,19 +486,19 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
             if (project?.Documents.Any() == true) {
                 // add project references?
                 var elapsed = DateTimeExtensions.GetTime() - start;
-                response?.LogInformation($"Loaded adhoc project in {elapsed}ms");
+                responseInternal?.LogInformation($"Loaded adhoc project in {elapsed}ms");
                 return project;
             }
         } catch (Exception ex) {
-            response?.LogError($"Unable to get in-memory project from workspace: {ex.Message}");
+            responseInternal?.LogError($"Unable to get in-memory project from workspace: {ex.Message}");
             return null;
         }
 
         return null;
     }
 
-
-    internal sealed class RoslynProjectState {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public sealed class RoslynProjectState {
         private readonly RuleApplicator applicator;
 
         public RoslynProjectState(RuleApplicator applicator) {
@@ -505,10 +506,15 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         }
 
         private bool loadAttempted = false;
+
+        /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
         public Project OriginalProject { get; private set; }
+
+        /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
         public Project Project { get; set; }
 
-        internal async Task TryLoadProjectOrFallbackOnce(ApplicatorOptions request, ApplyRulesResponse response) {
+        /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+        public async Task TryLoadProjectOrFallbackOnce(ApplicatorOptions request, ApplyRulesResponse response) {
             if (loadAttempted) return;
             loadAttempted = true;
             OriginalProject = Project = await applicator.TryLoadProjectOrFallback(request, response);
@@ -566,7 +572,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
 }
 
 public sealed class ApplyRulesResponse : LoggedResponse {
-    internal ApplyRulesResponse(IRuleModelRoot ruleModelRoot, IMessageLogger logger) : base(logger) {
+    public ApplyRulesResponse(IRuleModelRoot ruleModelRoot, IMessageLogger logger) : base(logger) {
         Rule = ruleModelRoot;
     }
 

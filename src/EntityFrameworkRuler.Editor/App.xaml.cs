@@ -35,7 +35,7 @@ public sealed partial class App : Application {
 
     private IServiceProvider CreateServiceProvider() {
         var services = new ServiceCollection()
-            .AddRulerCommon()
+            .AddRuler()
             .AddTransient<RuleEditorViewModel, RuleEditorViewModel>()
             .AddTransient<RulesFromEdmxViewModel, RulesFromEdmxViewModel>()
             .AddTransient<IRuleEditorDialog, RuleEditorDialog>()

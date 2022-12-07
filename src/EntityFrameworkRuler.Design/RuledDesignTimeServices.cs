@@ -39,7 +39,7 @@ namespace EntityFrameworkRuler.Design {
                 .AddSingleton<IDesignTimeRuleLoader, DesignTimeRuleLoader>()
                 .AddSingleton<IRuleModelUpdater, RuleModelUpdater>()
                 //.TryAddSingletonEnumerable<IModelCodeGenerator, RuledTemplatedModelGenerator>()
-                .AddRulerCommon()
+                .AddRuler()
                 .AddSingleton<IMessageLogger, ConsoleMessageLogger>();
         }
     }

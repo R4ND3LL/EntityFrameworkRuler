@@ -1,4 +1,8 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using EntityFrameworkRuler.Extension;
 using EnvDTE;
 using EnvDTE80;
 
@@ -24,11 +28,14 @@ internal abstract class RulerBaseCommand<T> : BaseCommand<T> where T : class, ne
                 item = await VS.Solutions.GetActiveItemAsync();
                 if (item == null || item.Type.NotIn(SolutionItemType.PhysicalFile)) return;
                 var fileExtension = Path.GetExtension(item.Name);
-                if (!SupportedFiles.Contains(fileExtension)) return;
+                if (!SupportedFiles.Contains(fileExtension)) {
+                    item = null; // item rejected due to invalid type. continue to open the form anyway
+                }
             }
             await ExecuteCoreAsync(e, item);
         } catch (Exception ex) {
             await ex.LogAsync();
+            await VS.MessageBox.ShowErrorAsync("Failed to open form: " + ex.Message);
         }
     }
 

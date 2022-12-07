@@ -1,8 +1,7 @@
-﻿using System.Linq;
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using System.Xml.XPath;
 
-namespace EntityFrameworkRuler.Applicator.CsProjParser;
+namespace EntityFrameworkRuler.CsProjParser;
 
 internal static class CsProjSerializer {
     public static CsProject Deserialize(string projContent) {

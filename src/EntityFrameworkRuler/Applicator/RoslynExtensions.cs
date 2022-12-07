@@ -39,7 +39,7 @@ public enum LocationResult {
     Found, NotFound
 }
 
-internal static class RoslynExtensions {
+public static class RoslynExtensions {
     private static VisualStudioInstance vsInstance;
 #if DEBUG
     public static uint FindClassesByNameTime;
@@ -393,25 +393,25 @@ internal static class RoslynExtensions {
     }
 
     public static async Task<Project>
-        LoadExistingProjectAsync(string csProjPath, LoggedResponse loggedResponse = null) {
+        LoadExistingProjectAsync(string csProjPath, LoggedResponse response = null) {
         try {
             vsInstance ??= MSBuildLocatorRegisterDefaults();
-            loggedResponse?.LogInformation($"Using msbuild: {vsInstance.MSBuildPath}");
+            response?.GetInternals()?.LogInformation($"Using msbuild: {vsInstance.MSBuildPath}");
             var start = DateTimeExtensions.GetTime();
             using var workspace = MSBuildWorkspace.Create();
             var project = await workspace.OpenProjectAsync(csProjPath);
             var diagnostics = workspace.Diagnostics;
             foreach (var diagnostic in diagnostics.Where(diagnostic =>
                          diagnostic.Kind == WorkspaceDiagnosticKind.Failure)) {
-                loggedResponse?.LogWarning($"Error loading existing project: {diagnostic.Message}");
+                response?.GetInternals().LogWarning($"Error loading existing project: {diagnostic.Message}");
                 return null;
             }
 
             var elapsed = DateTimeExtensions.GetTime() - start;
-            loggedResponse?.LogInformation($"Loaded project directly in {elapsed}ms");
+            response?.GetInternals().LogInformation($"Loaded project directly in {elapsed}ms");
             return project;
         } catch (Exception ex) {
-            loggedResponse?.LogError($"Error loading existing project: {ex.Message}");
+            response?.GetInternals().LogError($"Error loading existing project: {ex.Message}");
             return null;
         }
     }

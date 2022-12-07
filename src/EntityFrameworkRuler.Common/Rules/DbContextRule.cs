@@ -14,7 +14,8 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
         Schemas = Observable ? new ObservableCollection<SchemaRule>() : new List<SchemaRule>();
     }
 
-    internal static DbContextRule DefaultNoRulesFoundBehavior => new() { IncludeUnknownSchemas = true };
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static DbContextRule DefaultNoRulesFoundBehavior => new() { IncludeUnknownSchemas = true };
 
     /// <summary> DB context name of the reverse engineered model that this rule set applies to. </summary>
     [DataMember(Order = 1)]
@@ -50,9 +51,10 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     public RuleModelKind Kind => RuleModelKind.DbContext;
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     // ReSharper disable once UnusedAutoPropertyAccessor.Global
-    internal string FilePath { get; set; }
+    public string FilePath { get; set; }
 
     /// <inheritdoc />
     protected override string GetExpectedEntityFrameworkName() => Name;
@@ -73,5 +75,5 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
 
     IEnumerable<ISchemaRule> IRuleModelRoot.GetSchemas() => Schemas;
     IEnumerable<IClassRule> IRuleModelRoot.GetClasses() => Schemas.SelectMany(o => o.Tables);
-     string IRuleModelRoot.GetFilePath() => FilePath;
+    string IRuleModelRoot.GetFilePath() => FilePath;
 }

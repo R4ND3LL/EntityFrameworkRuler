@@ -118,7 +118,7 @@ public static class StringExtensions {
     }
 
     /// <summary> will return true if the string is a valid symbol name </summary>
-    internal static bool IsValidSymbolName(this string str) {
+    public static bool IsValidSymbolName(this string str) {
         if (string.IsNullOrEmpty(str)) return false;
         for (var i = 0; i < str.Length; i++) {
             var c = str[i];
@@ -228,13 +228,13 @@ public static class StringExtensions {
         var typeName = parts[^1];
         return (parts.Take(parts.Length - 1).Join("."), typeName);
     }
-
-    internal static char GetSwitchArgChar(this string arg) {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static char GetSwitchArgChar(this string arg) {
         arg = GetSwitchArg(arg);
         return arg?[0] ?? default;
     }
-
-    internal static string GetSwitchArg(this string arg) {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static string GetSwitchArg(this string arg) {
         if (arg.IsNullOrWhiteSpace() || arg.Length < 2) return default;
         var firstChar = arg[0];
         return firstChar is '-' or '/' ? arg[1..].ToLower() : default;
