@@ -185,7 +185,7 @@ public static class PathExtensions {
         int maxRecursionDepth = 1, Predicate<FileInfo> predicate = null) =>
         FindFile(new DirectoryInfo(path), searchPattern, recurseSubdirectories, maxRecursionDepth, predicate);
 
-    internal static FileInfo FindFile(this DirectoryInfo info, string searchPattern, bool recurseSubdirectories = true,
+    public static FileInfo FindFile(this DirectoryInfo info, string searchPattern, bool recurseSubdirectories = true,
         int maxRecursionDepth = 1, Predicate<FileInfo> predicate = null) {
         try {
             return FindFiles(info, searchPattern, recurseSubdirectories, maxRecursionDepth)

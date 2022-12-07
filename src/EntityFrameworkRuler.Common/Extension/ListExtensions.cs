@@ -88,18 +88,34 @@ public static class ListExtensions {
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static ObservableCollection<T> ToObservable<T>(this IEnumerable<T> c) {
-        return new ObservableCollection<T>(c);
+        return new(c);
     }
 
-#if NETCOREAPP3_1
+#if LEGACY
     /// <summary> missing in .net 3.1 </summary>
     public static IEnumerable<T> DistinctBy<T, TKey>(this IEnumerable<T> items, Func<T, TKey> property) {
         return items.GroupBy(property).Select(x => x.First());
     }
+
 #endif
+    /// <summary>Creates a <see cref="T:System.Collections.Generic.HashSet`1" /> from an <see cref="T:System.Collections.Generic.IEnumerable`1" />.</summary>
+    /// <param name="source">An <see cref="T:System.Collections.Generic.IEnumerable`1" /> to create a <see cref="T:System.Collections.Generic.HashSet`1" /> from.</param>
+    /// <typeparam name="TSource">The type of the elements of <paramref name="source" />.</typeparam>
+    /// <returns>A <see cref="T:System.Collections.Generic.HashSet`1" /> that contains values of type <paramref name="TSource" /> selected from the input sequence.</returns>
+    public static HashSet<TSource> ToHashSetNew<TSource>(this IEnumerable<TSource> source) => source.ToHashSetNew(null);
+
+    /// <summary>Creates a <see cref="T:System.Collections.Generic.HashSet`1" /> from an <see cref="T:System.Collections.Generic.IEnumerable`1" /> using the <paramref name="comparer" /> to compare keys.</summary>
+    /// <param name="source">An <see cref="T:System.Collections.Generic.IEnumerable`1" /> to create a <see cref="T:System.Collections.Generic.HashSet`1" /> from.</param>
+    /// <param name="comparer">An <see cref="T:System.Collections.Generic.IEqualityComparer`1" /> to compare keys.</param>
+    /// <typeparam name="TSource">The type of the elements of <paramref name="source" />.</typeparam>
+    /// <returns>A <see cref="T:System.Collections.Generic.HashSet`1" /> that contains values of type <paramref name="TSource" /> selected from the input sequence.</returns>
+    public static HashSet<TSource> ToHashSetNew<TSource>(this IEnumerable<TSource> source, IEqualityComparer<TSource> comparer) {
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        return new(source, comparer);
+    }
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static TValue GetOrAddNew<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key) where TValue : new() {
-        return GetOrAddNew<TKey, TValue>(source, key, _ => new());
+        return GetOrAddNew(source, key, _ => new());
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>

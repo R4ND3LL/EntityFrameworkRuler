@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using EntityFrameworkRuler.Applicator;
 using EntityFrameworkRuler.Generator;
+using EntityFrameworkRuler.Helper;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EntityFrameworkRuler;

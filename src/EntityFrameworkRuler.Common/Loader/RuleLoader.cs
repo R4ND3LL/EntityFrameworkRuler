@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable MemberCanBeInternal
-[assembly: CLSCompliant(false)]
 
 namespace EntityFrameworkRuler.Loader;
 

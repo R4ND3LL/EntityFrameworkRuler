@@ -5,16 +5,20 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EntityFrameworkRuler.Common;
-using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.CodeAnalysis.Rename;
 using Microsoft.CodeAnalysis.Text;
 using Document = Microsoft.CodeAnalysis.Document;
 using Project = Microsoft.CodeAnalysis.Project;
 using SyntaxFactory = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
+// ReSharper disable RedundantUsingDirective
+using Microsoft.Build.Locator;
+using Microsoft.CodeAnalysis.MSBuild;
+
+// ReSharper restore RedundantUsingDirective
 
 namespace EntityFrameworkRuler.Applicator;
 
@@ -40,7 +44,6 @@ public enum LocationResult {
 }
 
 public static class RoslynExtensions {
-    private static VisualStudioInstance vsInstance;
 #if DEBUG
     public static uint FindClassesByNameTime;
     public static uint RenameClassAsyncTime;
@@ -360,26 +363,30 @@ public static class RoslynExtensions {
             var path = document?.FilePath;
             if (path == null) continue;
             var text = await GetDocumentText(document);
+#if LEGACY
+            if (path.Length == int.MaxValue) await Task.Delay(0);
+            File.WriteAllText(path, text, Encoding.UTF8);
+#else
             await File.WriteAllTextAsync(path, text, Encoding.UTF8);
+#endif
             saveCount++;
         }
 
         return saveCount;
     }
 
-    public static async Task<int> SaveDocumentsAsync(this IEnumerable<Document> documents,
-        bool compareForChangesFirst = true) {
+    public static async Task<int> SaveDocumentsAsync(this IEnumerable<Document> documents) {
         var saveCount = 0;
         foreach (var document in documents) {
             var path = document.FilePath;
             if (path == null) continue;
             var text = await GetDocumentText(document);
-            if (compareForChangesFirst) {
-                var orig = (await File.ReadAllTextAsync(path, Encoding.UTF8))?.Trim();
-                if (text == orig) continue;
-            }
-
-            await File.WriteAllTextAsync(path, text, Encoding.UTF8);
+#if LEGACY
+            if (path.Length == int.MaxValue) await Task.Delay(0);
+            File.WriteAllText(path, text, Encoding.UTF8);
+#else
+             await File.WriteAllTextAsync(path, text, Encoding.UTF8);
+#endif
             saveCount++;
         }
 
@@ -392,9 +399,11 @@ public static class RoslynExtensions {
             (await document.GetTextAsync()).Lines.Select(o => o.ToString())).Trim();
     }
 
-    public static async Task<Project>
-        LoadExistingProjectAsync(string csProjPath, LoggedResponse response = null) {
+    public static async Task<Project> LoadExistingProjectAsync(string csProjPath, LoggedResponse response = null) {
         try {
+#if NETSTANDARD2_0
+            return null;
+#else
             vsInstance ??= MSBuildLocatorRegisterDefaults();
             response?.GetInternals()?.LogInformation($"Using msbuild: {vsInstance.MSBuildPath}");
             var start = DateTimeExtensions.GetTime();
@@ -410,11 +419,14 @@ public static class RoslynExtensions {
             var elapsed = DateTimeExtensions.GetTime() - start;
             response?.GetInternals().LogInformation($"Loaded project directly in {elapsed}ms");
             return project;
+#endif
         } catch (Exception ex) {
             response?.GetInternals().LogError($"Error loading existing project: {ex.Message}");
             return null;
         }
     }
+#if !NETSTANDARD2_0
+    private static VisualStudioInstance vsInstance;
 
     private static VisualStudioInstance MSBuildLocatorRegisterDefaults() {
         // override default behavior using using reflection to get the VS instances list and register the LATEST version of VS
@@ -442,11 +454,9 @@ public static class RoslynExtensions {
             return null;
         }
     }
+#endif
 
-    public static AdhocWorkspace GetWorkspaceForFilePaths(
-        this IEnumerable<string> filePaths,
-        IEnumerable<Assembly> projReferences = null) {
-        //var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
+    public static AdhocWorkspace GetWorkspaceForFilePaths(this IEnumerable<string> filePaths, IEnumerable<Assembly> projReferences = null) {
         var ws = new AdhocWorkspace();
         var refAssemblies = new HashSet<Assembly>();
         if (projReferences != null) refAssemblies.AddRange(projReferences);

@@ -1,12 +1,13 @@
 ﻿using System.Linq;
+using EntityFrameworkRuler.Applicator;
 
-namespace EntityFrameworkRuler.Applicator;
+namespace EntityFrameworkRuler.Helper;
 
-public static class ApplicatorArgHelper {
+internal static class ApplicatorArgHelper {
     internal static ApplicatorOptions GetDefaultOptions() =>
         TryParseArgs(Array.Empty<string>(), out var o) ? o : o ?? new LoadAndApplyOptions();
 
-    internal static bool TryParseArgs(string[] argsArray, out LoadAndApplyOptions applicatorOptions) {
+    public static bool TryParseArgs(string[] argsArray, out LoadAndApplyOptions applicatorOptions) {
         applicatorOptions = new();
         var args = argsArray.ToList().RemoveSwitchArgs(out var switchArgs);
 

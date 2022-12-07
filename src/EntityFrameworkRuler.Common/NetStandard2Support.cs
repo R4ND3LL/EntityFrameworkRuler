@@ -1,8 +1,18 @@
 ﻿#if LEGACY
 using System.Runtime.CompilerServices;
+
+// ReSharper disable EmptyNamespace
+
 // ReSharper disable RedundantIfElseBlock
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
+
+namespace Microsoft.Build.Locator {
+}
+
+namespace Microsoft.CodeAnalysis.MSBuild {
+}
+
 
 namespace System {
     /// <summary>Specifies that when a method returns <see cref="ReturnValue"/>, the parameter will not be null even if the corresponding type allows it.</summary>

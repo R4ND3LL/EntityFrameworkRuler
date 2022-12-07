@@ -340,7 +340,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         if (classRenameCount > 0 || propRenameCount > 0) {
             // perform a diff on the documents to find changes.
             var changes = state.Project.GetChangedDocuments(state.OriginalProject);
-            saved = changes?.Count > 0 ? await changes.SaveDocumentsAsync(false) : 0;
+            saved = changes?.Count > 0 ? await changes.SaveDocumentsAsync() : 0;
         } else {
             // type mapping only.  we know the exact docs that changed.
             Debug.Assert(typeMapCount > 0 && dirtyClassStates.Count > 0);
@@ -458,7 +458,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         }
 
         var thisAssembly = typeof(RuleApplicator).Assembly;
-        var thisAssemblyReferences = thisAssembly.GetReferencedAssemblies().Select(o => o.Name).ToHashSet();
+        var thisAssemblyReferences = thisAssembly.GetReferencedAssemblies().Select(o => o.Name).ToHashSetNew(StringComparer.OrdinalIgnoreCase);
 
         var refAssemblies = new HashSet<Assembly>();
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -552,7 +552,9 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
 
             // update it from current project
             var classSymbolTask = classSymbol.CurrentFrom(Project);
-            classSymbol = classSymbolTask.IsCompletedSuccessfully ? classSymbolTask.Result : await classSymbolTask;
+            classSymbol = classSymbolTask.IsCompleted && !classSymbolTask.IsCanceled && !classSymbolTask.IsFaulted
+                ? classSymbolTask.Result
+                : await classSymbolTask;
             classSymbolStale = false;
             return classSymbol;
         }

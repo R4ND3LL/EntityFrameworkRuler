@@ -12,7 +12,7 @@ public static class DependencyInjection {
         (T)serviceCollection?
             .AddRuler()
             .AddSingleton<IMessageLogger, ConsoleMessageLogger>()
-            .AddTransient<IRuleApplicator, RuleApplicator>();
+            ;
 
 
 }

@@ -1,4 +1,5 @@
-﻿using EntityFrameworkRuler.Common;
+﻿using EntityFrameworkRuler.Applicator;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator;
 using EntityFrameworkRuler.Generator.EdmxModel;
 using EntityFrameworkRuler.Generator.Services;
@@ -20,7 +21,8 @@ public static class DependencyInjection {
             .AddTransient<IEdmxParser, EdmxParser>()
             .AddTransient<IRuleSaver, RuleSaver>()
             .AddTransient<IRuleLoader, RuleLoader>()
-            .AddTransient<IRuleGenerator, RuleGenerator>();
+            .AddTransient<IRuleGenerator, RuleGenerator>()
+            .AddTransient<IRuleApplicator, RuleApplicator>();
 
     private static IServiceCollection CoerceLoaderServiceCollection(this IServiceCollection serviceCollection) {
         // possible location of reflection based service wiring on the target project ?

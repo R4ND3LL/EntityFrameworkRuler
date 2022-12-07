@@ -17,6 +17,7 @@ using EntityFrameworkRuler.Editor.Dialogs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio;
 using System.Reflection;
+using EntityFrameworkRuler.Applicator;
 using EntityFrameworkRuler.Extension;
 using EntityFrameworkRuler.Generator;
 using EntityFrameworkRuler.Generator.EdmxModel;
@@ -132,6 +133,7 @@ public sealed class EntityFrameworkRulerPackage : ToolkitPackage {
             .AddTransient<IRuleSaver, RuleSaver>()
             .AddTransient<IRuleLoader, RuleLoader>()
             .AddTransient<IRuleGenerator, RuleGenerator>()
+            .AddTransient<IRuleApplicator, RuleApplicator>()
             .AddTransient<RuleEditorViewModel, RuleEditorViewModel>()
             .AddTransient<RulesFromEdmxViewModel, RulesFromEdmxViewModel>()
             .AddTransient<IRuleEditorDialog, EntityFrameworkRuler.ToolWindows.RuleEditorDialog>()
