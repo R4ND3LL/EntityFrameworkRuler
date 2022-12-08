@@ -8,5 +8,5 @@ namespace NorthwindModel {
     }
 }
 
-namespace NorthwindModel.Models {
-}
+namespace NorthwindModel.Models { }
+namespace NorthwindModel.Context { }

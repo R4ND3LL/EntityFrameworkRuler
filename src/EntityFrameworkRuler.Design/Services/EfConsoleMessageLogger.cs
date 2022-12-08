@@ -27,7 +27,6 @@ public sealed class EfConsoleMessageLogger : MessageLoggerBase {
 #else
                 reporter.WriteVerbose(logMessage.Message);
 #endif
-                reporter.WriteVerbose(logMessage.Message);
                 break;
             case LogType.Information:
                 reporter.WriteInformation(logMessage.Message);
@@ -42,7 +41,7 @@ public sealed class EfConsoleMessageLogger : MessageLoggerBase {
                 throw new ArgumentOutOfRangeException(nameof(logMessage.Type), logMessage.Type, null);
         }
 
-        DebugLog(logMessage.Message);
+        //DebugLog(logMessage.Message);
     }
 
     [Conditional("DEBUG")]
