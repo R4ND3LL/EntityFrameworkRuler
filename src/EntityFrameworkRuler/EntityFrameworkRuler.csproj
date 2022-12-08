@@ -11,7 +11,7 @@
     <PackageIcon>crown128.png</PackageIcon>
     <RootNamespace>EntityFrameworkRuler</RootNamespace>
     <PackageId>EntityFrameworkRuler</PackageId>
-    <PackageReadmeFile>EntityFrameworkRuler.md</PackageReadmeFile>
+    <PackageReadmeFile>CommandLineTool.md</PackageReadmeFile>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>..\key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
@@ -72,6 +72,6 @@
     <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\docs\EntityFrameworkRuler.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\docs\CommandLineTool.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>

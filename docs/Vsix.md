@@ -18,29 +18,30 @@ EF Ruler applies customizations from a rule document stored in the project folde
 3) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will do the rest.
 
 -------
-### Initializing DB Context Rules _Without_ an EDMX:
+### Initializing DB Context Rules _without_ an EDMX:
 1) Reference [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.
-2) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will do the rest.  By default, if no rule file found, a complete model is generated based on the current EF Core model.  The rules can then be modified, and applied by re-running the [scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command.
+2) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and a complete rule file will be generated based on the reverse engineered model.  The rules can then be modified, and changes applied by re-running the [scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command.
 
 -------
 ### DB Context Customization and Ongoing DB Maintenance
 
-1) With [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) installed, right click on the json rules file and go to _Edit DB Context Rules_.
-2) Adjust the model as necessary using the editor UI.  
+1) Edit the rules json by hand, or with the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) installed, right click on the rules file and go to _Edit DB Context Rules_.
+2) Adjust the model as necessary using the editor:  
 ![RuleEditorPreview.png](RuleEditorPreview.png)
+3) Apply the customizations (see below).
 
 -------
 ### Applying Model Customizations:
-1) Reference NuGet package [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.  This is a Design-Time reference, meaning EF Core can use it during the scaffolding process but the assembly will NOT appear in the project build output. 
-2) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will apply all changes as per the json rule file.
+1) Reference NuGet package [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.  This is a design-time reference, meaning it will _not_ appear in the project build output, but will interact with EF Core's reverse engineer process.
+2) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will apply all changes as per the json rule file.  The rule file itself will also sync up with the reverse engineered model.
 
 -------
-### Adding/Removing Tables From the Model:
+### Adding or Removing Tables From the Model:
 By default, a rule file generated from EDMX limits tables and columns to just what was in the EDMX.  That way, an identical model can be generated.
 
 If it's time to add a table or column to the model, adjust the IncludeUnknownTables/IncludeUnknownColumns flags at the relevant level.
 
-If the database schema contains a lot of tables that you don't want to generate entities for, then enabling IncludeUnknownTables is not a good idea.  Instead, manually create the table entry in the rule file (using the Editor UI) and set IncludeUnknownColumns to true.  On the next scaffold, the entity and table rules will be generated fully.  
+If the database schema contains a lot of tables that you don't want to generate entities for, then enabling IncludeUnknownTables is not a good idea.  Instead, manually create the table entry in the rule file (using the [Editor]((https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler))) and set IncludeUnknownColumns to true.  On the next scaffold, the new entity will be generated fully.
 
 You can remove entities from the model by marking the corresponding table (or column) as _Not Mapped_.
 

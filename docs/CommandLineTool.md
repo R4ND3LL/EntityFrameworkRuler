@@ -1,6 +1,6 @@
-# Entity Framework Ruler - Common
+# Entity Framework Ruler - Command Line Tool
 
-### This library supports the tooling in Entity Framework Ruler and can be referenced directly from your project if you want to drive EF Ruler programmatically.
+### This is a dotnet command line tool and cannot be referenced directly from a project.  Its main purpose is to generate a DB context rule file from an EDMX. The [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) can also do the same thing with a UI.
 
 -------
 
@@ -12,13 +12,14 @@ Automate the customization of the EF Core Reverse Engineered model. Features inc
 - Forcing inclusion of simple many-to-many entities into the model.
 - Entity type configuration file splitting.
 
+
 EF Ruler applies customizations from a rule document stored in the project folder.  Rules can be initialized from the call to [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli), or they can be fully generated from an EDMX (from old Entity Framework) such that the scaffolding output will align with the old EF6 EDMX-based model.
 
 >"EF Ruler provides a smooth upgrade path from EF6 to EF Core by ensuring that the Reverse Engineered model maps perfectly from the old EDMX structure."
 
 -------
 ### Upgrading from EF6 with EDMX:
-1) Use the [command line tool](https://www.nuget.org/packages/EntityFrameworkRuler/) or the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) to generated DB Context rules from an EDMX file. 
+1) Use the [command line tool](https://www.nuget.org/packages/EntityFrameworkRuler/) or the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) to generated DB Context rules from an EDMX file.
 2) Reference [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.
 3) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will do the rest.
 

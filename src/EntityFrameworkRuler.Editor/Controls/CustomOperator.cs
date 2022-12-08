@@ -39,6 +39,7 @@ public sealed class CustomOperator : PropertyGridOperator {
         foreach (var item in items) {
             if (item == null) continue;
             if (item.DisplayName == "Not Mapped" && instance is DbContextRule) continue;
+            if (item.DisplayName == "Mapped") continue;
             if (item.Properties?.Count > 0 && item.ActualPropertyType != typeof(string) &&
                 typeof(IList).IsAssignableFrom(item.ActualPropertyType)) {
                 var collections = item.Properties.Cast<PropertyDescriptor>()
