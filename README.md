@@ -14,13 +14,13 @@ Automate the customization of the EF Core Reverse Engineered model. Features inc
 - Forcing inclusion of simple many-to-many entities into the model.
 - Entity type configuration file splitting.
 
-EF Ruler applies customizations from a rule document stored in the project folder.  Rules can be initialized from a call to [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli), or they can be fully generated from an EDMX  such that the scaffolding output will align with the old EF6 EDMX-based model.
+EF Ruler applies customizations from a rule document stored in the project folder.  Rules can be initialized with a call to [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli), or they can be fully generated from an EDMX such that the scaffolding output will align with the old EF6 EDMX-based model.
 
 >"EF Ruler provides a smooth upgrade path from EF6 to EF Core by ensuring that the Reverse Engineered model maps perfectly from the old EDMX structure."
 
 -------
 ### Upgrading from EF6 with EDMX:
-1) Use the [command line tool](https://www.nuget.org/packages/EntityFrameworkRuler/) or the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) to generated DB Context rules from an EDMX file. ![VS Extension Preview](src\Resources\EdmxConverterPreview.png)
+1) Use the [command line tool](https://www.nuget.org/packages/EntityFrameworkRuler/) or the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) to generated DB Context rules from an EDMX file. ![VS Extension Preview](/src/Resources/EdmxConverterPreview.png)
 2) Reference [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.
 3) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will do the rest.
 
@@ -34,7 +34,7 @@ EF Ruler applies customizations from a rule document stored in the project folde
 
 1) Edit the rules json by hand, or with the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) installed, right click on the rules file and go to _Edit DB Context Rules_.
 2) Adjust the model as necessary using the editor:  
-   ![RuleEditorPreview.png](src\Resources\RuleEditorPreview.png)
+   ![RuleEditorPreview.png](src/Resources/RuleEditorPreview.png)
 3) Apply the customizations (see below).
 
 -------
