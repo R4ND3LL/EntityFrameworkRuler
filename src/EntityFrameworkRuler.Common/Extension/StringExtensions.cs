@@ -228,15 +228,31 @@ public static class StringExtensions {
         var typeName = parts[^1];
         return (parts.Take(parts.Length - 1).Join("."), typeName);
     }
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static char GetSwitchArgChar(this string arg) {
         arg = GetSwitchArg(arg);
         return arg?[0] ?? default;
     }
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static string GetSwitchArg(this string arg) {
         if (arg.IsNullOrWhiteSpace() || arg.Length < 2) return default;
         var firstChar = arg[0];
         return firstChar is '-' or '/' ? arg[1..].ToLower() : default;
+    }
+
+    /// <summary> generate a unique identifier based on the name exists check </summary>
+    [DebuggerStepThrough]
+    public static string GetUniqueString(this string n, Func<string, bool> nameExists) {
+        if (n == null) throw new ArgumentNullException(nameof(n));
+        if ((!nameExists(n))) return n;
+        var num = 2;
+        var newName = $"{n}{num++}";
+        while (nameExists(newName)) {
+            newName = $"{n}{num++}";
+        }
+
+        return newName;
     }
 }

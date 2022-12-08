@@ -59,7 +59,7 @@ public class RuleValidator : IRuleValidator {
                 .Assert(s => s.IsValidSymbolName(), invalidSymbolName)
                 .Assert(s => s.Length < 200, tooLong)
                 .For(o => o.Schemas)
-                .Assert(o => o.Select(r => r.SchemaName).Where(r => r.HasCharacters()).IsDistinct(), "SchemaNames should be unique")
+                .Assert(o => o.Select(r => r.SchemaName).Where(r => r.HasCharacters()).IsDistinct(), "Schema names should be unique")
             ;
     }
 
@@ -74,9 +74,10 @@ public class RuleValidator : IRuleValidator {
                 .For(o => o.ColumnRegexPattern).Assert(o => VerifyRegEx(o))
                 .For(o => o.TableRegexPattern).Assert(o => VerifyRegEx(o))
                 .For(o => o.Tables)
-                .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Names should be unique")
-                .Assert(o => o.Select(r => r.EntityName).Where(r => r.HasCharacters()).IsDistinct(), "EntityNames should be unique")
-                .Assert(o => o.Select(r => r.NewName).Where(r => r.HasCharacters()).IsDistinct(), "NewNames should be unique")
+                .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Entity Names should be unique")
+                .Assert(o => o.Select(r => r.EntityName).Where(r => r.HasCharacters()).IsDistinct(), "Entity EntityNames should be unique")
+                .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
+                    "Final entity names should be unique")
             ;
     }
 
@@ -89,19 +90,15 @@ public class RuleValidator : IRuleValidator {
                 .For(o => o.NewName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.EntityName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.Columns)
-                .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Names should be unique")
-                .Assert(o => o.Select(r => r.PropertyName).Where(r => r.HasCharacters()).IsDistinct(), "PropertyNames should be unique")
-                .Assert(o => o.Select(r => r.NewName).Where(r => r.HasCharacters()).IsDistinct(), "NewNames should be unique")
-                .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
-                    "FinalNames should be unique")
+                .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Column Names should be unique")
+                .Assert(o => o.Select(r => r.PropertyName).Where(r => r.HasCharacters()).IsDistinct(), "Column PropertyNames should be unique")
                 .For(o => o.Navigations)
-                //.Assert(o => o.Select(r => r.FirstName).Where(r => r.HasCharacters()).IsDistinct(), "Names should be unique")
-                .Assert(o => o.Select(r => r.NewName).Where(r => r.HasCharacters()).IsDistinct(), "NewNames should be unique")
-                .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
-                    "FinalNames should be unique")
                 .Assert(o => o.Where(r => r.FkName.HasCharacters())
                         .Select(r => (r.FkName, r.IsPrincipal)).IsDistinct(),
                     "FkNames should be unique")
+                .For(o => ((IClassRule)o).GetProperties())
+                .Assert(o => o.Select(r => r.GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
+                    "Final property names should be unique")
             ;
     }
 

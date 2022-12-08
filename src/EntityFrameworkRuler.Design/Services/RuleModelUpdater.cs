@@ -1,11 +1,9 @@
-﻿using System.Data;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Rules;
 using EntityFrameworkRuler.Saver;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 

@@ -24,6 +24,7 @@ public class Validator<T> : IValidator where T : class {
         propertyValidators.Add(propertyValidator);
         return propertyValidator;
     }
+
     IEnumerable<EvaluationFailure> IValidator.Evaluate(object instance) => Evaluate((T)instance);
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -48,9 +49,12 @@ public class Validator<T> : IValidator where T : class {
     }
 
     private static string GetPropertyNameFast(Expression expression) {
+        if (expression == null) throw new ArgumentNullException(nameof(expression));
         if (expression is LambdaExpression l) expression = l.Body;
-        if (expression is not MemberExpression memberExpression)
-            throw new ArgumentException("MemberExpression is expected", nameof(expression));
+        if (expression is not MemberExpression memberExpression) {
+            // throw new ArgumentException("MemberExpression is expected", nameof(expression));
+            return expression.ToString();
+        }
 
         var member = memberExpression.Member;
         Debug.Assert(member.MemberType.In(MemberTypes.Property, MemberTypes.Field));
@@ -139,7 +143,6 @@ public class Validator<T> : IValidator where T : class {
 
         internal abstract IEnumerable<EvaluationFailure> Evaluate(T instance);
     }
-
 }
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
