@@ -8,6 +8,7 @@ using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding;
+using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.Extensions.Logging;
 
 namespace EntityFrameworkRuler.Design.Services;
@@ -21,18 +22,27 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
     /// <summary> Creates the rule loader </summary>
     public DesignTimeRuleLoader(IMessageLogger logger, IRuleLoader ruleLoader) {
-        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.logger = logger ?? new ConsoleMessageLogger();
         this.ruleLoader = ruleLoader ?? throw new ArgumentNullException(nameof(ruleLoader));
-        var reporterAssembly = logger.GetType().Assembly;
-        var assemblyName = reporterAssembly?.GetName();
-        EfVersion = assemblyName?.Version;
+
+        var efAssembly = typeof(CandidateNamingService).Assembly;
+        var efAssemblyName = efAssembly?.GetName();
+        EfVersion = efAssemblyName?.Version;
+
+        var thisAssembly = typeof(DesignTimeRuleLoader).Assembly;
+        var thisAssemblyName = thisAssembly?.GetName();
+        EfRulerVersion = thisAssemblyName?.Version;
+
         // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-        if (EfVersion != null) logger?.WriteInformation($"EF Ruler detected Entity Framework v{assemblyName.Version}");
-        else logger?.WriteInformation("EF Ruler could not detect the EF version");
+        if (EfVersion != null) this.logger.WriteInformation($"EF Ruler v{EfRulerVersion} detected Entity Framework v{EfVersion}");
+        else this.logger.WriteInformation($"EF Ruler v{EfRulerVersion} could not detect the EF version");
     }
 
     /// <summary> The detected entity framework version.  </summary>
     public Version EfVersion { get; protected set; }
+
+    /// <summary> This assembly version.  </summary>
+    public Version EfRulerVersion { get; protected set; }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected bool IsEf6 => EfVersion?.Major == 6;
@@ -90,6 +100,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             else
                 logger.WriteVerbose("EF Ruler was not given a target DB Context name.");
         }
+
         var projectDir = GetProjectDir();
         if (logger != null) {
             if (projectDir.HasNonWhiteSpace())
@@ -97,6 +108,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             else
                 logger.WriteVerbose("EF Ruler did not identify a project dir");
         }
+
         SolutionPath = projectDir?.FindSolutionParentPath();
         if (targetAssemblies?.Count > 0) {
             if (targetAssemblies.IsReadOnly) targetAssemblies = new List<TargetAssembly>();
@@ -221,10 +233,12 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             if (logger != null && loadRulesResponse.Rules?.Count > 0) {
                 foreach (var rule in loadRulesResponse.Rules) {
                     if (rule is DbContextRule contextRules) {
-                        logger.WriteVerbose($"DB Context Rules for {contextRules.Name} loaded with {contextRules.Schemas.Count} schemas and {contextRules.Schemas.SelectMany(o => o.Tables).Count()} tables from {(contextRules.FilePath?.Length > 0 ? Path.GetFileName(contextRules.FilePath) : string.Empty)}");
+                        logger.WriteVerbose(
+                            $"DB Context Rules for {contextRules.Name} loaded with {contextRules.Schemas.Count} schemas and {contextRules.Schemas.SelectMany(o => o.Tables).Count()} tables from {(contextRules.FilePath?.Length > 0 ? Path.GetFileName(contextRules.FilePath) : string.Empty)}");
                     }
                 }
             }
+
             return loadRulesResponse;
         }
 
