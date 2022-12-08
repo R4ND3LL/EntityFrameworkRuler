@@ -4,19 +4,20 @@ using EntityFrameworkRuler.Common;
 
 namespace EntityFrameworkRuler;
 
-internal sealed class VsixMessageLogger : IMessageLogger {
+internal sealed class VsixMessageLogger : MessageLoggerBase {
     private const string paneTitle = "Extensions";
     private static readonly Guid extensionsPaneGuid = new("1780E60C-EE25-482B-AC77-CBA91891C420");
     private static OutputWindowPane pane;
 
     /// <inheritdoc />
-    public LogType MinimumLevel { get; set; } = LogType.Information;
-    /// <inheritdoc />
-    public void Write(LogMessage logMessage) {
+    public override void Write(LogMessage logMessage) {
         var messageBuilder = new StringBuilder();
         switch (logMessage.Type) {
+            case LogType.Verbose:
+                //messageBuilder.Append("Info: ");
+                break;
             case LogType.Information:
-                messageBuilder.Append("Info: ");
+                //messageBuilder.Append("Info: ");
                 break;
             case LogType.Warning:
                 messageBuilder.Append("Warning: ");
