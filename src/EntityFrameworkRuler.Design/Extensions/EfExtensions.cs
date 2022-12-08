@@ -392,13 +392,9 @@ internal static class EfExtensions {
             typeScaffoldingInfo?.ScaffoldScale);
     }
 
-    internal static void WriteVerbosely(this IOperationReporter reporter, string msg) {
-        reporter?.WriteVerbose(msg);
-        DebugLog(msg);
-    }
 
-    [Conditional("DEBUG")]
-    internal static void DebugLog(string msg) => Console.WriteLine(msg);
+
+
 
     /// <summary>
     ///     Adds a <see cref="ServiceLifetime.Singleton" /> service implemented by the given concrete

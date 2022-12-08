@@ -20,7 +20,7 @@ namespace EntityFrameworkRuler.Design {
             var entryAssembly = Assembly.GetEntryAssembly();
             var entryName = entryAssembly?.GetName();
             if (entryName?.Name.In("ef", "dotnet-ef") == true) {
-                EfExtensions.DebugLog($"EF Ruler detected EF Tools v{entryName.Version}");
+                EfConsoleMessageLogger.DebugLog($"EF Ruler detected EF Tools v{entryName.Version}");
                 Debugger.Launch();
             }
 #endif
@@ -40,7 +40,7 @@ namespace EntityFrameworkRuler.Design {
                 .AddSingleton<IRuleModelUpdater, RuleModelUpdater>()
                 //.TryAddSingletonEnumerable<IModelCodeGenerator, RuledTemplatedModelGenerator>()
                 .AddRuler()
-                .AddSingleton<IMessageLogger, ConsoleMessageLogger>();
+                .AddSingleton<IMessageLogger, EfConsoleMessageLogger>();
         }
     }
 }

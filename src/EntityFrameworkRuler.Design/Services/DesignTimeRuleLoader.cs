@@ -6,7 +6,9 @@ using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore.Design.Internal;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding;
+using Microsoft.Extensions.Logging;
 
 namespace EntityFrameworkRuler.Design.Services;
 
@@ -14,21 +16,19 @@ namespace EntityFrameworkRuler.Design.Services;
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
-    private readonly IServiceProvider serviceProvider;
-    private readonly IOperationReporter reporter;
+    private readonly IMessageLogger logger;
     private readonly IRuleLoader ruleLoader;
 
     /// <summary> Creates the rule loader </summary>
-    public DesignTimeRuleLoader(IServiceProvider serviceProvider, IOperationReporter reporter, IRuleLoader ruleLoader) {
-        this.serviceProvider = serviceProvider;
-        this.reporter = reporter;
-        this.ruleLoader = ruleLoader;
-        var reporterAssembly = reporter.GetType().Assembly;
+    public DesignTimeRuleLoader(IMessageLogger logger, IRuleLoader ruleLoader) {
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        this.ruleLoader = ruleLoader ?? throw new ArgumentNullException(nameof(ruleLoader));
+        var reporterAssembly = logger.GetType().Assembly;
         var assemblyName = reporterAssembly?.GetName();
         EfVersion = assemblyName?.Version;
         // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-        if (EfVersion != null) reporter?.WriteInformation($"EF Ruler detected Entity Framework v{assemblyName.Version}");
-        else reporter?.WriteInformation("EF Ruler could not detect the EF version");
+        if (EfVersion != null) logger?.WriteInformation($"EF Ruler detected Entity Framework v{assemblyName.Version}");
+        else logger?.WriteInformation("EF Ruler could not detect the EF version");
     }
 
     /// <summary> The detected entity framework version.  </summary>
@@ -83,8 +83,20 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     /// <inheritdoc />
     public IDesignTimeRuleLoader SetCodeGenerationOptions(ModelCodeGenerationOptions options) {
         CodeGenOptions = options;
-
+        if (logger != null) {
+            var contextName = CodeGenOptions?.ContextName;
+            if (contextName != null)
+                logger.WriteVerbose($"EF Ruler notified that DB Context '{contextName}' will be reverse engineered.");
+            else
+                logger.WriteVerbose("EF Ruler was not given a target DB Context name.");
+        }
         var projectDir = GetProjectDir();
+        if (logger != null) {
+            if (projectDir.HasNonWhiteSpace())
+                logger.WriteVerbose($"EF Ruler identified project dir: {projectDir}");
+            else
+                logger.WriteVerbose("EF Ruler did not identify a project dir");
+        }
         SolutionPath = projectDir?.FindSolutionParentPath();
         if (targetAssemblies?.Count > 0) {
             if (targetAssemblies.IsReadOnly) targetAssemblies = new List<TargetAssembly>();
@@ -125,7 +137,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
             targetAssemblies = targetAssembliesQuery.ToList();
             if (targetAssemblies.Count > 0)
-                reporter?.WriteInformation($"Rule loader resolved target assembly: {targetAssemblies[0].Assembly.GetName().Name}");
+                logger?.WriteInformation($"EF Ruler resolved target assembly: {targetAssemblies[0].Assembly.GetName().Name}");
 
             if (targetAssemblies.Count is <= 0 or > 2) return;
             // we have a small number of targets.  add the references of our targets to expand the list. better for type resolution later
@@ -167,7 +179,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
                 if (!configurationTemplate.Directory.FullName.EnsurePathExists()) return; // could not create directory
                 File.WriteAllText(configurationTemplate.FullName, text, Encoding.UTF8);
             } catch (Exception ex) {
-                reporter?.WriteError($"Error generating EntityTypeConfiguration.t4 file: {ex.Message}");
+                logger?.WriteError($"Error generating EntityTypeConfiguration.t4 file: {ex.Message}");
             }
         } else {
             if (!configurationTemplate.Exists) return;
@@ -182,7 +194,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
                     File.Move(configurationTemplate.FullName, bakFile);
                 }
             } catch (Exception ex) {
-                reporter?.WriteError($"Error removing EntityTypeConfiguration.t4 file: {ex.Message}");
+                logger?.WriteError($"Error removing EntityTypeConfiguration.t4 file: {ex.Message}");
             }
         }
     }
@@ -200,14 +212,19 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         LoadRulesResponse Fetch() {
             var projectFolder = GetProjectDir();
             if (projectFolder.IsNullOrWhiteSpace() || !Directory.Exists(projectFolder)) {
-                reporter?.WriteWarning("Current project directory could not be determined for rule loading.");
+                logger?.WriteWarning("Current project directory could not be determined for rule loading.");
                 return null;
             }
 
-            ruleLoader.Log += LoaderLog;
             var loadRulesResponse = ruleLoader.LoadRulesInProjectPath(new LoadOptions(projectFolder)).GetAwaiter().GetResult();
-            ruleLoader.Log -= LoaderLog;
-            reporter?.WriteInformation($"EF Ruler loaded {loadRulesResponse.Rules?.Count ?? 0} rule file(s).");
+            logger?.WriteInformation($"EF Ruler loaded {loadRulesResponse.Rules?.Count ?? 0} rule file(s).");
+            if (logger != null && loadRulesResponse.Rules?.Count > 0) {
+                foreach (var rule in loadRulesResponse.Rules) {
+                    if (rule is DbContextRule contextRules) {
+                        logger.WriteVerbose($"DB Context Rules for {contextRules.Name} loaded with {contextRules.Schemas.Count} schemas and {contextRules.Schemas.SelectMany(o => o.Tables).Count()} tables from {(contextRules.FilePath?.Length > 0 ? Path.GetFileName(contextRules.FilePath) : string.Empty)}");
+                    }
+                }
+            }
             return loadRulesResponse;
         }
 
@@ -215,20 +232,20 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         return response?.Rules ?? Enumerable.Empty<IRuleModelRoot>();
     }
 
-    private void LoaderLog(object sender, LogMessage msg) {
-        switch (msg.Type) {
-            case LogType.Warning:
-                reporter?.WriteWarning(msg.Message);
-                break;
-            case LogType.Error:
-                reporter?.WriteError(msg.Message);
-                break;
-            case LogType.Information:
-            default:
-                reporter?.WriteVerbosely(msg.Message);
-                break;
-        }
-    }
+    //private void LoaderLog(object sender, LogMessage msg) {
+    //    switch (msg.Type) {
+    //        case LogType.Warning:
+    //            reporter?.WriteWarning(msg.Message);
+    //            break;
+    //        case LogType.Error:
+    //            reporter?.WriteError(msg.Message);
+    //            break;
+    //        case LogType.Information:
+    //        default:
+    //            reporter?.WriteVerbosely(msg.Message);
+    //            break;
+    //    }
+    //}
 
     /// <summary> Get the project base folder where the EF context model is being built </summary>
     public virtual string GetProjectDir() {

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Services;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 
@@ -13,7 +14,7 @@ public static class RuleExtensions {
 
     /// <summary> Use the current scaffolding context to load the given type </summary>
     public static Type TryResolveType(this IDesignTimeRuleLoader designTimeRuleLoader, string clrTypeName, Type underlyingType,
-        IOperationReporter reporter = null) {
+        IMessageLogger logger = null) {
         return typeCache.GetOrAddNew(clrTypeName, Factory);
 
         Type Factory(string arg) {
@@ -21,10 +22,10 @@ public static class RuleExtensions {
                 var clrType = designTimeRuleLoader?.TryResolveTypeInternal(clrTypeName, underlyingType);
                 if (clrType != null) return clrType;
 
-                reporter?.WriteWarning($"Type not found: {clrTypeName}");
+                logger?.WriteWarning($"Type not found: {clrTypeName}");
                 return null;
             } catch (Exception ex) {
-                reporter?.WriteWarning($"Error loading type '{clrTypeName}': {ex.Message}");
+                logger?.WriteWarning($"Error loading type '{clrTypeName}': {ex.Message}");
                 return null;
             }
         }

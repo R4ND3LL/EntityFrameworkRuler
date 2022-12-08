@@ -1,10 +1,13 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Data;
+using System.Diagnostics.CodeAnalysis;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Rules;
 using EntityFrameworkRuler.Saver;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 #pragma warning disable CS1591
 
@@ -16,21 +19,23 @@ namespace EntityFrameworkRuler.Design.Services;
 public class RuleModelUpdater : IRuleModelUpdater {
     private readonly IDesignTimeRuleLoader ruleLoader;
     private readonly IRuleSaver ruleSaver;
-    private readonly IOperationReporter reporter;
+    private readonly IMessageLogger logger;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public RuleModelUpdater(IDesignTimeRuleLoader ruleLoader, IRuleSaver ruleSaver, IOperationReporter reporter) {
+    public RuleModelUpdater(IDesignTimeRuleLoader ruleLoader, IRuleSaver ruleSaver, IMessageLogger logger) {
         this.ruleLoader = ruleLoader;
         this.ruleSaver = ruleSaver;
-        this.reporter = reporter;
+        this.logger = logger ?? NullMessageLogger.Instance;
     }
 
     /// <inheritdoc />
     public void OnModelCreated(IModel model) {
         if (ruleLoader == null) return;
+        var contextName = ruleLoader.CodeGenOptions?.ContextName;
         var contextRules = ruleLoader.GetDbContextRules();
         if (contextRules is null || ReferenceEquals(contextRules, DbContextRule.DefaultNoRulesFoundBehavior)) {
-            contextRules = new() {
+            logger.WriteVerbose($"New DB Context Rules file being initialized for {contextName ?? "No Name"}");
+            contextRules = new DbContextRule {
                 IncludeUnknownSchemas = true
             };
         }
@@ -42,10 +47,8 @@ public class RuleModelUpdater : IRuleModelUpdater {
             if (projectDir.IsNullOrWhiteSpace()) return;
         }
 
-        var contextName = ruleLoader.CodeGenOptions?.ContextName;
         contextRules.Name = contextName;
 
-        //var dbName = model.GetDatabaseName();
         UpdateDbContextRule(model, contextRules);
 
         // initialize a rule file from the current reverse engineered model
@@ -54,11 +57,11 @@ public class RuleModelUpdater : IRuleModelUpdater {
         var elapsed = DateTimeExtensions.GetTime() - start;
 
         if (response.Errors.Any()) {
-            reporter?.WriteError($"Failed to save rule file: {response.Errors.First()}");
+            logger.WriteError($"Failed to save rule file: {response.Errors.First()}");
         } else if (response.SavedRules.Count > 0) {
             var fn = Path.GetFileName(response.SavedRules[0]);
             var action = contextRules.FilePath.IsNullOrWhiteSpace() ? "Created" : "Updated";
-            reporter?.WriteInformation($"{action} {fn} in {elapsed}ms");
+            logger.WriteInformation($"{action} {fn} in {elapsed}ms");
         }
     }
 
@@ -136,7 +139,8 @@ public class RuleModelUpdater : IRuleModelUpdater {
             r = new() { Name = n };
         }
 
-        if (r.NewName.HasNonWhiteSpace() || r.Name != property.Property.Name) r.NewName = property.Property.Name;
+        r.Name = property.DbName;
+        if (r.NewName.IsNullOrWhiteSpace() && property.Property.Name != property.DbName) r.NewName = property.Property.Name;
         if (property.Property.ClrType?.IsEnum == true) r.NewType = property.Property.ClrType.FullName;
         return r;
     }
@@ -149,8 +153,9 @@ public class RuleModelUpdater : IRuleModelUpdater {
             r = new() { FkName = n, IsPrincipal = property.IsPrincipal };
         }
 
+        r.FkName = property.FkName;
         r.Name = property.Navigation.Name;
-        r.NewName = property.Navigation.Name;
+        if (r.NewName.IsNullOrWhiteSpace()) r.NewName = property.Navigation.Name;
         r.ToEntity = property.ToEntity;
         r.Multiplicity = property.Multiplicity.ToMultiplicityString();
         return r;
@@ -158,7 +163,8 @@ public class RuleModelUpdater : IRuleModelUpdater {
 
     private TableRule UpdateTableRule(TableRule r, EntityInfo entityInfo) {
         r ??= new() { Name = entityInfo.DbName, IncludeUnknownColumns = true };
-        if (r.NewName.HasNonWhiteSpace() || r.Name != entityInfo.Entity.Name) r.NewName = entityInfo.Entity.Name;
+        r.Name = entityInfo.DbName;
+        if (r.NewName.IsNullOrWhiteSpace() && entityInfo.Entity.Name != entityInfo.DbName) r.NewName = entityInfo.Entity.Name;
         if (!r.IncludeUnknownColumns) return r;
         UpdateColumns(r, entityInfo);
         UpdateNavigations(r, entityInfo);

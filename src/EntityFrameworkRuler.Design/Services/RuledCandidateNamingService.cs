@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +22,7 @@ namespace EntityFrameworkRuler.Design.Services;
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class RuledCandidateNamingService : CandidateNamingService {
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
-    private readonly IOperationReporter reporter;
+    private readonly IMessageLogger logger;
 
     private DbContextRule dbContextRule;
 
@@ -29,30 +30,31 @@ public class RuledCandidateNamingService : CandidateNamingService {
     private readonly MethodInfo generateCandidateIdentifierMethod;
 
     /// <inheritdoc />
-    public RuledCandidateNamingService(IDesignTimeRuleLoader designTimeRuleLoader, IOperationReporter reporter) {
+    public RuledCandidateNamingService(IDesignTimeRuleLoader designTimeRuleLoader, IMessageLogger logger) {
         this.designTimeRuleLoader = designTimeRuleLoader;
-        this.reporter = reporter;
+        this.logger = logger;
 
         // public virtual string GenerateCandidateIdentifier(string originalIdentifier)
         generateCandidateIdentifierMethod = typeof(CandidateNamingService).GetMethod<string>("GenerateCandidateIdentifier");
         if (generateCandidateIdentifierMethod == null) {
             // this method is expected to be missing for EF 6.  If not EF 6, log a warning
             if (designTimeRuleLoader.EfVersion?.Major != 6)
-                reporter?.WriteWarning("Method not found: CandidateNamingService.GenerateCandidateIdentifier(string)");
+                logger?.WriteWarning("Method not found: CandidateNamingService.GenerateCandidateIdentifier(string)");
         }
     }
 
     /// <summary> Name that table </summary>
     public override string GenerateCandidateIdentifier(DatabaseTable table) {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
-        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? DbContextRule.DefaultNoRulesFoundBehavior;
+        dbContextRule ??= ResolveDbContextRule();
 
-
-        if (!dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule))
+        if (!dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule)) {
+            logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} not found in rule file.");
             return base.GenerateCandidateIdentifier(table);
+        }
 
         if (tableRule?.NewName.HasNonWhiteSpace() == true) {
-            reporter?.WriteVerbosely($"RULED: Table {table.Schema}.{table.Name} mapped to entity name {tableRule.NewName}");
+            logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} mapped to entity name {tableRule.NewName}");
             return tableRule.NewName;
         }
 
@@ -81,11 +83,17 @@ public class RuledCandidateNamingService : CandidateNamingService {
         return candidateStringBuilder.ToString();
     }
 
+    private DbContextRule ResolveDbContextRule() {
+        var rule = designTimeRuleLoader?.GetDbContextRules() ?? DbContextRule.DefaultNoRulesFoundBehavior;
+        logger?.WriteVerbose($"Candidate Naming Service resolved DB Context Rules for {rule.Name ?? "No Name"} with {rule.Schemas.Count} schemas");
+        return rule;
+    }
+
     /// <summary> Name that column </summary>
     [SuppressMessage("ReSharper", "InvertIf")]
     public override string GenerateCandidateIdentifier(DatabaseColumn column) {
         if (column is null) throw new ArgumentNullException(nameof(column));
-        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? DbContextRule.DefaultNoRulesFoundBehavior;
+        dbContextRule ??= ResolveDbContextRule();
 
         if (!dbContextRule.TryResolveRuleFor(column?.Table?.Schema, column?.Table?.Name, out var schema, out var tableRule))
             return base.GenerateCandidateIdentifier(column);
@@ -93,7 +101,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
             return base.GenerateCandidateIdentifier(column);
 
         if (columnRule?.NewName.HasNonWhiteSpace() == true) {
-            reporter?.WriteVerbosely(
+            logger?.WriteVerbose(
                 $"RULED: Column {column.Table.Schema}.{column.Table.Name}.{columnRule.Name} property name set to {columnRule.NewName}");
             return columnRule.NewName;
         }
@@ -140,7 +148,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
         Func<string> defaultEfName) {
         if (foreignKey is null) throw new ArgumentNullException(nameof(foreignKey));
         if (defaultEfName == null) throw new ArgumentNullException(nameof(defaultEfName));
-        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? DbContextRule.DefaultNoRulesFoundBehavior;
+        dbContextRule ??= ResolveDbContextRule();
 
         var fkName = foreignKey.GetConstraintName();
         var entity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
@@ -168,7 +176,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
         var rename = tableRule.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
         if (rename?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
 
-        reporter?.WriteVerbosely($"RULED: Entity {entity.Name} navigation {rename.NewName} defined");
+        logger?.WriteVerbose($"RULED: Entity {entity.Name} navigation {rename.NewName} defined");
         return rename.NewName.Trim();
     }
 

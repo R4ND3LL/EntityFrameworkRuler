@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Castle.DynamicProxy;
+using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore.Metadata;
 using IInterceptor = Castle.DynamicProxy.IInterceptor;
@@ -24,7 +25,7 @@ namespace EntityFrameworkRuler.Design.Services;
 /// </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, IInterceptor {
-    private readonly IOperationReporter reporter;
+    private readonly IMessageLogger reporter;
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
     private readonly IRuleModelUpdater ruleModelUpdater;
     private DbContextRule dbContextRule;
@@ -41,7 +42,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledRelationalScaffoldingModelFactory(IServiceProvider serviceProvider,
-        IOperationReporter reporter,
+        IMessageLogger reporter,
         IDesignTimeRuleLoader designTimeRuleLoader,
         IRuleModelUpdater ruleModelUpdater) {
         this.reporter = reporter;
@@ -88,7 +89,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         var clrType = designTimeRuleLoader?.TryResolveType(columnRule.NewType, typeScaffoldingInfo?.ClrType, reporter);
         if (clrType == null) return typeScaffoldingInfo;
-        reporter?.WriteVerbosely(
+        reporter?.WriteVerbose(
             $"RULED: Property {schemaRule.SchemaName}.{tableRule.Name}.{columnRule.PropertyName} type set to {clrType.FullName}");
         // Regenerate the TypeScaffoldingInfo based on our new CLR type.
         return typeScaffoldingInfo.WithType(clrType);

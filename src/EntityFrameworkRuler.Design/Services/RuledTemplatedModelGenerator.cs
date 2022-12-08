@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using EntityFrameworkRuler.Common;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding;
@@ -16,7 +17,7 @@ namespace EntityFrameworkRuler.Design.Services;
 [SuppressMessage("ReSharper", "UnusedMember.Local")]
 // ReSharper disable once ClassNeverInstantiated.Global
 internal class RuledTemplatedModelGenerator : IModelCodeGenerator {
-    private readonly IOperationReporter reporter;
+    private readonly IMessageLogger reporter;
     private readonly IDesignTimeRuleLoader ruleLoader;
     private const string DbContextTemplate = "DbContext.t4";
     private const string EntityTypeTemplate = "EntityType.t4";
@@ -25,7 +26,7 @@ internal class RuledTemplatedModelGenerator : IModelCodeGenerator {
 
     /// <summary> Creates an EF Ruler ModelCodeGenerator </summary>
     public RuledTemplatedModelGenerator(
-        IOperationReporter reporter,
+        IMessageLogger reporter,
         IDesignTimeRuleLoader ruleLoader) {
         this.reporter = reporter;
         this.ruleLoader = ruleLoader;
