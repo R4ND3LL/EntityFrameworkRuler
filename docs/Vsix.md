@@ -7,7 +7,7 @@ Automate the customization of the EF Core Reverse Engineered model. Supported ch
 - Skipping non-mapped columns.
 - Forcing inclusion of simple many-to-many entities into the model.
 
-EF Ruler applies customizations from a rule document stored in the project folder.  Rules can be fully generated from an EDMX (from old Entity Framework) such that the scaffolding output will align with the old EF6 EDMX-based model.
+EF Ruler applies customizations from a rule document stored in the project folder.  Rules can be fully generated from an EDMX  such that the scaffolding output will align with the old EF6 EDMX-based model.
 
 >"EF Ruler provides a smooth upgrade path from EF6 to EF Core by ensuring that the Reverse Engineered model maps perfectly from the old EDMX structure."
 
