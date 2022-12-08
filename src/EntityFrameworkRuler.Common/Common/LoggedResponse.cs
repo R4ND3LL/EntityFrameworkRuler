@@ -64,7 +64,12 @@ public abstract class LoggedResponse : ILoggedResponse, IInternals<ILoggedRespon
     /// <inheritdoc />
     public virtual bool Success => !HasErrors;
 
-    ILoggedResponseInternal IInternals<ILoggedResponseInternal>.Instance=> this;
+    ILoggedResponseInternal IInternals<ILoggedResponseInternal>.Instance => this;
+
+
+    void ILoggedResponseInternal.LogVerbosely(string msg) {
+        Messages.Add(Raise(LogMessage.Verbose(msg)));
+    }
 
     void ILoggedResponseInternal.LogInformation(string msg) {
         Messages.Add(Raise(LogMessage.Information(msg)));
@@ -94,6 +99,8 @@ public abstract class LoggedResponse : ILoggedResponse, IInternals<ILoggedRespon
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public interface ILoggedResponseInternal : ILoggedResponse {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    void LogVerbosely(string msg);
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     void LogInformation(string msg);
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     void LogWarning(string msg);
@@ -108,8 +115,11 @@ public delegate void LogMessageHandler(object sender, LogMessage logMessage);
 
 /// <summary> The log type </summary>
 public enum LogType {
+    /// <summary> Verbose </summary>
+    Verbose = 0,
+
     /// <summary> Information </summary>
-    Information = 0,
+    Information = 1,
 
     /// <summary> Warning </summary>
     Warning,
@@ -120,6 +130,7 @@ public enum LogType {
 
 /// <summary> A simple log message object </summary>
 public struct LogMessage {
+    internal static LogMessage Verbose(string message) => new(LogType.Verbose, message);
     internal static LogMessage Information(string message) => new(LogType.Information, message);
     internal static LogMessage Warning(string message) => new(LogType.Warning, message);
     internal static LogMessage Error(string message) => new(LogType.Error, message);

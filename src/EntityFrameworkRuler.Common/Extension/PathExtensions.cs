@@ -157,7 +157,8 @@ public static class PathExtensions {
     }
 
     /// <summary> Locate the csproj file under the provided directory.  This operation is cached. </summary>
-    public static FileInfo FindProjectFileCached(this DirectoryInfo info) => FindFileCached(info, "*.csproj") ?? FindFileCached(info, "*.vbproj");
+    public static FileInfo FindProjectFileCached(this DirectoryInfo info) =>
+        FindFileCached(info, "*.csproj") ?? FindFileCached(info, "*.vbproj");
 
     /// <summary> Locate the edmx file under the provided directory.  This operation is cached. </summary>
     internal static FileInfo FindEdmxFileCached(this DirectoryInfo info) => FindFileCached(info, "*.edmx");
@@ -185,6 +186,7 @@ public static class PathExtensions {
         int maxRecursionDepth = 1, Predicate<FileInfo> predicate = null) =>
         FindFile(new DirectoryInfo(path), searchPattern, recurseSubdirectories, maxRecursionDepth, predicate);
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static FileInfo FindFile(this DirectoryInfo info, string searchPattern, bool recurseSubdirectories = true,
         int maxRecursionDepth = 1, Predicate<FileInfo> predicate = null) {
         try {
@@ -194,6 +196,7 @@ public static class PathExtensions {
             return null;
         }
     }
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static IEnumerable<FileInfo> FindFiles(this string path, string searchPattern, bool recurseSubdirectories = true,
         int maxRecursionDepth = 1) =>
@@ -207,7 +210,6 @@ public static class PathExtensions {
             recurseSubdirectories && maxRecursionDepth > 0 ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
 #else
         return info.EnumerateFiles(searchPattern,
-
             new EnumerationOptions() {
                 IgnoreInaccessible = true,
                 RecurseSubdirectories = recurseSubdirectories,

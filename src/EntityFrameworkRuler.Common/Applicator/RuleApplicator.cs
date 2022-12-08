@@ -19,6 +19,7 @@ using RuleLoader = EntityFrameworkRuler.Loader.RuleLoader;
 
 namespace EntityFrameworkRuler.Applicator;
 
+/// <summary> Apply EF model rules to existing code files using Roslyn. </summary>
 public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
     /// <summary> Create rule applicator for making changes to project files </summary>
     public RuleApplicator() : this(null, null) { }
@@ -31,6 +32,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
 
     #region properties
 
+    /// <summary> The loader service used by the applicator </summary>
     public IRuleLoader Loader { get; set; }
 
     #endregion
@@ -366,7 +368,6 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
 
         sb.Append($" across {saved} files");
         responseInternal.LogInformation(sb.ToString());
-        return;
     }
 
     private async Task<Project> TryLoadProjectOrFallback(ApplicatorOptions request, ApplyRulesResponse response) {
@@ -500,7 +501,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public sealed class RoslynProjectState {
         private readonly RuleApplicator applicator;
-
+        /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
         public RoslynProjectState(RuleApplicator applicator) {
             this.applicator = applicator;
         }
@@ -572,21 +573,26 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
         }
     }
 }
-
+/// <summary> Apply rules response </summary>
 public sealed class ApplyRulesResponse : LoggedResponse {
+    /// <summary> Creates apply rules response </summary>
     public ApplyRulesResponse(IRuleModelRoot ruleModelRoot, IMessageLogger logger) : base(logger) {
         Rule = ruleModelRoot;
     }
 
+    /// <summary> The rule model to apply </summary>
     public IRuleModelRoot Rule { get; internal set; }
 
     /// <inheritdoc />
     public override bool Success => base.Success && Rule != null;
 }
 
+/// <summary> Load and apply rules response </summary>
 [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
 public sealed class LoadAndApplyRulesResponse : ILoggedResponse {
+    /// <summary> The actual load response </summary>
     public LoadRulesResponse LoadRulesResponse { get; internal set; }
+    /// <summary> The actual apply response </summary>
     public IReadOnlyList<ApplyRulesResponse> ApplyRulesResponses { get; internal set; }
 
     /// <summary> return all errors in this response (including rule application responses) </summary>
@@ -619,6 +625,7 @@ public sealed class LoadAndApplyRulesResponse : ILoggedResponse {
     /// <inheritdoc />
     public bool HasErrors => Errors.Any();
 
+    /// <inheritdoc />
     public IMessageLogger Logger { get => null; set { } }
 
     /// <inheritdoc />

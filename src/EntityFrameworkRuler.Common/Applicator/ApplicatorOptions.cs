@@ -4,11 +4,16 @@ using EntityFrameworkRuler.Rules;
 
 namespace EntityFrameworkRuler.Applicator;
 
+/// <summary> Describes an applicator request </summary>
 [DataContract]
 public class ApplicatorOptions {
+    /// <summary> Creates an applicator request </summary>
     public ApplicatorOptions() { }
+
+    /// <summary> Creates an applicator request </summary>
     public ApplicatorOptions(string projectBasePath, params IRuleModelRoot[] rules) : this(projectBasePath, false, rules) { }
 
+    /// <summary> Creates an applicator request </summary>
     public ApplicatorOptions(string projectBasePath, bool adhocOnly, params IRuleModelRoot[] rules) {
         ProjectBasePath = projectBasePath;
         AdhocOnly = adhocOnly;
@@ -36,8 +41,10 @@ public class ApplicatorOptions {
     public string ModelsFolder { get; set; }
 }
 
+/// <summary> Describes a load and apply request </summary>
 [DataContract]
 public sealed class LoadAndApplyOptions : ApplicatorOptions, ILoadOptions {
+    /// <summary> Creates a load and apply request </summary>
     public LoadAndApplyOptions(string projectBasePath = null, bool adhocOnly = false) : base(projectBasePath, adhocOnly) {
         DbContextRulesFile = RuleFileNameOptions.DefaultDbContextRulesFile;
     }

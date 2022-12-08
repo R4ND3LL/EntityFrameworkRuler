@@ -22,35 +22,47 @@ using Microsoft.CodeAnalysis.MSBuild;
 
 namespace EntityFrameworkRuler.Applicator;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public struct PropertyActionResult {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public Project Project { get; set; }
 
-    //public Document Document { get; set; }
-    //public bool ClassLocated => ClassSymbol != null;
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public bool PropertyLocated => PropertySyntax != null;
 
-    //public INamedTypeSymbol ClassSymbol { get; set; }
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public PropertyDeclarationSyntax PropertySyntax { get; set; }
 }
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public struct ClassActionResult {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public Project Project { get; set; }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public bool ClassLocated => ClassSymbol != null; //{ get; set; }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public INamedTypeSymbol ClassSymbol { get; set; }
 }
 
-public enum LocationResult {
-    Found, NotFound
-}
-
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class RoslynExtensions {
 #if DEBUG
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static uint FindClassesByNameTime;
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static uint RenameClassAsyncTime;
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static uint RenamePropertyAsyncTime;
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static uint ChangePropertyTypeAsyncTime;
 #endif
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<ClassActionResult> RenameClassAsync(
         this Project project,
         string namespaceName,
@@ -93,11 +105,13 @@ public static class RoslynExtensions {
         return new() { Project = project };
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<bool> ClassExists(this Project project, string namespaceName, string className) {
         var classes = await FindClassesByName(project, namespaceName, className);
         return classes.Count > 0;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<IList<Document>> FindClassDocuments(this Project project, string namespaceName,
         string className) {
         if (string.IsNullOrEmpty(className)) return null;
@@ -107,7 +121,7 @@ public static class RoslynExtensions {
         return docs;
     }
 
-
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<PropertyActionResult> RenamePropertyAsync(this Project project,
         INamedTypeSymbol classSymbol,
         string oldPropertyName, string newPropertyName, bool renameOverloads = false, bool renameInStrings = false,
@@ -159,6 +173,7 @@ public static class RoslynExtensions {
         return new() { Project = newDocument.Project, PropertySyntax = propSyntax };
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<PropertyActionResult> ChangePropertyTypeAsync(this Project project, INamedTypeSymbol classSymbol,
         string propertyName, string newTypeName) {
         if (project == null) throw new ArgumentNullException(nameof(project));
@@ -197,6 +212,7 @@ public static class RoslynExtensions {
         return new() { Project = newDocument.Project, PropertySyntax = propSyntax };
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<bool> PropertyExists(this Project project, string fullClassName, string propertyName,
         INamedTypeSymbol classSymbols = null) {
         if (string.IsNullOrEmpty(fullClassName) || string.IsNullOrEmpty(propertyName)) return false;
@@ -204,6 +220,7 @@ public static class RoslynExtensions {
         return await PropertyExists(classSymbols, propertyName);
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<bool> PropertyExists(this INamedTypeSymbol classSymbol, string propertyName) {
         if (string.IsNullOrEmpty(propertyName)) return false;
         var tuple = await LocateProperty(classSymbol, propertyName);
@@ -246,7 +263,7 @@ public static class RoslynExtensions {
     //         }
     //     }
     // }
-
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<IList<INamedTypeSymbol>> FindClassesByName(this Project project,
         string namespaceName, string className) {
         var start = DateTimeExtensions.GetTime();
@@ -272,7 +289,7 @@ public static class RoslynExtensions {
         return results ?? Array.Empty<INamedTypeSymbol>();
     }
 
-
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<INamedTypeSymbol> FindClassByName(this Project project, string fullName) {
         var start = DateTimeExtensions.GetTime();
         // var parts = fullName.SplitNamespaceAndName();
@@ -356,6 +373,7 @@ public static class RoslynExtensions {
         return docs;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<int> SaveDocumentsAsync(this Project project, IEnumerable<DocumentId> documentIds) {
         var saveCount = 0;
         foreach (var documentId in documentIds) {
@@ -375,6 +393,7 @@ public static class RoslynExtensions {
         return saveCount;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<int> SaveDocumentsAsync(this IEnumerable<Document> documents) {
         var saveCount = 0;
         foreach (var document in documents) {
@@ -393,15 +412,18 @@ public static class RoslynExtensions {
         return saveCount;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<string> GetDocumentText(this Document document) {
         return string.Join(
             Environment.NewLine,
             (await document.GetTextAsync()).Lines.Select(o => o.ToString())).Trim();
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static async Task<Project> LoadExistingProjectAsync(string csProjPath, LoggedResponse response = null) {
         try {
 #if NETSTANDARD2_0
+            if (csProjPath?.Length == int.MaxValue) await Task.Delay(0);
             return null;
 #else
             vsInstance ??= MSBuildLocatorRegisterDefaults();
@@ -455,7 +477,7 @@ public static class RoslynExtensions {
         }
     }
 #endif
-
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static AdhocWorkspace GetWorkspaceForFilePaths(this IEnumerable<string> filePaths, IEnumerable<Assembly> projReferences = null) {
         var ws = new AdhocWorkspace();
         var refAssemblies = new HashSet<Assembly>();
@@ -492,6 +514,7 @@ public static class RoslynExtensions {
         return ws;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static AdhocWorkspace AddEntityResources(this AdhocWorkspace ws) {
         var projectId = ws.CurrentSolution.ProjectIds.First();
         // load from resources
