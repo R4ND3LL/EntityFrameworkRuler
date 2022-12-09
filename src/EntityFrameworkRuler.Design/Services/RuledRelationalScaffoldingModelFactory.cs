@@ -342,11 +342,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 break;
             }
             case "GetEntityTypeName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
-                string BaseCall(DatabaseTable t1) {
-                    invocation.SetArgumentValue(1, t1);
-                    invocation.Proceed();
-                    return (string)invocation.ReturnValue;
-                }
+                // string BaseCall(DatabaseTable t1) {
+                //     invocation.SetArgumentValue(1, t1);
+                //     invocation.Proceed();
+                //     return (string)invocation.ReturnValue;
+                // }
 
                 var response = GetEntityTypeName(t);
                 invocation.ReturnValue = response;

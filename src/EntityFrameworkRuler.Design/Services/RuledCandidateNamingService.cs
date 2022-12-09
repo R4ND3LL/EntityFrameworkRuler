@@ -66,8 +66,6 @@ public class RuledCandidateNamingService : CandidateNamingService {
     private NamedTableState NameTableFactory(DatabaseTable table) {
         dbContextRule ??= ResolveDbContextRule();
 
-        if (table.Name == "TargetLens") Debugger.Break();
-
         if (!dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule)) {
             var state = NameToState(base.GenerateCandidateIdentifier(table));
             logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} not found in rule file. Auto-named {state.Name}");
