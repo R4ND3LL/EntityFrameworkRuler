@@ -84,4 +84,10 @@ public static class RuleExtensions {
 
         return clrType;
     }
+
+    /// <summary> Convert the given function to one that caches its results </summary>
+    public static Func<TKey, TValue> Cached<TKey, TValue>(this Func<TKey, TValue> func, IEqualityComparer<TKey> comparer = null) {
+        var c = new CachedDelegate<TKey, TValue>(func);
+        return c.Invoke;
+    }
 }

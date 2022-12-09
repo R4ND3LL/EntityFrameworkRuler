@@ -44,7 +44,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected readonly HashSet<string> OmittedSchemas = new();
 
-    private CSharpNamer<DatabaseTable> tableNamer;
+    private RuledCSharpUniqueNamer<DatabaseTable, TableRule> tableNamer;
+    private RuledCSharpUniqueNamer<DatabaseTable, TableRule> dbSetNamer;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledRelationalScaffoldingModelFactory(IServiceProvider serviceProvider,
@@ -94,21 +95,30 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions options,
         Func<DatabaseModel, ModelReverseEngineerOptions, IModel> baseCall) {
-        Func<DatabaseTable, (string, bool)> tableGenAction;
+        Func<DatabaseTable, NamedElementState<DatabaseTable, TableRule>> tableNameAction;
 
-        if (candidateNamingService is RuledCandidateNamingService ruledNamer)
-            tableGenAction = t => ruledNamer.GenerateCandidateIdentifierAndIndicateFrozen(t);
-        else tableGenAction = t => (candidateNamingService.GenerateCandidateIdentifier(t), false);
+        // Note, table naming logic has to be overriden at this level because the pluralizer step is executed AFTER
+        // the CandidateNamingService returns its result.  This means that a user specified name will be subject to change
+        // by the pluralizer/singularizer.  To avoid altering the user's input, we have to return more information about
+        // a candidate name, hence NamedElementState, where IsFrozen can be set.
 
-        tableNamer = new RuledCSharpUniqueNamer<DatabaseTable>(
-            options.UseDatabaseNames
-                ? t => (t.Name, false)
-                : tableGenAction,
-            cSharpUtilities,
-            options.NoPluralize
-                ? null
-                : pluralizer.Singularize);
+        // Preventing the pluralizer from affecting navigation names set by the user would involve replacing VisitForeignKeys
+        // and AddNavigationProperties, which has critical EF wiring logic - so this is not advisable.
+        // As an alternative, we may consider setting _options.NoPluralize to true during the processing of these methods only, and
+        // moving the pluralize call into GetDependentEndCandidateNavigationPropertyName/GetPrincipalEndCandidateNavigationPropertyName.
 
+        if (options.UseDatabaseNames)
+            tableNameAction = t => new(t.Name, t);
+        else {
+            if (candidateNamingService is RuledCandidateNamingService ruledNamer)
+                tableNameAction = t => ruledNamer.GenerateCandidateNameState(t);
+            else tableNameAction = t => new(candidateNamingService.GenerateCandidateIdentifier(t), t, null, false);
+        }
+
+        tableNameAction = tableNameAction.Cached();
+
+        tableNamer = new(tableNameAction, cSharpUtilities, options.NoPluralize ? null : pluralizer.Singularize);
+        dbSetNamer = new(tableNameAction, cSharpUtilities, options.NoPluralize ? null : pluralizer.Pluralize);
 
         return baseCall(databaseModel, options);
     }
@@ -293,6 +303,12 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         return tableNamer.GetName(table);
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual string GetDbSetName(DatabaseTable table) {
+        //return (string)getEntityTypeNameMethod?.Invoke(proxy, new object[] { table });
+        return dbSetNamer.GetName(table);
+    }
+
     void IInterceptor.Intercept(IInvocation invocation) {
         switch (invocation.Method.Name) {
             case "GetTypeScaffoldingInfo" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseColumn dc: {
@@ -342,13 +358,12 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 break;
             }
             case "GetEntityTypeName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
-                // string BaseCall(DatabaseTable t1) {
-                //     invocation.SetArgumentValue(1, t1);
-                //     invocation.Proceed();
-                //     return (string)invocation.ReturnValue;
-                // }
-
                 var response = GetEntityTypeName(t);
+                invocation.ReturnValue = response;
+                break;
+            }
+            case "GetDbSetName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
+                var response = GetDbSetName(t);
                 invocation.ReturnValue = response;
                 break;
             }

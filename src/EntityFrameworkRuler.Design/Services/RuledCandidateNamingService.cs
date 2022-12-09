@@ -45,25 +45,23 @@ public class RuledCandidateNamingService : CandidateNamingService {
         }
     }
 
-    private readonly Dictionary<string, NamedTableState> namedTablesByName = new();
-    private readonly Dictionary<DatabaseTable, NamedTableState> namedTablesByTable = new();
 
     /// <summary> Name that table </summary>
     public override string GenerateCandidateIdentifier(DatabaseTable table) {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
 
-        return namedTablesByTable.GetOrAddNew(table, NameTableFactory).Name;
+#if DEBUG
+        if (Debugger.IsAttached) Debugger.Break();
+        // Components should be overriden to avoid this method in favor of the state creation method below.
+#endif
+
+        var state = GenerateCandidateNameState(table);
+        return state.Name;
     }
 
     /// <summary> Name that table, also return indicator whether the name is frozen (explicitly set by user, cannot be altered) </summary>
-    public (string, bool) GenerateCandidateIdentifierAndIndicateFrozen(DatabaseTable table) {
+    public virtual NamedElementState<DatabaseTable, TableRule> GenerateCandidateNameState(DatabaseTable table) {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
-
-        var state = namedTablesByTable.GetOrAddNew(table, NameTableFactory);
-        return (state.Name, state.IsFrozen);
-    }
-
-    private NamedTableState NameTableFactory(DatabaseTable table) {
         dbContextRule ??= ResolveDbContextRule();
 
         if (!dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule)) {
@@ -73,8 +71,8 @@ public class RuledCandidateNamingService : CandidateNamingService {
         }
 
         if (tableRule?.NewName.HasNonWhiteSpace() == true) {
-            var state = NameToState(tableRule.NewName);
-            state.IsFrozen = true; // explicitly set by user, cannot be altered by pluralizer
+            // Name explicitly set by user, cannot be altered by pluralizer so set FROZEN
+            var state = NameToState(tableRule.NewName, true);
             logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} mapped to entity name {state.Name}");
             return state;
         }
@@ -98,7 +96,6 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         if (string.IsNullOrWhiteSpace(newTableName)) {
             candidateStringBuilder.Append(GenerateIdentifier(table.Name));
-
             return NameToState(candidateStringBuilder.ToString());
         }
 
@@ -109,21 +106,9 @@ public class RuledCandidateNamingService : CandidateNamingService {
             $"RULED: Table {table.Schema}.{table.Name} auto-named entity {state2.Name}{(usedRegex ? " using regex" : "")}");
         return state2;
 
-        NamedTableState NameToState(string newName) {
-            var existing = namedTablesByName.TryGetValue(newName);
-            if (existing != null) {
-                if (existing.Table == table) return existing; // redundant call with same table.
-
-                var distinctName = newName.GetUniqueString(n => namedTablesByName.ContainsKey(n));
-                var state = new NamedTableState(distinctName, table, tableRule);
-                namedTablesByName.Add(state.Name, state);
-                logger?.WriteWarning($"RULED: Name collision detected for entity {newName}.  Enumerated distinct name {distinctName}.");
-                return state;
-            } else {
-                var state = new NamedTableState(newName, table, tableRule);
-                namedTablesByName.Add(state.Name, state);
-                return state;
-            }
+        NamedElementState<DatabaseTable, TableRule> NameToState(string newName, bool isFrozen = false) {
+            var state = new NamedElementState<DatabaseTable, TableRule>(newName, table, tableRule, isFrozen);
+            return state;
         }
     }
 
@@ -256,23 +241,4 @@ public class RuledCandidateNamingService : CandidateNamingService {
     }
 
     #endregion
-}
-
-[DebuggerDisplay("{Name}")]
-internal class NamedTableState {
-    public NamedTableState(string name, DatabaseTable table, TableRule tableRule) {
-        Name = name;
-        Table = table;
-        TableRule = tableRule;
-    }
-
-    public string Name { get; set; }
-    public DatabaseTable Table { get; set; }
-    public TableRule TableRule { get; set; }
-    public bool IsFrozen { get; set; }
-
-    /// <summary> implicitly convert to string </summary>
-    public static implicit operator string(NamedTableState o) => o.ToString();
-
-    public override string ToString() => Name;
 }
