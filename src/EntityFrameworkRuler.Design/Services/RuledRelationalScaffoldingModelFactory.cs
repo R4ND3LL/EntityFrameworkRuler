@@ -331,8 +331,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             case "Create" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is DatabaseModel dm &&
                                invocation.Arguments[1] is ModelReverseEngineerOptions op: {
                 IModel BaseCall(DatabaseModel databaseModel, ModelReverseEngineerOptions options) {
-                    invocation.SetArgumentValue(1, databaseModel);
-                    invocation.SetArgumentValue(2, options);
+                    invocation.SetArgumentValue(0, databaseModel);
+                    invocation.SetArgumentValue(1, options);
                     invocation.Proceed();
                     return (IModel)invocation.ReturnValue;
                 }
