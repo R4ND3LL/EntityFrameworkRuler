@@ -55,8 +55,18 @@ public class RuledCandidateNamingService : CandidateNamingService {
         return namedTablesByTable.GetOrAddNew(table, NameTableFactory).Name;
     }
 
+    /// <summary> Name that table, also return indicator whether the name is frozen (explicitly set by user, cannot be altered) </summary>
+    public (string, bool) GenerateCandidateIdentifierAndIndicateFrozen(DatabaseTable table) {
+        if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
+
+        var state = namedTablesByTable.GetOrAddNew(table, NameTableFactory);
+        return (state.Name, state.IsFrozen);
+    }
+
     private NamedTableState NameTableFactory(DatabaseTable table) {
         dbContextRule ??= ResolveDbContextRule();
+
+        if (table.Name == "TargetLens") Debugger.Break();
 
         if (!dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule)) {
             var state = NameToState(base.GenerateCandidateIdentifier(table));
@@ -66,6 +76,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         if (tableRule?.NewName.HasNonWhiteSpace() == true) {
             var state = NameToState(tableRule.NewName);
+            state.IsFrozen = true; // explicitly set by user, cannot be altered by pluralizer
             logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} mapped to entity name {state.Name}");
             return state;
         }
@@ -260,6 +271,7 @@ internal class NamedTableState {
     public string Name { get; set; }
     public DatabaseTable Table { get; set; }
     public TableRule TableRule { get; set; }
+    public bool IsFrozen { get; set; }
 
     /// <summary> implicitly convert to string </summary>
     public static implicit operator string(NamedTableState o) => o.ToString();

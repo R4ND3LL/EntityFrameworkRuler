@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Castle.DynamicProxy;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Rules;
+using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Metadata;
 using IInterceptor = Castle.DynamicProxy.IInterceptor;
 
@@ -28,6 +29,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     private readonly IMessageLogger reporter;
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
     private readonly IRuleModelUpdater ruleModelUpdater;
+    private readonly ICandidateNamingService candidateNamingService;
+    private readonly IPluralizer pluralizer;
+    private readonly ICSharpUtilities cSharpUtilities;
     private DbContextRule dbContextRule;
     private readonly RelationalScaffoldingModelFactory proxy;
     private readonly MethodInfo visitForeignKeyMethod;
@@ -40,14 +44,22 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected readonly HashSet<string> OmittedSchemas = new();
 
+    private CSharpNamer<DatabaseTable> tableNamer;
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledRelationalScaffoldingModelFactory(IServiceProvider serviceProvider,
         IMessageLogger reporter,
         IDesignTimeRuleLoader designTimeRuleLoader,
-        IRuleModelUpdater ruleModelUpdater) {
+        IRuleModelUpdater ruleModelUpdater,
+        ICandidateNamingService candidateNamingService,
+        IPluralizer pluralizer,
+        ICSharpUtilities cSharpUtilities) {
         this.reporter = reporter;
         this.designTimeRuleLoader = designTimeRuleLoader;
         this.ruleModelUpdater = ruleModelUpdater;
+        this.candidateNamingService = candidateNamingService;
+        this.pluralizer = pluralizer;
+        this.cSharpUtilities = cSharpUtilities;
 
         // avoid runtime binding errors against EF6 by using reflection and a proxy to access the resources we need.
         // this allows more fluid compatibility with EF versions without retargeting this project.
@@ -73,10 +85,32 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     }
 
     /// <inheritdoc />
-    public virtual IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions options) {
+    public IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions options) {
         var model = proxy.Create(databaseModel, options);
         ruleModelUpdater?.OnModelCreated(model);
         return model;
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions options,
+        Func<DatabaseModel, ModelReverseEngineerOptions, IModel> baseCall) {
+        Func<DatabaseTable, (string, bool)> tableGenAction;
+
+        if (candidateNamingService is RuledCandidateNamingService ruledNamer)
+            tableGenAction = t => ruledNamer.GenerateCandidateIdentifierAndIndicateFrozen(t);
+        else tableGenAction = t => (candidateNamingService.GenerateCandidateIdentifier(t), false);
+
+        tableNamer = new RuledCSharpUniqueNamer<DatabaseTable>(
+            options.UseDatabaseNames
+                ? t => (t.Name, false)
+                : tableGenAction,
+            cSharpUtilities,
+            options.NoPluralize
+                ? null
+                : pluralizer.Singularize);
+
+
+        return baseCall(databaseModel, options);
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -194,7 +228,6 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         return baseCall();
     }
 
-
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual ModelBuilder VisitForeignKeys(ModelBuilder modelBuilder, IList<DatabaseForeignKey> foreignKeys,
         Func<IList<DatabaseForeignKey>, ModelBuilder> baseCall) {
@@ -256,7 +289,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual string GetEntityTypeName(DatabaseTable table) {
-        return (string)getEntityTypeNameMethod?.Invoke(proxy, new object[] { table });
+        //return (string)getEntityTypeNameMethod?.Invoke(proxy, new object[] { table });
+        return tableNamer.GetName(table);
     }
 
     void IInterceptor.Intercept(IInvocation invocation) {
@@ -291,6 +325,30 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
 
                 var response = VisitForeignKeys(mb, fks, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
+            case "Create" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is DatabaseModel dm &&
+                               invocation.Arguments[1] is ModelReverseEngineerOptions op: {
+                IModel BaseCall(DatabaseModel databaseModel, ModelReverseEngineerOptions options) {
+                    invocation.SetArgumentValue(1, databaseModel);
+                    invocation.SetArgumentValue(2, options);
+                    invocation.Proceed();
+                    return (IModel)invocation.ReturnValue;
+                }
+
+                var response = Create(dm, op, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
+            case "GetEntityTypeName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
+                string BaseCall(DatabaseTable t1) {
+                    invocation.SetArgumentValue(1, t1);
+                    invocation.Proceed();
+                    return (string)invocation.ReturnValue;
+                }
+
+                var response = GetEntityTypeName(t);
                 invocation.ReturnValue = response;
                 break;
             }

@@ -160,12 +160,12 @@ public class RulerNamingService : IRulerNamingService {
 
         CSharpUniqueNamer<EntityProperty> Factory(EntityType _) {
             if (Options?.UseDatabaseNames == true)
-                return new(
+                return new CSharpUniqueNamer<EntityProperty>(
                     c => c.DbColumnName,
                     usedNames,
                     cSharpUtilities,
                     singularizePluralizer: null);
-            return new(
+            return new CSharpUniqueNamer<EntityProperty>(
                 GenerateCandidateIdentifier,
                 usedNames,
                 cSharpUtilities,

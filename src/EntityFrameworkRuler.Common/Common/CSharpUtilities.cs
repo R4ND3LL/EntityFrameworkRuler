@@ -241,7 +241,7 @@ public class CSharpUtilities : ICSharpUtilities {
 /// EF Core standard for entity element naming.
 /// Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal
 /// </summary>
-public interface ICSharpUtilities {
+internal interface ICSharpUtilities {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     string GenerateCSharpIdentifier(string identifier, ICollection<string>? existingIdentifiers,
         Func<string, string>? singularizePluralizer);
