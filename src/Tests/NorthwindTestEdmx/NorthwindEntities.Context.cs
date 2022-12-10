@@ -36,7 +36,6 @@ namespace NorthwindTestProject
         public virtual DbSet<Shipper> Shippers { get; set; }
         public virtual DbSet<Supplier> Suppliers { get; set; }
         public virtual DbSet<Territory> Territories { get; set; }
-        public virtual DbSet<sysdiagram> sysdiagrams { get; set; }
         public virtual DbSet<Alphabetical_list_of_product> Alphabetical_list_of_products { get; set; }
         public virtual DbSet<Category_Sales_for_1997> Category_Sales_for_1997 { get; set; }
         public virtual DbSet<Current_Product_List> Current_Product_Lists { get; set; }

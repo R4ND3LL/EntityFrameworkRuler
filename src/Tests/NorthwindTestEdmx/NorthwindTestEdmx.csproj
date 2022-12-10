@@ -77,6 +77,12 @@
     <Compile Include="CustomerDemographic.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="CustomerGreen.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="CustomerRed.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="Customer_and_Suppliers_by_City.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
@@ -151,9 +157,6 @@
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="Supplier.cs">
-      <DependentUpon>NorthwindEntities.tt</DependentUpon>
-    </Compile>
-    <Compile Include="sysdiagram.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="Territory.cs">
