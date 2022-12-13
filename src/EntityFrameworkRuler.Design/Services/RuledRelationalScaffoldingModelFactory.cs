@@ -165,9 +165,14 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (!includeTable) {
             if (!includeSchema && OmittedSchemas.Add(table.Schema))
                 reporter?.WriteInformation($"RULED: Schema {table.Schema} omitted.");
+            else if (tableRule == null && table.IsSimpleManyToManyJoinEntityType())
+                includeTable = true;
+        }
 
+        if (!includeTable) {
             OmittedTables.Add(table.GetFullName());
-            if (includeSchema) reporter?.WriteInformation($"RULED: Table {table.Schema}.{table.Name} omitted.");
+            if (includeSchema)
+                reporter?.WriteInformation($"RULED: {(table is DatabaseView ? "View" : "Table")} {table.Schema}.{table.Name} omitted.");
 
             return null;
         }
@@ -234,7 +239,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             table.ForeignKeys.Clear();
             var entityTypeName = GetEntityTypeName(table);
             modelBuilder.Model.RemoveEntityType(entityTypeName);
-            reporter?.WriteInformation($"RULED: Table {table.Schema}.{table.Name} omitted.");
+            reporter?.WriteInformation($"RULED: {(table is DatabaseView ? "View" : "Table")} {table.Schema}.{table.Name} omitted.");
             return null;
         }
 

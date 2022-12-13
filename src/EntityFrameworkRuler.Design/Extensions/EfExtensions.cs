@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -284,7 +285,34 @@ internal static class EfExtensions {
         return foreignKey.GetNavigation(true)?.IsCollection == true &&
                foreignKey.GetNavigation(false)?.IsCollection == true;
     }
+    /// <summary>
+    ///     Check whether an DatabaseTable could be considered a simple many-to-many join table, often suppressed dy EF.
+    /// </summary>
+    /// <param name="table">The DatabaseTable to check.</param>
+    /// <returns><see langword="true" /> if the DatabaseTable could be considered a join table.</returns>
+    public static bool IsSimpleManyToManyJoinEntityType(this DatabaseTable table)
+    {
+        //if (entityType.GetNavigations().Any() || entityType.GetSkipNavigations().Any()) return false;
+        var primaryKey = table.PrimaryKey;
+        var properties = table.Columns;
+        var foreignKeys = table.ForeignKeys;
+        //var indexes = table.Indexes;
+        if (primaryKey != null
+            && primaryKey.Columns.Count > 1
+            && foreignKeys.Count == 2
+            && primaryKey.Columns.Count == properties.Count
+            && foreignKeys[0].Columns.Count + foreignKeys[1].Columns.Count == properties.Count
+            && !foreignKeys[0].Columns.Intersect(foreignKeys[1].Columns).Any()
+            && foreignKeys[0].Columns.All(o => !o.IsNullable)
+            && foreignKeys[1].Columns.All(o => !o.IsNullable)
+            // && !foreignKeys[0].IsUnique
+            // && !foreignKeys[1].IsUnique
+           ) {
+            return true;
+        }
 
+        return false;
+    }
     public static IReadOnlyNavigation GetDependentNavigation(this IReadOnlyForeignKey foreignKey) =>
         foreignKey.GetNavigation(true);
 
