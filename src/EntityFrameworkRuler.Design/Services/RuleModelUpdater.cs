@@ -5,6 +5,7 @@ using EntityFrameworkRuler.Rules;
 using EntityFrameworkRuler.Saver;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 #pragma warning disable CS1591
@@ -81,6 +82,15 @@ public class RuleModelUpdater : IRuleModelUpdater {
                 continue;
             }
 
+            var isDynamicNamingTables =
+                contextRules.PreserveCasingUsingRegex ||
+                schemaRule.UseSchemaName ||
+                (schemaRule.TableRegexPattern.HasNonWhiteSpace() && schemaRule.TablePatternReplaceWith != null);
+            var isDynamicNamingColumns =
+                contextRules.PreserveCasingUsingRegex ||
+                schemaRule.UseSchemaName ||
+                (schemaRule.ColumnRegexPattern.HasNonWhiteSpace() && schemaRule.ColumnPatternReplaceWith != null);
+
             // remove from list so that we can tell what needs to be added after this loop
             entitiesBySchema.Remove(schemaRule.SchemaName);
 
@@ -93,17 +103,17 @@ public class RuleModelUpdater : IRuleModelUpdater {
 
                 // remove from list so that we can tell what needs to be added after this loop
                 entitiesByDbName.Remove(tableRule.Name);
-                UpdateTableRule(tableRule, table.Value);
+                UpdateTableRule(tableRule, table.Value, isDynamicNamingTables, isDynamicNamingColumns);
             }
 
             if (!(entitiesByDbName.Count > 0)) continue;
 
             // add generated entities that dont have a corresponding rule (remainder of list after identification pass).
             if (schemaRule.IncludeUnknownTables)
-                AddTables(schemaRule, entitiesByDbName.Values.Where(o => !o.IsView));
+                AddTables(schemaRule, entitiesByDbName.Values.Where(o => !o.IsView), isDynamicNamingTables, isDynamicNamingColumns);
 
             if (schemaRule.IncludeUnknownViews)
-                AddTables(schemaRule, entitiesByDbName.Values.Where(o => o.IsView));
+                AddTables(schemaRule, entitiesByDbName.Values.Where(o => o.IsView), isDynamicNamingTables, isDynamicNamingColumns);
         }
 
         if (entitiesBySchema.Count <= 0) return;
@@ -117,20 +127,25 @@ public class RuleModelUpdater : IRuleModelUpdater {
                 IncludeUnknownViews = true,
             };
             contextRules.Schemas.Add(schemaRule);
+
+            var isDynamicNamingTables = contextRules.PreserveCasingUsingRegex;
+            var isDynamicNamingColumns = contextRules.PreserveCasingUsingRegex;
+
             foreach (var entity in entities.Value)
-                schemaRule.Tables.Add(UpdateTableRule(null, entity.Value));
+                schemaRule.Tables.Add(UpdateTableRule(null, entity.Value, isDynamicNamingTables, isDynamicNamingColumns));
         }
     }
 
 
-    private void AddTables(SchemaRule schemaRule, IEnumerable<EntityInfo> unknownTables) {
+    private void AddTables(SchemaRule schemaRule, IEnumerable<EntityInfo> unknownTables, bool isDynamicNamingTables,
+        bool isDynamicNamingColumns) {
         if (unknownTables == null) return;
         foreach (var unknownTable in unknownTables) {
-            schemaRule.Tables.Add(UpdateTableRule(null, unknownTable));
+            schemaRule.Tables.Add(UpdateTableRule(null, unknownTable, isDynamicNamingTables, isDynamicNamingColumns));
         }
     }
 
-    private ColumnRule UpdateColumnRule(ColumnRule r, ColumnInfo property) {
+    private ColumnRule UpdateColumnRule(ColumnRule r, ColumnInfo property, bool isDynamicNamingColumns) {
         if (r == null) {
             var n = property.DbName;
             if (n == null) return null;
@@ -138,7 +153,12 @@ public class RuleModelUpdater : IRuleModelUpdater {
         }
 
         r.Name = property.DbName;
-        if (r.NewName.IsNullOrWhiteSpace() && property.Property.Name != property.DbName) r.NewName = property.Property.Name;
+
+        // can only update expect name if it wasn't already influenced by dynamic naming or NewName
+        if (!isDynamicNamingColumns && r.NewName.IsNullOrWhiteSpace() &&
+            (r.PropertyName.HasNonWhiteSpace() || property.Property.Name != property.DbName))
+            r.PropertyName = property.Property.Name;
+
         if (property.Property.ClrType?.IsEnum == true) r.NewType = property.Property.ClrType.FullName;
         return r;
     }
@@ -152,19 +172,26 @@ public class RuleModelUpdater : IRuleModelUpdater {
         }
 
         r.FkName = property.FkName;
-        r.Name = property.Navigation.Name;
-        if (r.NewName.IsNullOrWhiteSpace()) r.NewName = property.Navigation.Name;
+
+        // can only update expect name if it wasn't already influenced by NewName
+        if (r.NewName.IsNullOrWhiteSpace()) r.Name = property.Navigation.Name;
+
         r.ToEntity = property.ToEntity;
         r.Multiplicity = property.Multiplicity.ToMultiplicityString();
         return r;
     }
 
-    private TableRule UpdateTableRule(TableRule r, EntityInfo entityInfo) {
+    private TableRule UpdateTableRule(TableRule r, EntityInfo entityInfo, bool isDynamicNamingTables, bool isDynamicNamingColumns) {
         r ??= new() { Name = entityInfo.DbName, IncludeUnknownColumns = true };
         r.Name = entityInfo.DbName;
-        if (r.NewName.IsNullOrWhiteSpace() && entityInfo.Entity.Name != entityInfo.DbName) r.NewName = entityInfo.Entity.Name;
+
+        // can only update expect name if it wasn't already influenced by dynamic naming or NewName
+        if (!isDynamicNamingTables && r.NewName.IsNullOrWhiteSpace() &&
+            (r.EntityName.HasNonWhiteSpace() || entityInfo.Entity.Name != entityInfo.DbName))
+            r.EntityName = entityInfo.Entity.Name;
+
         if (!r.IncludeUnknownColumns) return r;
-        UpdateColumns(r, entityInfo);
+        UpdateColumns(r, entityInfo, isDynamicNamingColumns);
         UpdateNavigations(r, entityInfo);
         return r;
     }
@@ -194,7 +221,7 @@ public class RuleModelUpdater : IRuleModelUpdater {
             r.Navigations.Add(UpdateNavigationRule(null, property));
     }
 
-    private void UpdateColumns(TableRule r, EntityInfo entityInfo) {
+    private void UpdateColumns(TableRule r, EntityInfo entityInfo, bool isDynamicNamingColumns) {
         // update column rules first
         var colsByDbName = entityInfo.Entity.GetProperties().Select(ToColumnInfo)
             .Where(o => o.DbName != null)
@@ -208,13 +235,13 @@ public class RuleModelUpdater : IRuleModelUpdater {
 
             // remove from list so that we can tell what has is remaining after identification
             colsByDbName.Remove(columnRule.Name);
-            UpdateColumnRule(columnRule, info);
+            UpdateColumnRule(columnRule, info, isDynamicNamingColumns);
         }
 
         if (colsByDbName.Count <= 0) return;
         // add generated properties that dont have corresponding rules (remainder of list after identification pass).
         foreach (var property in colsByDbName.Values)
-            r.Columns.Add(UpdateColumnRule(null, property));
+            r.Columns.Add(UpdateColumnRule(null, property, isDynamicNamingColumns));
     }
 
 

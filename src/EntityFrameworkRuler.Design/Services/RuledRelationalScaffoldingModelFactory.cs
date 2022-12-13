@@ -96,6 +96,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     protected virtual IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions options,
         Func<DatabaseModel, ModelReverseEngineerOptions, IModel> baseCall) {
         Func<DatabaseTable, NamedElementState<DatabaseTable, TableRule>> tableNameAction;
+        Func<DatabaseTable, NamedElementState<DatabaseTable, TableRule>> dbSetNameAction;
 
         // Note, table naming logic has to be overriden at this level because the pluralizer step is executed AFTER
         // the CandidateNamingService returns its result.  This means that a user specified name will be subject to change
@@ -107,18 +108,23 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         // As an alternative, we may consider setting _options.NoPluralize to true during the processing of these methods only, and
         // moving the pluralize call into GetDependentEndCandidateNavigationPropertyName/GetPrincipalEndCandidateNavigationPropertyName.
 
-        if (options.UseDatabaseNames)
+        if (options.UseDatabaseNames) {
             tableNameAction = t => new(t.Name, t);
-        else {
-            if (candidateNamingService is RuledCandidateNamingService ruledNamer)
-                tableNameAction = t => ruledNamer.GenerateCandidateNameState(t);
-            else tableNameAction = t => new(candidateNamingService.GenerateCandidateIdentifier(t), t, null, false);
+            dbSetNameAction = t => new(t.Name, t);
+        } else {
+            if (candidateNamingService is RuledCandidateNamingService ruledNamer) {
+                tableNameAction = t => ruledNamer.GenerateCandidateNameState(t, false);
+                dbSetNameAction = t => ruledNamer.GenerateCandidateNameState(t, true);
+            } else {
+                dbSetNameAction = tableNameAction = t => new(candidateNamingService.GenerateCandidateIdentifier(t), t, null, false);
+            }
         }
 
         tableNameAction = tableNameAction.Cached();
+        dbSetNameAction = dbSetNameAction.Cached();
 
         tableNamer = new(tableNameAction, cSharpUtilities, options.NoPluralize ? null : pluralizer.Singularize);
-        dbSetNamer = new(tableNameAction, cSharpUtilities, options.NoPluralize ? null : pluralizer.Pluralize);
+        dbSetNamer = new(dbSetNameAction, cSharpUtilities, options.NoPluralize ? null : pluralizer.Pluralize);
 
         return baseCall(databaseModel, options);
     }

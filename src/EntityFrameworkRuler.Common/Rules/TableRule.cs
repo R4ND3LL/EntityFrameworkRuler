@@ -36,24 +36,29 @@ public sealed class TableRule : RuleBase, IClassRule {
     [DisplayName("New Name"), Category("Mapping"), Description("The new name to give the entity.")]
     public string NewName { get; set; }
 
+    /// <summary> The DB Set name to use for the entity collection within the DB context.  The default behavior is to pluralize the entity name. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
+    [DisplayName("DBSet Name"), Category("Mapping"), Description("The DB Set name to use for the entity collection within the DB context.  The default behavior is to pluralize the entity name.")]
+    public string DbSetName { get; set; }
+
     /// <summary> If true, generate properties for columns that are not identified in this table rule.  Default is false. </summary>
-    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 4)]
+    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 5)]
     [DisplayName("Include Unknown Columns"), Category("Mapping"),
      Description("If true, generate properties for columns that are not identified in this table rule.  Default is false.")]
     public bool IncludeUnknownColumns { get; set; }
 
     /// <summary> If true, omit this table during the scaffolding process. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
     public override bool NotMapped { get; set; }
 
     /// <summary> The primitive property rules to apply to this entity. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 7)]
     [DisplayName("Properties"), Category("Properties|Properties"), Description("The primitive property rules to apply to this entity.")]
     public IList<ColumnRule> Columns { get; private set; }
 
     /// <summary> The navigation property rules to apply to this entity. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 7)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 8)]
     [DisplayName("Navigations"), Category("Navigations|Navigations"), Description("The navigation property rules to apply to this entity.")]
     public IList<NavigationRule> Navigations { get; private set; }
 
