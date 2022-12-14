@@ -38,7 +38,9 @@ public sealed class TableRule : RuleBase, IClassRule {
 
     /// <summary> The DB Set name to use for the entity collection within the DB context.  The default behavior is to pluralize the entity name. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
-    [DisplayName("DBSet Name"), Category("Mapping"), Description("The DB Set name to use for the entity collection within the DB context.  The default behavior is to pluralize the entity name.")]
+    [DisplayName("DBSet Name"), Category("Mapping"),
+     Description(
+         "The DB Set name to use for the entity collection within the DB context.  The default behavior is to pluralize the entity name.")]
     public string DbSetName { get; set; }
 
     /// <summary> If true, generate properties for columns that are not identified in this table rule.  Default is false. </summary>
@@ -50,7 +52,8 @@ public sealed class TableRule : RuleBase, IClassRule {
     /// <summary> If true, omit this table during the scaffolding process. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
-    public override bool NotMapped { get; set; }
+    public bool NotMapped { get; set; }
+
 
     /// <summary> The primitive property rules to apply to this entity. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 7)]
@@ -73,6 +76,9 @@ public sealed class TableRule : RuleBase, IClassRule {
         NewName = value;
         //OnPropertyChanged(nameof(NewName));
     }
+
+    /// <inheritdoc />
+    protected override bool GetNotMapped() => NotMapped;
 
     IEnumerable<IPropertyRule> IClassRule.GetProperties() {
         if (!Columns.IsNullOrEmpty())

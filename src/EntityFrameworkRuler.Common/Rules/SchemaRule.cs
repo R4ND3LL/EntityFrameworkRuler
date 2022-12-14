@@ -43,7 +43,8 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
     /// <summary> If true, omit this schema and all tables within it during the scaffolding process. Default is false. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
     [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
-    public override bool NotMapped { get; set; }
+    public bool NotMapped { get; set; }
+
 
     /// <summary> Prefix entity names with the schema name. Only done when the name is not explicitly identified herein for the given entity. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
@@ -96,6 +97,9 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
         SchemaName = value;
         //OnPropertyChanged(nameof(Name));
     }
+
+    /// <inheritdoc />
+    protected override bool GetNotMapped() => NotMapped;
 
     IEnumerable<IClassRule> ISchemaRule.GetClasses() => Tables;
 }

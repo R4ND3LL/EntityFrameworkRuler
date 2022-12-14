@@ -53,7 +53,10 @@ public sealed class NavigationRule : RuleBase, IPropertyRule {
     /// <inheritdoc />
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 7)]
     [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
-    public override bool NotMapped { get; set; }
+    public bool NotMapped { get; set; }
+
+    /// <inheritdoc />
+    protected override bool GetNotMapped() => NotMapped;
 
     /// <inheritdoc />
     protected override string GetNewName() => NewName.NullIfEmpty();

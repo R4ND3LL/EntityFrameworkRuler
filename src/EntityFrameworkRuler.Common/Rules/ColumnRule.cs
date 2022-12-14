@@ -11,7 +11,8 @@ namespace EntityFrameworkRuler.Rules;
 public sealed class ColumnRule : RuleBase, IPropertyRule {
     /// <summary> The raw database name of the column.  Used to locate the property during scaffolding phase.  Required. </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
-    [DisplayName("DB Name"), Category("Mapping"), Description("The raw database name of the column.  Used to locate the property during scaffolding phase.  Required."), Required]
+    [DisplayName("DB Name"), Category("Mapping"),
+     Description("The raw database name of the column.  Used to locate the property during scaffolding phase.  Required."), Required]
     public string Name { get; set; }
 
     /// <summary>
@@ -36,7 +37,10 @@ public sealed class ColumnRule : RuleBase, IPropertyRule {
     /// <summary> If true, omit this column during the scaffolding process. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
     [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
-    public override bool NotMapped { get; set; }
+    public bool NotMapped { get; set; }
+
+    /// <inheritdoc />
+    protected override bool GetNotMapped() => NotMapped;
 
     IEnumerable<string> IPropertyRule.GetCurrentNameOptions() => new[] { PropertyName, Name };
     string IPropertyRule.GetNewTypeName() => NewType;
@@ -44,6 +48,7 @@ public sealed class ColumnRule : RuleBase, IPropertyRule {
 
     /// <inheritdoc />
     protected override string GetNewName() => NewName.NullIfEmpty();
+
     /// <inheritdoc />
     protected override string GetExpectedEntityFrameworkName() => PropertyName.NullIfEmpty() ?? Name;
 
@@ -52,5 +57,4 @@ public sealed class ColumnRule : RuleBase, IPropertyRule {
         NewName = value;
         //OnPropertyChanged(nameof(NewName));
     }
-
 }
