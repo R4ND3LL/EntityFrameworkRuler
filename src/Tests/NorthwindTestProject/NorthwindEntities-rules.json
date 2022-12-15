@@ -1,994 +1,1172 @@
 {
-   "Name": "NorthwindEntities",
-   "PreserveCasingUsingRegex": false,
-   "IncludeUnknownSchemas": false,
+  "Name": "NorthwindEntities",
+  "PreserveCasingUsingRegex": false,
+  "IncludeUnknownSchemas": false,
   "SplitEntityTypeConfigurations": true,
-   "Schemas": [
-      {
-         "SchemaName": "dbo",
-         "IncludeUnknownTables": false,
-         "IncludeUnknownViews": false,
-         "Namespace": null,
-         "Tables": [
+  "Schemas": [
+    {
+      "SchemaName": "dbo",
+      "IncludeUnknownTables": false,
+      "IncludeUnknownViews": false,
+      "Namespace": null,
+      "Entities": [
+        {
+          "Name": "Alphabetical list of products",
+          "EntityName": "AlphabeticalListOfProduct",
+          "NewName": "Alphabetical_list_of_product",
+          "IncludeUnknownColumns": false,
+          "Properties": [
             {
-               "Name": "Alphabetical list of products",
-               "EntityName": "AlphabeticalListOfProduct",
-               "NewName": "Alphabetical_list_of_product",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "ProductID",
-                     "PropertyName": "ProductId",
-                     "NewName": "ProductID"
-                  },
-                  {
-                     "Name": "ProductName"
-                  },
-                  {
-                     "Name": "SupplierID",
-                     "PropertyName": "SupplierId",
-                     "NewName": "SupplierID"
-                  },
-                  {
-                     "Name": "CategoryID",
-                     "PropertyName": "CategoryId",
-                     "NewName": "CategoryID"
-                  },
-                  {
-                     "Name": "QuantityPerUnit"
-                  },
-                  {
-                     "Name": "UnitPrice",
-                     "NewName": "UnitPriceCustom"
-                  },
-                  {
-                     "Name": "UnitsInStock"
-                  },
-                  {
-                     "Name": "UnitsOnOrder"
-                  },
-                  {
-                     "Name": "ReorderLevel"
-                  },
-                  {
-                     "Name": "Discontinued"
-                  },
-                  {
-                     "Name": "CategoryName"
-                  }
-               ],
-               "Navigations": [ ]
+              "Name": "ProductID",
+              "PropertyName": "ProductId",
+              "NewName": "ProductID"
             },
             {
-               "Name": "Categories",
-               "EntityName": "Category",
-               "NewName": "Category",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "CategoryID",
-                     "PropertyName": "CategoryId",
-                     "NewName": "CategoryID"
-                  },
-                  {
-                     "Name": "CategoryName"
-                  },
-                  {
-                     "Name": "Description"
-                  },
-                  {
-                     "Name": "Picture"
-                  }
-               ],
-               "Navigations": [
-                  {
-                     "Name": null,
-                     "NewName": "Products",
-                     "FkName": "FK_Products_Categories",
-                     "ToEntity": "Product",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  }
-               ]
+              "Name": "ProductName"
             },
             {
-               "Name": "Category Sales for 1997",
-               "EntityName": "CategorySalesFor1997",
-               "NewName": "Category_Sales_for_1997",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "CategoryName"
-                  },
-                  {
-                     "Name": "CategorySales"
-                  }
-               ],
-               "Navigations": [ ]
+              "Name": "SupplierID",
+              "PropertyName": "SupplierId",
+              "NewName": "SupplierID"
             },
             {
-               "Name": "Current Product List",
-               "EntityName": "CurrentProductList",
-               "NewName": "Current_Product_List",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "ProductID",
-                     "PropertyName": "ProductId",
-                     "NewName": "ProductID"
-                  },
-                  {
-                     "Name": "ProductName"
-                  }
-               ],
-               "Navigations": [ ]
+              "Name": "CategoryID",
+              "PropertyName": "CategoryId",
+              "NewName": "CategoryID"
             },
             {
-               "Name": "Customer and Suppliers by City",
-               "EntityName": "CustomerAndSuppliersByCity",
-               "NewName": "Customer_and_Suppliers_by_City",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "City"
-                  },
-                  {
-                     "Name": "CompanyName"
-                  },
-                  {
-                     "Name": "ContactName"
-                  },
-                  {
-                     "Name": "Relationship"
-                  }
-               ],
-               "Navigations": [ ]
+              "Name": "QuantityPerUnit"
             },
             {
-               "Name": "CustomerDemographics",
-               "EntityName": "CustomerDemographic",
-               "NewName": "CustomerDemographic",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "CustomerTypeID",
-                     "PropertyName": "CustomerTypeId",
-                     "NewName": "CustomerTypeID"
-                  },
-                  {
-                     "Name": "CustomerDesc"
-                  }
-               ],
-               "Navigations": [
-                  {
-                     "Name": null,
-                     "NewName": "Customers",
-                     "FkName": "CustomerCustomerDemo",
-                     "ToEntity": "Customer",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  }
-               ]
+              "Name": "UnitPrice",
+              "NewName": "UnitPriceCustom"
             },
             {
-               "Name": "Employees",
-               "EntityName": "Employee",
-               "NewName": "Employee",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "EmployeeID",
-                     "PropertyName": "EmployeeId",
-                     "NewName": "EmployeeID"
-                  },
-                  {
-                     "Name": "LastName"
-                  },
-                  {
-                     "Name": "FirstName"
-                  },
-                  {
-                     "Name": "Title"
-                  },
-                  {
-                     "Name": "TitleOfCourtesy"
-                  },
-                  {
-                     "Name": "BirthDate"
-                  },
-                  {
-                     "Name": "HireDate"
-                  },
-                  {
-                     "Name": "Address"
-                  },
-                  {
-                     "Name": "City"
-                  },
-                  {
-                     "Name": "Region"
-                  },
-                  {
-                     "Name": "PostalCode"
-                  },
-                  {
-                     "Name": "Country"
-                  },
-                  {
-                     "Name": "HomePhone"
-                  },
-                  {
-                     "Name": "Extension"
-                  },
-                  {
-                     "Name": "Photo"
-                  },
-                  {
-                     "Name": "Notes"
-                  },
-                  {
-                     "Name": "ReportsTo",
-                     "NewName": "ReportsToCustom"
-                  },
-                  {
-                     "Name": "PhotoPath"
-                  }
-               ],
-               "Navigations": [
-                  {
-                     "Name": "InverseReportsToNavigation",
-                     "NewName": "EmployeesCustom",
-                     "FkName": "FK_Employees_Employees",
-                     "ToEntity": "Employee",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  },
-                  {
-                     "Name": "ReportsToNavigation",
-                     "NewName": "EmployeeOneCustom",
-                     "FkName": "FK_Employees_Employees",
-                     "ToEntity": "Employee",
-                     "Multiplicity": "0..1"
-                  },
-                  {
-                     "Name": "OrdersNavigation",
-                     "NewName": "Orders",
-                     "FkName": "FK_Orders_Employees",
-                     "ToEntity": "Order",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  },
-                  {
-                     "Name": null,
-                     "NewName": "Territories",
-                     "FkName": "EmployeeTerritories",
-                     "ToEntity": "Territory",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  }
-               ]
+              "Name": "UnitsInStock"
             },
             {
-               "Name": "Invoices",
-               "EntityName": "Invoice",
-               "NewName": "Invoice",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "ShipName"
-                  },
-                  {
-                     "Name": "ShipAddress"
-                  },
-                  {
-                     "Name": "ShipCity"
-                  },
-                  {
-                     "Name": "ShipRegion"
-                  },
-                  {
-                     "Name": "ShipPostalCode"
-                  },
-                  {
-                     "Name": "ShipCountry"
-                  },
-                  {
-                     "Name": "CustomerID",
-                     "PropertyName": "CustomerId",
-                     "NewName": "CustomerID"
-                  },
-                  {
-                     "Name": "CustomerName"
-                  },
-                  {
-                     "Name": "Address"
-                  },
-                  {
-                     "Name": "City",
-                     "NewName": "CityCustom"
-                  },
-                  {
-                     "Name": "Region"
-                  },
-                  {
-                     "Name": "PostalCode"
-                  },
-                  {
-                     "Name": "Country"
-                  },
-                  {
-                     "Name": "Salesperson"
-                  },
-                  {
-                     "Name": "OrderID",
-                     "PropertyName": "OrderId",
-                     "NewName": "OrderID"
-                  },
-                  {
-                     "Name": "OrderDate"
-                  },
-                  {
-                     "Name": "RequiredDate"
-                  },
-                  {
-                     "Name": "ShippedDate"
-                  },
-                  {
-                     "Name": "ShipperName"
-                  },
-                  {
-                     "Name": "ProductID",
-                     "PropertyName": "ProductId",
-                     "NewName": "ProductID"
-                  },
-                  {
-                     "Name": "ProductName"
-                  },
-                  {
-                     "Name": "UnitPrice"
-                  },
-                  {
-                     "Name": "Quantity"
-                  },
-                  {
-                     "Name": "Discount",
-                     "NewName": "DiscountCustom"
-                  },
-                  {
-                     "Name": "ExtendedPrice"
-                  },
-                  {
-                     "Name": "Freight"
-                  }
-               ],
-               "Navigations": [ ]
+              "Name": "UnitsOnOrder"
             },
             {
-               "Name": "Orders",
-               "EntityName": "Order",
-               "NewName": "Order",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "OrderID",
-                     "PropertyName": "OrderId",
-                     "NewName": "OrderID"
-                  },
-                  {
-                     "Name": "CustomerID",
-                     "PropertyName": "CustomerId",
-                     "NewName": "CustomerID"
-                  },
-                  {
-                     "Name": "EmployeeID",
-                     "PropertyName": "EmployeeId",
-                     "NewName": "EmployeeID"
-                  },
-                  {
-                     "Name": "OrderDate",
-                     "NewName": "OrderDateCustom"
-                  },
-                  {
-                     "Name": "RequiredDate"
-                  },
-                  {
-                     "Name": "ShippedDate"
-                  },
-                  {
-                     "Name": "ShipVia",
-                     "NewName": "ShipViaCustom"
-                  },
-                  {
-                     "Name": "Freight"
-                  },
-                  {
-                     "Name": "ShipName"
-                  },
-                  {
-                     "Name": "ShipAddress"
-                  },
-                  {
-                     "Name": "ShipCity"
-                  },
-                  {
-                     "Name": "ShipRegion"
-                  },
-                  {
-                     "Name": "ShipPostalCode"
-                  },
-                  {
-                     "Name": "ShipCountry"
-                  }
-               ],
-               "Navigations": [
-                  {
-                     "Name": "CustomerNavigation",
-                     "NewName": "Customer",
-                     "FkName": "FK_Orders_Customers",
-                     "ToEntity": "Customer",
-                     "Multiplicity": "0..1"
-                  },
-                  {
-                     "Name": "Employee",
-                     "NewName": "CustomEmployee",
-                     "FkName": "FK_Orders_Employees",
-                     "ToEntity": "Employee",
-                     "Multiplicity": "0..1"
-                  },
-                  {
-                     "Name": "OrderDetails",
-                     "NewName": "OrderDetailsCustom",
-                     "FkName": "FK_Order_Details_Orders",
-                     "ToEntity": "Order_Detail",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  },
-                  {
-                     "Name": "ShipViaNavigation",
-                     "NewName": "CustomShipper",
-                     "FkName": "FK_Orders_Shippers",
-                     "ToEntity": "Shipper",
-                     "Multiplicity": "0..1"
-                  }
-               ]
+              "Name": "ReorderLevel"
             },
             {
-               "Name": "Order Details",
-               "EntityName": "OrderDetail",
-               "NewName": "Order_Detail",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "OrderID",
-                     "PropertyName": "OrderId",
-                     "NewName": "OrderID"
-                  },
-                  {
-                     "Name": "ProductID",
-                     "PropertyName": "ProductId",
-                     "NewName": "ProductID"
-                  },
-                  {
-                     "Name": "UnitPrice"
-                  },
-                  {
-                     "Name": "Quantity",
-                     "NewType": "NorthwindModel.QuantityEnum"
-                  },
-                  {
-                     "Name": "Discount"
-                  }
-               ],
-               "Navigations": [
-                  {
-                     "Name": "Order",
-                     "NewName": "OrderCustom",
-                     "FkName": "FK_Order_Details_Orders",
-                     "ToEntity": "Order",
-                     "Multiplicity": "1"
-                  },
-                  {
-                     "Name": "Product",
-                     "NewName": "ProductCustom",
-                     "FkName": "FK_Order_Details_Products",
-                     "ToEntity": "Product",
-                     "Multiplicity": "1"
-                  }
-               ]
+              "Name": "Discontinued"
             },
             {
-               "Name": "Order Details Extended",
-               "EntityName": "OrderDetailsExtended",
-               "NewName": "Order_Details_Extended",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "OrderID",
-                     "PropertyName": "OrderId",
-                     "NewName": "OrderID"
-                  },
-                  {
-                     "Name": "ProductID",
-                     "PropertyName": "ProductId",
-                     "NewName": "ProductID"
-                  },
-                  {
-                     "Name": "ProductName"
-                  },
-                  {
-                     "Name": "UnitPrice",
-                     "NewName": "UnitPriceCustom"
-                  },
-                  {
-                     "Name": "Quantity"
-                  },
-                  {
-                     "Name": "Discount",
-                     "NewName": "DiscountCustom"
-                  },
-                  {
-                     "Name": "ExtendedPrice"
-                  }
-               ],
-               "Navigations": [ ]
-            },
-            {
-               "Name": "Order Subtotals",
-               "EntityName": "OrderSubtotal",
-               "NewName": "Order_Subtotal",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "OrderID",
-                     "PropertyName": "OrderId",
-                     "NewName": "OrderID"
-                  },
-                  {
-                     "Name": "Subtotal"
-                  }
-               ],
-               "Navigations": [ ]
-            },
-            {
-               "Name": "Orders Qry",
-               "EntityName": "OrdersQry",
-               "NewName": "Orders_Qry_Custom",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "OrderID",
-                     "PropertyName": "OrderId",
-                     "NewName": "OrderID"
-                  },
-                  {
-                     "Name": "CustomerID",
-                     "PropertyName": "CustomerId",
-                     "NewName": "CustomerID"
-                  },
-                  {
-                     "Name": "EmployeeID",
-                     "PropertyName": "EmployeeId",
-                     "NewName": "EmployeeID"
-                  },
-                  {
-                     "Name": "OrderDate"
-                  },
-                  {
-                     "Name": "RequiredDate"
-                  },
-                  {
-                     "Name": "ShippedDate"
-                  },
-                  {
-                     "Name": "ShipVia"
-                  },
-                  {
-                     "Name": "Freight"
-                  },
-                  {
-                     "Name": "ShipName"
-                  },
-                  {
-                     "Name": "ShipAddress"
-                  },
-                  {
-                     "Name": "ShipCity"
-                  },
-                  {
-                     "Name": "ShipRegion"
-                  },
-                  {
-                     "Name": "ShipPostalCode"
-                  },
-                  {
-                     "Name": "ShipCountry"
-                  },
-                  {
-                     "Name": "CompanyName"
-                  },
-                  {
-                     "Name": "Address"
-                  },
-                  {
-                     "Name": "City"
-                  },
-                  {
-                     "Name": "Region"
-                  },
-                  {
-                     "Name": "PostalCode"
-                  },
-                  {
-                     "Name": "Country"
-                  }
-               ],
-               "Navigations": [ ]
-            },
-            {
-               "Name": "Products",
-               "EntityName": "Product",
-               "NewName": "Product",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "ProductID",
-                     "PropertyName": "ProductId",
-                     "NewName": "ProductID"
-                  },
-                  {
-                     "Name": "ProductName"
-                  },
-                  {
-                     "Name": "SupplierID",
-                     "PropertyName": "SupplierId",
-                     "NewName": "SupplierID"
-                  },
-                  {
-                     "Name": "CategoryID",
-                     "PropertyName": "CategoryId",
-                     "NewName": "CategoryID"
-                  },
-                  {
-                     "Name": "QuantityPerUnit"
-                  },
-                  {
-                     "Name": "UnitPrice"
-                  },
-                  {
-                     "Name": "UnitsInStock"
-                  },
-                  {
-                     "Name": "UnitsOnOrder"
-                  },
-                  {
-                     "Name": "ReorderLevel"
-                  },
-                  {
-                     "Name": "Discontinued"
-                  }
-               ],
-               "Navigations": [
-                  {
-                     "Name": "Category",
-                     "NewName": "CategoryCustom",
-                     "FkName": "FK_Products_Categories",
-                     "ToEntity": "Category",
-                     "Multiplicity": "0..1"
-                  },
-                  {
-                     "Name": "OrderDetails",
-                     "NewName": "Order_Details",
-                     "FkName": "FK_Order_Details_Products",
-                     "ToEntity": "Order_Detail",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  },
-                  {
-                     "Name": "SupplierNavigation",
-                     "NewName": "Supplier",
-                     "FkName": "FK_Products_Suppliers",
-                     "ToEntity": "Supplier",
-                     "Multiplicity": "0..1"
-                  }
-               ]
-            },
-            {
-               "Name": "Product Sales for 1997",
-               "EntityName": "ProductSalesFor1997",
-               "NewName": "Product_Sales_for_1997",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "CategoryName"
-                  },
-                  {
-                     "Name": "ProductName"
-                  },
-                  {
-                     "Name": "ProductSales"
-                  }
-               ],
-               "Navigations": [ ]
-            },
-            {
-               "Name": "Products Above Average Price",
-               "EntityName": "ProductsAboveAveragePrice",
-               "NewName": "Products_Above_Average_Price",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "ProductName"
-                  },
-                  {
-                     "Name": "UnitPrice"
-                  }
-               ],
-               "Navigations": [ ]
-            },
-            {
-               "Name": "Products by Category",
-               "EntityName": "ProductsByCategory",
-               "NewName": "Products_by_Category",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "CategoryName",
-                     "NewName": "CategoryNameCustom"
-                  },
-                  {
-                     "Name": "ProductName"
-                  },
-                  {
-                     "Name": "QuantityPerUnit"
-                  },
-                  {
-                     "Name": "UnitsInStock",
-                     "NewName": "UnitsInStockCustom",
-                     "NewType": "NorthwindModel.UnitsInStockEnum"
-                  },
-                  {
-                     "Name": "Discontinued"
-                  }
-               ],
-               "Navigations": [ ]
-            },
-            {
-               "Name": "Region",
-               "NewName": "RegionCustom",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "RegionID",
-                     "PropertyName": "RegionId",
-                     "NewName": "RegionID"
-                  },
-                  {
-                     "Name": "RegionDescription"
-                  }
-               ],
-               "Navigations": [
-                  {
-                     "Name": "Territories",
-                     "NewName": "TerritoriesCustom",
-                     "FkName": "FK_Territories_Region",
-                     "ToEntity": "Territory",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  }
-               ]
-            },
-            {
-               "Name": "Sales by Category",
-               "EntityName": "SalesByCategory",
-               "NewName": "Sales_by_Category",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "CategoryID",
-                     "PropertyName": "CategoryId",
-                     "NewName": "CategoryID"
-                  },
-                  {
-                     "Name": "CategoryName"
-                  },
-                  {
-                     "Name": "ProductName"
-                  },
-                  {
-                     "Name": "ProductSales"
-                  }
-               ],
-               "Navigations": [ ]
-            },
-            {
-               "Name": "Sales Totals by Amount",
-               "EntityName": "SalesTotalsByAmount",
-               "NewName": "Sales_Totals_by_Amount",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "SaleAmount"
-                  },
-                  {
-                     "Name": "OrderID",
-                     "PropertyName": "OrderId",
-                     "NewName": "OrderIDCustom"
-                  },
-                  {
-                     "Name": "CompanyName",
-                     "NewName": "CompanyNameCustom"
-                  },
-                  {
-                     "Name": "ShippedDate",
-                     "NewName": "ShippedDateCustom"
-                  }
-               ],
-               "Navigations": [ ]
-            },
-            {
-               "Name": "Shippers",
-               "EntityName": "Shipper",
-               "NewName": "Shipper",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "ShipperID",
-                     "PropertyName": "ShipperId",
-                     "NewName": "ShipperID"
-                  },
-                  {
-                     "Name": "CompanyName"
-                  },
-                  {
-                     "Name": "Phone"
-                  }
-               ],
-               "Navigations": [
-                  {
-                     "Name": "Orders",
-                     "NewName": "OrdersCustom",
-                     "FkName": "FK_Orders_Shippers",
-                     "ToEntity": "Order",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  }
-               ]
-            },
-            {
-               "Name": "Summary of Sales by Quarter",
-               "EntityName": "SummaryOfSalesByQuarter",
-               "NewName": "Summary_of_Sales_by_Quarter",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "ShippedDate"
-                  },
-                  {
-                     "Name": "OrderID",
-                     "PropertyName": "OrderId",
-                     "NewName": "OrderID"
-                  },
-                  {
-                     "Name": "Subtotal"
-                  }
-               ],
-               "Navigations": [ ]
-            },
-            {
-               "Name": "Summary of Sales by Year",
-               "EntityName": "SummaryOfSalesByYear",
-               "NewName": "Summary_of_Sales_by_Year",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "ShippedDate"
-                  },
-                  {
-                     "Name": "OrderID",
-                     "PropertyName": "OrderId",
-                     "NewName": "OrderID"
-                  },
-                  {
-                     "Name": "Subtotal"
-                  }
-               ],
-               "Navigations": [ ]
-            },
-            {
-               "Name": "Suppliers",
-               "EntityName": "Supplier",
-               "NewName": "Supplier",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "SupplierID",
-                     "PropertyName": "SupplierId",
-                     "NewName": "SupplierID"
-                  },
-                  {
-                     "Name": "CompanyName"
-                  },
-                  {
-                     "Name": "ContactName"
-                  },
-                  {
-                     "Name": "ContactTitle"
-                  },
-                  {
-                     "Name": "Address"
-                  },
-                  {
-                     "Name": "City"
-                  },
-                  {
-                     "Name": "Region"
-                  },
-                  {
-                     "Name": "PostalCode"
-                  },
-                  {
-                     "Name": "Country"
-                  },
-                  {
-                     "Name": "Phone"
-                  },
-                  {
-                     "Name": "Fax"
-                  },
-                  {
-                     "Name": "HomePage"
-                  }
-               ],
-               "Navigations": [
-                  {
-                     "Name": "Products",
-                     "NewName": "ProductsCustom",
-                     "FkName": "FK_Products_Suppliers",
-                     "ToEntity": "Product",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  }
-               ]
-            },
-            {
-               "Name": "Territories",
-               "EntityName": "Territory",
-               "NewName": "Territory",
-               "IncludeUnknownColumns": false,
-               "Columns": [
-                  {
-                     "Name": "TerritoryID",
-                     "PropertyName": "TerritoryId",
-                     "NewName": "TerritoryID"
-                  },
-                  {
-                     "Name": "TerritoryDescription"
-                  },
-                  {
-                     "Name": "RegionID",
-                     "PropertyName": "RegionId",
-                     "NewName": "RegionID"
-                  }
-               ],
-               "Navigations": [
-                  {
-                     "Name": "Region",
-                     "NewName": "RegionCustom",
-                     "FkName": "FK_Territories_Region",
-                     "ToEntity": "RegionCustom",
-                     "Multiplicity": "1"
-                  },
-                  {
-                     "Name": null,
-                     "NewName": "Employees",
-                     "FkName": "EmployeeTerritories",
-                     "ToEntity": "Employee",
-                     "IsPrincipal": true,
-                     "Multiplicity": "*"
-                  }
-               ]
+              "Name": "CategoryName"
             }
-         ]
-      }
-   ]
+          ]
+        },
+        {
+          "Name": "Animals",
+          "EntityName": "Animal",
+          "NewName": "Animal",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "Id"
+            },
+            {
+              "Name": "Species"
+            },
+            {
+              "Name": "Discriminator",
+              "DiscriminatorConditions": [
+                {
+                  "Value": "Dog",
+                  "ToEntityName": "Dog"
+                },
+                {
+                  "Value": "Cat",
+                  "ToEntityName": "Cat"
+                }
+              ]
+            },
+            {
+              "Name": "Value"
+            },
+            {
+              "Name": "Name"
+            },
+            {
+              "Name": "FavoriteToy"
+            }
+          ],
+          "Annotations": {
+            "DiscriminatorProperty": "Discriminator",
+            "Relational:MappingStrategy": "TPH"
+          }
+        },
+        {
+          "Name": "Animals",
+          "EntityName": "Animal2",
+          "NewName": "Cat",
+          "BaseTypeName": "Animal",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "EducationLevel"
+            }
+          ]
+        },
+        {
+          "Name": "Categories",
+          "EntityName": "Category",
+          "NewName": "Category",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "CategoryID",
+              "PropertyName": "CategoryId",
+              "NewName": "CategoryID"
+            },
+            {
+              "Name": "CategoryName"
+            },
+            {
+              "Name": "Description"
+            },
+            {
+              "Name": "Picture"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": null,
+              "NewName": "Products",
+              "FkName": "FK_Products_Categories",
+              "ToEntity": "Product",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ]
+        },
+        {
+          "Name": "Category Sales for 1997",
+          "EntityName": "CategorySalesFor1997",
+          "NewName": "Category_Sales_for_1997",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "CategoryName"
+            },
+            {
+              "Name": "CategorySales"
+            }
+          ]
+        },
+        {
+          "Name": "Current Product List",
+          "EntityName": "CurrentProductList",
+          "NewName": "Current_Product_List",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "ProductID",
+              "PropertyName": "ProductId",
+              "NewName": "ProductID"
+            },
+            {
+              "Name": "ProductName"
+            }
+          ]
+        },
+        {
+          "Name": "Customers",
+          "EntityName": "Customer",
+          "NewName": "Customer",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "CustomerID",
+              "PropertyName": "CustomerId",
+              "NewName": "CustomerID"
+            },
+            {
+              "Name": "CompanyName"
+            },
+            {
+              "Name": "ContactName"
+            },
+            {
+              "Name": "Address"
+            },
+            {
+              "Name": "City"
+            },
+            {
+              "Name": "Region"
+            },
+            {
+              "Name": "PostalCode"
+            },
+            {
+              "Name": "Country"
+            },
+            {
+              "Name": "ContactTitle",
+              "NotMapped": true,
+              "DiscriminatorConditions": [
+                {
+                  "Value": "Red",
+                  "ToEntityName": "CustomerRed"
+                },
+                {
+                  "Value": "Green",
+                  "ToEntityName": "CustomerGreen"
+                }
+              ]
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "Orders",
+              "NewName": "OrdersCustom",
+              "FkName": "FK_Orders_Customers",
+              "ToEntity": "Order",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "CustomerDemographics",
+              "NewName": "CustomerDemographicsCustom",
+              "FkName": "CustomerCustomerDemo",
+              "ToEntity": "CustomerDemographic",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ],
+          "Annotations": {
+            "DiscriminatorProperty": "ContactTitle",
+            "Relational:MappingStrategy": "TPH",
+            "Ruler:Abstract": true
+          }
+        },
+        {
+          "Name": "Customer and Suppliers by City",
+          "EntityName": "CustomerAndSuppliersByCity",
+          "NewName": "Customer_and_Suppliers_by_City",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "City"
+            },
+            {
+              "Name": "CompanyName"
+            },
+            {
+              "Name": "ContactName"
+            },
+            {
+              "Name": "Relationship"
+            }
+          ]
+        },
+        {
+          "Name": "CustomerDemographics",
+          "EntityName": "CustomerDemographic",
+          "NewName": "CustomerDemographic",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "CustomerTypeID",
+              "PropertyName": "CustomerTypeId",
+              "NewName": "CustomerTypeID"
+            },
+            {
+              "Name": "CustomerDesc"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": null,
+              "NewName": "Customers",
+              "FkName": "CustomerCustomerDemo",
+              "ToEntity": "Customer",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ]
+        },
+        {
+          "Name": "Customers",
+          "EntityName": "Customer2",
+          "NewName": "CustomerGreen",
+          "BaseTypeName": "Customer",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "Phone"
+            }
+          ]
+        },
+        {
+          "Name": "Customers",
+          "EntityName": "Customer1",
+          "NewName": "CustomerRed",
+          "BaseTypeName": "Customer",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "Fax"
+            }
+          ]
+        },
+        {
+          "Name": "Animals",
+          "EntityName": "Animal1",
+          "NewName": "Dog",
+          "BaseTypeName": "Animal",
+          "IncludeUnknownColumns": false
+        },
+        {
+          "Name": "Employees",
+          "EntityName": "Employee",
+          "NewName": "Employee",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "EmployeeID",
+              "PropertyName": "EmployeeId",
+              "NewName": "EmployeeID"
+            },
+            {
+              "Name": "LastName"
+            },
+            {
+              "Name": "FirstName"
+            },
+            {
+              "Name": "Title"
+            },
+            {
+              "Name": "TitleOfCourtesy"
+            },
+            {
+              "Name": "BirthDate"
+            },
+            {
+              "Name": "HireDate"
+            },
+            {
+              "Name": "Address"
+            },
+            {
+              "Name": "City"
+            },
+            {
+              "Name": "Region"
+            },
+            {
+              "Name": "PostalCode"
+            },
+            {
+              "Name": "Country"
+            },
+            {
+              "Name": "HomePhone"
+            },
+            {
+              "Name": "Extension"
+            },
+            {
+              "Name": "Photo"
+            },
+            {
+              "Name": "Notes"
+            },
+            {
+              "Name": "ReportsTo",
+              "NewName": "ReportsToCustom"
+            },
+            {
+              "Name": "PhotoPath"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "InverseReportsToNavigation",
+              "NewName": "EmployeesCustom",
+              "FkName": "FK_Employees_Employees",
+              "ToEntity": "Employee",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "ReportsToNavigation",
+              "NewName": "EmployeeOneCustom",
+              "FkName": "FK_Employees_Employees",
+              "ToEntity": "Employee",
+              "Multiplicity": "0..1"
+            },
+            {
+              "Name": "OrdersNavigation",
+              "NewName": "Orders",
+              "FkName": "FK_Orders_Employees",
+              "ToEntity": "Order",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": null,
+              "NewName": "Territories",
+              "FkName": "EmployeeTerritories",
+              "ToEntity": "Territory",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "Employee1",
+              "NewName": "EmployeeBrief",
+              "FkName": "EmployeeEmployeeBrief",
+              "ToEntity": "EmployeeBrief",
+              "IsPrincipal": true,
+              "Multiplicity": "1"
+            }
+          ]
+        },
+        {
+          "Name": "Employees",
+          "EntityName": "Employee1",
+          "NewName": "EmployeeBrief",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "EmployeeID",
+              "PropertyName": "EmployeeId",
+              "NewName": "EmployeeID"
+            },
+            {
+              "Name": "LastName"
+            },
+            {
+              "Name": "FirstName"
+            },
+            {
+              "Name": "Title"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "EmployeeNavigation",
+              "NewName": "Employee",
+              "FkName": "EmployeeEmployeeBrief",
+              "ToEntity": "Employee",
+              "Multiplicity": "1"
+            }
+          ]
+        },
+        {
+          "Name": "Invoices",
+          "EntityName": "Invoice",
+          "NewName": "Invoice",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "ShipName"
+            },
+            {
+              "Name": "ShipAddress"
+            },
+            {
+              "Name": "ShipCity"
+            },
+            {
+              "Name": "ShipRegion"
+            },
+            {
+              "Name": "ShipPostalCode"
+            },
+            {
+              "Name": "ShipCountry"
+            },
+            {
+              "Name": "CustomerID",
+              "PropertyName": "CustomerId",
+              "NewName": "CustomerID"
+            },
+            {
+              "Name": "CustomerName"
+            },
+            {
+              "Name": "Address"
+            },
+            {
+              "Name": "City",
+              "NewName": "CityCustom"
+            },
+            {
+              "Name": "Region"
+            },
+            {
+              "Name": "PostalCode"
+            },
+            {
+              "Name": "Country"
+            },
+            {
+              "Name": "Salesperson"
+            },
+            {
+              "Name": "OrderID",
+              "PropertyName": "OrderId",
+              "NewName": "OrderID"
+            },
+            {
+              "Name": "OrderDate"
+            },
+            {
+              "Name": "RequiredDate"
+            },
+            {
+              "Name": "ShippedDate"
+            },
+            {
+              "Name": "ShipperName"
+            },
+            {
+              "Name": "ProductID",
+              "PropertyName": "ProductId",
+              "NewName": "ProductID"
+            },
+            {
+              "Name": "ProductName"
+            },
+            {
+              "Name": "UnitPrice"
+            },
+            {
+              "Name": "Quantity"
+            },
+            {
+              "Name": "Discount",
+              "NewName": "DiscountCustom"
+            },
+            {
+              "Name": "ExtendedPrice"
+            },
+            {
+              "Name": "Freight"
+            }
+          ]
+        },
+        {
+          "Name": "Orders",
+          "EntityName": "Order",
+          "NewName": "Order",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "OrderID",
+              "PropertyName": "OrderId",
+              "NewName": "OrderID"
+            },
+            {
+              "Name": "CustomerID",
+              "PropertyName": "CustomerId",
+              "NewName": "CustomerID"
+            },
+            {
+              "Name": "EmployeeID",
+              "PropertyName": "EmployeeId",
+              "NewName": "EmployeeID"
+            },
+            {
+              "Name": "OrderDate",
+              "NewName": "OrderDateCustom"
+            },
+            {
+              "Name": "RequiredDate"
+            },
+            {
+              "Name": "ShippedDate"
+            },
+            {
+              "Name": "ShipVia",
+              "NewName": "ShipViaCustom"
+            },
+            {
+              "Name": "Freight"
+            },
+            {
+              "Name": "ShipName"
+            },
+            {
+              "Name": "ShipAddress"
+            },
+            {
+              "Name": "ShipCity"
+            },
+            {
+              "Name": "ShipRegion"
+            },
+            {
+              "Name": "ShipPostalCode"
+            },
+            {
+              "Name": "ShipCountry"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "CustomerNavigation",
+              "NewName": "Customer",
+              "FkName": "FK_Orders_Customers",
+              "ToEntity": "Customer",
+              "Multiplicity": "0..1"
+            },
+            {
+              "Name": "Employee",
+              "NewName": "CustomEmployee",
+              "FkName": "FK_Orders_Employees",
+              "ToEntity": "Employee",
+              "Multiplicity": "0..1"
+            },
+            {
+              "Name": "OrderDetails",
+              "NewName": "OrderDetailsCustom",
+              "FkName": "FK_Order_Details_Orders",
+              "ToEntity": "Order_Detail",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "ShipViaNavigation",
+              "NewName": "CustomShipper",
+              "FkName": "FK_Orders_Shippers",
+              "ToEntity": "Shipper",
+              "Multiplicity": "0..1"
+            }
+          ]
+        },
+        {
+          "Name": "Order Details",
+          "EntityName": "OrderDetail",
+          "NewName": "Order_Detail",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "OrderID",
+              "PropertyName": "OrderId",
+              "NewName": "OrderID"
+            },
+            {
+              "Name": "ProductID",
+              "PropertyName": "ProductId",
+              "NewName": "ProductID"
+            },
+            {
+              "Name": "UnitPrice"
+            },
+            {
+              "Name": "Quantity",
+              "NewType": "NorthwindModel.QuantityEnum"
+            },
+            {
+              "Name": "Discount"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "Order",
+              "NewName": "OrderCustom",
+              "FkName": "FK_Order_Details_Orders",
+              "ToEntity": "Order",
+              "Multiplicity": "1"
+            },
+            {
+              "Name": "Product",
+              "NewName": "ProductCustom",
+              "FkName": "FK_Order_Details_Products",
+              "ToEntity": "Product",
+              "Multiplicity": "1"
+            }
+          ]
+        },
+        {
+          "Name": "Order Details Extended",
+          "EntityName": "OrderDetailsExtended",
+          "NewName": "Order_Details_Extended",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "OrderID",
+              "PropertyName": "OrderId",
+              "NewName": "OrderID"
+            },
+            {
+              "Name": "ProductID",
+              "PropertyName": "ProductId",
+              "NewName": "ProductID"
+            },
+            {
+              "Name": "ProductName"
+            },
+            {
+              "Name": "UnitPrice",
+              "NewName": "UnitPriceCustom"
+            },
+            {
+              "Name": "Quantity"
+            },
+            {
+              "Name": "Discount",
+              "NewName": "DiscountCustom"
+            },
+            {
+              "Name": "ExtendedPrice"
+            }
+          ]
+        },
+        {
+          "Name": "Order Subtotals",
+          "EntityName": "OrderSubtotal",
+          "NewName": "Order_Subtotal",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "OrderID",
+              "PropertyName": "OrderId",
+              "NewName": "OrderID"
+            },
+            {
+              "Name": "Subtotal"
+            }
+          ]
+        },
+        {
+          "Name": "Orders Qry",
+          "EntityName": "OrdersQry",
+          "NewName": "Orders_Qry_Custom",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "OrderID",
+              "PropertyName": "OrderId",
+              "NewName": "OrderID"
+            },
+            {
+              "Name": "CustomerID",
+              "PropertyName": "CustomerId",
+              "NewName": "CustomerID"
+            },
+            {
+              "Name": "EmployeeID",
+              "PropertyName": "EmployeeId",
+              "NewName": "EmployeeID"
+            },
+            {
+              "Name": "OrderDate"
+            },
+            {
+              "Name": "RequiredDate"
+            },
+            {
+              "Name": "ShippedDate"
+            },
+            {
+              "Name": "ShipVia"
+            },
+            {
+              "Name": "Freight"
+            },
+            {
+              "Name": "ShipName"
+            },
+            {
+              "Name": "ShipAddress"
+            },
+            {
+              "Name": "ShipCity"
+            },
+            {
+              "Name": "ShipRegion"
+            },
+            {
+              "Name": "ShipPostalCode"
+            },
+            {
+              "Name": "ShipCountry"
+            },
+            {
+              "Name": "CompanyName"
+            },
+            {
+              "Name": "Address"
+            },
+            {
+              "Name": "City"
+            },
+            {
+              "Name": "Region"
+            },
+            {
+              "Name": "PostalCode"
+            },
+            {
+              "Name": "Country"
+            }
+          ]
+        },
+        {
+          "Name": "Products",
+          "EntityName": "Product",
+          "NewName": "Product",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "ProductID",
+              "PropertyName": "ProductId",
+              "NewName": "ProductID"
+            },
+            {
+              "Name": "ProductName"
+            },
+            {
+              "Name": "SupplierID",
+              "PropertyName": "SupplierId",
+              "NewName": "SupplierID"
+            },
+            {
+              "Name": "CategoryID",
+              "PropertyName": "CategoryId",
+              "NewName": "CategoryID"
+            },
+            {
+              "Name": "QuantityPerUnit"
+            },
+            {
+              "Name": "UnitPrice"
+            },
+            {
+              "Name": "UnitsInStock"
+            },
+            {
+              "Name": "UnitsOnOrder"
+            },
+            {
+              "Name": "ReorderLevel"
+            },
+            {
+              "Name": "Discontinued"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "Category",
+              "NewName": "CategoryCustom",
+              "FkName": "FK_Products_Categories",
+              "ToEntity": "Category",
+              "Multiplicity": "0..1"
+            },
+            {
+              "Name": "OrderDetails",
+              "NewName": "Order_Details",
+              "FkName": "FK_Order_Details_Products",
+              "ToEntity": "Order_Detail",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "SupplierNavigation",
+              "NewName": "Supplier",
+              "FkName": "FK_Products_Suppliers",
+              "ToEntity": "Supplier",
+              "Multiplicity": "0..1"
+            }
+          ]
+        },
+        {
+          "Name": "Product Sales for 1997",
+          "EntityName": "ProductSalesFor1997",
+          "NewName": "Product_Sales_for_1997",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "CategoryName"
+            },
+            {
+              "Name": "ProductName"
+            },
+            {
+              "Name": "ProductSales"
+            }
+          ]
+        },
+        {
+          "Name": "Products Above Average Price",
+          "EntityName": "ProductsAboveAveragePrice",
+          "NewName": "Products_Above_Average_Price",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "ProductName"
+            },
+            {
+              "Name": "UnitPrice"
+            }
+          ]
+        },
+        {
+          "Name": "Products by Category",
+          "EntityName": "ProductsByCategory",
+          "NewName": "Products_by_Category",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "CategoryName",
+              "NewName": "CategoryNameCustom"
+            },
+            {
+              "Name": "ProductName"
+            },
+            {
+              "Name": "QuantityPerUnit"
+            },
+            {
+              "Name": "UnitsInStock",
+              "NewName": "UnitsInStockCustom",
+              "NewType": "NorthwindModel.UnitsInStockEnum"
+            },
+            {
+              "Name": "Discontinued"
+            }
+          ]
+        },
+        {
+          "Name": "Region",
+          "NewName": "RegionCustom",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "RegionID",
+              "PropertyName": "RegionId",
+              "NewName": "RegionID"
+            },
+            {
+              "Name": "RegionDescription"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "Territories",
+              "NewName": "TerritoriesCustom",
+              "FkName": "FK_Territories_Region",
+              "ToEntity": "Territory",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ]
+        },
+        {
+          "Name": "Sales by Category",
+          "EntityName": "SalesByCategory",
+          "NewName": "Sales_by_Category",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "CategoryID",
+              "PropertyName": "CategoryId",
+              "NewName": "CategoryID"
+            },
+            {
+              "Name": "CategoryName"
+            },
+            {
+              "Name": "ProductName"
+            },
+            {
+              "Name": "ProductSales"
+            }
+          ]
+        },
+        {
+          "Name": "Sales Totals by Amount",
+          "EntityName": "SalesTotalsByAmount",
+          "NewName": "Sales_Totals_by_Amount",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "SaleAmount"
+            },
+            {
+              "Name": "OrderID",
+              "PropertyName": "OrderId",
+              "NewName": "OrderIDCustom"
+            },
+            {
+              "Name": "CompanyName",
+              "NewName": "CompanyNameCustom"
+            },
+            {
+              "Name": "ShippedDate",
+              "NewName": "ShippedDateCustom"
+            }
+          ]
+        },
+        {
+          "Name": "Shippers",
+          "EntityName": "Shipper",
+          "NewName": "Shipper",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "ShipperID",
+              "PropertyName": "ShipperId",
+              "NewName": "ShipperID"
+            },
+            {
+              "Name": "CompanyName"
+            },
+            {
+              "Name": "Phone"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "Orders",
+              "NewName": "OrdersCustom",
+              "FkName": "FK_Orders_Shippers",
+              "ToEntity": "Order",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ]
+        },
+        {
+          "Name": "Summary of Sales by Quarter",
+          "EntityName": "SummaryOfSalesByQuarter",
+          "NewName": "Summary_of_Sales_by_Quarter",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "ShippedDate"
+            },
+            {
+              "Name": "OrderID",
+              "PropertyName": "OrderId",
+              "NewName": "OrderID"
+            },
+            {
+              "Name": "Subtotal"
+            }
+          ]
+        },
+        {
+          "Name": "Summary of Sales by Year",
+          "EntityName": "SummaryOfSalesByYear",
+          "NewName": "Summary_of_Sales_by_Year",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "ShippedDate"
+            },
+            {
+              "Name": "OrderID",
+              "PropertyName": "OrderId",
+              "NewName": "OrderID"
+            },
+            {
+              "Name": "Subtotal"
+            }
+          ]
+        },
+        {
+          "Name": "Suppliers",
+          "EntityName": "Supplier",
+          "NewName": "Supplier",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "SupplierID",
+              "PropertyName": "SupplierId",
+              "NewName": "SupplierID"
+            },
+            {
+              "Name": "CompanyName"
+            },
+            {
+              "Name": "ContactName"
+            },
+            {
+              "Name": "ContactTitle"
+            },
+            {
+              "Name": "Address"
+            },
+            {
+              "Name": "City"
+            },
+            {
+              "Name": "Region"
+            },
+            {
+              "Name": "PostalCode"
+            },
+            {
+              "Name": "Country"
+            },
+            {
+              "Name": "Phone"
+            },
+            {
+              "Name": "Fax"
+            },
+            {
+              "Name": "HomePage"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "Products",
+              "NewName": "ProductsCustom",
+              "FkName": "FK_Products_Suppliers",
+              "ToEntity": "Product",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ]
+        },
+        {
+          "Name": "Territories",
+          "EntityName": "Territory",
+          "NewName": "Territory",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "TerritoryID",
+              "PropertyName": "TerritoryId",
+              "NewName": "TerritoryID"
+            },
+            {
+              "Name": "TerritoryDescription"
+            },
+            {
+              "Name": "RegionID",
+              "PropertyName": "RegionId",
+              "NewName": "RegionID"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "Region",
+              "NewName": "RegionCustom",
+              "FkName": "FK_Territories_Region",
+              "ToEntity": "RegionCustom",
+              "Multiplicity": "1"
+            },
+            {
+              "Name": null,
+              "NewName": "Employees",
+              "FkName": "EmployeeTerritories",
+              "ToEntity": "Employee",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

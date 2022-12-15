@@ -14,6 +14,7 @@ public sealed class PropertyRule : RuleBase, IPropertyRule {
     public PropertyRule() {
         DiscriminatorConditions = Observable ? new ObservableCollection<DiscriminatorCondition>() : new List<DiscriminatorCondition>();
     }
+
     /// <summary> The raw database name of the column.  Used to locate the property during scaffolding phase.  Required. </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
     [DisplayName("DB Name"), Category("Mapping"),
@@ -48,7 +49,7 @@ public sealed class PropertyRule : RuleBase, IPropertyRule {
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     [DisplayName("Discriminator Conditions"), Category("TPH Configuration"),
      Description("If using TPH inheritance, discriminator conditions describe the mapping from the base type to the concrete types.")]
-    public IList<DiscriminatorCondition> DiscriminatorConditions { get;  }
+    public IList<DiscriminatorCondition> DiscriminatorConditions { get; }
 
     IEnumerable<string> IPropertyRule.GetCurrentNameOptions() => new[] { PropertyName, Name };
     string IPropertyRule.GetNewTypeName() => NewType;
@@ -67,6 +68,8 @@ public sealed class PropertyRule : RuleBase, IPropertyRule {
 }
 
 /// <summary> If using TPH, discriminator conditions describe the mapping from the base type to the concrete types. </summary>
+[DebuggerDisplay("DiscriminatorCondition {Value} to {ToEntityName}")]
+[DataContract]
 public sealed class DiscriminatorCondition {
     /// <summary> Rows with this value will be mapped to the selected target entity.  Required. </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
