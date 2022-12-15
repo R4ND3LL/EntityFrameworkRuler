@@ -25,7 +25,8 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
     /// <param name="ruleSaver"> Service that can persist a rule model to disk </param>
     /// <param name="logger"> Response logger </param>
     [ActivatorUtilitiesConstructor]
-    public RuleGenerator(IRulerNamingService namingService, IEdmxParser edmxParser, IRuleSaver ruleSaver, IMessageLogger logger) : base(logger) {
+    public RuleGenerator(IRulerNamingService namingService, IEdmxParser edmxParser, IRuleSaver ruleSaver, IMessageLogger logger) :
+        base(logger) {
         NamingService = namingService;
         EdmxParser = edmxParser;
         RuleSaver = ruleSaver;
@@ -75,7 +76,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
     /// <inheritdoc />
     public GenerateRulesResponse GenerateRules(string edmxFilePath, bool useDatabaseNames = false, bool noPluralize = false,
         bool includeUnknowns = false, bool compactRules = false) {
-        return GenerateRules(new(edmxFilePath, useDatabaseNames, noPluralize, includeUnknowns, compactRules));
+        return GenerateRules(new(edmxFilePath, useDatabaseNames, noPluralize, includeUnknowns));
     }
 
     /// <inheritdoc />
@@ -125,7 +126,6 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
         };
         var namingService = NamingService ??= new RulerNamingService(null, request);
 
-        var generateAll = !request.IncludeUnknowns || !request.CompactRules;
         foreach (var grp in edmx.Entities.GroupBy(o => o.DbSchema)) {
             if (grp.Key.IsNullOrWhiteSpace()) continue;
 
@@ -137,36 +137,71 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
             schemaRule.IncludeUnknownViews = request.IncludeUnknowns;
             foreach (var entity in grp.OrderBy(o => o.Name)) {
                 // if entity name is different than db, it has to go into output
-                var altered = false;
+                //var altered = false;
                 // Get the expected EF entity identifier based on options.. just like EF would:
                 var expectedClassName = namingService.GetExpectedEntityTypeName(entity);
-                var tbl = new TableRule {
+                var entityRule = new EntityRule {
                     Name = entity.StorageName,
                     EntityName = entity.StorageName == expectedClassName ? null : expectedClassName,
                     NewName = entity.Name.CoalesceWhiteSpace(expectedClassName, entity.StorageName),
-                    IncludeUnknownColumns = request.IncludeUnknowns
+                    IncludeUnknownColumns = request.IncludeUnknowns,
+                    BaseTypeName = entity.BaseType?.Name,
                 };
 
-                if (tbl.Name != tbl.NewName) altered = true;
+                if (entity.IsAbstract) entityRule.IsAbstract(true);
+                var relationalMappingStrategy = entity.RelationalMappingStrategy;
+                if (relationalMappingStrategy?.Length == 3) {
+                    entityRule.SetMappingStrategy(relationalMappingStrategy);
+                }
 
-                Debug.Assert(tbl.EntityName?.IsValidSymbolName() != false);
-                Debug.Assert(tbl.NewName.IsValidSymbolName());
+                Debug.Assert(entityRule.EntityName?.IsValidSymbolName() != false);
+                Debug.Assert(entityRule.NewName.IsValidSymbolName());
 
                 foreach (var property in entity.Properties) {
                     // if property name is different than db, it has to go into output
                     // Get the expected EF property identifier based on options.. just like EF would:
                     var expectedPropertyName = namingService.GetExpectedPropertyName(property, expectedClassName);
-                    if (!generateAll && (expectedPropertyName.IsNullOrWhiteSpace() ||
-                                         (property.Name == expectedPropertyName && property.EnumType == null))) continue;
-                    tbl.Columns.Add(new() {
+                    var propertyRule = new PropertyRule() {
                         Name = property.DbColumnName,
                         PropertyName = expectedPropertyName == property.DbColumnName ? null : expectedPropertyName,
                         NewName = property.Name == expectedPropertyName ? null : property.Name,
                         NewType = property.EnumType?.ExternalTypeName ?? property.EnumType?.FullName
-                    });
-                    Debug.Assert(tbl.Columns[^1].PropertyName == null || tbl.Columns[^1].PropertyName.IsValidSymbolName());
-                    Debug.Assert(tbl.Columns[^1].NewName == null || tbl.Columns[^1].NewName.IsValidSymbolName());
-                    altered = true;
+                    };
+
+                    Debug.Assert(propertyRule.PropertyName == null || propertyRule.PropertyName.IsValidSymbolName());
+                    Debug.Assert(propertyRule.NewName == null || propertyRule.NewName.IsValidSymbolName());
+                    entityRule.Properties.Add(propertyRule);
+                }
+
+                if (relationalMappingStrategy == "TPH" && entity.DiscriminatorPropertyMappings.Count > 0) {
+                    foreach (var discriminatorPropertyMapping in entity.DiscriminatorPropertyMappings) {
+                        var property = discriminatorPropertyMapping.Property;
+                        var propertyRule = entityRule.Properties.FirstOrDefault(o => o.Name == property.Name);
+                        if (propertyRule == null) {
+                            // Must add property rule for the column even though it's not mapped to a property in the EDMX
+                            var expectedPropertyName = namingService.GetExpectedPropertyName(property, entity, expectedClassName);
+                            propertyRule = new() {
+                                Name = property.Name,
+                                PropertyName = expectedPropertyName == property.Name ? null : expectedPropertyName,
+                                NewName = property.Name == expectedPropertyName ? null : property.Name,
+                                NotMapped = true
+                            };
+                            Debug.Assert(propertyRule.PropertyName == null || propertyRule.PropertyName.IsValidSymbolName());
+                            Debug.Assert(propertyRule.NewName == null || propertyRule.NewName.IsValidSymbolName());
+                            entityRule.Properties.Add(propertyRule);
+                        }
+
+                        // with discriminators for this property, set the value-to-entity mapping annotations
+                        entityRule.SetDiscriminatorColumn(property.Name);
+
+                        var toEntity = discriminatorPropertyMapping.ToEntity;
+                        var expectedToClassName = namingService.GetExpectedEntityTypeName(toEntity);
+                        var c = new DiscriminatorCondition() {
+                            Value = discriminatorPropertyMapping.Condition.Value,
+                            ToEntityName = toEntity.Name.CoalesceWhiteSpace(expectedToClassName, toEntity.StorageName)
+                        };
+                        propertyRule.DiscriminatorConditions.Add(c);
+                    }
                 }
 
                 foreach (var navigation in entity.NavigationProperties) {
@@ -176,7 +211,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                             .FirstOrDefault(o => o != navigation.Name)
                     };
 
-                    if (!generateAll && navigationRename.Name.IsNullOrWhiteSpace()) continue;
+                    //if (!generateAll && navigationRename.Name.IsNullOrWhiteSpace()) continue;
 
                     // fill in other metadata
                     var inverseNav = navigation.InverseNavigation;
@@ -192,11 +227,10 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                                                 navigation.InverseNavigation?.Multiplicity != Multiplicity.Many))
                         Debugger.Break();
 #endif
-                    tbl.Navigations.Add(navigationRename);
-                    altered = true;
+                    entityRule.Navigations.Add(navigationRename);
                 }
 
-                if (altered || generateAll) schemaRule.Tables.Add(tbl);
+                schemaRule.Entities.Add(entityRule);
             }
         }
 
@@ -230,6 +264,4 @@ public sealed class GenerateRulesResponse : LoggedResponse {
 
     /// <inheritdoc />
     public override bool Success => base.Success && rules.Count > 0;
-
-
 }

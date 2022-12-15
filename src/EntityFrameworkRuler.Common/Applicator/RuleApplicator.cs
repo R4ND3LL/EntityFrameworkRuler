@@ -159,7 +159,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
             var schemaResponse = new ApplyRulesResponse(null, Logger);
             schemaResponse.Log += OnResponseLog;
             try {
-                await ApplyRulesCore(request, schema.Tables, schema.Namespace, schemaResponse, state);
+                await ApplyRulesCore(request, schema.Entities, schema.Namespace, schemaResponse, state);
                 response.GetInternals().Merge(schemaResponse);
             } finally {
                 schemaResponse.Log -= OnResponseLog;
@@ -174,7 +174,7 @@ public sealed class RuleApplicator : RuleHandler, IRuleApplicator {
     /// <param name="response"> The response to fill. </param>
     /// <param name="state"> Roslyn project state. Internal use only. </param>
     /// <returns></returns>
-    private async Task ApplyRulesCore(ApplicatorOptions request, IEnumerable<IClassRule> classRules, string namespaceName,
+    private async Task ApplyRulesCore(ApplicatorOptions request, IEnumerable<IEntityRule> classRules, string namespaceName,
         ApplyRulesResponse response, RoslynProjectState state = null) {
         string ToFullClassName(string className) {
             return namespaceName.HasNonWhiteSpace() ? $"{namespaceName}.{className}" : className;

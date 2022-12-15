@@ -10,6 +10,8 @@ using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Schema;
 using System.Xml.Serialization;
+using EntityFrameworkRuler.Generator.Services;
+
 #pragma warning disable CS1591
 
 namespace EntityFrameworkRuler.Generator.EdmxModel;
@@ -126,7 +128,7 @@ public class StorageEntityKey {
 
 [DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "Property", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-public class StorageProperty {
+public class StorageProperty : IEntityProperty {
     [XmlAttribute(AttributeName = "Name")]
     public string Name { get; set; }
 
@@ -147,6 +149,24 @@ public class StorageProperty {
 
     [XmlAttribute(AttributeName = "Scale")]
     public string Scale { get; set; }
+
+    #region naming cache
+
+    /// <summary> internal use only to cache the expected EF Core identifier </summary>
+    private NamingCache<string> expectedEfCoreName;
+
+    string IEntityProperty.GetExpectedEfCoreName(IRulerNamingService namingService) {
+        return expectedEfCoreName.GetValue(namingService);
+    }
+
+    string IEntityProperty.SetExpectedEfCoreName(IRulerNamingService namingService, string value) {
+        expectedEfCoreName = new(namingService, value);
+        return value;
+    }
+
+    string IEntityProperty.GetName() => Name;
+
+    #endregion
 }
 
 [DebuggerDisplay("Role={Role} Type={Type} Multiplicity={Multiplicity}")]
@@ -588,6 +608,15 @@ public class ConceptualEntityType {
 
     [XmlAttribute(AttributeName = "Name")]
     public string Name { get; set; }
+
+    [XmlElement(ElementName = "Documentation", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
+    public ConceptualDocumentation Documentation { get; set; }
+
+    [XmlAttribute(AttributeName = "Abstract")]
+    public bool Abstract { get; set; }
+
+    [XmlAttribute(AttributeName = "BaseType")]
+    public string BaseType { get; set; }
 }
 
 [XmlRoot(ElementName = "Documentation", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
@@ -717,6 +746,18 @@ public class MappingFragment {
 
     [XmlAttribute(AttributeName = "StoreEntitySet")]
     public string StoreEntitySet { get; set; }
+
+    [XmlElement(ElementName = "Condition", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
+    public MappingCondition Condition { get; set; }
+}
+
+[XmlRoot(ElementName = "Condition", Namespace = "http://schemas.microsoft.com/ado/2009/11/mapping/cs")]
+public class MappingCondition {
+    [XmlAttribute(AttributeName = "ColumnName")]
+    public string ColumnName { get; set; }
+
+    [XmlAttribute(AttributeName = "Value")]
+    public string Value { get; set; }
 }
 
 [DebuggerDisplay("{TypeName}")]

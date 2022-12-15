@@ -60,19 +60,19 @@ public class RuledCandidateNamingService : CandidateNamingService {
     }
 
     /// <summary> Name that table, also return indicator whether the name is frozen (explicitly set by user, cannot be altered) </summary>
-    public virtual NamedElementState<DatabaseTable, TableRule> GenerateCandidateNameState(DatabaseTable table) {
+    public virtual NamedElementState<DatabaseTable, EntityRule> GenerateCandidateNameState(DatabaseTable table) {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
         dbContextRule ??= ResolveDbContextRule();
 
-        if (!dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var tableRule)) {
+        if (!dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var entityRule)) {
             var state = NameToState(base.GenerateCandidateIdentifier(table));
             logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} not found in rule file. Auto-named {state.Name}");
             return state;
         }
 
-        if (tableRule?.NewName.HasNonWhiteSpace() == true) {
+        if (entityRule?.NewName.HasNonWhiteSpace() == true) {
             // Name explicitly set by user, cannot be altered by pluralizer so set FROZEN
-            var state = NameToState(tableRule.NewName, true);
+            var state = NameToState(entityRule.NewName, true);
             logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} mapped to entity name {state.Name}");
             return state;
         }
@@ -106,8 +106,8 @@ public class RuledCandidateNamingService : CandidateNamingService {
             $"RULED: Table {table.Schema}.{table.Name} auto-named entity {state2.Name}{(usedRegex ? " using regex" : "")}");
         return state2;
 
-        NamedElementState<DatabaseTable, TableRule> NameToState(string newName, bool isFrozen = false) {
-            var state = new NamedElementState<DatabaseTable, TableRule>(newName, table, tableRule, isFrozen);
+        NamedElementState<DatabaseTable, EntityRule> NameToState(string newName, bool isFrozen = false) {
+            var state = new NamedElementState<DatabaseTable, EntityRule>(newName, table, entityRule, isFrozen);
             return state;
         }
     }
@@ -125,15 +125,15 @@ public class RuledCandidateNamingService : CandidateNamingService {
         if (column is null) throw new ArgumentNullException(nameof(column));
         dbContextRule ??= ResolveDbContextRule();
 
-        if (!dbContextRule.TryResolveRuleFor(column.Table.Schema, column.Table.Name, out var schema, out var tableRule))
+        if (!dbContextRule.TryResolveRuleFor(column.Table.Schema, column.Table.Name, out var schema, out var entityRule))
             return base.GenerateCandidateIdentifier(column);
-        if (!tableRule.TryResolveRuleFor(column.Name, out var columnRule))
+        if (!entityRule.TryResolveRuleFor(column.Name, out var propertyRule))
             return base.GenerateCandidateIdentifier(column);
 
-        if (columnRule?.NewName.HasNonWhiteSpace() == true) {
+        if (propertyRule?.NewName.HasNonWhiteSpace() == true) {
             logger?.WriteVerbose(
-                $"RULED: Column {column.Table.Schema}.{column.Table.Name}.{columnRule.Name} property name set to {columnRule.NewName}");
-            return columnRule.NewName;
+                $"RULED: Column {column.Table.Schema}.{column.Table.Name}.{propertyRule.Name} property name set to {propertyRule.NewName}");
+            return propertyRule.NewName;
         }
 
         if (!string.IsNullOrEmpty(schema.ColumnRegexPattern) && schema.ColumnPatternReplaceWith != null) {
@@ -200,10 +200,10 @@ public class RuledCandidateNamingService : CandidateNamingService {
             schemaName = null;
         }
 
-        var tableRule = dbContextRule.TryResolveRuleForEntity(entity.Name, schemaName, tableName);
-        if (tableRule?.Navigations.IsNullOrEmpty() != false) return defaultEfName();
+        var entityRule = dbContextRule.TryResolveRuleForEntity(entity.Name, schemaName, tableName);
+        if (entityRule?.Navigations.IsNullOrEmpty() != false) return defaultEfName();
 
-        var rename = tableRule.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
+        var rename = entityRule.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
         if (rename?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
 
         logger?.WriteVerbose($"RULED: Navigation {entity.Name}.{rename.NewName} defined");

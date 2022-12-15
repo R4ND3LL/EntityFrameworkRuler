@@ -15,8 +15,8 @@ public class RuleValidator : IRuleValidator {
 
     private IValidator dbContextRule;
     private IValidator schemaRule;
-    private IValidator tableRule;
-    private IValidator columnRule;
+    private IValidator entityRule;
+    private IValidator propertyRule;
     private IValidator navigationRule;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -29,11 +29,11 @@ public class RuleValidator : IRuleValidator {
             case SchemaRule:
                 validator = schemaRule ??= InitializeSchemaRuleValidator();
                 break;
-            case TableRule:
-                validator = tableRule ??= InitializeTableRuleValidator();
+            case EntityRule:
+                validator = entityRule ??= InitializeEntityRuleValidator();
                 break;
-            case ColumnRule:
-                validator = columnRule ??= InitializeColumnRuleValidator();
+            case PropertyRule:
+                validator = propertyRule ??= InitializePropertyRuleValidator();
                 break;
             case NavigationRule:
                 validator = navigationRule ??= InitializeNavigationRuleValidator();
@@ -73,7 +73,7 @@ public class RuleValidator : IRuleValidator {
                     "Invalid namespace")
                 .For(o => o.ColumnRegexPattern).Assert(o => VerifyRegEx(o))
                 .For(o => o.TableRegexPattern).Assert(o => VerifyRegEx(o))
-                .For(o => o.Tables)
+                .For(o => o.Entities)
                 .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Entity Names should be unique")
                 .Assert(o => o.Select(r => r.EntityName).Where(r => r.HasCharacters()).IsDistinct(), "Entity EntityNames should be unique")
                 .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
@@ -82,29 +82,29 @@ public class RuleValidator : IRuleValidator {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    protected virtual Validator<TableRule> InitializeTableRuleValidator() {
-        return new Validator<TableRule>()
+    protected virtual Validator<EntityRule> InitializeEntityRuleValidator() {
+        return new Validator<EntityRule>()
                 .For(o => o.Name)
                 .Assert(s => s.IsValidDbIdentifier(), invalidSymbolName)
                 .Assert(s => s.Length < 200, tooLong)
                 .For(o => o.NewName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.EntityName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
-                .For(o => o.Columns)
+                .For(o => o.Properties)
                 .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Column Names should be unique")
                 .Assert(o => o.Select(r => r.PropertyName).Where(r => r.HasCharacters()).IsDistinct(), "Column PropertyNames should be unique")
                 .For(o => o.Navigations)
                 .Assert(o => o.Where(r => r.FkName.HasCharacters())
                         .Select(r => (r.FkName, r.IsPrincipal)).IsDistinct(),
                     "FkNames should be unique")
-                .For(o => ((IClassRule)o).GetProperties())
+                .For(o => ((IEntityRule)o).GetProperties())
                 .Assert(o => o.Select(r => r.GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
                     "Final property names should be unique")
             ;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    protected virtual Validator<ColumnRule> InitializeColumnRuleValidator() {
-        return new Validator<ColumnRule>()
+    protected virtual Validator<PropertyRule> InitializePropertyRuleValidator() {
+        return new Validator<PropertyRule>()
                 .For(o => o.Name)
                 .Assert(s => s.IsValidDbIdentifier(), invalidSymbolName)
                 .Assert(s => s.Length < 200, tooLong)

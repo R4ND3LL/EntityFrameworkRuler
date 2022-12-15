@@ -85,9 +85,10 @@ public sealed class CustomOperator : PropertyGridOperator {
         return key switch {
             "DbContextRule" => "DB Context",
             "SchemaRule" => "Schema",
-            "TableRule" => "Table",
-            "ColumnRule" => "Column",
+            "EntityRule" => "Entity",
+            "PropertyRule" => "Property",
             "NavigationRule" => "Navigation",
+            "ToEntityName" => "To Entity",
             _ => base.GetLocalizedString(key, declaringType)
         };
     }

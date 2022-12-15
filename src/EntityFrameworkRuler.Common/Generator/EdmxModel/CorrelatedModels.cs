@@ -27,6 +27,7 @@ public sealed class Schema : NotifyPropertyChanged {
     public IList<AssociationBase> Associations { get; } = new ObservableCollection<AssociationBase>();
     public override string ToString() { return $"Schema: {Namespace}"; }
 }
+
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class EntityType : NotifyPropertyChanged {
     public EntityType(ConceptualEntityType conceptualEntityType, Schema schema) {
@@ -46,6 +47,16 @@ public sealed class EntityType : NotifyPropertyChanged {
 
     /// <summary> The storage name of the entity </summary>
     public string StorageName => StorageEntity?.Name ?? Name;
+
+    /// <summary> The storage name of the entity with DB Schema </summary>
+    public string StorageFullName {
+        get {
+            var schema = DbSchema;
+            var table = StorageEntity?.Name ?? Name;
+            if (schema.HasNonWhiteSpace() && table.HasNonWhiteSpace()) return $"{schema}.{table}";
+            return table;
+        }
+    }
 
     /// <summary> The cleansed storage name (spaces converted to underscore) </summary>
     public string StorageNameIdentifier => StorageName.GenerateCandidateIdentifier(); //.CapitalizeFirst();
@@ -72,6 +83,32 @@ public sealed class EntityType : NotifyPropertyChanged {
     public IList<ConceptualAssociation> Associations { get; set; }
     public IList<EntityProperty> ConceptualKey { get; } = new List<EntityProperty>();
     public IList<EntityProperty> StorageKey { get; } = new List<EntityProperty>();
+    public bool IsAbstract => ConceptualEntity?.Abstract == true;
+
+    /// <summary> base class of this entity is another entity type </summary>
+    public EntityType BaseType { get; set; }
+
+    /// <summary> entity types that derive from this entity class </summary>
+    public List<EntityType> DerivedTypes { get; } = new List<EntityType>();
+
+    public MappingCondition Discriminator => MappingFragments.Select(mf => mf.Condition).FirstOrDefault(c => c != null);
+    public List<(StorageProperty Property, MappingCondition Condition, EntityType ToEntity)> DiscriminatorPropertyMappings { get; } = new();
+    public string RelationalMappingStrategy { get; set; }
+
+    /// <summary> get the inner most base type, or this if no base type exists </summary>
+    public EntityType GetHierarchyRoot() {
+        var b = BaseType;
+        while (b?.BaseType != null) b = b.BaseType;
+        return b ?? this;
+    }
+
+    /// <summary> recursively get all entity types that derive from this entity class </summary>
+    public IEnumerable<EntityType> GetAllDerivedTypes() {
+        foreach (var derivedType in DerivedTypes) {
+            yield return derivedType;
+            foreach (var grandChild in derivedType.GetAllDerivedTypes()) yield return grandChild;
+        }
+    }
 
     #endregion
 
@@ -145,6 +182,7 @@ internal readonly struct NamingCache<T> {
         return ReferenceEquals(current, Owner) ? value : default;
     }
 }
+
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 [DebuggerDisplay("{Name}")]
 public class EntityPropertyBase : NotifyPropertyChanged {
@@ -160,11 +198,16 @@ public class EntityPropertyBase : NotifyPropertyChanged {
     public IPropertyRef ConceptualProperty { get; }
     public string EntityName => Entity?.Name;
 }
+
+public interface IEntityProperty {
+    string GetExpectedEfCoreName(IRulerNamingService namingService);
+    string SetExpectedEfCoreName(IRulerNamingService namingService, string value);
+    string GetName();
+}
+
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-public sealed class EntityProperty : EntityPropertyBase {
-    public EntityProperty(EntityType conceptualEntity, ConceptualProperty conceptualProperty) : base(conceptualEntity,
-        conceptualProperty) {
-    }
+public sealed class EntityProperty : EntityPropertyBase, IEntityProperty {
+    public EntityProperty(EntityType entity, ConceptualProperty conceptualProperty) : base(entity, conceptualProperty) { }
 
 
     /// <summary> the database type name </summary>
@@ -184,9 +227,6 @@ public sealed class EntityProperty : EntityPropertyBase {
     public ScalarPropertyMapping Mapping { get; set; }
     public string DbColumnName => Mapping?.ColumnName;
 
-    /// <summary> The cleansed storage column name (spaces converted to underscore) </summary>
-    public string DbColumnNameIdentifier => DbColumnName.GenerateCandidateIdentifier();
-
     public new ConceptualProperty ConceptualProperty => (ConceptualProperty)base.ConceptualProperty;
     public bool IsConceptualKey { get; set; }
     public bool IsStorageKey { get; set; }
@@ -196,19 +236,22 @@ public sealed class EntityProperty : EntityPropertyBase {
     /// <summary> internal use only to cache the expected EF Core identifier </summary>
     private NamingCache<string> expectedEfCoreName;
 
-    internal string GetExpectedEfCoreName(IRulerNamingService namingService) {
+    string IEntityProperty.GetExpectedEfCoreName(IRulerNamingService namingService) {
         return expectedEfCoreName.GetValue(namingService);
     }
 
-    internal string SetExpectedEfCoreName(IRulerNamingService namingService, string value) {
+    string IEntityProperty.SetExpectedEfCoreName(IRulerNamingService namingService, string value) {
         expectedEfCoreName = new(namingService, value);
         return value;
     }
+
+    string IEntityProperty.GetName() => DbColumnName;
 
     #endregion
 
     public override string ToString() { return $"Prop: {Name}"; }
 }
+
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class NavigationProperty : EntityPropertyBase {
     public NavigationProperty(EntityType conceptualEntity, ConceptualNavigationProperty conceptualProperty)
@@ -351,6 +394,7 @@ public abstract class AssociationBase : NotifyPropertyChanged {
 
     public override string ToString() { return $"Association: {Name}"; }
 }
+
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class EnumTypeMember : NotifyPropertyChanged {
     public EnumTypeMember(ConceptualEnumMember conceptualEnumMember) {
@@ -368,6 +412,7 @@ public sealed class EnumTypeMember : NotifyPropertyChanged {
 
     public override string ToString() { return $"Enum Member: {Name} ({Value})"; }
 }
+
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class EnumType : NotifyPropertyChanged {
     public EnumType(ConceptualEnumType conceptualEnumType, Schema schema) {
@@ -396,6 +441,7 @@ public sealed class EnumType : NotifyPropertyChanged {
 
     public override string ToString() { return $"EnumType: {Name} (Ext: {ExternalTypeName})"; }
 }
+
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class EndRole : NotifyPropertyChanged {
     public EndRole(ConceptualAssociation conceptualAssociation, ConceptualEnd conceptualEnd, EntityType entityType) {

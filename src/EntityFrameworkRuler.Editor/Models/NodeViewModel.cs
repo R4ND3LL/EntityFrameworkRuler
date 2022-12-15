@@ -26,13 +26,13 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
                 Hook(dr.Schemas);
                 break;
             case SchemaRule sr:
-                Hook(sr.Tables);
+                Hook(sr.Entities);
                 break;
-            case TableRule tr:
-                Hook(tr.Columns);
+            case EntityRule tr:
+                Hook(tr.Properties);
                 Hook(tr.Navigations);
                 break;
-            case ColumnRule cr:
+            case PropertyRule cr:
                 break;
             case NavigationRule nr:
                 break;
@@ -78,8 +78,8 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
         var i = Item;
         IsDbContext = i is DbContextRule;
         IsSchema = i is SchemaRule;
-        IsTable = i is TableRule;
-        IsColumn = i is ColumnRule;
+        IsTable = i is EntityRule;
+        IsColumn = i is PropertyRule;
         IsNavigation = i is NavigationRule;
     }
 

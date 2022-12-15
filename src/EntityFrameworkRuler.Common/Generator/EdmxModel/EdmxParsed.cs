@@ -16,8 +16,8 @@ public sealed class EdmxParsed {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string FilePath { get; }
 
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public Dictionary<string, AssociationBase> AssociationsByName { get; internal set; }
+    // /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    // public Dictionary<string, AssociationBase> AssociationsByName { get; internal set; }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public Dictionary<string, EnumType> EnumsByName { get; internal set; }

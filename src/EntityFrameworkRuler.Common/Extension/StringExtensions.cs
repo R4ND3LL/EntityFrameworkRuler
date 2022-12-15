@@ -163,7 +163,7 @@ public static class StringExtensions {
     }
 
     /// <summary>
-    /// Convert DB element name to entity identifier. This is the EF Core standard.
+    /// Convert DB element name to entity identifier. This is the EF Core standard. Spaces converted to underscores.
     /// Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService.GenerateCandidateIdentifier()
     /// </summary>
     public static string GenerateCandidateIdentifier(this string originalIdentifier) {

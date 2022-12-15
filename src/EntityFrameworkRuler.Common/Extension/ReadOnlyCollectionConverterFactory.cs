@@ -1,6 +1,8 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using EntityFrameworkRuler.Rules;
 
 namespace EntityFrameworkRuler.Extension;
 
@@ -38,6 +40,7 @@ internal sealed class ReadOnlyCollectionConverterFactory : JsonConverterFactory 
         public ReadOnlyCollectionConverter() {
             propertyHandlers = typeof(T)
                 .GetProperties()
+                .Where(o => o.Name != "Item")
                 .Select(x => new {
                     Property = x,
                     CollectionInterface = (!x.CanWrite || x.GetSetMethod() == null) && x.PropertyType.IsGenericType
@@ -92,7 +95,26 @@ internal sealed class ReadOnlyCollectionConverterFactory : JsonConverterFactory 
                 if (reader.TokenType != JsonTokenType.PropertyName) continue;
                 var propName = reader.GetString();
                 if (propName == null) continue;
-                if (propertyHandlers.TryGetValue(propName, out var handler)) {
+                var handler = propertyHandlers.TryGetValue(propName);
+                if (handler.PropertyType == null) {
+                    if (typeToConvert == typeof(SchemaRule)) {
+                        if (propName == "Tables") {
+                            propName = "Entities";
+                            handler = propertyHandlers.TryGetValue(propName);
+                        }
+                    } else if (typeToConvert == typeof(EntityRule)) {
+                        if (propName == "Columns") {
+                            propName = "Properties";
+                            handler = propertyHandlers.TryGetValue(propName);
+                        }
+                    } else {
+#if DEBUG
+                        if (Debugger.IsAttached) Debugger.Break();
+#endif
+                    }
+                }
+
+                if (handler.PropertyType != null) {
                     if (!reader.Read()) throw new JsonException($"Bad JSON");
 
                     if (handler.Setter != null)

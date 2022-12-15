@@ -4,16 +4,18 @@ using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Xml;
+using EntityFrameworkRuler.Generator.EdmxModel;
+
 // ReSharper disable RemoveRedundantBraces
 
-namespace EntityFrameworkRuler.Generator.EdmxModel;
+namespace EntityFrameworkRuler.Generator.Services;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 [SuppressMessage("ReSharper", "ClassCanBeSealed.Global")]
 public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
     /// <inheritdoc />
     public EdmxParsed Parse(string fileInstancePath) {
-        State = new(fileInstancePath);
+        State = new(fileInstancePath); // FYI, this is not thread safe
         if (!File.Exists(fileInstancePath)) throw new InvalidDataException($"Could not find file {fileInstancePath}");
 
         var edmxModel = EdmxSerializer.Deserialize(File.ReadAllText(fileInstancePath));
@@ -39,6 +41,8 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
                 .ToDictionary(o =>
                     o.Name.Split('.').Last() ?? string.Empty, StringComparer.OrdinalIgnoreCase);
 
+        var entitiesByTableMapping = new Dictionary<string, List<EntityType>>();
+
         foreach (var conceptualEntityType in edmx.ConceptualModels.Schema.EntityTypes) {
             var entity = new EntityType(conceptualEntityType, schema);
             Entities.Add(entity);
@@ -46,13 +50,24 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
 
             var fullName = entity.FullName;
             var selfName = entity.SelfName;
+            var isOfTypeName = $"IsTypeOf({fullName})";
 
-            entity.EntitySetMapping = edmx.Mappings.Mapping.EntityContainerMapping.EntitySetMappings?
-                .FirstOrDefault(o => o.EntityTypeMappings.Any(etm => etm.TypeName.EqualsIgnoreCase(fullName)));
+            entity.EntitySetMapping =
+                edmx.Mappings.Mapping.EntityContainerMapping.EntitySetMappings?
+                    .FirstOrDefault(o =>
+                        o.EntityTypeMappings.Any(etm => etm.TypeName.EqualsIgnoreCase(fullName)))
+                ?? edmx.Mappings.Mapping.EntityContainerMapping.EntitySetMappings?
+                    .FirstOrDefault(o =>
+                        o.EntityTypeMappings.Any(etm => etm.TypeName.EqualsIgnoreCase(isOfTypeName)));
 
-            entity.MappingFragments = entity.EntitySetMapping?.EntityTypeMappings?
-                .FirstOrDefault(etm => etm.TypeName.EqualsIgnoreCase(fullName))
-                ?.MappingFragments ?? new List<MappingFragment>();
+            entity.MappingFragments =
+                entity.EntitySetMapping?.EntityTypeMappings?
+                    .FirstOrDefault(etm => etm.TypeName.EqualsIgnoreCase(fullName))
+                    ?.MappingFragments
+                ?? entity.EntitySetMapping?.EntityTypeMappings?
+                    .FirstOrDefault(etm => etm.TypeName.EqualsIgnoreCase(isOfTypeName))
+                    ?.MappingFragments
+                ?? new List<MappingFragment>();
 
             if (entity.MappingFragments?.Count > 0) {
                 entity.StoreEntitySetNames = entity.MappingFragments.Select(o => o.StoreEntitySet).Distinct().ToArray();
@@ -65,6 +80,11 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
                     entity.StorageEntity =
                         edmx.StorageModels.Schema.EntityTypes.FirstOrDefault(
                             o => o.Name == entity.StorageEntitySet.Name);
+
+
+                // track entities-table mapping, so that we can easily capture TPH and table splitting behavior
+                entitiesByTableMapping.GetOrAddNew(entity.StorageFullName ?? string.Empty, _ => new())
+                    .Add(entity);
             }
 
             // populate associations that hit this entity
@@ -147,39 +167,108 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
 
         var associationSetMappings = edmx.Mappings.Mapping.EntityContainerMapping?.AssociationSetMapping;
 
+        var entitiesWithBaseTypes = new List<EntityType>();
         // with all entities loaded, perform association linking
-        foreach (var entity in Entities)
-        foreach (var navigation in entity.NavigationProperties) {
-            if (navigation.Association != null) continue; // wired up from the opposite end!
-            var ass = navigation.ConceptualAssociation;
-            if (ass == null) continue;
+        foreach (var entity in Entities) {
+            foreach (var navigation in entity.NavigationProperties) {
+                if (navigation.Association != null) continue; // wired up from the opposite end!
+                var ass = navigation.ConceptualAssociation;
+                if (ass == null) continue;
 
-            var endRoles = ass.Ends.Select(end => CreateEndRole(ass, end)).ToArray();
-            Debug.Assert(ass.Ends.Count == 0 || endRoles.Length > 0);
-            Debug.Assert(endRoles.Length == 2);
+                var endRoles = ass.Ends.Select(end => CreateEndRole(ass, end)).ToArray();
+                Debug.Assert(ass.Ends.Count == 0 || endRoles.Length > 0);
+                Debug.Assert(endRoles.Length == 2);
 
-            var toEndRole = endRoles.FirstOrDefault(o => o.Role == navigation.ToRoleName);
-            var fromEndRole = endRoles.FirstOrDefault(o => o.Role == navigation.FromRoleName);
+                var toEndRole = endRoles.FirstOrDefault(o => o.Role == navigation.ToRoleName);
+                var fromEndRole = endRoles.FirstOrDefault(o => o.Role == navigation.FromRoleName);
 
-            if (toEndRole == null || fromEndRole == null) {
+                if (toEndRole == null || fromEndRole == null) {
 #if DEBUGPARSER
                 if (Debugger.IsAttached) Debugger.Break(); // invalid association!?
 #endif
-                continue;
-            }
+                    continue;
+                }
 
-            if (ass.ReferentialConstraint == null) {
-                // constraint missing probably because this is a many-to-many relationship with a suppressed junction.
-                ResolveDesignAssociation(navigation, ass, endRoles, toEndRole, associationSetMappings);
-            } else {
-                // normal fk association
-                ResolveFkAssociation(navigation, ass, endRoles, toEndRole, edmxModel);
-            }
+                if (ass.ReferentialConstraint == null) {
+                    // constraint missing probably because this is a many-to-many relationship with a suppressed junction.
+                    ResolveDesignAssociation(navigation, ass, endRoles, toEndRole, associationSetMappings);
+                } else {
+                    // normal fk association
+                    ResolveFkAssociation(navigation, ass, endRoles, toEndRole, edmxModel);
+                }
 #if DEBUGPARSER
             if (navigation.Association == null && Debugger.IsAttached)
                 Debugger.Break(); // invalid association. May be design time only?
 #endif
+            }
+
+            if (!entity.ConceptualEntity.BaseType.HasNonWhiteSpace()) continue;
+
+            // resolve entity base type
+            EntityType baseType;
+            if (entity.ConceptualEntity.BaseType.Contains("."))
+                baseType = Entities.FirstOrDefault(o => o.FullName == entity.ConceptualEntity.BaseType);
+            else
+                baseType = Entities.FirstOrDefault(o => o.Name == entity.ConceptualEntity.BaseType);
+            Debug.Assert(baseType != null);
+            entity.BaseType = baseType;
+            entitiesWithBaseTypes.Add(entity);
         }
+
+        var hierarchicalRoots = new HashSet<EntityType>();
+        foreach (var grp in entitiesWithBaseTypes.GroupBy(o => o.BaseType)) {
+            var bt = grp.Key;
+            Debug.Assert(bt.DerivedTypes.Count == 0);
+            bt.DerivedTypes.AddRange(grp);
+            hierarchicalRoots.Add(bt.GetHierarchyRoot());
+        }
+
+        foreach (var hierarchicalRoot in hierarchicalRoots) {
+            // at the root of each relational strategy.  to try identify what strategy is used.
+            var fullHierarchy = new[] { hierarchicalRoot }.Concat(hierarchicalRoot.GetAllDerivedTypes()).Distinct().ToList();
+            //var concreteTypes = fullHierarchy.Where(o => !o.IsAbstract).ToList();
+            var baseTypes = fullHierarchy.Where(o => o.BaseType != null).Select(o => o.BaseType).Distinct().ToList();
+            var leafTypes = fullHierarchy.Where(o => !o.IsAbstract && !baseTypes.Contains(o)).ToList();
+            var dbTables = fullHierarchy
+                .Where(o => o.StorageEntitySet != null && o.StorageEntity != null)
+                .Select(o => o.StorageFullName)
+                .Distinct()
+                .ToList();
+            if (dbTables.Count == 1) {
+                // full hierarchy mapped to 1 table. TPH?
+                var withConditions = fullHierarchy.Where(o => o.Discriminator?.ColumnName != null).ToArray();
+                //var withoutConditions = entities.Where(o => o.Discriminator == null).ToArray();
+                if (!withConditions.Any() || hierarchicalRoot.Discriminator != null) continue;
+                // this is a TPH mapping strategy
+                var discriminatorsMatched = 0;
+                foreach (var entityType in withConditions) {
+                    var d = entityType.Discriminator;
+                    var prop = baseTypes.Where(e => e.StorageEntity?.Properties?.Count > 0)
+                        .SelectMany(e => e.StorageEntity.Properties.Select(p => (e, p))).FirstOrDefault(o => d.ColumnName == o.p.Name);
+                    if (prop.p == null) continue;
+
+                    // add the Discriminator mapping to the entity that owns the discriminator property
+                    prop.e.DiscriminatorPropertyMappings.Add((prop.p, d, entityType));
+                    discriminatorsMatched++;
+                }
+
+                if (discriminatorsMatched <= 0) continue;
+                foreach (var entityType in baseTypes.Where(o => o.DiscriminatorPropertyMappings.Count > 0)) {
+                    entityType.RelationalMappingStrategy = "TPH";
+                }
+            } else if (dbTables.Count == leafTypes.Count) {
+                // table for each concrete type = TPC
+                // can also add check to ensure that no table exists for the root entity.
+                if (hierarchicalRoot.StorageEntity?.Name == null) {
+                    hierarchicalRoot.RelationalMappingStrategy = "TPC";
+                }
+            } else if (dbTables.Count > leafTypes.Count) {
+                // table for each concrete type + abstract types = TPT
+                // can also add check to ensure each table has FK back to root entity table.
+                hierarchicalRoot.RelationalMappingStrategy = "TPT";
+            }
+        }
+
 #if DEBUGPARSER
         // ensure associations are properly linked.
         var navsWithNoAssociation = Entities.SelectMany(o => o.NavigationProperties).Where(o => o.Association == null)
@@ -192,11 +281,11 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
         Debug.Assert(associationsNotLinked.Length == 0);
 #endif
 
-        State.AssociationsByName = Entities.SelectMany(o => o.NavigationProperties)
-            .Where(o => o.Association != null)
-            .Select(o => o.Association)
-            .GroupBy(o => o.Name)
-            .ToDictionary(o => o.Key, o => o.First(), StringComparer.InvariantCultureIgnoreCase);
+        // State.AssociationsByName = Entities.SelectMany(o => o.NavigationProperties)
+        //     .Where(o => o.Association != null)
+        //     .Select(o => o.Association)
+        //     .GroupBy(o => o.Name)
+        //     .ToDictionary(o => o.Key, o => o.First(), StringComparer.InvariantCultureIgnoreCase);
         return State;
     }
 
@@ -214,8 +303,8 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
         if (inverseEndProperty == null) return;
         var inverseEntity = toEndRole?.Entity;
         var inverseNavigation =
-            inverseEntity?.NavigationProperties?.FirstOrDefault(o => o.Name == inverseEndProperty.Name)??
-            inverseEntity?.NavigationProperties?.FirstOrDefault(o => o.Relationship == navigation.Relationship)
+                inverseEntity?.NavigationProperties?.FirstOrDefault(o => o.Name == inverseEndProperty.Name) ??
+                inverseEntity?.NavigationProperties?.FirstOrDefault(o => o.Relationship == navigation.Relationship)
             ;
         if (inverseNavigation == null || navigation == inverseNavigation) return;
         // Note, for a many-to-many, there are no dependents in the end entities. Rather, the FKs are all in the junction,
@@ -350,8 +439,10 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
     #region properties
 
     private EdmxParsed State { get; set; }
+
     private string FilePath => State.FilePath;
-    private Dictionary<string, AssociationBase> AssociationsByName => State.AssociationsByName;
+
+    //private Dictionary<string, AssociationBase> AssociationsByName => State.AssociationsByName;
     private Dictionary<string, EnumType> EnumsByName => State.EnumsByName;
     private Dictionary<string, EnumType> EnumsByConceptualSchemaName => State.EnumsByConceptualSchemaName;
     private Dictionary<string, EnumType> EnumsByExternalTypeName => State.EnumsByExternalTypeName;

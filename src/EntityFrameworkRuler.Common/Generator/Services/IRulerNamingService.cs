@@ -15,4 +15,7 @@ public interface IRulerNamingService {
 
     /// <summary> Get the property name that we expect EF to generate during the reverse engineering process. </summary>
     string GetExpectedPropertyName(EntityProperty property, string expectedEntityTypeName = null);
+
+    /// <summary> Get the property name that we expect EF to generate during the reverse engineering process. </summary>
+    string GetExpectedPropertyName(IEntityProperty property, EntityType entityType, string expectedEntityTypeName = null);
 }

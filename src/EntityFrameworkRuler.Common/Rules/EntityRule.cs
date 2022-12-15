@@ -7,13 +7,13 @@ using System.Runtime.Serialization;
 namespace EntityFrameworkRuler.Rules;
 
 /// <summary> Table rule </summary>
-[DebuggerDisplay("Table {Name} to {NewName}")]
+[DebuggerDisplay("Entity {Name} to {NewName}")]
 [DataContract]
-public sealed class TableRule : RuleBase, IClassRule {
+public sealed class EntityRule : RuleBase, IEntityRule {
     /// <summary> Creates a table rule </summary>
-    public TableRule() {
+    public EntityRule() {
         Navigations = Observable ? new ObservableCollection<NavigationRule>() : new List<NavigationRule>();
-        Columns = Observable ? new ObservableCollection<ColumnRule>() : new List<ColumnRule>();
+        Properties = Observable ? new ObservableCollection<PropertyRule>() : new List<PropertyRule>();
     }
 
     /// <summary> The raw database name of the table.  Used to locate the property during scaffolding phase.  Required. </summary>
@@ -21,10 +21,9 @@ public sealed class TableRule : RuleBase, IClassRule {
     [DisplayName("DB Name"), Category("Mapping"), Description("The storage name of the table."), Required]
     public string Name { get; set; }
 
-
     /// <summary>
     /// The expected EF generated name for the entity.
-    /// Used to locate the entity when applying rule after scaffolding using Roslyn.
+    /// Used to locate the entity when applying rules after scaffolding using Roslyn.
     /// Usually only populated if different than the Name.
     /// </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 2)]
@@ -36,24 +35,29 @@ public sealed class TableRule : RuleBase, IClassRule {
     [DisplayName("New Name"), Category("Mapping"), Description("The new name to give the entity.")]
     public string NewName { get; set; }
 
+    /// <summary> The base entity type name use in an inheritance strategy. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 4)]
+    [DisplayName("Base Type"), Category("Mapping"), Description("The base entity type name use in an inheritance strategy.")]
+    public string BaseTypeName { get; set; }
+
     /// <summary> If true, generate properties for columns that are not identified in this table rule.  Default is false. </summary>
-    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 4)]
+    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 5)]
     [DisplayName("Include Unknown Columns"), Category("Mapping"),
      Description("If true, generate properties for columns that are not identified in this table rule.  Default is false.")]
     public bool IncludeUnknownColumns { get; set; }
 
     /// <summary> If true, omit this table during the scaffolding process. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
     public override bool NotMapped { get; set; }
 
     /// <summary> The primitive property rules to apply to this entity. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 7)]
     [DisplayName("Properties"), Category("Properties|Properties"), Description("The primitive property rules to apply to this entity.")]
-    public IList<ColumnRule> Columns { get; private set; }
+    public IList<PropertyRule> Properties { get; private set; }
 
     /// <summary> The navigation property rules to apply to this entity. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 7)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 8)]
     [DisplayName("Navigations"), Category("Navigations|Navigations"), Description("The navigation property rules to apply to this entity.")]
     public IList<NavigationRule> Navigations { get; private set; }
 
@@ -69,9 +73,9 @@ public sealed class TableRule : RuleBase, IClassRule {
         //OnPropertyChanged(nameof(NewName));
     }
 
-    IEnumerable<IPropertyRule> IClassRule.GetProperties() {
-        if (!Columns.IsNullOrEmpty())
-            foreach (var rule in Columns)
+    IEnumerable<IPropertyRule> IEntityRule.GetProperties() {
+        if (!Properties.IsNullOrEmpty())
+            foreach (var rule in Properties)
                 yield return rule;
         if (!Navigations.IsNullOrEmpty())
             foreach (var rule in Navigations)

@@ -13,7 +13,7 @@ namespace EntityFrameworkRuler.Rules;
 public sealed class SchemaRule : RuleBase, ISchemaRule {
     /// <summary> Creates a schema rule </summary>
     public SchemaRule() {
-        Tables = Observable ? new ObservableCollection<TableRule>() : new List<TableRule>();
+        Entities = Observable ? new ObservableCollection<EntityRule>() : new List<EntityRule>();
     }
 
     /// <summary> The schema name this rule applies to.  Required. </summary>
@@ -82,8 +82,8 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
 
     /// <summary> The table rules to apply to this schema. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 12)]
-    [DisplayName("Tables"), Category("Tables|Tables"), Description("The table rules to apply to this schema.")]
-    public IList<TableRule> Tables { get; }
+    [DisplayName("Entities"), Category("Entities|Entities"), Description("The entity rules to apply to this schema.")]
+    public IList<EntityRule> Entities { get; }
 
     /// <inheritdoc />
     protected override string GetNewName() => null;
@@ -97,5 +97,5 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
         //OnPropertyChanged(nameof(Name));
     }
 
-    IEnumerable<IClassRule> ISchemaRule.GetClasses() => Tables;
+    IEnumerable<IEntityRule> ISchemaRule.GetClasses() => Entities;
 }

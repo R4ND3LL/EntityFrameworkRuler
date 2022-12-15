@@ -106,9 +106,11 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
         // Open document
         var filename = dialog.FileName;
         if (filename.IsNullOrWhiteSpace()) return;
+        // ReSharper disable once AssignNullToNotNullAttribute
         TargetProjectPath = new FileInfo(filename).Directory?.FullName;
     }
 
+    // ReSharper disable once ConditionIsAlwaysTrueOrFalse
     private bool CanGenerate => SelectedEdmxFile != null && TargetProjectPath.HasNonWhiteSpace();
 
     [RelayCommand(CanExecute = nameof(CanGenerate), AllowConcurrentExecutions = false)]
@@ -118,7 +120,6 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
             var hasError = false;
             var generatorOptions = new GeneratorOptions() {
                 EdmxFilePath = SelectedEdmxFile.Path,
-                CompactRules = CompactRules,
                 IncludeUnknowns = IncludeUnknowns,
                 NoPluralize = NoPluralize,
                 UseDatabaseNames = UseDatabaseNames

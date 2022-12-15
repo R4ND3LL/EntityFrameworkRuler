@@ -1,6 +1,7 @@
 ﻿using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using EntityFrameworkRuler.Rules;
 
@@ -17,8 +18,31 @@ public static class JsonSerializerExtensions {
         AllowTrailingCommas = true,
         ReadCommentHandling = JsonCommentHandling.Skip,
         IgnoreReadOnlyProperties = false,
-        Converters = { new ReadOnlyCollectionConverterFactory(), new NavigationConverterFactory() }
+        Converters = { new ReadOnlyCollectionConverterFactory(), new NavigationConverterFactory() },
+        // TypeInfoResolver = new DefaultJsonTypeInfoResolver {
+        //     Modifiers = {
+        //         ModifyTypeInfo
+        //     }
+        // }
     };
+
+    // private static void ModifyTypeInfo(JsonTypeInfo ti) {
+    //     // if (ti.Kind != JsonTypeInfoKind.None) return;
+    //     // if (ti.Type == typeof(SchemaRule)) {
+    //     //     var tables = ti.Properties.FirstOrDefault(o => o.Name == "Entities");
+    //     //     if (tables == null) {
+    //     //         //ti.Kind = JsonTypeInfoKind.Object;
+    //     //         //ti.Properties.Add(ti.CreateJsonPropertyInfo(typeof(EntityRule), "Entities"));
+    //     //     }
+    //     // }
+    //     //
+    //     // if (ti.Type == typeof(EntityRule)) {
+    //     //     var properties = ti.Properties.FirstOrDefault(o => o.Name == "Properties");
+    //     //     if (properties == null) {
+    //     //         //ti.Properties.Add(ti.CreateJsonPropertyInfo(typeof(EntityRule), "Entities"));
+    //     //     }
+    //     // }
+    // }
 
     /// <summary> Read the json file or return NULL on failure </summary>
     /// <param name="filePath">json file path to load</param>

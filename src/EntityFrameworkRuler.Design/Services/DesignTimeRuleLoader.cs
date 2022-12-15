@@ -234,7 +234,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
                 foreach (var rule in loadRulesResponse.Rules) {
                     if (rule is DbContextRule contextRules) {
                         logger.WriteVerbose(
-                            $"DB Context Rules for {contextRules.Name} loaded with {contextRules.Schemas.Count} schemas and {contextRules.Schemas.SelectMany(o => o.Tables).Count()} tables from {(contextRules.FilePath?.Length > 0 ? Path.GetFileName(contextRules.FilePath) : string.Empty)}");
+                            $"DB Context Rules for {contextRules.Name} loaded with {contextRules.Schemas.Count} schemas and {contextRules.Schemas.SelectMany(o => o.Entities).Count()} tables from {(contextRules.FilePath?.Length > 0 ? Path.GetFileName(contextRules.FilePath) : string.Empty)}");
                     }
                 }
             }

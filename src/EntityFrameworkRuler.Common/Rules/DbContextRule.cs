@@ -74,6 +74,6 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
     public override bool NotMapped { get => false; set { } }
 
     IEnumerable<ISchemaRule> IRuleModelRoot.GetSchemas() => Schemas;
-    IEnumerable<IClassRule> IRuleModelRoot.GetClasses() => Schemas.SelectMany(o => o.Tables);
+    IEnumerable<IEntityRule> IRuleModelRoot.GetClasses() => Schemas.SelectMany(o => o.Entities);
     string IRuleModelRoot.GetFilePath() => FilePath;
 }

@@ -40,7 +40,8 @@ internal static class Program {
                     var errorCount = response.Errors.Count();
                     if (errorCount == 0) {
                         await Console.Out
-                            .WriteLineAsync($"Successfully generated {genAndSaveOptions.SaveOptions.Rules.Count} rule files in {elapsed}ms")
+                            .WriteLineAsync(
+                                $"Successfully generated {genAndSaveOptions.SaveOptions.Rules.Count} rule file{(genAndSaveOptions.SaveOptions.Rules.Count > 1 ? "s" : string.Empty)} in {elapsed}ms")
                             .ConfigureAwait(false);
                         return 0;
                     }

@@ -32,7 +32,7 @@ public class RulerNamingService : IRulerNamingService {
     private readonly IRulerPluralizer pluralizer;
     private readonly CSharpUtilities cSharpUtilities;
     private CSharpUniqueNamer<EntityType> tableNamer;
-    private readonly Dictionary<EntityType, CSharpUniqueNamer<EntityProperty>> columnNamers;
+    private readonly Dictionary<EntityType, CSharpUniqueNamer<IEntityProperty>> columnNamers;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public bool RelyOnEfMethodOnly { get; } = true;
@@ -121,10 +121,10 @@ public class RulerNamingService : IRulerNamingService {
                 var prefix = navigation.IsDependentEnd ? string.Empty : inverseEntity.StorageNameIdentifier;
 
                 if (isMany) {
-                    yield return $"{prefix}{dep.DbColumnNameIdentifier}Navigations";
+                    yield return $"{prefix}{dep.Name.GenerateCandidateIdentifier()}Navigations";
                     yield return pluralizer.Pluralize(navigation.ToRole.Entity.StorageNameIdentifier);
                 } else {
-                    yield return $"{prefix}{dep.DbColumnNameIdentifier}Navigation";
+                    yield return $"{prefix}{dep.Name.GenerateCandidateIdentifier()}Navigation";
                     yield return navigation.ToRole.Entity.StorageNameIdentifier;
                 }
 
@@ -149,23 +149,27 @@ public class RulerNamingService : IRulerNamingService {
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string GetExpectedPropertyName(EntityProperty column, string expectedEntityTypeName = null) {
+        return GetExpectedPropertyName(column, column.Entity, expectedEntityTypeName);
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public string GetExpectedPropertyName(IEntityProperty column, EntityType table, string expectedEntityTypeName = null) {
         var v = column.GetExpectedEfCoreName(this);
         if (v != null) return v;
 
-        var table = column.Entity;
         var usedNames = new List<string>();
-        if (column.Entity != null) usedNames.Add(expectedEntityTypeName.CoalesceWhiteSpace(() => GetExpectedEntityTypeName(table)));
+        if (table != null) usedNames.Add(expectedEntityTypeName.CoalesceWhiteSpace(() => GetExpectedEntityTypeName(table)));
 
         return column.SetExpectedEfCoreName(this, columnNamers.GetOrAddNew(table, Factory).GetName(column));
 
-        CSharpUniqueNamer<EntityProperty> Factory(EntityType _) {
+        CSharpUniqueNamer<IEntityProperty> Factory(EntityType _) {
             if (Options?.UseDatabaseNames == true)
-                return new CSharpUniqueNamer<EntityProperty>(
-                    c => c.DbColumnName,
+                return new CSharpUniqueNamer<IEntityProperty>(
+                    c => c.GetName(),
                     usedNames,
                     cSharpUtilities,
                     singularizePluralizer: null);
-            return new CSharpUniqueNamer<EntityProperty>(
+            return new CSharpUniqueNamer<IEntityProperty>(
                 GenerateCandidateIdentifier,
                 usedNames,
                 cSharpUtilities,
@@ -173,12 +177,11 @@ public class RulerNamingService : IRulerNamingService {
         }
     }
 
-
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string GenerateCandidateIdentifier(EntityType originalTable) => originalTable.StorageNameIdentifier;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public string GenerateCandidateIdentifier(EntityProperty originalColumn) => originalColumn.DbColumnNameIdentifier;
+    public string GenerateCandidateIdentifier(IEntityProperty originalColumn) => originalColumn.GetName().GenerateCandidateIdentifier();
 
     /// <summary> Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService </summary>
     private string GetDependentEndCandidateNavigationPropertyName(ReferentialConstraint foreignKey) {

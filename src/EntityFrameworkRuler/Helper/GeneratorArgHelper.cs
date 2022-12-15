@@ -36,11 +36,6 @@ internal static class GeneratorArgHelper {
                     case "allowunknowns":
                         op.GeneratorOptions.IncludeUnknowns = true;
                         break;
-                    case "compact":
-                    case "compactrules":
-                    case "compact-rules":
-                        op.GeneratorOptions.CompactRules = true;
-                        break;
                     default:
                         return false; // invalid arg
                 }
