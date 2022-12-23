@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace EntityFrameworkRuler.Rules;
 
@@ -91,6 +92,9 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
         set => UpdateCollection(ref entities, value);
     }
 
+    /// <summary> Serialization backward compatibility for Tables -> Entities. </summary>
+    public IList<EntityRule> Tables { get => Entities; set => Entities = value; }
+
     /// <inheritdoc />
     protected override string GetDbName() => SchemaName;
 
@@ -108,5 +112,6 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
 
     /// <inheritdoc />
     protected override bool GetNotMapped() => NotMapped;
+
     IEnumerable<IEntityRule> ISchemaRule.GetClasses() => Entities;
 }

@@ -69,6 +69,9 @@ public sealed class EntityRule : RuleBase, IEntityRule {
         set => UpdateCollection(ref properties, value);
     }
 
+    /// <summary> Serialization backward compatibility for Columns -> Properties. </summary>
+    public IList<PropertyRule> Columns { get => Properties; set => Properties = value; }
+
     private IList<NavigationRule> navigations;
 
     /// <summary> The navigation property rules to apply to this entity. </summary>
@@ -96,6 +99,7 @@ public sealed class EntityRule : RuleBase, IEntityRule {
 
     /// <inheritdoc />
     protected override bool GetNotMapped() => NotMapped;
+
     IEnumerable<IPropertyRule> IEntityRule.GetProperties() {
         if (!Properties.IsNullOrEmpty())
             foreach (var rule in Properties)
