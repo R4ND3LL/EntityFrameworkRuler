@@ -81,7 +81,9 @@ public sealed class NavigationRule : RuleBase, IPropertyRule {
         new(FkName, ToEntity, IsPrincipal, Multiplicity.ParseMultiplicity());
 }
 
-public class NavigationRuleNameConverter : JsonConverter<string> {
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+public sealed class NavigationRuleNameConverter : JsonConverter<string> {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
         string result = null;
         if (reader.TokenType == JsonTokenType.StartArray)
@@ -103,6 +105,7 @@ public class NavigationRuleNameConverter : JsonConverter<string> {
         return result;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options) {
         writer.WriteStringValue((string)value);
     }

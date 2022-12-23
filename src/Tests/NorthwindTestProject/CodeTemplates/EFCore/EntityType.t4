@@ -64,11 +64,11 @@ namespace <#= NamespaceHint #>;
         }
     }
 #>
-public partial class <#= EntityType.Name #>
+public partial class <#= EntityType.Name #> <# if (EntityType.BaseType?.Name!=null) { #>: <#= EntityType.BaseType.Name #><# } #> 
 {
 <#
     var firstProperty = true;
-    foreach (var property in EntityType.GetProperties().OrderBy(p => p.GetColumnOrder() ?? -1))
+    foreach (var property in EntityType.GetProperties().Where(o => o.DeclaringEntityType == EntityType).OrderBy(p => p.GetColumnOrder() ?? -1))
     {
         if (!firstProperty)
         {
