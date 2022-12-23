@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace NorthwindModel.Models;
-
-public partial class Category
+namespace NorthwindModel.Models
 {
-    public int CategoryId { get; set; }
+    public partial class Category
+    {
+        public Category()
+        {
+            Products = new HashSet<Product>();
+        }
 
-    public string CategoryName { get; set; }
+        public int CategoryID { get; set; }
+        public string CategoryName { get; set; }
+        public string Description { get; set; }
+        public byte[] Picture { get; set; }
 
-    public string Description { get; set; }
-
-    public byte[] Picture { get; set; }
-
-    public virtual ICollection<Product> Products { get; } = new List<Product>();
+        public virtual ICollection<Product> Products { get; set; }
+    }
 }

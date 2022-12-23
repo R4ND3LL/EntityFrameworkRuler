@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace NorthwindModel.Models;
-
-public partial class Shipper
+namespace NorthwindModel.Models
 {
-    public int ShipperId { get; set; }
+    public partial class Shipper
+    {
+        public Shipper()
+        {
+            OrdersCustoms = new HashSet<Order>();
+        }
 
-    public string CompanyName { get; set; }
+        public int ShipperID { get; set; }
+        public string CompanyName { get; set; }
+        public string Phone { get; set; }
 
-    public string Phone { get; set; }
-
-    public virtual ICollection<Order> Orders { get; } = new List<Order>();
+        public virtual ICollection<Order> OrdersCustoms { get; set; }
+    }
 }

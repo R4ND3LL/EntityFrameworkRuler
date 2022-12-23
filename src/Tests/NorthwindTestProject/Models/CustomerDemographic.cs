@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace NorthwindModel.Models;
-
-public partial class CustomerDemographic
+namespace NorthwindModel.Models
 {
-    public string CustomerTypeId { get; set; }
+    public partial class CustomerDemographic
+    {
+        public CustomerDemographic()
+        {
+            Customers = new HashSet<Customer>();
+        }
 
-    public string CustomerDesc { get; set; }
+        public string CustomerTypeID { get; set; }
+        public string CustomerDesc { get; set; }
 
-    public virtual ICollection<Customer> Customers { get; } = new List<Customer>();
+        public virtual ICollection<Customer> Customers { get; set; }
+    }
 }
