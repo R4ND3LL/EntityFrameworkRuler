@@ -18,7 +18,7 @@ internal class Program {
         /***************************************************************************************/
         /********* Do not run this project.  It is a target for rule application only. *********/
         /***************************************************************************************/
-#if true
+#if false
         using var dbContext = new NorthwindEntities(new DbContextOptions<NorthwindEntities>());
 
         // ReSharper disable once SuggestVarOrType_SimpleTypes

@@ -60,7 +60,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
     }
 
     /// <summary> Name that table, also return indicator whether the name is frozen (explicitly set by user, cannot be altered) </summary>
-    public virtual NamedElementState<DatabaseTable, EntityRule> GenerateCandidateNameState(DatabaseTable table) {
+    public virtual NamedElementState<DatabaseTable, EntityRule> GenerateCandidateNameState(DatabaseTable table, bool forDbSetName = false) {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
         dbContextRule ??= ResolveDbContextRule();
 
@@ -71,10 +71,18 @@ public class RuledCandidateNamingService : CandidateNamingService {
             return state;
         }
 
-        if (entityRule.Rule.NewName.HasNonWhiteSpace()) {
-            // Name explicitly set by user, cannot be altered by pluralizer so set FROZEN
-            var state = NameToState(entityRule.Rule.NewName, true);
-            logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} mapped to entity name {state.Name}");
+        if (forDbSetName && entityRule?.Rule.DbSetName.HasNonWhiteSpace() == true) {
+            // Name explicitly set by user. cannot be altered by pluralizer so set FROZEN
+            var state = NameToState(entityRule.Rule.DbSetName, true);
+            logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} mapped to DbSet name {state.Name}");
+            return state;
+        }
+
+        if (entityRule?.Rule.NewName.HasNonWhiteSpace() == true) {
+            // Name explicitly set by user. if not naming the DbSet then this cannot be altered by pluralizer so set FROZEN
+            var state = NameToState(entityRule.Rule.NewName, !forDbSetName);
+            logger?.WriteVerbose(
+                $"RULED: Table {table.Schema}.{table.Name} mapped to {(forDbSetName ? "DbSet" : "entity")} name {state.Name}");
             return state;
         }
 
@@ -105,7 +113,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         var state2 = NameToState(candidateStringBuilder.ToString());
         logger?.WriteVerbose(
-            $"RULED: Table {table.Schema}.{table.Name} auto-named entity {state2.Name}{(usedRegex ? " using regex" : "")}");
+            $"RULED: {(table is DatabaseView ? "View" : "Table")} {table.Schema}.{table.Name} auto-named {(forDbSetName ? "DbSet" : "entity")} {state2.Name}{(usedRegex ? " using regex" : "")}");
         return state2;
 
         NamedElementState<DatabaseTable, EntityRule> NameToState(string newName, bool isFrozen = false) {

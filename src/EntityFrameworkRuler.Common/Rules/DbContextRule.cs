@@ -73,9 +73,7 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
     protected override void SetFinalName(string value) => Name = value;
 
     /// <inheritdoc />
-    [IgnoreDataMember, JsonIgnore, XmlIgnore]
-    [DisplayName("Not Mapped"), Category("Mapping"), Description("Assumed true at the DB Context level.")]
-    public override bool NotMapped { get => false; set { } }
+    protected override bool GetNotMapped() => false;
 
     IEnumerable<ISchemaRule> IRuleModelRoot.GetSchemas() => Schemas;
     IEnumerable<IEntityRule> IRuleModelRoot.GetClasses() => Schemas.SelectMany(o => o.Entities);

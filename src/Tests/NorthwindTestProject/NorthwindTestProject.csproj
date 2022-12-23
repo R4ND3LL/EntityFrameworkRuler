@@ -12,51 +12,26 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0">
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="6.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.0">
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="7.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Remove="Configurations\EntityConfigurations.cs" />
-        <Compile Remove="Configurations\ProductConfiguration.cs" />
         <None Remove="CodeTemplates\EFCore\*.dll" />
-        <Compile Remove="Data\EmployeeConfiguration.cs" />
-        <Compile Remove="Data\Current_Product_ListConfiguration.cs" />
         <None Remove="CodeTemplates\EFCore\Microsoft.SqlServer.Server.dll" />
         <None Remove="CodeTemplates\EFCore\Microsoft.Win32.SystemEvents.dll" />
         <None Remove="CodeTemplates\EFCore\Mono.TextTemplating.dll" />
-        <Compile Update="Models\NorthwindEntities.cs">
-          <AutoGen>True</AutoGen>
-          <DesignTime>True</DesignTime>
-          <DependentUpon>NorthwindEntities.tt</DependentUpon>
-        </Compile>
-        <Compile Remove="Models\UnitsInStockEnum.cs" />
-        <Compile Remove="Models\QuantityEnum.cs" />
-        <Compile Remove="Models\Alphabetical_list_of_product.cs" />
-        <Compile Remove="Models\Category_Sales_for_1997.cs" />
-        <Compile Remove="Models\Current_Product_List.cs" />
-        <Compile Remove="Models\Customer_and_Suppliers_by_City.cs" />
-        <Compile Remove="Models\Order_Detail.cs" />
-        <Compile Remove="Models\Order_Details_Extended.cs" />
-        <Compile Remove="Models\Order_Subtotal.cs" />
-        <Compile Remove="Models\Orders_Qry_Custom.cs" />
-        <Compile Remove="Models\Product_Sales_for_1997.cs" />
-        <Compile Remove="Models\Products_Above_Average_Price.cs" />
-        <Compile Remove="Models\Products_by_Category.cs" />
-        <Compile Remove="Models\RegionCustom.cs" />
-        <Compile Remove="Models\Sales_by_Category.cs" />
-        <Compile Remove="Models\Sales_Totals_by_Amount.cs" />
-        <Compile Remove="Models\Summary_of_Sales_by_Quarter.cs" />
-        <Compile Remove="Models\Summary_of_Sales_by_Year.cs" />
+        <Compile Remove="Models\*" />
+        <Compile Remove="Context\*" />
     </ItemGroup>
 
     <ItemGroup>

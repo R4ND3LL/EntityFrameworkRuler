@@ -97,16 +97,17 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     }
 
     /// <inheritdoc />
-    public IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions options) {
-        var model = proxy.Create(databaseModel, options);
+    public IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions ops) {
+        var model = proxy.Create(databaseModel, ops);
         return model;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    protected virtual IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions options,
+    protected virtual IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions ops,
         Func<DatabaseModel, ModelReverseEngineerOptions, IModel> baseCall) {
-        this.options = options;
+        options = ops;
         Func<DatabaseTable, NamedElementState<DatabaseTable, EntityRule>> tableNameAction;
+        Func<DatabaseTable, NamedElementState<DatabaseTable, EntityRule>> dbSetNameAction;
 
         // Note, table naming logic has to be overriden at this level because the pluralizer step is executed AFTER
         // the CandidateNamingService returns its result.  This means that a user specified name will be subject to change
@@ -119,20 +120,24 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         // moving the pluralize call into GetDependentEndCandidateNavigationPropertyName/GetPrincipalEndCandidateNavigationPropertyName.
         // However it is less likely there will be any need for this measure to protect nav names.
 
-        if (options.UseDatabaseNames)
+        if (ops.UseDatabaseNames) {
             tableNameAction = t => new(t.Name, t);
-        else {
-            if (candidateNamingService is RuledCandidateNamingService ruledNamer)
+            dbSetNameAction = t => new(t.Name, t);
+        } else {
+            if (candidateNamingService is RuledCandidateNamingService ruledNamer) {
                 tableNameAction = t => ruledNamer.GenerateCandidateNameState(t);
-            else tableNameAction = t => new(candidateNamingService.GenerateCandidateIdentifier(t), t, null, false);
+                dbSetNameAction = t => ruledNamer.GenerateCandidateNameState(t, true);
+            } else
+                dbSetNameAction = tableNameAction = t => new(candidateNamingService.GenerateCandidateIdentifier(t), t);
         }
 
         tableNameAction = tableNameAction.Cached();
+        dbSetNameAction = dbSetNameAction.Cached();
 
-        tableNamer = new(tableNameAction, cSharpUtilities, options.NoPluralize ? null : pluralizer.Singularize);
-        dbSetNamer = new(tableNameAction, cSharpUtilities, options.NoPluralize ? null : pluralizer.Pluralize);
+        tableNamer = new(tableNameAction, cSharpUtilities, ops.NoPluralize ? null : pluralizer.Singularize);
+        dbSetNamer = new(dbSetNameAction, cSharpUtilities, ops.NoPluralize ? null : pluralizer.Pluralize);
 
-        var model = baseCall(databaseModel, options);
+        var model = baseCall(databaseModel, ops);
         ruleModelUpdater?.OnModelCreated(model);
         return model;
     }
@@ -140,8 +145,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseColumn column, Func<TypeScaffoldingInfo> baseCall) {
         var typeScaffoldingInfo = baseCall();
-        Debug.Assert(explicitTableRuleMapping.table == column.Table);
-        var entityRule = explicitTableRuleMapping.table == column.Table ? explicitTableRuleMapping.entityRule : null;
+        Debug.Assert(explicitEntityRuleMapping.table == column.Table);
+        var entityRule = explicitEntityRuleMapping.table == column.Table ? explicitEntityRuleMapping.entityRule : null;
         if (entityRule == null) return typeScaffoldingInfo;
 
         var propertyRule = entityRule.TryResolveRuleFor(column.Name);
@@ -154,11 +159,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         return typeScaffoldingInfo.WithType(clrType);
     }
 
-    private (DatabaseTable table, EntityRuleNode entityRule) explicitTableRuleMapping;
+    private (DatabaseTable table, EntityRuleNode entityRule) explicitEntityRuleMapping;
 
     /// <summary> Get the entity rule for this table </summary>
     protected virtual EntityRuleNode TryResolveRuleFor(DatabaseTable table) {
-        if (explicitTableRuleMapping.table == table) return explicitTableRuleMapping.entityRule;
+        if (explicitEntityRuleMapping.table == table) return explicitEntityRuleMapping.entityRule;
 
         dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRuleNode(DbContextRule.DefaultNoRulesFoundBehavior);
         var tableNode = dbContextRule.TryResolveRuleFor(table.Schema)?.TryResolveRuleFor(table.Name);
@@ -274,7 +279,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         return modelBuilder;
 
         void InvokeVisitTable(DatabaseTableNode table, EntityRuleNode entityRule) {
-            explicitTableRuleMapping = (table, entityRule);
+            explicitEntityRuleMapping = (table, entityRule);
             try {
                 // We have to call the base VisitTable in order to perform the basic wiring.
                 // The call will be captured, and the result of the wiring will be customized based on the rules.
@@ -283,7 +288,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 table.EntityRules.Add(entityRule);
                 table.Builders.Add(builder);
             } finally {
-                explicitTableRuleMapping = default;
+                explicitEntityRuleMapping = default;
             }
         }
 
@@ -295,6 +300,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             if (isView) {
                 if (!schemaRule.Rule.IncludeUnknownTables) return false;
             } else {
+                // ensure M2M junctions are not auto-excluded
+                if (table.Table.IsSimpleManyToManyJoinEntityType()) return true;
                 if (!schemaRule.Rule.IncludeUnknownViews) return false;
             }
 
@@ -307,7 +314,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
 
         void OmitTable(DatabaseTableNode table) {
-            if (OmittedTables.Add(table.Name)) reporter.WriteInformation($"RULED: Table {table.Schema}.{table.Name} omitted.");
+            if (OmittedTables.Add(table.Name))
+                reporter.WriteInformation(
+                    $"RULED: {(table.Table is DatabaseView ? "View" : "Table")}  {table.Schema}.{table.Name} omitted.");
         }
     }
 
@@ -349,6 +358,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                         // ToTable() and DbSet should be REMOVED for TPH leafs
                         entityTypeBuilder.ToTable((string)null);
                         const string scaffoldingDbSetName = "Scaffolding:DbSetName";
+                        Debug.Assert(IsValidAnnotation(scaffoldingDbSetName));
                         var removed = entityTypeBuilder.Metadata.RemoveAnnotation(scaffoldingDbSetName);
                         Debug.Assert(removed != null);
                         break;
@@ -545,7 +555,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual KeyBuilder VisitPrimaryKey(EntityTypeBuilder builder, DatabaseTable table, Func<KeyBuilder> baseCall) {
-        if (explicitTableRuleMapping.table == table && explicitTableRuleMapping.entityRule?.BaseEntityRuleNode != null)
+        if (explicitEntityRuleMapping.table == table && explicitEntityRuleMapping.entityRule?.BaseEntityRuleNode != null)
             // EF requires that a PK is defined only on the base type. what about in TPT where there is a table?
             // Also can't return null here otherwise that will kill the entity.
             // Return a random key (it wont be used for anything!)
@@ -618,15 +628,15 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual string GetEntityTypeName(DatabaseTable table) {
-        if (explicitTableRuleMapping.table == table && explicitTableRuleMapping.entityRule?.Rule.NewName.HasNonWhiteSpace() == true)
-            return explicitTableRuleMapping.entityRule.Rule.NewName;
+        if (explicitEntityRuleMapping.table == table && explicitEntityRuleMapping.entityRule?.Rule.NewName.HasNonWhiteSpace() == true)
+            return explicitEntityRuleMapping.entityRule.Rule.NewName;
         return tableNamer.GetName(table);
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual string GetDbSetName(DatabaseTable table) {
-        if (explicitTableRuleMapping.table == table && explicitTableRuleMapping.entityRule?.Rule.NewName.HasNonWhiteSpace() == true) {
-            var name = explicitTableRuleMapping.entityRule.Rule.NewName;
+        if (explicitEntityRuleMapping.table == table && explicitEntityRuleMapping.entityRule?.Rule.NewName.HasNonWhiteSpace() == true) {
+            var name = explicitEntityRuleMapping.entityRule.Rule.NewName;
             name = options?.NoPluralize == true ? name : pluralizer.Pluralize(name);
             return name;
         }

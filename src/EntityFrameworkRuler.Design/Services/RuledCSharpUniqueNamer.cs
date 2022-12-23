@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
+
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
@@ -13,6 +14,7 @@ namespace EntityFrameworkRuler.Design.Services;
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class RuledCSharpUniqueNamer<T, TRule> where T : notnull where TRule : class, IRuleItem {
+    private readonly bool respectFrozenFlag;
     private readonly Func<T, NamedElementState<T, TRule>> nameGetter;
     private readonly ICSharpUtilities cSharpUtilities;
     private readonly Func<string, string> singularizePluralizer;
@@ -21,18 +23,19 @@ public class RuledCSharpUniqueNamer<T, TRule> where T : notnull where TRule : cl
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledCSharpUniqueNamer(Func<T, NamedElementState<T, TRule>> nameGetter, ICSharpUtilities cSharpUtilities,
-        Func<string, string> singularizePluralizer)
-        : this(nameGetter, null, cSharpUtilities, singularizePluralizer) {
+        Func<string, string> singularizePluralizer, bool respectFrozenFlag = true)
+        : this(nameGetter, null, cSharpUtilities, singularizePluralizer, respectFrozenFlag) {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledCSharpUniqueNamer(Func<T, NamedElementState<T, TRule>> nameGetter,
         IEnumerable<string> usedNames,
         ICSharpUtilities cSharpUtilities,
-        Func<string, string> singularizePluralizer) {
+        Func<string, string> singularizePluralizer, bool respectFrozenFlag = true) {
         this.nameGetter = nameGetter;
         this.cSharpUtilities = cSharpUtilities;
         this.singularizePluralizer = singularizePluralizer;
+        this.respectFrozenFlag = respectFrozenFlag;
         if (usedNames == null) return;
         foreach (var name in usedNames) this.usedNames.Add(name);
     }
@@ -54,7 +57,7 @@ public class RuledCSharpUniqueNamer<T, TRule> where T : notnull where TRule : cl
         // if allowed to pluralize/singularize name, i.e. it was not explicitly set by rule, then pass the
         // singularizePluralizer. otherwise pass null for the singularizePluralizer.
         // If this is not done, the explicitly defined names may be altered by the singularizePluralizer.
-        var sp = state.IsFrozen ? null : singularizePluralizer;
+        var sp = respectFrozenFlag && state.IsFrozen ? null : singularizePluralizer;
 
         var input = cSharpUtilities.GenerateCSharpIdentifier(state.Name,
             existingIdentifiers: null,

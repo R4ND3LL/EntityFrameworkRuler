@@ -43,7 +43,10 @@ public sealed class PropertyRule : RuleBase, IPropertyRule {
     /// <summary> If true, omit this column during the scaffolding process. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
     [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
-    public override bool NotMapped { get; set; }
+    public bool NotMapped { get; set; }
+
+    /// <inheritdoc />
+    protected override bool GetNotMapped() => NotMapped;
 
     private IList<DiscriminatorCondition> discriminatorConditions;
 

@@ -27,12 +27,15 @@ public abstract class RuleBase : IRuleItem {
     /// <summary> Sets the conceptual name of the model. That is, the name that this element should have in the final reverse engineered model. </summary>
     protected abstract void SetFinalName(string value);
 
+    /// <summary> If true, omit this item and all containing elements during the scaffolding process. Default is false. </summary>
+    protected abstract bool GetNotMapped();
+
     /// <summary> If true, omit this column during the scaffolding process. </summary>
-    public abstract bool NotMapped { get; set; }
+    bool IRuleItem.NotMapped => GetNotMapped();
 
     /// <summary> If false, omit this column during the scaffolding process. </summary>
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
-    public bool Mapped => !NotMapped;
+    public bool Mapped => !GetNotMapped();
 
     string IRuleItem.GetExpectedEntityFrameworkName() => GetExpectedEntityFrameworkName();
     string IRuleItem.GetNewName() => GetNewName();
