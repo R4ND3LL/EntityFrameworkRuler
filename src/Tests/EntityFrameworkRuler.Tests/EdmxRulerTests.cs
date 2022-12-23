@@ -37,13 +37,14 @@ public sealed class EdmxRulerTests {
         var elapsed = DateTimeExtensions.GetTime() - start;
         generateRulesResponse.Errors.Count().ShouldBe(0);
         generateRulesResponse.Rules.Count.ShouldBe(1);
-        output.WriteLine($"Successfully generated {generateRulesResponse.Rules.Count} rule files in {elapsed}ms");
+        output.WriteLine(
+            $"Successfully generated {generateRulesResponse.Rules.Count} rule file{(generateRulesResponse.Rules.Count > 1 ? "s" : string.Empty)} in {elapsed}ms");
         rules.ShouldBe(generateRulesResponse.Rules);
-        var enumMappingRules = rules.OfType<DbContextRule>().Single().Schemas.SelectMany(o => o.Tables).SelectMany(o => o.Columns)
+        var enumMappingRules = rules.OfType<DbContextRule>().Single().Schemas.SelectMany(o => o.Entities).SelectMany(o => o.Properties)
             .Where(o => o.NewType.HasNonWhiteSpace()).ToList();
         var dbContextRule = rules.OfType<DbContextRule>().Single();
         var navigationNamingRules = rules.OfType<DbContextRule>().Single().Schemas
-            .SelectMany(o => o.Tables)
+            .SelectMany(o => o.Entities)
             .SelectMany(o => o.Navigations)
             .ToList();
 
@@ -52,17 +53,17 @@ public sealed class EdmxRulerTests {
         enumMappingRules.ForAll(o => (o.PropertyName == null || o.PropertyName.IsValidSymbolName()).ShouldBeTrue());
 
         dbContextRule.Schemas.Count.ShouldBe(1);
-        dbContextRule.Schemas[0].Tables.Count.ShouldBe(27);
-        var prod = dbContextRule.Schemas[0].Tables.FirstOrDefault(o => o.Name == "Products");
+        dbContextRule.Schemas[0].Entities.Count.ShouldBe(27);
+        var prod = dbContextRule.Schemas[0].Entities.FirstOrDefault(o => o.Name == "Products");
         prod.ShouldNotBeNull();
-        prod.Columns.Count.ShouldBe(10);
-        prod.Columns[0].PropertyName.ShouldBe("ProductId");
-        prod.Columns[0].NewName.ShouldBe("ProductID");
-        dbContextRule.Schemas[0].Tables.ForAll(o => (o.EntityName?.IsValidSymbolName() != false).ShouldBeTrue());
-        dbContextRule.Schemas[0].Tables.ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
-        dbContextRule.Schemas[0].Tables.SelectMany(o => o.Columns)
+        prod.Properties.Count.ShouldBe(10);
+        prod.Properties[0].PropertyName.ShouldBe("ProductId");
+        prod.Properties[0].NewName.ShouldBe("ProductID");
+        dbContextRule.Schemas[0].Entities.ForAll(o => (o.EntityName?.IsValidSymbolName() != false).ShouldBeTrue());
+        dbContextRule.Schemas[0].Entities.ForAll(o => o.NewName.IsValidSymbolName().ShouldBeTrue());
+        dbContextRule.Schemas[0].Entities.SelectMany(o => o.Properties)
             .ForAll(o => (o.PropertyName?.IsValidSymbolName() != false).ShouldBeTrue());
-        dbContextRule.Schemas[0].Tables.SelectMany(o => o.Columns)
+        dbContextRule.Schemas[0].Entities.SelectMany(o => o.Properties)
             .ForAll(o => (o.NewName == null || o.NewName.IsValidSymbolName()).ShouldBeTrue());
 
         navigationNamingRules.Count.ShouldBeGreaterThan(15);
@@ -141,6 +142,77 @@ public sealed class EdmxRulerTests {
         rules.Rules.Count.ShouldBeGreaterThan(0);
         var elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"Loaded {rules.Rules.Count} in {elapsed}ms.");
+    }
+
+    [Fact]
+    public void ShouldSerializeAnnotations() {
+        var rule = new DbContextRule();
+        rule.IncludeUnknownSchemas = true;
+        var testAnnotation = "TEST_ANNOTATION";
+        rule.Annotations.Add(testAnnotation, "123");
+        var json = rule.WriteJson();
+        json.ShouldContain(testAnnotation);
+        var rule2 = json.ReadJson<DbContextRule>();
+        rule2.Annotations.ContainsKey(testAnnotation).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void ShouldSerializeNavigationNameArray() {
+        var json = $$"""
+            {
+                "Schemas": [
+                    {
+                        "SchemaName": "dbo",
+                        "Entities": [
+                            {
+                                "Name": "TestEntity",
+                                "Properties": [
+                                    {
+                                        "Name": "ContactTitle",
+                                        "DiscriminatorConditions": [
+                                            {
+                                                "Value": "Red",
+                                                "ToEntityName": "CustomerRed"
+                                            },
+                                            {
+                                                "Value": "Green",
+                                                "ToEntityName": "CustomerGreen"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "Navigations": [
+                                    {
+                                        "Name": [
+                                            "TestNav"
+                                        ],
+                                        "FkName": "Fk",
+                                        "Annotations": {
+                                            "Relational:MappingStrategy": "TPH",
+                                            "Number": 45
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+            """;
+
+        var rule = json.ReadJson<DbContextRule>();
+        rule.Schemas[0].SchemaName.ShouldBe("dbo");
+        rule.Schemas[0].Entities[0].Name.ShouldBe("TestEntity");
+        rule.Schemas[0].Entities[0].Navigations[0].Name.ShouldBe("TestNav");
+        rule.Schemas[0].Entities[0].Navigations[0].FkName.ShouldBe("Fk");
+        rule.Schemas[0].Entities[0].Properties[0].DiscriminatorConditions.Count.ShouldBe(2);
+        var json2 = rule.WriteJson();
+        json2.ShouldContain("TestNav");
+        var rule2 = json2.ReadJson<DbContextRule>();
+        rule2.Schemas[0].Entities[0].Navigations[0].Name.ShouldBe("TestNav");
+        rule2.Schemas[0].Entities[0].Navigations[0].Annotations["Relational:MappingStrategy"].ShouldBe("TPH");
+        rule2.Schemas[0].Entities[0].Navigations[0].Annotations["Number"].ShouldBe((long)45);
+        rule2.Schemas[0].Entities[0].Properties[0].DiscriminatorConditions.Count.ShouldBe(2);
     }
 
     // [Fact]

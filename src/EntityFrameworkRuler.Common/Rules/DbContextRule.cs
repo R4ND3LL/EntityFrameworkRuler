@@ -11,7 +11,7 @@ namespace EntityFrameworkRuler.Rules;
 public sealed class DbContextRule : RuleBase, IRuleModelRoot {
     /// <summary> Creates a DB context rule </summary>
     public DbContextRule() {
-        Schemas = Observable ? new ObservableCollection<SchemaRule>() : new List<SchemaRule>();
+        schemas = Observable ? new ObservableCollection<SchemaRule>() : new List<SchemaRule>();
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -41,11 +41,15 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
          "If true, EntityTypeConfigurations will be split into separate files using EntityTypeConfiguration.t4 for EF >= 7.  Default is false.")]
     public bool SplitEntityTypeConfigurations { get; set; }
 
+    private IList<SchemaRule> schemas;
+
     /// <summary> Schema rules </summary>
     [DataMember(Order = 100)]
     [DisplayName("Schemas"), Category("Schemas|Schemas"), Description("The schema rules to apply to this DB context.")]
-    public IList<SchemaRule> Schemas { get; private set; }
-
+    public IList<SchemaRule> Schemas {
+        get => schemas;
+        set => UpdateCollection(ref schemas, value);
+    }
 
     /// <inheritdoc />
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
@@ -63,10 +67,10 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
     protected override string GetNewName() => null;
 
     /// <inheritdoc />
-    protected override void SetFinalName(string value) {
-        Name = value;
-        //OnPropertyChanged(nameof(Name));
-    }
+    protected override string GetDbName() => Name;
+
+    /// <inheritdoc />
+    protected override void SetFinalName(string value) => Name = value;
 
     /// <inheritdoc />
     [IgnoreDataMember, JsonIgnore, XmlIgnore]

@@ -12,8 +12,8 @@ namespace EntityFrameworkRuler.Rules;
 public sealed class EntityRule : RuleBase, IEntityRule {
     /// <summary> Creates a table rule </summary>
     public EntityRule() {
-        Navigations = Observable ? new ObservableCollection<NavigationRule>() : new List<NavigationRule>();
-        Properties = Observable ? new ObservableCollection<PropertyRule>() : new List<PropertyRule>();
+        navigations = Observable ? new ObservableCollection<NavigationRule>() : new List<NavigationRule>();
+        properties = Observable ? new ObservableCollection<PropertyRule>() : new List<PropertyRule>();
     }
 
     /// <summary> The raw database name of the table.  Used to locate the property during scaffolding phase.  Required. </summary>
@@ -51,15 +51,28 @@ public sealed class EntityRule : RuleBase, IEntityRule {
     [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
     public override bool NotMapped { get; set; }
 
+    private IList<PropertyRule> properties;
+
     /// <summary> The primitive property rules to apply to this entity. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 7)]
     [DisplayName("Properties"), Category("Properties|Properties"), Description("The primitive property rules to apply to this entity.")]
-    public IList<PropertyRule> Properties { get; private set; }
+    public IList<PropertyRule> Properties {
+        get => properties;
+        set => UpdateCollection(ref properties, value);
+    }
+
+    private IList<NavigationRule> navigations;
 
     /// <summary> The navigation property rules to apply to this entity. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 8)]
     [DisplayName("Navigations"), Category("Navigations|Navigations"), Description("The navigation property rules to apply to this entity.")]
-    public IList<NavigationRule> Navigations { get; private set; }
+    public IList<NavigationRule> Navigations {
+        get => navigations;
+        set => UpdateCollection(ref navigations, value);
+    }
+
+    /// <inheritdoc />
+    protected override string GetDbName() => Name;
 
     /// <inheritdoc />
     protected override string GetNewName() => NewName.NullIfEmpty();

@@ -65,7 +65,7 @@ public partial class <#= EntityType.Name #>Configuration : IEntityTypeConfigurat
 
         var anyEntityTypeConfiguration = false;
         var key = EntityType.FindPrimaryKey();
-        if (key != null)
+        if (key != null && key.DeclaringEntityType == EntityType)
         {
             var keyFluentApiCalls = key.GetFluentApiCalls(annotationCodeGenerator);
             if (keyFluentApiCalls != null
@@ -99,7 +99,7 @@ public partial class <#= EntityType.Name #>Configuration : IEntityTypeConfigurat
         }
 
         foreach (var index in EntityType.GetIndexes()
-            .Where(i => !(Options.UseDataAnnotations && i.IsHandledByDataAnnotations(annotationCodeGenerator))))
+            .Where(i => i.DeclaringEntityType == EntityType && !(Options.UseDataAnnotations && i.IsHandledByDataAnnotations(annotationCodeGenerator))))
         {
             if (anyEntityTypeConfiguration)
             {
@@ -118,7 +118,7 @@ public partial class <#= EntityType.Name #>Configuration : IEntityTypeConfigurat
         }
 
         var firstProperty = true;
-        foreach (var property in EntityType.GetProperties())
+        foreach (var property in EntityType.GetProperties().Where(o => o.DeclaringEntityType == EntityType))
         {
             var propertyFluentApiCalls = property.GetFluentApiCalls(annotationCodeGenerator)
                 ?.FilterChain(c => !(Options.UseDataAnnotations && c.IsHandledByDataAnnotations)
@@ -141,7 +141,7 @@ public partial class <#= EntityType.Name #>Configuration : IEntityTypeConfigurat
             firstProperty = false;
         }
 
-        foreach (var foreignKey in EntityType.GetForeignKeys())
+        foreach (var foreignKey in EntityType.GetForeignKeys().Where(o => o.DeclaringEntityType == EntityType))
         {
             var foreignKeyFluentApiCalls = foreignKey.GetFluentApiCalls(annotationCodeGenerator)
                 ?.FilterChain(c => !(Options.UseDataAnnotations && c.IsHandledByDataAnnotations));
@@ -215,7 +215,7 @@ public partial class <#= EntityType.Name #>Configuration : IEntityTypeConfigurat
 <#
             }
 
-            foreach (var index in joinEntityType.GetIndexes())
+            foreach (var index in joinEntityType.GetIndexes().Where(o => o.DeclaringEntityType == EntityType))
             {
                 var indexFluentApiCalls = index.GetFluentApiCalls(annotationCodeGenerator);
                 if (indexFluentApiCalls != null)

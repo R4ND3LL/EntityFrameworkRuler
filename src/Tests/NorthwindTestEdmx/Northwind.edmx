@@ -5,6 +5,18 @@
     <!-- SSDL content -->
     <edmx:StorageModels>
     <Schema Namespace="NorthwindModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Animals">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Species" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="Discriminator" Type="nvarchar(max)" Nullable="false" />
+          <Property Name="Value" Type="decimal" Precision="18" Scale="2" />
+          <Property Name="Name" Type="nvarchar(max)" />
+          <Property Name="EducationLevel" Type="nvarchar(max)" />
+          <Property Name="FavoriteToy" Type="nvarchar(max)" />
+        </EntityType>
         <EntityType Name="Categories">
           <Key>
             <PropertyRef Name="CategoryID" />
@@ -546,6 +558,7 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           </ReferentialConstraint>
         </Association>
         <EntityContainer Name="NorthwindModelStoreContainer">
+          <EntitySet Name="Animals" EntityType="Self.Animals" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Categories" EntityType="Self.Categories" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CustomerCustomerDemo" EntityType="Self.CustomerCustomerDemo" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CustomerDemographics" EntityType="Self.CustomerDemographics" Schema="dbo" store:Type="Tables" />
@@ -836,6 +849,7 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <NavigationProperty Name="EmployeeOneCustom" Relationship="Self.FK_Employees_Employees" FromRole="Employees1" ToRole="Employees" />
           <NavigationProperty Name="Orders" Relationship="Self.FK_Orders_Employees" FromRole="Employees" ToRole="Orders" />
           <NavigationProperty Name="Territories" Relationship="Self.EmployeeTerritories" FromRole="Employees" ToRole="Territories" />
+          <NavigationProperty Name="EmployeeBrief" Relationship="NorthwindModel.EmployeeEmployeeBrief" FromRole="Employee" ToRole="EmployeeBrief" />
         </EntityType>
         <EntityType Name="Order_Detail">
           <Key>
@@ -1123,6 +1137,12 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <EntitySet Name="Sales_Totals_by_Amounts" EntityType="NorthwindModel.Sales_Totals_by_Amount" />
           <EntitySet Name="Summary_of_Sales_by_Quarters" EntityType="NorthwindModel.Summary_of_Sales_by_Quarter" />
           <EntitySet Name="Summary_of_Sales_by_Years" EntityType="NorthwindModel.Summary_of_Sales_by_Year" />
+          <EntitySet Name="Animals" EntityType="NorthwindModel.Animal" />
+          <EntitySet Name="EmployeeBriefs" EntityType="NorthwindModel.EmployeeBrief" />
+          <AssociationSet Name="EmployeeEmployeeBrief" Association="NorthwindModel.EmployeeEmployeeBrief">
+            <End Role="Employee" EntitySet="Employees" />
+            <End Role="EmployeeBrief" EntitySet="EmployeeBriefs" />
+          </AssociationSet>
         </EntityContainer>
         <EntityType Name="Alphabetical_list_of_product">
           <Key>
@@ -1335,14 +1355,51 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <Documentation>
             <Summary>TPH EXAMPLE</Summary>
           </Documentation>
-          <Property Name="Fax" Type="String" MaxLength="24" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Fax" Type="String" MaxLength="24" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityType Name="CustomerGreen" BaseType="NorthwindModel.Customer" >
           <Documentation>
             <Summary>TPH EXAMPLE</Summary>
           </Documentation>
-          <Property Name="Phone" Type="String" MaxLength="24" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Phone" Type="String" MaxLength="24" FixedLength="false" Unicode="true" />
         </EntityType>
+        <EntityType Name="Animal">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Species" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Discriminator" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Value" Type="Decimal" Precision="18" Scale="2" />
+          <Property Name="Name" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="FavoriteToy" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="Dog" BaseType="NorthwindModel.Animal" />
+        <EntityType Name="Cat" BaseType="NorthwindModel.Animal" >
+          <Property Name="EducationLevel" Type="String" Unicode="true" FixedLength="false" MaxLength="Max" />
+        </EntityType>
+        <EntityType Name="EmployeeBrief">
+          <Key>
+            <PropertyRef Name="EmployeeID" />
+          </Key>
+          <Property Name="EmployeeID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="LastName" Type="String" Nullable="false" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="FirstName" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="Title" Type="String" MaxLength="30" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Employee" Relationship="NorthwindModel.EmployeeEmployeeBrief" FromRole="EmployeeBrief" ToRole="Employee" />
+        </EntityType>
+        <Association Name="EmployeeEmployeeBrief">
+          <End Type="NorthwindModel.Employee" Role="Employee" Multiplicity="1" />
+          <End Type="NorthwindModel.EmployeeBrief" Role="EmployeeBrief" Multiplicity="1" />
+          <ReferentialConstraint>
+            <Principal Role="Employee">
+              <PropertyRef Name="EmployeeID" />
+            </Principal>
+            <Dependent Role="EmployeeBrief">
+              <PropertyRef Name="EmployeeID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -1711,6 +1768,41 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
                 <ScalarProperty Name="Subtotal" ColumnName="Subtotal" />
                 <ScalarProperty Name="OrderID" ColumnName="OrderID" />
                 <ScalarProperty Name="ShippedDate" ColumnName="ShippedDate" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Animals">
+            <EntityTypeMapping TypeName="IsTypeOf(NorthwindModel.Animal)">
+              <MappingFragment StoreEntitySet="Animals">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <ScalarProperty Name="FavoriteToy" ColumnName="FavoriteToy" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Value" ColumnName="Value" />
+                <ScalarProperty Name="Discriminator" ColumnName="Discriminator" />
+                <ScalarProperty Name="Species" ColumnName="Species" />
+              </MappingFragment>
+            </EntityTypeMapping>
+            <EntityTypeMapping TypeName="IsTypeOf(NorthwindModel.Cat)">
+              <MappingFragment StoreEntitySet="Animals">
+                <ScalarProperty Name="EducationLevel" ColumnName="EducationLevel" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <Condition ColumnName="Discriminator" Value="Cat" />
+              </MappingFragment>
+            </EntityTypeMapping>
+            <EntityTypeMapping TypeName="IsTypeOf(NorthwindModel.Dog)">
+              <MappingFragment StoreEntitySet="Animals">
+                <ScalarProperty Name="Id" ColumnName="Id" />
+                <Condition ColumnName="Discriminator" Value="Dog" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="EmployeeBriefs">
+            <EntityTypeMapping TypeName="IsTypeOf(NorthwindModel.EmployeeBrief)">
+              <MappingFragment StoreEntitySet="Employees">
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="FirstName" ColumnName="FirstName" />
+                <ScalarProperty Name="LastName" ColumnName="LastName" />
+                <ScalarProperty Name="EmployeeID" ColumnName="EmployeeID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

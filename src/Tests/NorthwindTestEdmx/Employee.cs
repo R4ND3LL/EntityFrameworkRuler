@@ -48,5 +48,6 @@ namespace NorthwindTestProject
         public virtual ICollection<Order> Orders { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Territory> Territories { get; set; }
+        public virtual EmployeeBrief EmployeeBrief { get; set; }
     }
 }

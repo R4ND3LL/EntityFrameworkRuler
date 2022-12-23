@@ -9,7 +9,7 @@ namespace EntityFrameworkRuler.Common.Annotations;
 /// <remarks>
 ///     See <see href="https://aka.ms/efcore-docs-modeling">Modeling entity types and relationships</see> for more information and examples.
 /// </remarks>
-public static class RelationalAnnotationNames {
+public static class EfRelationalAnnotationNames {
     /// <summary>
     ///     The prefix used for all relational annotations.
     /// </summary>

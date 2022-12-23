@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Services;
-using Microsoft.EntityFrameworkCore.Design.Internal;
 
 // ReSharper disable MemberCanBeInternal
 
@@ -90,4 +89,15 @@ public static class RuleExtensions {
         var c = new CachedDelegate<TKey, TValue>(func);
         return c.Invoke;
     }
+
+    // /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    // public static DatabaseTable ResolveTable(this ICollection<DatabaseTable> tables, SchemaRule schemaRule, EntityRule entityRule) {
+    //     if (schemaRule == null || schemaRule.SchemaName.IsNullOrWhiteSpace()) return null;
+    //     if (entityRule == null || entityRule.Name.IsNullOrWhiteSpace()) return null;
+    //     var name = entityRule.Name.Trim();
+    //
+    //     var table = tables.FirstOrDefault(o => o.Name == name) ??
+    //                 tables.FirstOrDefault(o => o.Name.EqualsIgnoreCase(name));
+    //     return table;
+    // }
 }

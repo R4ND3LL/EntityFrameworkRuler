@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Common;
-using EntityFrameworkRuler.Design.Extensions;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 
 namespace EntityFrameworkRuler.Design.Services;

@@ -1,8 +1,10 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
+// ReSharper disable MemberCanBeProtected.Global
 
 namespace EntityFrameworkRuler.Rules;
 
@@ -12,6 +14,9 @@ namespace EntityFrameworkRuler.Rules;
 public abstract class RuleBase : IRuleItem {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static bool Observable = false;
+
+    /// <summary> Gets the DB name for this element. </summary>
+    protected abstract string GetDbName();
 
     /// <summary> Get the name that we expect EF will generate for this item. </summary>
     protected abstract string GetExpectedEntityFrameworkName();
@@ -31,17 +36,73 @@ public abstract class RuleBase : IRuleItem {
 
     string IRuleItem.GetExpectedEntityFrameworkName() => GetExpectedEntityFrameworkName();
     string IRuleItem.GetNewName() => GetNewName();
+    string IRuleItem.GetDbName() => GetDbName();
 
     /// <inheritdoc />
     public string GetFinalName() => GetNewName().NullIfWhitespace() ?? GetExpectedEntityFrameworkName();
+
     void IRuleItem.SetFinalName(string value) => SetFinalName(value);
 
+    /// <summary> Intended for internal use only. </summary>
+    protected static void UpdateCollection<T>(ref IList<T> c, IList<T> value) {
+        if (Observable) {
+            if (value?.Count > 0) {
+                c.Clear();
+                c.AddRange(value);
+            } else if (c.Count > 0)
+                c.Clear();
+        } else
+            c = value;
+    }
+
+    /// <summary> Intended for internal use only. </summary>
+    private static void UpdateDictionary<TKey, TValue>(IDictionary<TKey, TValue> c, IDictionary<TKey, TValue> value,
+        Func<TValue, TValue> valueCleaner) {
+        if (value?.Count > 0) {
+            c.Clear();
+            foreach (var kvp in value) c.Add(kvp.Key, valueCleaner(kvp.Value));
+        } else if (c.Count > 0)
+            c.Clear();
+    }
+
     #region Annotations
+
+    private readonly SortedDictionary<string, object> annotations = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary> Metadata annotations for this element. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 99)]
     [DisplayName("Annotations"), Category("Mapping"), Description("Metadata annotations for this element.")]
-    public SortedDictionary<string, object> Annotations { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public SortedDictionary<string, object> Annotations {
+        get => annotations;
+        set => UpdateDictionary(annotations, value, AnnotationCleaner);
+    }
+
+    private static object AnnotationCleaner(object value) {
+        if (value is not JsonElement je) return value;
+        try {
+            switch (je.ValueKind) {
+                case JsonValueKind.Object:
+                    return je.GetRawText();
+                case JsonValueKind.Array:
+                    return je.GetRawText();
+                case JsonValueKind.Number:
+                    return je.GetInt64();
+                case JsonValueKind.True:
+                    return je.GetBoolean();
+                case JsonValueKind.False:
+                    return false;
+                case JsonValueKind.Null:
+                    return null;
+                case JsonValueKind.Undefined:
+                    return je.GetRawText();
+                case JsonValueKind.String:
+                default:
+                    return je.GetString();
+            }
+        } catch {
+            return je.GetRawText();
+        }
+    }
 
     /// <summary>
     ///     Gets the value annotation with the given name, returning <see langword="null" /> if it does not exist.
@@ -56,11 +117,8 @@ public abstract class RuleBase : IRuleItem {
         get => FindAnnotation(name);
         set {
             if (name == null) return;
-            if (value == null) {
-                RemoveAnnotation(name);
-            } else {
-                SetAnnotation(name, value);
-            }
+            if (value == null) RemoveAnnotation(name);
+            else SetAnnotation(name, value);
         }
     }
 
@@ -88,9 +146,8 @@ public abstract class RuleBase : IRuleItem {
     public virtual void SetAnnotation(string name, object value) {
         var oldAnnotation = FindAnnotation(name);
         if (oldAnnotation != null
-            && Equals(oldAnnotation, value)) {
+            && Equals(oldAnnotation, value))
             return;
-        }
 
         SetAnnotation(name, value, oldAnnotation);
     }
@@ -113,9 +170,7 @@ public abstract class RuleBase : IRuleItem {
     /// <returns>The annotation value that was removed.</returns>
     public virtual object RemoveAnnotation(string name) {
         var annotation = FindAnnotation(name);
-        if (annotation == null) {
-            return null;
-        }
+        if (annotation == null) return null;
 
         Annotations.Remove(name);
         OnAnnotationSet(name, null, annotation);

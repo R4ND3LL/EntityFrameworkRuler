@@ -2,14 +2,11 @@
 using System.Reflection;
 using System.Text;
 using EntityFrameworkRuler.Common;
-using EntityFrameworkRuler.Design.Extensions;
+using EntityFrameworkRuler.Design.Services.Models;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
-using Microsoft.EntityFrameworkCore.Design.Internal;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
-using Microsoft.Extensions.Logging;
 
 namespace EntityFrameworkRuler.Design.Services;
 
@@ -50,7 +47,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected bool IsEf7 => EfVersion?.Major == 7;
 
-    private LoadRulesResponse response;
+    private List<DbContextRuleNode> loadedRules;
 
     /// <inheritdoc />
     public ModelCodeGenerationOptions CodeGenOptions { get; private set; }
@@ -75,18 +72,18 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
 
     /// <inheritdoc />
-    public DbContextRule GetDbContextRules() {
+    public DbContextRuleNode GetDbContextRules() {
         // pick the rule file that matches the context name
-        var rules = GetRules()?.OfType<DbContextRule>().ToArray();
-        if (rules.IsNullOrEmpty()) return DbContextRule.DefaultNoRulesFoundBehavior;
+        var rules = GetRules();
+        if (rules == null || rules.Count == 0) return new(DbContextRule.DefaultNoRulesFoundBehavior);
         var contextName = CodeGenOptions?.ContextName?.Trim();
         // ReSharper disable once InvertIf
         if (contextName.HasNonWhiteSpace()) {
-            var rule = rules!.FirstOrDefault(o => o.Name?.Trim().EqualsIgnoreCase(contextName) == true);
+            var rule = rules!.FirstOrDefault(o => o.DbName?.Trim().EqualsIgnoreCase(contextName) == true);
             if (rule != null) return rule;
         }
 
-        return rules!.FirstOrDefault(o => !o.Schemas.IsNullOrEmpty()) ?? rules[0];
+        return rules!.FirstOrDefault(o => !o.Rule.Schemas.IsNullOrEmpty()) ?? rules[0];
     }
 
 
@@ -118,7 +115,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         if (projectDir.IsNullOrWhiteSpace()) return this;
         if (Directory.GetCurrentDirectory() != projectDir) {
             // ensure the rules are reloaded if they are accessed again
-            response = null;
+            loadedRules = null;
         }
 
         var dir = new DirectoryInfo(projectDir!);
@@ -173,7 +170,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         if (!(EfVersion?.Major >= 7)) return;
         // EF v7 supports entity config templating.
         var rules = GetDbContextRules();
-        var splitConfigs = rules?.SplitEntityTypeConfigurations ?? false;
+        var splitConfigs = rules?.Rule?.SplitEntityTypeConfigurations ?? false;
 
         var configurationTemplate = RuledTemplatedModelGenerator.GetEntityTypeConfigurationFile(projectDir);
         if (configurationTemplate?.Directory == null) return;
@@ -220,30 +217,32 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
 
     /// <summary> Internal load method for all rules </summary>
-    protected virtual IEnumerable<IRuleModelRoot> GetRules() {
-        LoadRulesResponse Fetch() {
+    protected virtual IReadOnlyList<DbContextRuleNode> GetRules() {
+        List<DbContextRuleNode> Fetch() {
+            var nodes = new List<DbContextRuleNode>();
             var projectFolder = GetProjectDir();
             if (projectFolder.IsNullOrWhiteSpace() || !Directory.Exists(projectFolder)) {
                 logger?.WriteWarning("Current project directory could not be determined for rule loading.");
-                return null;
-            }
-
-            var loadRulesResponse = ruleLoader.LoadRulesInProjectPath(new LoadOptions(projectFolder)).GetAwaiter().GetResult();
-            logger?.WriteInformation($"EF Ruler loaded {loadRulesResponse.Rules?.Count ?? 0} rule file(s).");
-            if (logger != null && loadRulesResponse.Rules?.Count > 0) {
-                foreach (var rule in loadRulesResponse.Rules) {
-                    if (rule is DbContextRule contextRules) {
+            } else {
+                var loadRulesResponse = ruleLoader.LoadRulesInProjectPath(new LoadOptions(projectFolder)).GetAwaiter().GetResult();
+                logger?.WriteInformation($"EF Ruler loaded {loadRulesResponse.Rules?.Count ?? 0} rule file(s).");
+                if (logger != null && loadRulesResponse.Rules?.Count > 0) {
+                    foreach (var rule in loadRulesResponse.Rules) {
+                        if (rule is not DbContextRule contextRules) continue;
                         logger.WriteVerbose(
                             $"DB Context Rules for {contextRules.Name} loaded with {contextRules.Schemas.Count} schemas and {contextRules.Schemas.SelectMany(o => o.Entities).Count()} tables from {(contextRules.FilePath?.Length > 0 ? Path.GetFileName(contextRules.FilePath) : string.Empty)}");
+                        nodes.Add(new(contextRules));
                     }
                 }
             }
 
-            return loadRulesResponse;
+            if (nodes.Count == 0) nodes.Add(new(DbContextRule.DefaultNoRulesFoundBehavior));
+
+            return nodes;
         }
 
-        response ??= Fetch() ?? new LoadRulesResponse(NullMessageLogger.Instance);
-        return response?.Rules ?? Enumerable.Empty<IRuleModelRoot>();
+        loadedRules ??= Fetch();
+        return loadedRules ?? new();
     }
 
     //private void LoaderLog(object sender, LogMessage msg) {

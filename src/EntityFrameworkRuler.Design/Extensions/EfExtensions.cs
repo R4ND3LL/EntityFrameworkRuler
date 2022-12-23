@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
@@ -71,13 +70,41 @@ internal static class EfExtensions {
         return name == null ? default : StoreObjectIdentifier.View(name, entityType.GetViewSchema());
     }
 
+    /// <summary> Returns the table ident of the supplied entity. </summary>
+    public static StoreObjectIdentifier GetStoreObjectIdentifier(this IMutableTypeBase tb) {
+        if (tb is not IEntityType entityType) return default;
+        var name = entityType.GetTableName();
+        if (name != null) return StoreObjectIdentifier.Table(name, entityType.GetSchema());
+
+        name = RelationalEntityTypeExtensions.GetViewName(entityType);
+        return name == null ? default : StoreObjectIdentifier.View(name, entityType.GetViewSchema());
+    }
+
     /// <summary> Returns the table ident of the supplied property. </summary>
     public static StoreObjectIdentifier GetStoreObjectIdentifier(this IProperty propertyType) {
         return propertyType.DeclaringType.GetStoreObjectIdentifier();
     }
 
     /// <summary> Returns the table column name for the supplied property </summary>
+    public static string GetColumnNameNoDefault(this IMutableProperty o) {
+        return o.FindAnnotation(RelationalAnnotationNames.ColumnName)?.Value as string; //?? o.GetDefaultColumnName();
+    }
+
+    /// <summary> Returns the table column name for the supplied property </summary>
     public static string GetColumnNameUsingStoreObject(this IProperty propertyType) {
+        var tb = propertyType.DeclaringType;
+        var tableIdentifier = tb.GetStoreObjectIdentifier();
+        if (tableIdentifier == default || string.IsNullOrEmpty(tableIdentifier.Name)) return null;
+        var tableColumnName = propertyType.GetColumnName(tableIdentifier);
+        if (tableColumnName.IsNullOrEmpty()) {
+            tableColumnName = propertyType.FindAnnotation("Relational:ColumnName")?.Value as string;
+        }
+
+        return tableColumnName;
+    }
+
+    /// <summary> Returns the table column name for the supplied property </summary>
+    public static string GetColumnNameUsingStoreObject(this IMutableProperty propertyType) {
         var tb = propertyType.DeclaringType;
         var tableIdentifier = tb.GetStoreObjectIdentifier();
         if (tableIdentifier == default || string.IsNullOrEmpty(tableIdentifier.Name)) return null;
@@ -139,6 +166,15 @@ internal static class EfExtensions {
     }
 
     public static Multiplicity GetMultiplicity(this INavigation property) {
+        if (property == null) return Multiplicity.Unknown;
+        if (property.IsCollection) return Multiplicity.Many;
+        var props = property.ForeignKey?.Properties;
+        if (props == null || props.Count == 0) return Multiplicity.Unknown;
+        if (props.All(o => o.IsNullable)) return Multiplicity.ZeroOne;
+        return Multiplicity.One;
+    }
+
+    public static Multiplicity GetMultiplicity(this IMutableNavigation property) {
         if (property == null) return Multiplicity.Unknown;
         if (property.IsCollection) return Multiplicity.Many;
         var props = property.ForeignKey?.Properties;
@@ -391,9 +427,6 @@ internal static class EfExtensions {
             typeScaffoldingInfo?.ScaffoldPrecision,
             typeScaffoldingInfo?.ScaffoldScale);
     }
-
-
-
 
 
     /// <summary>

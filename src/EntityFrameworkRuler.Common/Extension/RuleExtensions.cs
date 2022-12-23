@@ -143,13 +143,13 @@ public static class RuleExtensions {
         if (entityRule?.Navigations == null || entityRule.Navigations.Count == 0) return null;
 
         // locate by fkName first, which is most reliable.
-        var navigationRenames = fkName.HasNonWhiteSpace()
+        var navigationRules = fkName.HasNonWhiteSpace()
             ? entityRule.Navigations
                 .Where(t => t.FkName == fkName)
                 .ToArray()
             : Array.Empty<NavigationRule>();
 
-        if (navigationRenames.Length == 0) {
+        if (navigationRules.Length == 0) {
             // Maybe FkName is not defined?  if not, try to locate by expected target name instead
             if (fkName.HasNonWhiteSpace()) {
                 var someFkNamesEmpty = entityRule.Navigations.Any(o => o.FkName.IsNullOrWhiteSpace());
@@ -160,24 +160,24 @@ public static class RuleExtensions {
             }
 
             var efName = defaultEfName();
-            navigationRenames = entityRule.Navigations.Where(o => o.Name.HasNonWhiteSpace() && o.Name.EqualsIgnoreCase(efName))
+            navigationRules = entityRule.Navigations.Where(o => o.Name.HasNonWhiteSpace() && o.Name.EqualsIgnoreCase(efName))
                 .ToArray();
-            if (navigationRenames.Length == 0) return null; // expected EF name resolution failed to
+            if (navigationRules.Length == 0) return null; // expected EF name resolution failed to
         }
 
         // we have candidate matches (by fk name or expected target name). we may need to narrow further.
         // ReSharper disable once InvertIf
-        if (navigationRenames.Length > 1) {
+        if (navigationRules.Length > 1) {
             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (isManyToMany)
                 // many-to-many relationships always set IsPrincipal=true for both ends in the rule file.
-                navigationRenames = navigationRenames.Where(o => o.IsPrincipal).ToArray();
+                navigationRules = navigationRules.Where(o => o.IsPrincipal).ToArray();
             else
                 // filter for this end only
-                navigationRenames = navigationRenames.Where(o => o.IsPrincipal == thisIsPrincipal).ToArray();
+                navigationRules = navigationRules.Where(o => o.IsPrincipal == thisIsPrincipal).ToArray();
         }
 
-        return navigationRenames.Length != 1 ? null : navigationRenames[0];
+        return navigationRules.Length != 1 ? null : navigationRules[0];
     }
 
     /// <summary> Get the rule elements within this element </summary>
@@ -202,10 +202,10 @@ public static class RuleExtensions {
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    public static bool CanIncludeTable(this DbContextRule dbContextRule,
+    public static bool CanIncludeEntity(this DbContextRule dbContextRule,
         SchemaRule schemaRule, EntityRule entityRule, bool isView, out bool schemaIncluded) {
         schemaIncluded = true;
-#if DEBUG
+#if DEBUG2
         return true;
 #endif
         if (schemaRule == null) {
@@ -231,7 +231,8 @@ public static class RuleExtensions {
 
         // drop the table if all columns are not mapped
         if (entityRule.IncludeUnknownColumns) return true;
-        return entityRule.Properties.Count > 0 && entityRule.Properties.Any(o => o.Mapped);
+        return entityRule.BaseTypeName.HasNonWhiteSpace() ||
+               (entityRule.Properties.Count > 0 && entityRule.Properties.Any(o => o.ShouldMap()));
     }
 
     #region Annotations
@@ -243,29 +244,29 @@ public static class RuleExtensions {
     }
 
     /// <summary> Sets the mapping strategy for the derived types. </summary>
-    public static T UseTphMappingStrategy<T>(this T rule) where T : RuleBase => SetMappingStrategy(rule, "TPH");
+    public static T UseTphMapping<T>(this T rule) where T : RuleBase => SetMappingStrategy(rule, "TPH");
 
     /// <summary> Sets the mapping strategy for the derived types. </summary>
-    public static T UseTptMappingStrategy<T>(this T rule) where T : RuleBase => SetMappingStrategy(rule, "TPT");
+    public static T UseTptMapping<T>(this T rule) where T : RuleBase => SetMappingStrategy(rule, "TPT");
 
     /// <summary> Sets the mapping strategy for the derived types. </summary>
-    public static T UseTpcMappingStrategy<T>(this T rule) where T : RuleBase => SetMappingStrategy(rule, "TPC");
+    public static T UseTpcMapping<T>(this T rule) where T : RuleBase => SetMappingStrategy(rule, "TPC");
 
     /// <summary> Sets the mapping strategy for the derived types. </summary>
     public static T SetMappingStrategy<T>(this T rule, string strategy) where T : RuleBase
-        => rule.SetOrRemoveAnnotation(RelationalAnnotationNames.MappingStrategy, strategy);
+        => rule.SetOrRemoveAnnotation(EfRelationalAnnotationNames.MappingStrategy, strategy);
 
     /// <summary> Gets the mapping strategy for the derived types. </summary>
     public static string GetMappingStrategy<T>(this T rule) where T : RuleBase
-        => rule.FindAnnotation(RelationalAnnotationNames.MappingStrategy) as string;
+        => rule.FindAnnotation(EfRelationalAnnotationNames.MappingStrategy) as string;
 
     /// <summary> Sets the discriminator column name. </summary>
     public static EntityRule SetDiscriminatorColumn(this EntityRule rule, string columnName)
-        => rule.SetOrRemoveAnnotation(CoreAnnotationNames.DiscriminatorProperty, columnName);
+        => rule.SetOrRemoveAnnotation(EfCoreAnnotationNames.DiscriminatorProperty, columnName);
 
     /// <summary> Gets the discriminator column name. </summary>
     public static string GetDiscriminatorColumn(this EntityRule rule)
-        => rule.FindAnnotation(CoreAnnotationNames.DiscriminatorProperty) as string;
+        => rule.FindAnnotation(EfCoreAnnotationNames.DiscriminatorProperty) as string;
 
     /// <summary> Sets the type as abstract. </summary>
     public static EntityRule IsAbstract(this EntityRule rule, bool isAbstract)
@@ -276,11 +277,11 @@ public static class RuleExtensions {
 
     /// <summary> Sets the property discriminator value. </summary>
     public static PropertyRule SetDiscriminatorValue(this PropertyRule rule, string value, string toEntity)
-        => rule.SetOrRemoveAnnotation(CoreAnnotationNames.DiscriminatorValue, value.HasNonWhiteSpace() ? $"{value}>{toEntity}" : null);
+        => rule.SetOrRemoveAnnotation(EfCoreAnnotationNames.DiscriminatorValue, value.HasNonWhiteSpace() ? $"{value}>{toEntity}" : null);
 
     /// <summary> Gets the property discriminator value. </summary>
     public static (string value, string toEntity) GetDiscriminatorValue(this PropertyRule rule, string value, string toEntity)
-        => rule.FindAnnotation(CoreAnnotationNames.DiscriminatorValue) is string s ? ParseDiscriminatorValue(s) : default;
+        => rule.FindAnnotation(EfCoreAnnotationNames.DiscriminatorValue) is string s ? ParseDiscriminatorValue(s) : default;
 
     private static (string value, string toEntity) ParseDiscriminatorValue(string s) {
         var parts = s.Split('>');

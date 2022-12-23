@@ -4,8 +4,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Extensions;
+using EntityFrameworkRuler.Design.Services.Models;
 using EntityFrameworkRuler.Rules;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
@@ -26,7 +26,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
     private readonly IMessageLogger logger;
 
-    private DbContextRule dbContextRule;
+    private DbContextRuleNode dbContextRule;
 
     //private NavigationNamingRules navigationRules;
     private readonly MethodInfo generateCandidateIdentifierMethod;
@@ -64,25 +64,27 @@ public class RuledCandidateNamingService : CandidateNamingService {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
         dbContextRule ??= ResolveDbContextRule();
 
-        if (!dbContextRule.TryResolveRuleFor(table.Schema, table.Name, out var schema, out var entityRule)) {
+        var entityRule = dbContextRule.TryResolveRuleFor(table.Schema, table.Name);
+        if (entityRule == null) {
             var state = NameToState(base.GenerateCandidateIdentifier(table));
             logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} not found in rule file. Auto-named {state.Name}");
             return state;
         }
 
-        if (entityRule?.NewName.HasNonWhiteSpace() == true) {
+        if (entityRule.Rule.NewName.HasNonWhiteSpace()) {
             // Name explicitly set by user, cannot be altered by pluralizer so set FROZEN
-            var state = NameToState(entityRule.NewName, true);
+            var state = NameToState(entityRule.Rule.NewName, true);
             logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} mapped to entity name {state.Name}");
             return state;
         }
 
+        var schema = entityRule.Parent.Rule;
         var candidateStringBuilder = new StringBuilder();
-        if (schema.UseSchemaName) candidateStringBuilder.Append(GenerateIdentifier(table.Schema));
+        if (schema?.UseSchemaName == true) candidateStringBuilder.Append(GenerateIdentifier(table.Schema));
         bool usedRegex;
         string newTableName;
         if (!string.IsNullOrEmpty(schema.TableRegexPattern) && schema.TablePatternReplaceWith != null) {
-            if (dbContextRule.PreserveCasingUsingRegex)
+            if (dbContextRule.Rule.PreserveCasingUsingRegex)
                 newTableName = RegexNameReplace(schema.TableRegexPattern, table.Name,
                     schema.TablePatternReplaceWith);
             else
@@ -112,10 +114,10 @@ public class RuledCandidateNamingService : CandidateNamingService {
         }
     }
 
-    private DbContextRule ResolveDbContextRule() {
-        var rule = designTimeRuleLoader?.GetDbContextRules() ?? DbContextRule.DefaultNoRulesFoundBehavior;
+    private DbContextRuleNode ResolveDbContextRule() {
+        var rule = designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRuleNode(DbContextRule.DefaultNoRulesFoundBehavior);
         logger?.WriteVerbose(
-            $"Candidate Naming Service resolved DB Context Rules for {rule.Name ?? "No Name"} with {rule.Schemas.Count} schemas");
+            $"Candidate Naming Service resolved DB Context Rules for {rule.DbName ?? "No Name"} with {rule.Schemas.Count} schemas");
         return rule;
     }
 
@@ -125,21 +127,23 @@ public class RuledCandidateNamingService : CandidateNamingService {
         if (column is null) throw new ArgumentNullException(nameof(column));
         dbContextRule ??= ResolveDbContextRule();
 
-        if (!dbContextRule.TryResolveRuleFor(column.Table.Schema, column.Table.Name, out var schema, out var entityRule))
+        var entityRule = dbContextRule.TryResolveRuleFor(column.Table.Schema, column.Table.Name);
+        if (entityRule == null)
             return base.GenerateCandidateIdentifier(column);
-        if (!entityRule.TryResolveRuleFor(column.Name, out var propertyRule))
-            return base.GenerateCandidateIdentifier(column);
+        var propertyRule = entityRule.TryResolveRuleFor(column.Name);
+        if (propertyRule == null) return base.GenerateCandidateIdentifier(column);
 
-        if (propertyRule?.NewName.HasNonWhiteSpace() == true) {
+        if (propertyRule.Rule.NewName.HasNonWhiteSpace()) {
             logger?.WriteVerbose(
-                $"RULED: Column {column.Table.Schema}.{column.Table.Name}.{propertyRule.Name} property name set to {propertyRule.NewName}");
-            return propertyRule.NewName;
+                $"RULED: Column {column.Table.Schema}.{column.Table.Name}.{propertyRule.Rule.Name} property name set to {propertyRule.Rule.NewName}");
+            return propertyRule.Rule.NewName;
         }
 
+        var schema = entityRule.Parent.Rule;
         if (!string.IsNullOrEmpty(schema.ColumnRegexPattern) && schema.ColumnPatternReplaceWith != null) {
             var candidateStringBuilder = new StringBuilder();
             string newColumnName;
-            if (dbContextRule.PreserveCasingUsingRegex)
+            if (dbContextRule.Rule.PreserveCasingUsingRegex)
                 newColumnName = RegexNameReplace(schema.ColumnRegexPattern, column.Name,
                     schema.ColumnPatternReplaceWith);
             else
@@ -186,28 +190,15 @@ public class RuledCandidateNamingService : CandidateNamingService {
         // ReSharper disable once HeuristicUnreachableCode
         if (entity == null) return defaultEfName();
 
-        string tableName;
-        try {
-            tableName = entity.GetTableName() ?? entity.GetViewName();
-        } catch {
-            tableName = null;
-        }
+        var entityRule = dbContextRule.TryResolveRuleForEntityName(entity.Name);
 
-        string schemaName;
-        try {
-            schemaName = entity.GetSchema() ?? entity.GetViewSchema();
-        } catch {
-            schemaName = null;
-        }
+        if (entityRule == null || entityRule.Navigations.Count == 0) return defaultEfName();
 
-        var entityRule = dbContextRule.TryResolveRuleForEntity(entity.Name, schemaName, tableName);
-        if (entityRule?.Navigations.IsNullOrEmpty() != false) return defaultEfName();
+        var navigationRule = entityRule.Rule.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
+        if (navigationRule?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
 
-        var rename = entityRule.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
-        if (rename?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
-
-        logger?.WriteVerbose($"RULED: Navigation {entity.Name}.{rename.NewName} defined");
-        return rename.NewName.Trim();
+        logger?.WriteVerbose($"RULED: Navigation {entity.Name}.{navigationRule.NewName} defined");
+        return navigationRule.NewName.Trim();
     }
 
     /// <summary>

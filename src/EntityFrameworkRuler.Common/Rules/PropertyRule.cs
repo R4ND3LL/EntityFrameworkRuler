@@ -12,7 +12,7 @@ namespace EntityFrameworkRuler.Rules;
 public sealed class PropertyRule : RuleBase, IPropertyRule {
     /// <inheritdoc />
     public PropertyRule() {
-        DiscriminatorConditions = Observable ? new ObservableCollection<DiscriminatorCondition>() : new List<DiscriminatorCondition>();
+        discriminatorConditions = Observable ? new ObservableCollection<DiscriminatorCondition>() : new List<DiscriminatorCondition>();
     }
 
     /// <summary> The raw database name of the column.  Used to locate the property during scaffolding phase.  Required. </summary>
@@ -45,15 +45,23 @@ public sealed class PropertyRule : RuleBase, IPropertyRule {
     [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
     public override bool NotMapped { get; set; }
 
+    private IList<DiscriminatorCondition> discriminatorConditions;
+
     /// <summary> If using TPH inheritance, discriminator conditions describe the mapping from the base type to the concrete types. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     [DisplayName("Discriminator Conditions"), Category("TPH Configuration"),
      Description("If using TPH inheritance, discriminator conditions describe the mapping from the base type to the concrete types.")]
-    public IList<DiscriminatorCondition> DiscriminatorConditions { get; }
+    public IList<DiscriminatorCondition> DiscriminatorConditions {
+        get => discriminatorConditions;
+        set => UpdateCollection(ref discriminatorConditions, value);
+    }
 
     IEnumerable<string> IPropertyRule.GetCurrentNameOptions() => new[] { PropertyName, Name };
     string IPropertyRule.GetNewTypeName() => NewType;
     NavigationMetadata IPropertyRule.GetNavigationMetadata() => default;
+
+    /// <inheritdoc />
+    protected override string GetDbName() => Name;
 
     /// <inheritdoc />
     protected override string GetNewName() => NewName.NullIfEmpty();
@@ -65,6 +73,11 @@ public sealed class PropertyRule : RuleBase, IPropertyRule {
     protected override void SetFinalName(string value) {
         NewName = value;
     }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public bool ShouldMap() {
+        return !NotMapped || DiscriminatorConditions.Count > 0;
+    }
 }
 
 /// <summary> If using TPH, discriminator conditions describe the mapping from the base type to the concrete types. </summary>
@@ -75,7 +88,7 @@ public sealed class DiscriminatorCondition {
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
     [DisplayName("Value"), Category("Mapping"),
      Description("Rows with this value will be mapped to the selected target entity.  Required."), Required]
-    public object Value { get; set; }
+    public string Value { get; set; }
 
     /// <summary> The target concrete entity type.  Required. </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 2)]

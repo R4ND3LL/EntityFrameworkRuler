@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.Serialization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
@@ -21,6 +22,7 @@ public sealed class NavigationRule : RuleBase, IPropertyRule {
     [DataMember(EmitDefaultValue = true, IsRequired = true, Order = 1)]
     [DisplayName("Expected Name"), Category("Mapping"),
      Description("The expected EF generated name for the navigation property.")]
+    [JsonConverter(typeof(NavigationRuleNameConverter))]
     public string Name { get; set; }
 
     /// <summary> New name of property. Optional. </summary>
@@ -56,6 +58,9 @@ public sealed class NavigationRule : RuleBase, IPropertyRule {
     public override bool NotMapped { get; set; }
 
     /// <inheritdoc />
+    protected override string GetDbName() => Name;
+
+    /// <inheritdoc />
     protected override string GetNewName() => NewName.NullIfEmpty();
 
     /// <inheritdoc />
@@ -74,6 +79,33 @@ public sealed class NavigationRule : RuleBase, IPropertyRule {
     /// <inheritdoc />
     public NavigationMetadata GetNavigationMetadata() =>
         new(FkName, ToEntity, IsPrincipal, Multiplicity.ParseMultiplicity());
+}
+
+public class NavigationRuleNameConverter : JsonConverter<string> {
+    public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
+        string result = null;
+        if (reader.TokenType == JsonTokenType.StartArray)
+            while (true) {
+                if (!reader.Read()) throw new JsonException($"Bad JSON");
+
+                if (reader.TokenType == JsonTokenType.EndArray) break;
+
+                if (result != null) continue;
+                var s = reader.GetString();
+                if (s.HasNonWhiteSpace()) result = s;
+            }
+
+        if (reader.TokenType == JsonTokenType.String) {
+            var s = reader.GetString();
+            return s;
+        }
+
+        return result;
+    }
+
+    public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options) {
+        writer.WriteStringValue((string)value);
+    }
 }
 
 /// <summary> Multiplicity, or expected count, on a navigation end. </summary>

@@ -49,6 +49,9 @@ public interface IRuleItem {
     /// <summary> Gets the new name to give this element. </summary>
     string GetNewName();
 
+    /// <summary> Get the DB name. </summary>
+    string GetDbName();
+
     /// <summary> Gets the conceptual name of the model. That is, the name that this element should have after the reverse engineer. </summary>
     string GetFinalName();
 
