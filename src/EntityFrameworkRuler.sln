@@ -18,7 +18,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{6ECD160C-8
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Tests", "Tests\EntityFrameworkRuler.Tests\EntityFrameworkRuler.Tests.csproj", "{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NorthwindTestProject", "Tests\NorthwindTestProject\NorthwindTestProject.csproj", "{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NorthwindTestRoslyn", "Tests\NorthwindTestRoslyn\NorthwindTestRoslyn.csproj", "{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Design", "EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj", "{513C1B89-ADDA-4829-AFAF-1E9C3AD8833F}"
 EndProject
@@ -32,7 +32,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Editor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFrameworkRuler.Vsix", "EntityFrameworkRuler.Vsix\EntityFrameworkRuler.Vsix.csproj", "{3E4ACF52-C319-4367-9A65-AFCC2C88D9F9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwindScaffoldTestProject", "Tests\NorthwindScaffoldTestProject\NorthwindScaffoldTestProject.csproj", "{07097483-166E-4126-9EB9-FE22B695F3E7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwindTestDesign", "Tests\NorthwindTestDesign\NorthwindTestDesign.csproj", "{07097483-166E-4126-9EB9-FE22B695F3E7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

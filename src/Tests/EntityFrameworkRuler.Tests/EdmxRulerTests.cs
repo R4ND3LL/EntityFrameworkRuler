@@ -53,7 +53,7 @@ public sealed class EdmxRulerTests {
         enumMappingRules.ForAll(o => (o.PropertyName == null || o.PropertyName.IsValidSymbolName()).ShouldBeTrue());
 
         dbContextRule.Schemas.Count.ShouldBe(1);
-        dbContextRule.Schemas[0].Entities.Count.ShouldBe(27);
+        dbContextRule.Schemas[0].Entities.Count.ShouldBe(32);
         var prod = dbContextRule.Schemas[0].Entities.FirstOrDefault(o => o.Name == "Products");
         prod.ShouldNotBeNull();
         prod.Properties.Count.ShouldBe(10);
@@ -116,7 +116,7 @@ public sealed class EdmxRulerTests {
         await state.TryLoadProjectOrFallbackOnce(new ApplicatorOptions(projectBasePath, true), response);
         var project = state.Project;
         project.ShouldNotBeNull();
-        //var ns = "NorthwindTestProject.Models";
+        //var ns = "NorthwindTestRoslyn.Models";
         var result = await Microsoft.CodeAnalysis.FindSymbols.SymbolFinder.FindDeclarationsAsync(project, "Product",
             false,
             SymbolFilter.Type, CancellationToken.None);
@@ -241,7 +241,7 @@ public sealed class EdmxRulerTests {
         while (dir != null && dir.Name != "Tests") dir = dir.Parent;
 
         dir.ShouldNotBeNull();
-        var path = Path.Combine(dir.FullName, $"NorthwindTestProject{Path.DirectorySeparatorChar}NorthwindTestProject.csproj");
+        var path = Path.Combine(dir.FullName, $"NorthwindTestProject{Path.DirectorySeparatorChar}NorthwindTestRoslyn.csproj");
         File.Exists(path).ShouldBeTrue();
         return path;
     }

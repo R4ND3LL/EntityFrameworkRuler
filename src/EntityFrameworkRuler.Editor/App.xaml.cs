@@ -25,7 +25,7 @@ public sealed partial class App : Application {
 #if DEBUG
         var sln = Directory.GetCurrentDirectory().FindSolutionParentPath();
         if (sln != null) {
-            sln = Path.Combine(sln, "Tests\\NorthwindTestProject\\");
+            sln = Path.Combine(sln, "Tests\\\\NorthwindTestDesign\\");
             if (Directory.Exists(sln)) window.ViewModel.SetContext(null, sln);
         }
 #endif
