@@ -79,7 +79,7 @@ public sealed class EdmxRulerTests {
         elapsed = DateTimeExtensions.GetTime() - start;
         output.WriteLine($"Rule contents look good at {elapsed}ms");
 
-        var csProj = ResolveNorthwindProject();
+        var csProj = ResolveNorthwindTestRoslynProject();
         var projBasePath = new FileInfo(csProj).Directory!.FullName;
         IRuleApplicator applicator = new RuleApplicator();
         applicator.Log += LogReceived;
@@ -110,7 +110,7 @@ public sealed class EdmxRulerTests {
 
     [Fact]
     public async Task ShouldLoadProjectUsingRoslynAndFindTypes() {
-        var projectBasePath = ResolveNorthwindProject();
+        var projectBasePath = NorthwindTestDesignProject();
         var state = new RuleApplicator.RoslynProjectState(new RuleApplicator());
         var response = new ApplyRulesResponse(null, NullMessageLogger.Instance);
         await state.TryLoadProjectOrFallbackOnce(new ApplicatorOptions(projectBasePath, true), response);
@@ -136,7 +136,7 @@ public sealed class EdmxRulerTests {
     public async Task ShouldLoadRules() {
         var start = DateTimeExtensions.GetTime();
         IRuleApplicator ruleApplicator = new RuleApplicator();
-        var rules = await ruleApplicator.LoadRulesInProjectPath(ResolveNorthwindProject());
+        var rules = await ruleApplicator.LoadRulesInProjectPath(NorthwindTestDesignProject());
         rules.ShouldNotBeNull();
         rules.Rules.ShouldNotBeNull();
         rules.Rules.Count.ShouldBeGreaterThan(0);
@@ -236,7 +236,7 @@ public sealed class EdmxRulerTests {
         return path;
     }
 
-    private static string ResolveNorthwindProject() {
+    private static string ResolveNorthwindTestRoslynProject() {
         var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
         while (dir != null && dir.Name != "Tests") dir = dir.Parent;
 
@@ -244,11 +244,19 @@ public sealed class EdmxRulerTests {
         var path = Path.Combine(dir.FullName, $"NorthwindTestRoslyn{Path.DirectorySeparatorChar}NorthwindTestRoslyn.csproj");
         File.Exists(path).ShouldBeTrue();
         return path;
+    }    private static string NorthwindTestDesignProject() {
+        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+        while (dir != null && dir.Name != "Tests") dir = dir.Parent;
+
+        dir.ShouldNotBeNull();
+        var path = Path.Combine(dir.FullName, $"NorthwindTestDesign{Path.DirectorySeparatorChar}NorthwindTestDesign.csproj");
+        File.Exists(path).ShouldBeTrue();
+        return path;
     }
 
     private static async Task SampleCode() {
         var edmxPath = ResolveNorthwindEdmxPath();
-        var projectBasePath = ResolveNorthwindProject();
+        var projectBasePath = ResolveNorthwindTestRoslynProject();
         {
             // Generate and save rules:
             var generator = new RuleGenerator();
