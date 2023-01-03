@@ -15,6 +15,7 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    [IgnoreDataMember, JsonIgnore, XmlIgnore, Browsable(false)]
     public static DbContextRule DefaultNoRulesFoundBehavior => new() { IncludeUnknownSchemas = true };
 
     /// <summary> DB context name of the reverse engineered model that this rule set applies to. </summary>
@@ -52,11 +53,11 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
     }
 
     /// <inheritdoc />
-    [IgnoreDataMember, JsonIgnore, XmlIgnore]
+    [IgnoreDataMember, JsonIgnore, XmlIgnore, Browsable(false)]
     public RuleModelKind Kind => RuleModelKind.DbContext;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    [IgnoreDataMember, JsonIgnore, XmlIgnore]
+    [IgnoreDataMember, JsonIgnore, XmlIgnore, Browsable(false)]
     // ReSharper disable once UnusedAutoPropertyAccessor.Global
     public string FilePath { get; set; }
 

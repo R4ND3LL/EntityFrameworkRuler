@@ -78,7 +78,7 @@ public class RuleValidator : IRuleValidator {
                 .For(o => o.ColumnRegexPattern).Assert(o => VerifyRegEx(o))
                 .For(o => o.TableRegexPattern).Assert(o => VerifyRegEx(o))
                 .For(o => o.Entities)
-                .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Entity Names should be unique")
+                //.Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Entity Names should be unique")
                 .Assert(o => o.Select(r => r.EntityName).Where(r => r.HasCharacters()).IsDistinct(), "Entity EntityNames should be unique")
                 .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
                     "Final entity names should be unique")

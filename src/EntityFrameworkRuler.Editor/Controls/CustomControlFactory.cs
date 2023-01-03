@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 using PropertyTools.Wpf;
@@ -37,14 +38,15 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
     }
     protected override FrameworkElement CreateGridControl(PropertyItem property) {
         // Create a custom data grid that hides columns that are not intended for use in the grid control
-        var c = new MyDataGrid {
-            CanDelete = property.ListCanRemove,
-            CanInsert = property.ListCanAdd,
-            InputDirection = property.InputDirection,
-            IsEasyInsertByMouseEnabled = property.IsEasyInsertByMouseEnabled,
-            IsEasyInsertByKeyboardEnabled = property.IsEasyInsertByKeyboardEnabled,
-            AutoGenerateColumns = property.Columns.Count == 0
-        };
+        MyDataGrid c;
+        if (property.PropertyName == "Annotations") c = new AnnotationDataGrid();
+        else c = new MyDataGrid();
+        c.CanDelete = property.ListCanRemove;
+        c.CanInsert = property.ListCanAdd;
+        c.InputDirection = property.InputDirection;
+        c.IsEasyInsertByMouseEnabled = property.IsEasyInsertByMouseEnabled;
+        c.IsEasyInsertByKeyboardEnabled = property.IsEasyInsertByKeyboardEnabled;
+        c.AutoGenerateColumns = property.Columns.Count == 0;
 
         foreach (var cd in property.Columns) {
             if (cd.PropertyName == string.Empty && property.ListItemItemsSource != null) {
@@ -152,13 +154,69 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
         }
     }
 }
+public sealed class AnnotationDataGrid : MyDataGrid {
+    public AnnotationDataGrid() {
+        CellDefinitionFactory = new MyCellDefinitionFactory(CellDefinitionFactory, CoerceCellDefinition);
+        //ControlFactory = new MyDataGridControlFactory(ControlFactory, CoerceEditControl);
+    }
+
+    private CellDefinition CoerceCellDefinition(CellDescriptor descriptor, CellDefinition cellDefinition) {
+        if (descriptor.BindingPath == "Key" && cellDefinition is SelectorCellDefinition scd) {
+            // will cause combo box to bind to Text property, meaning user can set values outside of items source range.
+            scd.IsEditable = true;
+        }
+        return cellDefinition;
+    }
+
+    //private FrameworkElement CoerceEditControl(CellDefinition cellDefinition, FrameworkElement edit) { }
+}
+
+
 
 /// <summary> Custom data grid that hides columns that are not intended for use in the grid control </summary>
-public sealed class MyDataGrid : PropertyTools.Wpf.DataGrid {
+public class MyDataGrid : PropertyTools.Wpf.DataGrid {
+    public MyDataGrid() {
+    }
+
+
+
     protected override IDataGridOperator CreateOperator() {
         return new MyDataGridOperator(this, base.CreateOperator());
     }
 }
+public sealed class MyCellDefinitionFactory : ICellDefinitionFactory {
+    private readonly ICellDefinitionFactory cellDefinitionFactory;
+    private readonly Func<CellDescriptor, CellDefinition, CellDefinition> coerceCell;
+
+    public MyCellDefinitionFactory(ICellDefinitionFactory cellDefinitionFactory, Func<CellDescriptor, CellDefinition, CellDefinition> coerceCell) {
+        this.cellDefinitionFactory = cellDefinitionFactory ?? throw new ArgumentNullException(nameof(cellDefinitionFactory));
+        this.coerceCell = coerceCell;
+    }
+
+    public CellDefinition CreateCellDefinition(CellDescriptor d) {
+        return coerceCell.Invoke(d, cellDefinitionFactory.CreateCellDefinition(d));
+    }
+}
+public sealed class MyDataGridControlFactory : IDataGridControlFactory {
+    private readonly IDataGridControlFactory controlFactory;
+    private readonly Func<CellDefinition, FrameworkElement, FrameworkElement> coerceEdit;
+
+    public MyDataGridControlFactory(IDataGridControlFactory controlFactory, Func<CellDefinition, FrameworkElement, FrameworkElement> coerceEdit) {
+        this.controlFactory = controlFactory ?? throw new ArgumentNullException(nameof(controlFactory));
+        this.coerceEdit = coerceEdit;
+    }
+
+    public FrameworkElement CreateDisplayControl(CellDefinition cellDefinition) {
+        return controlFactory.CreateDisplayControl(cellDefinition);
+    }
+
+    public FrameworkElement CreateEditControl(CellDefinition cellDefinition) {
+        var edit = controlFactory.CreateEditControl(cellDefinition);
+        if (edit != null) return coerceEdit?.Invoke(cellDefinition, edit);
+        return null;
+    }
+}
+
 /// <summary> Custom data grid operator that hides columns that are not intended for use in the grid control </summary>
 public sealed class MyDataGridOperator : IDataGridOperator {
     private readonly MyDataGrid grid;
@@ -171,10 +229,15 @@ public sealed class MyDataGridOperator : IDataGridOperator {
 
     public void AutoGenerateColumns() {
         op.AutoGenerateColumns();
-        var remove = grid.ColumnDefinitions
-            .Where(o => o.Header is string s && (s.In("Tables", "Columns", "Properties", "Navigations", "UseSchemaName", "Annotations", "AnnotationsDictionary")
-                                                 || s.Contains("Regex") || s.Contains("Replace")))
-            .ToArray();
+        var remove = new List<PropertyDefinition>();
+        foreach (var o in grid.ColumnDefinitions) {
+            if (o.Header is string s && (s.In("Tables", "Columns", "Properties", "Navigations", "UseSchemaName", "Annotations", "AnnotationsDictionary")
+                                         || s.Contains("Regex") || s.Contains("Replace")))
+                remove.Add(o);
+            else {
+                o.HorizontalAlignment = HorizontalAlignment.Left;
+            }
+        }
         remove.ForAll(o => grid.ColumnDefinitions.Remove(o));
     }
 

@@ -122,7 +122,10 @@
               "NewName": "CategoryID"
             },
             {
-              "Name": "CategoryName"
+              "Name": "CategoryName",
+              "Annotations": {
+                "Relational:Comment": "Test comment for CategoryName"
+              }
             },
             {
               "Name": "Description"
@@ -140,7 +143,10 @@
               "IsPrincipal": true,
               "Multiplicity": "*"
             }
-          ]
+          ],
+          "Annotations": {
+            "Relational:Comment": "Test comment for Category entity"
+          }
         },
         {
           "Name": "Category Sales for 1997",

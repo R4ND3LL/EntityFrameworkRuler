@@ -1,4 +1,4 @@
-namespace EntityFrameworkRuler.Design.Services;
+namespace EntityFrameworkRuler.Common;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class CachedDelegate<TKey, TValue> {

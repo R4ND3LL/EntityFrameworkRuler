@@ -17,12 +17,7 @@ internal class CSharpUniqueNamer<T> : CSharpNamer<T>
     where T : notnull {
     private readonly HashSet<string> _usedNames = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public CSharpUniqueNamer(
         Func<T, string> nameGetter,
         ICSharpUtilities cSharpUtilities,
@@ -30,12 +25,7 @@ internal class CSharpUniqueNamer<T> : CSharpNamer<T>
         : this(nameGetter, null, cSharpUtilities, singularizePluralizer) {
     }
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public CSharpUniqueNamer(Func<T, string> nameGetter, IEnumerable<string> usedNames, ICSharpUtilities cSharpUtilities,
         Func<string, string> singularizePluralizer)
         : base(nameGetter, cSharpUtilities, singularizePluralizer) {
@@ -44,12 +34,7 @@ internal class CSharpUniqueNamer<T> : CSharpNamer<T>
             _usedNames.Add(name);
     }
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public override string GetName(T item) {
         if (NameCache.ContainsKey(item)) return base.GetName(item);
 

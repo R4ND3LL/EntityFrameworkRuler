@@ -82,16 +82,16 @@ public abstract class RuleBase : IRuleItem {
     private readonly AnnotationCollection annotations = new();
 
     /// <summary> Metadata annotations for this element. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 99)]
     [DisplayName("Annotations"), Category("Mapping"), Description("Metadata annotations for this element.")]
-    [JsonIgnore, XmlIgnore]
+    [IgnoreDataMember, JsonIgnore, XmlIgnore]
     public AnnotationCollection Annotations {
         get => annotations;
         set => UpdateAnnotations(annotations, value, AnnotationCleaner);
     }
 
     /// <summary> Metadata annotations for this element in dictionary form. Used for serialization only. </summary>
-    [Obsolete("Intended for internal use only (for serialization)")]
+    [Obsolete("Intended for internal use only (for serialization)"), Browsable(false)]
+    [DataMember(Name = "Annotations", EmitDefaultValue = false, IsRequired = false, Order = 99)]
     [JsonPropertyName("Annotations")]
     public SortedDictionary<string, object> AnnotationsDictionary {
         get => Annotations?.ToDictionary();

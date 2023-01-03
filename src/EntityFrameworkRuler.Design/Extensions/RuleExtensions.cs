@@ -84,11 +84,7 @@ public static class RuleExtensions {
         return clrType;
     }
 
-    /// <summary> Convert the given function to one that caches its results </summary>
-    public static Func<TKey, TValue> Cached<TKey, TValue>(this Func<TKey, TValue> func, IEqualityComparer<TKey> comparer = null) {
-        var c = new CachedDelegate<TKey, TValue>(func);
-        return c.Invoke;
-    }
+    
 
     // /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     // public static DatabaseTable ResolveTable(this ICollection<DatabaseTable> tables, SchemaRule schemaRule, EntityRule entityRule) {

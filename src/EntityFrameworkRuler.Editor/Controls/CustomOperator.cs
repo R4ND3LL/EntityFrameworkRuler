@@ -1,11 +1,29 @@
 ﻿using System.Collections;
 using System.ComponentModel;
+using System.Linq;
+using System.Windows;
+using EntityFrameworkRuler.Common.Annotations;
 using EntityFrameworkRuler.Rules;
 using PropertyTools.Wpf;
 
 namespace EntityFrameworkRuler.Editor.Controls;
 
 public sealed class CustomOperator : PropertyGridOperator {
+    private static readonly List<string> annotationsKeys;
+
+    static CustomOperator() {
+        annotationsKeys = new List<string>();
+        AddAnnotations(AnnotationHelperCore.ToDictionary(typeof(EfCoreAnnotationNames)).Values
+            .Concat(AnnotationHelperCore.ToDictionary(typeof(EfRelationalAnnotationNames)).Values)
+            .Concat(AnnotationHelperCore.ToDictionary(typeof(RulerAnnotations)).Values)
+            .Concat(AnnotationHelperCore.ToDictionary(typeof(EfScaffoldingAnnotationNames)).Values)
+        );
+
+        void AddAnnotations(IEnumerable<string> index) {
+            foreach (var v in index.OrderBy(o => o)) annotationsKeys.Add(v);
+        }
+    }
+
     public CustomOperator() {
         // must change default pattern as it interferes with UseSchemaName
         OptionalPattern = "Use{0}Property";
@@ -38,22 +56,7 @@ public sealed class CustomOperator : PropertyGridOperator {
 
         foreach (var item in items) {
             if (item == null) continue;
-            if (item.PropertyName == "NotMapped" && instance is DbContextRule) continue;
-            if (item.PropertyName == "FilePath" && instance is DbContextRule) continue;
-            if (item.PropertyName == "Columns" && instance is EntityRule) continue;
-            if (item.PropertyName == "Tables" && instance is SchemaRule) continue;
-            if (item.PropertyName == "Mapped") continue;
-            if (item.PropertyName == "AnnotationsDictionary") continue;
-            if (item.PropertyName == "Annotations") {
-                //item.Tab = "Annotations";
-                //item.DisplayName = null;
-                //item.FillTab = true;
-                //item.HeaderPlacement = PropertyTools.DataAnnotations.HeaderPlacement.Collapsed;
-                //item.Columns.Add(new ColumnDefinition() { PropertyName = "Key", Header = "Key" });
-                //item.Columns.Add(new ColumnDefinition() { PropertyName = "Value", Header = "Value" });
-                item.IsEasyInsertByKeyboardEnabled = true;
-                item.IsEasyInsertByMouseEnabled = true;
-            }
+
             if (item.Properties?.Count > 0 && item.ActualPropertyType != typeof(string) &&
                 typeof(IList).IsAssignableFrom(item.ActualPropertyType)) {
                 var collections = item.Properties.Cast<PropertyDescriptor>()
@@ -77,11 +80,37 @@ public sealed class CustomOperator : PropertyGridOperator {
 
     public override PropertyItem CreatePropertyItem(PropertyDescriptor pd, PropertyDescriptorCollection propertyDescriptors,
         object instance) {
+        switch (pd.Name) {
+            case "NotMapped" when instance is DbContextRule:
+            case "FilePath" when instance is DbContextRule:
+            case "Columns" when instance is EntityRule:
+            case "Tables" when instance is SchemaRule:
+            case "Mapped" or "AnnotationsDictionary":
+                return null;
+        }
+
         var item = base.CreatePropertyItem(pd, propertyDescriptors, instance);
         if (item == null) return null;
         switch (pd.Name) {
             case "Multiplicity":
                 item.ItemsSource = new[] { "1", "0..1", "*" };
+                break;
+            case "Annotations":
+                item.IsEasyInsertByKeyboardEnabled = true;
+                item.IsEasyInsertByMouseEnabled = true;
+                item.Columns.Add(new ColumnDefinition {
+                    PropertyName = "Key",
+                    Header = "Key",
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Width = new GridLength(1, GridUnitType.Star),
+                    ItemsSource = annotationsKeys,
+                });
+                item.Columns.Add(new ColumnDefinition {
+                    PropertyName = "Value",
+                    Header = "Value",
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Width = new GridLength(1, GridUnitType.Star)
+                });
                 break;
             default: {
                     if (pd.PropertyType == typeof(RuleModelKind)) {

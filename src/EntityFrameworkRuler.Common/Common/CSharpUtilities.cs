@@ -96,33 +96,18 @@ public class CSharpUtilities : ICSharpUtilities {
             default,
             TimeSpan.FromMilliseconds(1000.0));
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual bool IsCSharpKeyword(string identifier)
         => CSharpKeywords.Contains(identifier);
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual string GenerateCSharpIdentifier(
         string identifier,
         ICollection<string> existingIdentifiers,
         Func<string, string> singularizePluralizer)
         => GenerateCSharpIdentifier(identifier, existingIdentifiers, singularizePluralizer, Uniquifier);
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual string GenerateCSharpIdentifier(
         string identifier,
         ICollection<string> existingIdentifiers,
@@ -146,12 +131,7 @@ public class CSharpUtilities : ICSharpUtilities {
         return uniquifier(proposedIdentifier, existingIdentifiers);
     }
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual string Uniquifier(string proposedIdentifier, ICollection<string> existingIdentifiers) {
         if (existingIdentifiers == null) return proposedIdentifier;
 
@@ -165,12 +145,7 @@ public class CSharpUtilities : ICSharpUtilities {
         return finalIdentifier;
     }
 
-    /// <summary>
-    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
-    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
-    ///     any release. You should only use it directly in your code with extreme caution and knowing that
-    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
-    /// </summary>
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual bool IsValidIdentifier(string name) {
         if (string.IsNullOrEmpty(name)) return false;
 
