@@ -119,7 +119,10 @@
             {
               "Name": "CategoryID",
               "PropertyName": "CategoryId",
-              "NewName": "CategoryID"
+              "NewName": "CategoryID",
+              "Annotations": {
+                "Relational:Comment": "CategoryID Summary\r\nCategoryID Long Description"
+              }
             },
             {
               "Name": "CategoryName",
@@ -141,11 +144,14 @@
               "FkName": "FK_Products_Categories",
               "ToEntity": "Product",
               "IsPrincipal": true,
-              "Multiplicity": "*"
+              "Multiplicity": "*",
+              "Annotations": {
+                "Relational:Comment": "Products Summary\r\nProducts Long Description"
+              }
             }
           ],
           "Annotations": {
-            "Relational:Comment": "Test comment for Category entity"
+            "Relational:Comment": "Category summary\r\nCategory Long Description"
           }
         },
         {
@@ -245,6 +251,7 @@
           ],
           "Annotations": {
             "DiscriminatorProperty": "ContactTitle",
+            "Relational:Comment": "TPH EXAMPLE ABSTRACT BASE ENTITY",
             "Relational:MappingStrategy": "TPH",
             "Ruler:Abstract": true
           }
@@ -305,7 +312,10 @@
             {
               "Name": "Phone"
             }
-          ]
+          ],
+          "Annotations": {
+            "Relational:Comment": "TPH EXAMPLE"
+          }
         },
         {
           "Name": "Customers",
@@ -317,7 +327,10 @@
             {
               "Name": "Fax"
             }
-          ]
+          ],
+          "Annotations": {
+            "Relational:Comment": "TPH EXAMPLE"
+          }
         },
         {
           "Name": "Animals",

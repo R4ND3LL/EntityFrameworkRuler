@@ -154,6 +154,9 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                     entityRule.SetMappingStrategy(relationalMappingStrategy);
                 }
 
+                var comment = entity.ConceptualEntity?.Documentation?.GetComment();
+                if (comment.HasNonWhiteSpace()) entityRule.SetComment(comment);
+
                 Debug.Assert(entityRule.EntityName?.IsValidSymbolName() != false);
                 Debug.Assert(entityRule.NewName.IsValidSymbolName());
 
@@ -167,6 +170,9 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                         NewName = property.Name == expectedPropertyName ? null : property.Name,
                         NewType = property.EnumType?.ExternalTypeName ?? property.EnumType?.FullName
                     };
+
+                    comment = property.ConceptualProperty?.Documentation?.GetComment();
+                    if (comment.HasNonWhiteSpace()) propertyRule.SetComment(comment);
 
                     Debug.Assert(propertyRule.PropertyName == null || propertyRule.PropertyName.IsValidSymbolName());
                     Debug.Assert(propertyRule.NewName == null || propertyRule.NewName.IsValidSymbolName());
@@ -205,7 +211,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                 }
 
                 foreach (var navigation in entity.NavigationProperties) {
-                    var navigationRename = new NavigationRule {
+                    var navigationRule = new NavigationRule {
                         NewName = navigation.Name,
                         Name = namingService.FindCandidateNavigationNames(navigation)
                             .FirstOrDefault(o => o != navigation.Name)
@@ -216,18 +222,22 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                     // fill in other metadata
                     var inverseNav = navigation.InverseNavigation;
                     var inverseEntity = inverseNav?.Entity;
-                    navigationRename.FkName = navigation.Association?.Name;
-                    navigationRename.Multiplicity = navigation.Multiplicity.ToMultiplicityString();
-                    navigationRename.ToEntity =
+                    navigationRule.FkName = navigation.Association?.Name;
+                    navigationRule.Multiplicity = navigation.Multiplicity.ToMultiplicityString();
+                    navigationRule.ToEntity =
                         inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameIdentifier;
-                    navigationRename.IsPrincipal = navigation.IsPrincipalEnd;
+                    navigationRule.IsPrincipal = navigation.IsPrincipalEnd;
+
+                    comment = navigation.ConceptualNavigationProperty?.Documentation?.GetComment();
+                    if (comment.HasNonWhiteSpace()) navigationRule.SetComment(comment);
+
 #if DEBUG
-                    if (Debugger.IsAttached && navigationRename.FkName.IsNullOrWhiteSpace()
+                    if (Debugger.IsAttached && navigationRule.FkName.IsNullOrWhiteSpace()
                                             && (navigation.Multiplicity != Multiplicity.Many ||
                                                 navigation.InverseNavigation?.Multiplicity != Multiplicity.Many))
                         Debugger.Break();
 #endif
-                    entityRule.Navigations.Add(navigationRename);
+                    entityRule.Navigations.Add(navigationRule);
                 }
 
                 schemaRule.Entities.Add(entityRule);

@@ -788,14 +788,28 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
     <edmx:ConceptualModels>
       <Schema Namespace="NorthwindModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
         <EntityType Name="Category">
+          <Documentation>
+            <Summary>Category summary</Summary>
+            <LongDescription>Category Long Description</LongDescription>
+          </Documentation>
           <Key>
             <PropertyRef Name="CategoryID" />
           </Key>
-          <Property Name="CategoryID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CategoryID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" >
+            <Documentation>
+              <Summary>CategoryID Summary</Summary>
+              <LongDescription>CategoryID Long Description</LongDescription>
+            </Documentation>
+          </Property>
           <Property Name="CategoryName" Type="String" MaxLength="15" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="Description" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
           <Property Name="Picture" Type="Binary" MaxLength="Max" FixedLength="false" />
-          <NavigationProperty Name="Products" Relationship="Self.FK_Products_Categories" FromRole="Categories" ToRole="Products" />
+          <NavigationProperty Name="Products" Relationship="Self.FK_Products_Categories" FromRole="Categories" ToRole="Products" >
+            <Documentation>
+              <Summary>Products Summary</Summary>
+              <LongDescription>Products Long Description</LongDescription>
+            </Documentation>
+          </NavigationProperty>
         </EntityType>
         <EntityType Name="CustomerDemographic">
           <Key>

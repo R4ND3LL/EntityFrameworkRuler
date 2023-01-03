@@ -592,6 +592,9 @@ public class ConceptualNavigationProperty : IPropertyRef {
 
     [XmlAttribute(AttributeName = "ToRole")]
     public string ToRole { get; set; }
+
+    [XmlElement(ElementName = "Documentation", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
+    public ConceptualDocumentation Documentation { get; set; }
 }
 
 [DebuggerDisplay("{Name}")]
@@ -623,6 +626,16 @@ public class ConceptualEntityType {
 public class ConceptualDocumentation {
     [XmlElement(ElementName = "Summary", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public string Summary { get; set; }
+    [XmlElement(ElementName = "LongDescription", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
+    public string LongDescription { get; set; }
+
+    /// <summary> Get the comment text from this documentation object </summary>
+    public string GetComment() {
+        if (Summary.IsNullOrEmpty() && LongDescription.IsNullOrEmpty()) return null;
+        if (Summary.IsNullOrEmpty()) return LongDescription;
+        if (LongDescription.IsNullOrEmpty()) return Summary;
+        return Summary + Environment.NewLine + LongDescription;
+    }
 }
 
 [DebuggerDisplay("{Role}")]

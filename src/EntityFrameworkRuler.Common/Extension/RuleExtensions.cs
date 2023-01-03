@@ -269,6 +269,14 @@ public static class RuleExtensions {
     public static string GetDiscriminatorColumn(this EntityRule rule)
         => rule.FindAnnotation(EfCoreAnnotationNames.DiscriminatorProperty) as string;
 
+    /// <summary> Sets the Comment. </summary>
+    public static T SetComment<T>(this T rule, string comment) where T : RuleBase
+        => rule.SetOrRemoveAnnotation(EfRelationalAnnotationNames.Comment, comment);
+
+    /// <summary> Gets the Comment. </summary>
+    public static string GetComment<T>(this T rule) where T : RuleBase
+        => rule.FindAnnotation(EfRelationalAnnotationNames.Comment) as string;
+
     /// <summary> Sets the type as abstract. </summary>
     public static EntityRule IsAbstract(this EntityRule rule, bool isAbstract)
         => rule.SetOrRemoveAnnotation(RulerAnnotations.Abstract, isAbstract ? true : null);
