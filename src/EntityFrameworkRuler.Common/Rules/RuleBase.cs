@@ -4,6 +4,7 @@ using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
+using EntityFrameworkRuler.Common.Annotations;
 // ReSharper disable MemberCanBeProtected.Global
 
 namespace EntityFrameworkRuler.Rules;
@@ -59,8 +60,16 @@ public abstract class RuleBase : IRuleItem {
     }
 
     /// <summary> Intended for internal use only. </summary>
-    private static void UpdateDictionary<TKey, TValue>(IDictionary<TKey, TValue> c, IDictionary<TKey, TValue> value,
-        Func<TValue, TValue> valueCleaner) {
+    private static void UpdateAnnotations(AnnotationCollection c, AnnotationCollection value, Func<object, object> valueCleaner) {
+        if (value?.Count > 0) {
+            c.Clear();
+            foreach (var kvp in value) c.Add(kvp.Key, valueCleaner(kvp.Value));
+        } else if (c.Count > 0)
+            c.Clear();
+    }
+
+    /// <summary> Intended for internal use only. </summary>
+    private static void UpdateAnnotations(AnnotationCollection c, SortedDictionary<string, object> value, Func<object, object> valueCleaner) {
         if (value?.Count > 0) {
             c.Clear();
             foreach (var kvp in value) c.Add(kvp.Key, valueCleaner(kvp.Value));
@@ -70,14 +79,23 @@ public abstract class RuleBase : IRuleItem {
 
     #region Annotations
 
-    private readonly SortedDictionary<string, object> annotations = new(StringComparer.OrdinalIgnoreCase);
+    private readonly AnnotationCollection annotations = new();
 
     /// <summary> Metadata annotations for this element. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 99)]
     [DisplayName("Annotations"), Category("Mapping"), Description("Metadata annotations for this element.")]
-    public SortedDictionary<string, object> Annotations {
+    [JsonIgnore, XmlIgnore]
+    public AnnotationCollection Annotations {
         get => annotations;
-        set => UpdateDictionary(annotations, value, AnnotationCleaner);
+        set => UpdateAnnotations(annotations, value, AnnotationCleaner);
+    }
+
+    /// <summary> Metadata annotations for this element in dictionary form. Used for serialization only. </summary>
+    [Obsolete("Intended for internal use only (for serialization)")]
+    [JsonPropertyName("Annotations")]
+    public SortedDictionary<string, object> AnnotationsDictionary {
+        get => Annotations?.ToDictionary();
+        set => UpdateAnnotations(annotations, value, AnnotationCleaner);
     }
 
     private static object AnnotationCleaner(object value) {
@@ -135,9 +153,7 @@ public abstract class RuleBase : IRuleItem {
     public virtual object FindAnnotation(string name) {
         return Annotations == null || name == null
             ? null
-            : Annotations.TryGetValue(name, out var annotation)
-                ? annotation
-                : null;
+            : Annotations.Find(name)?.Value;
     }
 
     /// <summary>
@@ -148,9 +164,7 @@ public abstract class RuleBase : IRuleItem {
     /// <param name="value">The value to be stored in the annotation.</param>
     public virtual void SetAnnotation(string name, object value) {
         var oldAnnotation = FindAnnotation(name);
-        if (oldAnnotation != null
-            && Equals(oldAnnotation, value))
-            return;
+        if (oldAnnotation != null && Equals(oldAnnotation, value)) return;
 
         SetAnnotation(name, value, oldAnnotation);
     }
@@ -172,12 +186,10 @@ public abstract class RuleBase : IRuleItem {
     /// <param name="name">The annotation to remove.</param>
     /// <returns>The annotation value that was removed.</returns>
     public virtual object RemoveAnnotation(string name) {
-        var annotation = FindAnnotation(name);
-        if (annotation == null) return null;
-
-        Annotations.Remove(name);
-        OnAnnotationSet(name, null, annotation);
-        return annotation;
+        var removed = Annotations.Remove(name);
+        if (removed == null) return null;
+        OnAnnotationSet(name, null, removed.Value);
+        return removed;
     }
 
     /// <summary> Called when an annotation was set or removed. </summary>

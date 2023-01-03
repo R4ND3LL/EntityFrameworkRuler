@@ -38,8 +38,22 @@ public sealed class CustomOperator : PropertyGridOperator {
 
         foreach (var item in items) {
             if (item == null) continue;
-            if (item.DisplayName == "Not Mapped" && instance is DbContextRule) continue;
-            if (item.DisplayName == "Mapped") continue;
+            if (item.PropertyName == "NotMapped" && instance is DbContextRule) continue;
+            if (item.PropertyName == "FilePath" && instance is DbContextRule) continue;
+            if (item.PropertyName == "Columns" && instance is EntityRule) continue;
+            if (item.PropertyName == "Tables" && instance is SchemaRule) continue;
+            if (item.PropertyName == "Mapped") continue;
+            if (item.PropertyName == "AnnotationsDictionary") continue;
+            if (item.PropertyName == "Annotations") {
+                //item.Tab = "Annotations";
+                //item.DisplayName = null;
+                //item.FillTab = true;
+                //item.HeaderPlacement = PropertyTools.DataAnnotations.HeaderPlacement.Collapsed;
+                //item.Columns.Add(new ColumnDefinition() { PropertyName = "Key", Header = "Key" });
+                //item.Columns.Add(new ColumnDefinition() { PropertyName = "Value", Header = "Value" });
+                item.IsEasyInsertByKeyboardEnabled = true;
+                item.IsEasyInsertByMouseEnabled = true;
+            }
             if (item.Properties?.Count > 0 && item.ActualPropertyType != typeof(string) &&
                 typeof(IList).IsAssignableFrom(item.ActualPropertyType)) {
                 var collections = item.Properties.Cast<PropertyDescriptor>()
@@ -70,12 +84,12 @@ public sealed class CustomOperator : PropertyGridOperator {
                 item.ItemsSource = new[] { "1", "0..1", "*" };
                 break;
             default: {
-                if (pd.PropertyType == typeof(RuleModelKind)) {
-                    return null;
-                }
+                    if (pd.PropertyType == typeof(RuleModelKind)) {
+                        return null;
+                    }
 
-                break;
-            }
+                    break;
+                }
         }
 
         return item;

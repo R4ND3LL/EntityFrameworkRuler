@@ -70,6 +70,7 @@ public sealed class EntityRule : RuleBase, IEntityRule {
     }
 
     /// <summary> Serialization backward compatibility for Columns -> Properties. </summary>
+    [Obsolete("Use Properties instead")]
     public IList<PropertyRule> Columns { get => Properties; set => Properties = value; }
 
     private IList<NavigationRule> navigations;

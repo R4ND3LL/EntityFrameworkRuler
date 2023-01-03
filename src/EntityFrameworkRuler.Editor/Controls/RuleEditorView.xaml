@@ -29,20 +29,20 @@
                     </Grid.ColumnDefinitions>
                     <controls:SvgImage Grid.Column="0" x:Name="NavIcon" OverrideBrush="{DynamicResource BlackBrush}"
                                    Source="/EntityFrameworkRuler.Editor;component/Resources/navigation.svg"
-                                   VerticalAlignment="Center" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center" Focusable="False" IsTabStop="False"
                                    Width="12" Height="12" Visibility="Visible" Opacity="0.7" Margin="0,0,4,0"
                                    Padding="0" />
 
                     <pt:EditableTextBlock Name="Text" Grid.Column="1"
                                       Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      Margin="0 0 0 0" SnapsToDevicePixels="True"
+                                      Margin="0 0 0 0" SnapsToDevicePixels="True"  Focusable="False"
                                       Foreground="{DynamicResource InputText}"
                                       FontFamily="Consolas, Segoe UI" FontSize="12"
                                       IsEditing="{Binding IsEditing}" />
 
                     <controls:SvgImage Grid.Column="2" x:Name="ErrorIcon" OverrideBrush="{DynamicResource RedTextBrush}"
                                        Source="/EntityFrameworkRuler.Editor;component/Resources/error.svg"
-                                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" HorizontalAlignment="Center" Focusable="False" IsTabStop="False"
                                        Width="11" Height="11" Visibility="Collapsed" Opacity="0.5" Margin="4,0,0,0"
                                        Padding="0" />
                 </Grid>
@@ -203,7 +203,7 @@
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type models:RuleNodeViewModel}"
                                               ItemsSource="{Binding Children}">
-                        <ContentControl Content="{Binding }" />
+                        <ContentControl Content="{Binding }" Focusable="False" IsTabStop="False" />
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
             </TreeView>

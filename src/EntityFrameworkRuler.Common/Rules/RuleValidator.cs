@@ -60,8 +60,12 @@ public class RuleValidator : IRuleValidator {
                 .Assert(s => s.Length < 200, tooLong)
                 .For(o => o.Schemas)
                 .Assert(o => o.Select(r => r.SchemaName).Where(r => r.HasCharacters()).IsDistinct(), "Schema names should be unique")
+                .For(o => o.Annotations)
+                .Assert(o => o.All(r => r.Key.HasCharacters()), "Annotation keys are required")
+                .Assert(o => o.Select(r => r.Key).IsDistinct(), "Annotation keys should be unique")
             ;
     }
+
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual Validator<SchemaRule> InitializeSchemaRuleValidator() {
@@ -78,6 +82,9 @@ public class RuleValidator : IRuleValidator {
                 .Assert(o => o.Select(r => r.EntityName).Where(r => r.HasCharacters()).IsDistinct(), "Entity EntityNames should be unique")
                 .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
                     "Final entity names should be unique")
+                .For(o => o.Annotations)
+                .Assert(o => o.All(r => r.Key.HasCharacters()), "Annotation keys are required")
+                .Assert(o => o.Select(r => r.Key).IsDistinct(), "Annotation keys should be unique")
             ;
     }
 
@@ -99,6 +106,10 @@ public class RuleValidator : IRuleValidator {
                 .For(o => ((IEntityRule)o).GetProperties())
                 .Assert(o => o.Select(r => r.GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
                     "Final property names should be unique")
+                .For(o => o.Annotations)
+                .Assert(o => o.All(r => r.Key.HasCharacters()), "Annotation keys are required")
+                .Assert(o => o.Select(r => r.Key).IsDistinct(), "Annotation keys should be unique")
+
             ;
     }
 
@@ -113,6 +124,9 @@ public class RuleValidator : IRuleValidator {
                 .Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.NewType)
                 .Assert(o => o.IsNullOrWhiteSpace() || o.Split('.').All(p => p.IsValidSymbolName()), "Invalid type name")
+                .For(o => o.Annotations)
+                .Assert(o => o.All(r => r.Key.HasCharacters()), "Annotation keys are required")
+                .Assert(o => o.Select(r => r.Key).IsDistinct(), "Annotation keys should be unique")
             ;
     }
 
@@ -125,6 +139,9 @@ public class RuleValidator : IRuleValidator {
                 .For(o => o.ToEntity).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.FkName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.Multiplicity).Assert(o => o.IsNullOrEmpty() || o.ParseMultiplicity() != Multiplicity.Unknown)
+                .For(o => o.Annotations)
+                .Assert(o => o.All(r => r.Key.HasCharacters()), "Annotation keys are required")
+                .Assert(o => o.Select(r => r.Key).IsDistinct(), "Annotation keys should be unique")
             ;
     }
 

@@ -2,9 +2,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
-
+// ReSharper disable ClassCanBeSealed.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
-
 // ReSharper disable MemberCanBeInternal
 
 namespace EntityFrameworkRuler.Common;

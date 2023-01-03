@@ -100,7 +100,7 @@
                                       Style="{StaticResource ExpandCollapseToggleStyle}"
                                       IsChecked="{Binding Path=IsExpanded,RelativeSource={RelativeSource TemplatedParent}}"
                                       ClickMode="Press"/>
-                        <Border Name="Bd"
+                        <Border Name="Bd"  
                                 Grid.Column="1" CornerRadius="3"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
@@ -108,12 +108,12 @@
                                 Padding="{TemplateBinding Padding}"
                                 SnapsToDevicePixels="true">
 
-                            <ContentPresenter x:Name="PART_Header"
+                            <ContentPresenter x:Name="PART_Header" Focusable="False" 
                                               ContentSource="Header"
                                               HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                               SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                         </Border>
-                        <ItemsPresenter x:Name="ItemsHost"
+                        <ItemsPresenter x:Name="ItemsHost" 
                                         Grid.Row="1"
                                         Grid.Column="1"
                                         Grid.ColumnSpan="2"/>

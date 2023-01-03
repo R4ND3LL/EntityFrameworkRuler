@@ -3,7 +3,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
-using EntityFrameworkRuler.Editor.Dialogs;
 using PropertyTools.Wpf;
 using ColumnDefinition = PropertyTools.Wpf.ColumnDefinition;
 
@@ -18,14 +17,16 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
     /// <inheritdoc />
     public override FrameworkElement CreateControl(PropertyItem property, PropertyControlFactoryOptions options) {
         var fe = base.CreateControl(property, options);
+
         if (property.Is(typeof(List<string>))) {
             if (fe is PropertyTools.Wpf.DataGrid dg) {
                 dg.ColumnDefinitions.Add(new ColumnDefinition() { Width = new(1, GridUnitType.Star) });
             }
         }
 
+
         if (fe is Control c) {
-            if (fe is not PropertyTools.Wpf.DataGrid dg) {
+            if (fe is not PropertyTools.Wpf.DataGrid) {
                 c.Background = AppearanceManager.Current.InputBackground;
             }
             c.Foreground = AppearanceManager.Current.InputText;
@@ -35,6 +36,7 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
         return fe;
     }
     protected override FrameworkElement CreateGridControl(PropertyItem property) {
+        // Create a custom data grid that hides columns that are not intended for use in the grid control
         var c = new MyDataGrid {
             CanDelete = property.ListCanRemove,
             CanInsert = property.ListCanAdd,
@@ -53,17 +55,13 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
         }
 
         c.SetBinding(PropertyTools.Wpf.DataGrid.ItemsSourceProperty, property.CreateBinding());
-        //return c;
-        {
-            //dg.CanInsert = false;
-            c.Background = AppearanceManager.Current.WindowBackground;
-            c.Foreground = AppearanceManager.Current.InputText;
-            c.BorderBrush = Brushes.Transparent;
-            c.IsAutoFillEnabled = false;
-            c.IsMoveAfterEnterEnabled = false;
-            c.GridLineBrush = AppearanceManager.Current.GrayBrush8;
-            //dg.Operator = new
-        }
+        //dg.CanInsert = false;
+        c.Background = AppearanceManager.Current.WindowBackground;
+        c.Foreground = AppearanceManager.Current.InputText;
+        c.BorderBrush = Brushes.Transparent;
+        c.IsAutoFillEnabled = false;
+        c.IsMoveAfterEnterEnabled = false;
+        c.GridLineBrush = AppearanceManager.Current.GrayBrush8;
         return c;
     }
     /// <inheritdoc />
@@ -155,12 +153,13 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
     }
 }
 
+/// <summary> Custom data grid that hides columns that are not intended for use in the grid control </summary>
 public sealed class MyDataGrid : PropertyTools.Wpf.DataGrid {
     protected override IDataGridOperator CreateOperator() {
         return new MyDataGridOperator(this, base.CreateOperator());
     }
 }
-
+/// <summary> Custom data grid operator that hides columns that are not intended for use in the grid control </summary>
 public sealed class MyDataGridOperator : IDataGridOperator {
     private readonly MyDataGrid grid;
     private readonly IDataGridOperator op;
@@ -173,7 +172,7 @@ public sealed class MyDataGridOperator : IDataGridOperator {
     public void AutoGenerateColumns() {
         op.AutoGenerateColumns();
         var remove = grid.ColumnDefinitions
-            .Where(o => o.Header is string s && (s.In("Tables", "Columns", "Properties", "Navigations", "UseSchemaName")
+            .Where(o => o.Header is string s && (s.In("Tables", "Columns", "Properties", "Navigations", "UseSchemaName", "Annotations", "AnnotationsDictionary")
                                                  || s.Contains("Regex") || s.Contains("Replace")))
             .ToArray();
         remove.ForAll(o => grid.ColumnDefinitions.Remove(o));

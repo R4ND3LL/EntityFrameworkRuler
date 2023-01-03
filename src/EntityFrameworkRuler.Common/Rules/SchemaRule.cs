@@ -93,6 +93,7 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
     }
 
     /// <summary> Serialization backward compatibility for Tables -> Entities. </summary>
+    [Obsolete("Use Entities instead")]
     public IList<EntityRule> Tables { get => Entities; set => Entities = value; }
 
     /// <inheritdoc />
