@@ -104,4 +104,11 @@ public sealed class AnnotationItem {
 
     /// <summary> Gets or sets the Value </summary>
     public object Value { get; set; }
+
+    /// <summary> Gets the Value </summary>
+    public object GetActualValue() {
+        var v = Value;
+        if (v is string s) v = s.NullIfEmpty();
+        return v;
+    }
 }
