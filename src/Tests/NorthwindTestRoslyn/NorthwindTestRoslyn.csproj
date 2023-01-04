@@ -6,8 +6,6 @@
         <UseWindowsForms>false</UseWindowsForms>
         <ImplicitUsings>disable</ImplicitUsings>
         <IsPackable>false</IsPackable>
-        <!-- will copy package files to output folder -->
-        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <RootNamespace>NorthwindModel</RootNamespace>
     </PropertyGroup>
 
@@ -25,11 +23,5 @@
         </PackageReference>
     </ItemGroup>
 
-    <ItemGroup> 
-        <None Remove="CodeTemplates\EFCore\*.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.SqlServer.Server.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Win32.SystemEvents.dll" />
-        <None Remove="CodeTemplates\EFCore\Mono.TextTemplating.dll" /> 
-    </ItemGroup>
 
 </Project>
