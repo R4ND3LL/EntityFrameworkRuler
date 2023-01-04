@@ -110,7 +110,7 @@ public sealed class EdmxRulerTests {
 
     [Fact]
     public async Task ShouldLoadProjectUsingRoslynAndFindTypes() {
-        var projectBasePath = NorthwindTestDesignProject();
+        var projectBasePath = ResolveNorthwindTestRoslynProject();
         var state = new RuleApplicator.RoslynProjectState(new RuleApplicator());
         var response = new ApplyRulesResponse(null, NullMessageLogger.Instance);
         await state.TryLoadProjectOrFallbackOnce(new ApplicatorOptions(projectBasePath, true), response);
@@ -244,7 +244,9 @@ public sealed class EdmxRulerTests {
         var path = Path.Combine(dir.FullName, $"NorthwindTestRoslyn{Path.DirectorySeparatorChar}NorthwindTestRoslyn.csproj");
         File.Exists(path).ShouldBeTrue();
         return path;
-    }    private static string NorthwindTestDesignProject() {
+    }
+
+    private static string NorthwindTestDesignProject() {
         var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
         while (dir != null && dir.Name != "Tests") dir = dir.Parent;
 
