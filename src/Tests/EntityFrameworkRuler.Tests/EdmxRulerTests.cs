@@ -244,7 +244,8 @@ public sealed class EdmxRulerTests {
         var path = Path.Combine(dir.FullName, $"NorthwindTestRoslyn{Path.DirectorySeparatorChar}NorthwindTestRoslyn.csproj");
         File.Exists(path).ShouldBeTrue();
         return path;
-    }    private static string NorthwindTestDesignProject() {
+    }
+    private static string NorthwindTestDesignProject() {
         var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
         while (dir != null && dir.Name != "Tests") dir = dir.Parent;
 
