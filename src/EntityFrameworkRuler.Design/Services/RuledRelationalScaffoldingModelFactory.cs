@@ -486,7 +486,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
             }
             foreach (var item in entity.GetIndexes()
-                         .Where(o => o.Properties.Any(ip => ip == p)).ToList()) {
+                         .Where(o => o.Properties.Any(ip => ip == p)).ToArray()) {
                 var removed = entity.RemoveIndex(item);
                 Debug.Assert(removed != null);
             }
@@ -494,7 +494,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         void RemoveKeysWith(IMutableProperty p, string columnName) {
             foreach (var item in entity.GetKeys()
-                         .Where(o => o.Properties.Any(ip => ip == p)).ToList()) {
+                         .Where(o => o.Properties.Any(ip => ip == p)).ToArray()) {
                 var removed = entity.RemoveKey(item);
                 Debug.Assert(removed != null);
             }
@@ -511,7 +511,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
             // attempt entity foreign key removal anyway:
             foreach (var item in entity.GetForeignKeys()
-                         .Where(o => o.Properties.Any(ip => ip == p)).ToList()) {
+                         .Where(o => o.Properties.Any(ip => ip == p)).ToArray()) {
                 var removed = entity.RemoveForeignKey(item);
                 Debug.Assert(removed != null);
             }

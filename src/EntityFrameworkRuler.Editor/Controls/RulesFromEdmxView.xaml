@@ -19,8 +19,10 @@
                 <TextBlock Text="EDMX file: " VerticalAlignment="Center" />
                 <ComboBox Grid.Column="1" ItemsSource="{Binding SuggestedEdmxFiles}"
                           VerticalContentAlignment="Center" VerticalAlignment="Center" MinHeight="24"
-                          DisplayMemberPath="Path"
-                          SelectedItem="{Binding SelectedEdmxFile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                          DisplayMemberPath="Path" IsEditable="True"
+                          SelectedItem="{Binding SelectedEdmxFile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          Text="{Binding SelectedEdmxFilePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          />
                 <Button Grid.Column="2" Content="Browse" Command="{Binding EdmxBrowseCommand}" Margin="10,0,0,0"
                         Padding="10,2,10,2" />
             </Grid>

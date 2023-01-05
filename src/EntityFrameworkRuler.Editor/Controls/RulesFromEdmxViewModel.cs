@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows;
+using System.Xml.Xsl;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EntityFrameworkRuler.Editor.Models;
@@ -21,8 +22,10 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
     public void SetContext(string edmxFilePath = null, string targetProjectPath = null, Action<SaveRulesResponse> onGenerated = null) {
         if (onGenerated != null) OnGenerated = onGenerated;
         if (edmxFilePath.HasNonWhiteSpace() && edmxFilePath.EndsWithIgnoreCase(".edmx")) {
-            SuggestedEdmxFiles.Add(new(new(edmxFilePath.Trim())));
+            edmxFilePath = edmxFilePath!.Trim();
+            SuggestedEdmxFiles.Add(new(new(edmxFilePath)));
             SelectedEdmxFile = SuggestedEdmxFiles[0];
+            SelectedEdmxFilePath = edmxFilePath;
         }
 
         if (targetProjectPath.HasNonWhiteSpace()) {
@@ -43,7 +46,10 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
                 .FindEdmxFilesNearProjectAsync()
                 .ConfigureAwait(true);
             files.Select(o => new ObservableFileInfo(o)).ForAll(o => suggestedEdmxFiles.Add(o));
-            if (suggestedEdmxFiles?.Count == 1) SelectedEdmxFile = suggestedEdmxFiles[0];
+            if (suggestedEdmxFiles?.Count == 1) {
+                SelectedEdmxFile = suggestedEdmxFiles[0];
+                SelectedEdmxFilePath = suggestedEdmxFiles[0].Path;
+            }
         } catch {
         }
     }
@@ -56,6 +62,10 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
+    private string selectedEdmxFilePath;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(GenerateCommand))]
     private string targetProjectPath;
 
     [ObservableProperty] private bool noPluralize;
@@ -64,6 +74,14 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
     [ObservableProperty] private bool useDatabaseNames;
     [ObservableProperty] private bool compactRulesEnabled;
 
+    partial void OnSelectedEdmxFileChanged(ObservableFileInfo value) {
+        if (value != null)
+            SelectedEdmxFilePath = value?.Path;
+    }
+
+    partial void OnSelectedEdmxFilePathChanged(string value) {
+
+    }
 
     partial void OnIncludeUnknownsChanged(bool value) {
         CompactRulesEnabled = value; // can only compact rules when we are including unknown elements.
@@ -86,7 +104,7 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
         if (result != true) return;
         // Open document
         var filename = dialog.FileName;
-        SelectedEdmxFile = new(new(filename));
+        SetContext(filename);
     }
 
     [RelayCommand]
@@ -106,12 +124,12 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
         // Open document
         var filename = dialog.FileName;
         if (filename.IsNullOrWhiteSpace()) return;
-        // ReSharper disable once AssignNullToNotNullAttribute
-        TargetProjectPath = new FileInfo(filename).Directory?.FullName;
+        var path = new FileInfo(filename).Directory?.FullName;
+        if (path != null) SetContext(null, path);
     }
 
     // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-    private bool CanGenerate => SelectedEdmxFile != null && TargetProjectPath.HasNonWhiteSpace();
+    private bool CanGenerate => SelectedEdmxFilePath.HasNonWhiteSpace() && TargetProjectPath.HasNonWhiteSpace();
 
     [RelayCommand(CanExecute = nameof(CanGenerate), AllowConcurrentExecutions = false)]
     private async Task Generate() {
@@ -119,7 +137,7 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
             var sb = new StringBuilder();
             var hasError = false;
             var generatorOptions = new GeneratorOptions() {
-                EdmxFilePath = SelectedEdmxFile.Path,
+                EdmxFilePath = SelectedEdmxFilePath,
                 IncludeUnknowns = IncludeUnknowns,
                 NoPluralize = NoPluralize,
                 UseDatabaseNames = UseDatabaseNames
