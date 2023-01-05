@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>EntityFrameworkRuler</RootNamespace>
-    <Description>Adds rule-based structuring of the EF Core Reverse Engineering model</Description>
+    <Description>Core API for the customization of the EF Core Reverse Engineered model with EDMX support.</Description>
     <PackageProjectUrl>https://github.com/R4ND3LL/EntityFrameworkRuler</PackageProjectUrl>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
