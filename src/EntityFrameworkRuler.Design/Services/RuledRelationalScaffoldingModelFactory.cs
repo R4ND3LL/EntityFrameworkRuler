@@ -47,6 +47,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected readonly HashSet<string> OmittedSchemas = new();
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected readonly HashSet<IMutableForeignKey> OmittedForeignKeys = new();
+
     private RuledCSharpUniqueNamer<DatabaseTable, EntityRule> tableNamer;
     private RuledCSharpUniqueNamer<DatabaseTable, EntityRule> dbSetNamer;
     private ModelReverseEngineerOptions options;
@@ -561,51 +564,64 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual ModelBuilder VisitForeignKeys(ModelBuilder modelBuilder, IList<DatabaseForeignKey> foreignKeys,
         Func<IList<DatabaseForeignKey>, ModelBuilder> baseCall) {
-        if (visitForeignKeyMethod == null || addNavigationPropertiesMethod == null) return baseCall(foreignKeys);
+        try {
+            if (visitForeignKeyMethod == null || addNavigationPropertiesMethod == null) return baseCall(foreignKeys);
 
-        ArgumentNullException.ThrowIfNull(foreignKeys);
-        ArgumentNullException.ThrowIfNull(modelBuilder);
+            ArgumentNullException.ThrowIfNull(foreignKeys);
+            ArgumentNullException.ThrowIfNull(modelBuilder);
 
-        var schemaNames = foreignKeys.Select(o => o.Table.Schema).Where(o => o.HasNonWhiteSpace()).Distinct().ToArray();
+            var schemaNames = foreignKeys.Select(o => o.Table.Schema).Where(o => o.HasNonWhiteSpace()).Distinct().ToArray();
 
-        var schemas = schemaNames.Select(o => dbContextRule?.Rule?.TryResolveRuleFor(o))
-            .Where(o => o?.UseManyToManyEntity == true).ToArray();
+            var schemas = schemaNames.Select(o => dbContextRule?.Rule?.TryResolveRuleFor(o))
+                .Where(o => o?.UseManyToManyEntity == true).ToArray();
 
-        if (OmittedTables.Count > 0) {
-            // check to see if the foreign key maps to an omitted table. if so, nuke it.
-            var fksToBeRemoved = new HashSet<DatabaseForeignKey>();
-            foreach (var foreignKey in foreignKeys)
-                if (OmittedTables.Contains(foreignKey.PrincipalTable.GetFullName()))
-                    fksToBeRemoved.Add(foreignKey);
-                else if (OmittedSchemas.Contains(foreignKey.PrincipalTable.Schema))
-                    fksToBeRemoved.Add(foreignKey);
+            if (OmittedTables.Count > 0) {
+                // check to see if the foreign key maps to an omitted table. if so, nuke it.
+                var fksToBeRemoved = new HashSet<DatabaseForeignKey>();
+                foreach (var foreignKey in foreignKeys)
+                    if (OmittedTables.Contains(foreignKey.PrincipalTable.GetFullName()))
+                        fksToBeRemoved.Add(foreignKey);
+                    else if (OmittedSchemas.Contains(foreignKey.PrincipalTable.Schema))
+                        fksToBeRemoved.Add(foreignKey);
 
-            if (fksToBeRemoved.Count > 0)
-                foreignKeys = foreignKeys.Where(o => !fksToBeRemoved.Contains(o)).ToList();
-        }
-
-        if (schemas.IsNullOrEmpty()) return baseCall(foreignKeys);
-
-        foreach (var grp in foreignKeys.GroupBy(o => o.Table.Schema)) {
-            var schema = grp.Key;
-            var schemaForeignKeys = grp.ToArray();
-            var schemaReference = schemas.FirstOrDefault(o => o.SchemaName == schema);
-            if (schemaReference == null) {
-                modelBuilder = baseCall(schemaForeignKeys);
-                continue;
+                if (fksToBeRemoved.Count > 0)
+                    foreignKeys = foreignKeys.Where(o => !fksToBeRemoved.Contains(o)).ToList();
             }
 
-            // force simple ManyToMany junctions to be generated as entities
-            reporter.WriteInformation($"RULED: Simple many-to-many junctions in {schema} are being forced to generate entities.");
-            foreach (var fk in schemaForeignKeys)
-                InvokeVisitForeignKey(modelBuilder, fk);
+            if (schemas.IsNullOrEmpty()) return baseCall(foreignKeys);
 
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-            foreach (var foreignKey in entityType.GetForeignKeys())
-                InvokeAddNavigationProperties(foreignKey);
+            foreach (var grp in foreignKeys.GroupBy(o => o.Table.Schema)) {
+                var schema = grp.Key;
+                var schemaForeignKeys = grp.ToArray();
+                var schemaReference = schemas.FirstOrDefault(o => o.SchemaName == schema);
+                if (schemaReference == null) {
+                    modelBuilder = baseCall(schemaForeignKeys);
+                    continue;
+                }
+
+                // force simple ManyToMany junctions to be generated as entities
+                reporter.WriteInformation($"RULED: Simple many-to-many junctions in {schema} are being forced to generate entities.");
+                foreach (var fk in schemaForeignKeys)
+                    InvokeVisitForeignKey(modelBuilder, fk);
+
+                foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+                foreach (var foreignKey in entityType.GetForeignKeys())
+                    InvokeAddNavigationProperties(foreignKey);
+            }
+
+            return modelBuilder;
+        } finally {
+            if (OmittedForeignKeys.Count > 0) {
+                // remove the omitted foreign keys now
+                foreach (var foreignKey in OmittedForeignKeys) {
+                    var pRemoved = foreignKey.PrincipalEntityType.RemoveForeignKey(foreignKey);
+                    var dRemoved = foreignKey.DeclaringEntityType.RemoveForeignKey(foreignKey);
+                    Debug.Assert(pRemoved != null);
+                    Debug.Assert(dRemoved != null);
+                    reporter.WriteInformation($"RULED: Foreign key {foreignKey.GetConstraintName()} omitted.");
+                }
+            }
         }
-
-        return modelBuilder;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -625,13 +641,24 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var fkName = foreignKey.GetConstraintName();
         var isManyToMany = foreignKey.IsManyToMany();
 
+        var dependentExcluded = true;
+        var principalExcluded = true;
         if (foreignKey.DependentToPrincipal != null)
-            ApplyNavRule(foreignKey.DependentToPrincipal, foreignKey.DeclaringEntityType, false);
+            dependentExcluded = ApplyNavRule(foreignKey.DependentToPrincipal, foreignKey.DeclaringEntityType, false);
 
         if (foreignKey.PrincipalToDependent != null)
-            ApplyNavRule(foreignKey.PrincipalToDependent, foreignKey.PrincipalEntityType, true);
+            principalExcluded = ApplyNavRule(foreignKey.PrincipalToDependent, foreignKey.PrincipalEntityType, true);
 
-        void ApplyNavRule(IMutableNavigation navigation, IMutableEntityType entityType, bool thisIsPrincipal) {
+        if (dependentExcluded && principalExcluded) {
+            // technically, EF supports a single ended navigation (no inverse) but the T4s are built to iterate FKs
+            // and generate navigations for both ends of the relation.  For this reason, if we omit one navigation then
+            // an Null-Ref error will occur because the T4 code expects both ends to be set at all times.
+            // We can mandate changes to the T4s such that each end is checked for null first, but for simplicity sake,
+            // we will only exclude a navigation if BOTH ends are excluded, thus, removing the FK altogether.
+            OmittedForeignKeys.Add(foreignKey);
+        }
+
+        bool ApplyNavRule(IMutableNavigation navigation, IMutableEntityType entityType, bool thisIsPrincipal) {
             var entityRule = dbContextRule.TryResolveRuleForEntityName(entityType.Name);
             var navigationRule = entityRule?.TryResolveNavigationRuleFor(fkName,
                 () => entityType.Name,
@@ -646,23 +673,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             navigationRule?.MapTo(navigation, fkName, thisIsPrincipal, isManyToMany);
 
-            if (navigationRule?.Rule.Mapped != true) {
-                // exclude this navigation
-                var memberInfo = (MemberInfo)null;
-                if (thisIsPrincipal) {
-                    // ReSharper disable once ExpressionIsAlwaysNull
-                    foreignKey.SetPrincipalToDependent(memberInfo);
-                } else {
-                    // ReSharper disable once ExpressionIsAlwaysNull
-                    foreignKey.SetDependentToPrincipal(memberInfo);
-                }
-
-                reporter.WriteInformation($"RULED: Navigation {entityType.Name}.{navigation.Name} omitted.");
-                return;
-            }
-
-
-            if (navigationRule?.Rule.Annotations.Count > 0 && navigationRule.Rule.Mapped) {
+            if (navigationRule?.Rule.Annotations.Count > 0) {
                 foreach (var annotation in navigationRule.Rule.Annotations) {
                     if (!IsValidAnnotation(annotation.Key)) {
                         reporter.WriteWarning(
@@ -677,6 +688,24 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
             }
 
+            // exclude this navigation (when rule is null or explicitly not mapped)
+            var excluded = navigationRule?.Rule.Mapped != true;
+            // if (navigationRule?.Rule.Mapped != true) {
+            //     // exclude this navigation (when rule is null or explicitly not mapped)
+            //     var memberInfo = (MemberInfo)null;
+            //     if (thisIsPrincipal) {
+            //         // ReSharper disable once ExpressionIsAlwaysNull
+            //         foreignKey.SetPrincipalToDependent(memberInfo);
+            //     } else {
+            //         // ReSharper disable once ExpressionIsAlwaysNull
+            //         foreignKey.SetDependentToPrincipal(memberInfo);
+            //     }
+            //
+            //     reporter.WriteInformation($"RULED: Navigation {entityType.Name}.{navigation.Name} omitted.");
+            //     return true;
+            // }
+
+            return excluded;
             // foreach (var navigation in excludedNavigations)
             //     if (entityType is EntityType et) {
             //         var removed = et.RemoveNavigation(navigation.Name);
