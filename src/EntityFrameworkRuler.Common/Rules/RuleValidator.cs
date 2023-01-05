@@ -100,9 +100,9 @@ public class RuleValidator : IRuleValidator {
                 .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Column Names should be unique")
                 .Assert(o => o.Select(r => r.PropertyName).Where(r => r.HasCharacters()).IsDistinct(), "Column PropertyNames should be unique")
                 .For(o => o.Navigations)
-                .Assert(o => o.Where(r => r.FkName.HasCharacters())
-                        .Select(r => (r.FkName, r.IsPrincipal)).IsDistinct(),
-                    "FkNames should be unique")
+                // .Assert(o => o.Where(r => r.FkName.HasCharacters())
+                //         .Select(r => (r.FkName, r.IsPrincipal)).IsDistinct(),
+                //     "FkNames should be unique") // removed to allow for self referencing navigation pairs
                 .For(o => ((IEntityRule)o).GetProperties())
                 .Assert(o => o.Select(r => r.GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
                     "Final property names should be unique")
