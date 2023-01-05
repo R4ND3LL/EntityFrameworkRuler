@@ -23,7 +23,9 @@ public sealed class NavigationRuleNode : RuleNode<NavigationRule, EntityRuleNode
         Rule.IsPrincipal = thisIsPrincipal || isManyToMany;
         if (!string.IsNullOrWhiteSpace(navigation.TargetEntityType.Name))
             Rule.ToEntity = navigation.TargetEntityType.Name;
-        Rule.Multiplicity = navigation.GetMultiplicity().ToMultiplicityString();
+
+        var m = navigation.GetMultiplicity().ToMultiplicityString();
+        if (Rule.Multiplicity != m) Rule.Multiplicity = m;
     }
 
     /// <summary> implicit conversion </summary>

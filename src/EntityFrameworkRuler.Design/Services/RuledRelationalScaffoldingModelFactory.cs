@@ -685,7 +685,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var entityRule = dbContextRule.TryResolveRuleForEntityName(entityType.Name);
             var navigationRule = entityRule?.TryResolveNavigationRuleFor(fkName,
                 () => entityType.Name,
-                true,
+                thisIsPrincipal,
                 isManyToMany);
 
             var navEntity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
