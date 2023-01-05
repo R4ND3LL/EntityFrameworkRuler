@@ -713,27 +713,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             // exclude this navigation (when rule is null or explicitly not mapped)
             var excluded = navigationRule?.Rule.Mapped != true;
-            // if (navigationRule?.Rule.Mapped != true) {
-            //     // exclude this navigation (when rule is null or explicitly not mapped)
-            //     var memberInfo = (MemberInfo)null;
-            //     if (thisIsPrincipal) {
-            //         // ReSharper disable once ExpressionIsAlwaysNull
-            //         foreignKey.SetPrincipalToDependent(memberInfo);
-            //     } else {
-            //         // ReSharper disable once ExpressionIsAlwaysNull
-            //         foreignKey.SetDependentToPrincipal(memberInfo);
-            //     }
-            //
-            //     reporter.WriteInformation($"RULED: Navigation {entityType.Name}.{navigation.Name} omitted.");
-            //     return true;
-            // }
-
             return excluded;
-            // foreach (var navigation in excludedNavigations)
-            //     if (entityType is EntityType et) {
-            //         var removed = et.RemoveNavigation(navigation.Name);
-            //         Debug.Assert(removed != null);
-            //     }
         }
     }
 
