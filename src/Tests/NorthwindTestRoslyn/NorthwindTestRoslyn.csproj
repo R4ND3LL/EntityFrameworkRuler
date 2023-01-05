@@ -6,8 +6,6 @@
         <UseWindowsForms>false</UseWindowsForms>
         <ImplicitUsings>disable</ImplicitUsings>
         <IsPackable>false</IsPackable>
-        <!-- will copy package files to output folder -->
-        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <RootNamespace>NorthwindModel</RootNamespace>
     </PropertyGroup>
 
@@ -25,86 +23,5 @@
         </PackageReference>
     </ItemGroup>
 
-    <ItemGroup>
-        <Compile Include="Context\NorthwindEntities.cs" />
-        <Compile Include="Context\NorthwindEntities.cs" />
-        <Compile Include="Models\AlphabeticalListOfProduct.cs" />
-        <Compile Include="Models\AlphabeticalListOfProduct.cs" />
-        <Compile Include="Models\Alphabetical_list_of_product.cs" />
-        <Compile Include="Models\Animal.cs" />
-        <Compile Include="Models\Category.cs" />
-        <Compile Include="Models\Category.cs" />
-        <Compile Include="Models\CategorySalesFor1997.cs" />
-        <Compile Include="Models\CategorySalesFor1997.cs" />
-        <Compile Include="Models\Category_Sales_for_1997.cs" />
-        <Compile Include="Models\CurrentProductList.cs" />
-        <Compile Include="Models\CurrentProductList.cs" />
-        <Compile Include="Models\Current_Product_List.cs" />
-        <Compile Include="Models\Customer.cs" />
-        <Compile Include="Models\Customer.cs" />
-        <Compile Include="Models\CustomerAndSuppliersByCity.cs" />
-        <Compile Include="Models\CustomerAndSuppliersByCity.cs" />
-        <Compile Include="Models\CustomerDemographic.cs" />
-        <Compile Include="Models\CustomerDemographic.cs" />
-        <Compile Include="Models\Customer_and_Suppliers_by_City.cs" />
-        <Compile Include="Models\Employee.cs" />
-        <Compile Include="Models\Employee.cs" />
-        <Compile Include="Models\Invoice.cs" />
-        <Compile Include="Models\Invoice.cs" />
-        <Compile Include="Models\Order.cs" />
-        <Compile Include="Models\Order.cs" />
-        <Compile Include="Models\OrderDetail.cs" />
-        <Compile Include="Models\OrderDetail.cs" />
-        <Compile Include="Models\OrderDetailsExtended.cs" />
-        <Compile Include="Models\OrderDetailsExtended.cs" />
-        <Compile Include="Models\OrdersQry.cs" />
-        <Compile Include="Models\OrdersQry.cs" />
-        <Compile Include="Models\OrderSubtotal.cs" />
-        <Compile Include="Models\OrderSubtotal.cs" />
-        <Compile Include="Models\Orders_Qry_Custom.cs" />
-        <Compile Include="Models\Order_Detail.cs" />
-        <Compile Include="Models\Order_Details_Extended.cs" />
-        <Compile Include="Models\Order_Subtotal.cs" />
-        <Compile Include="Models\Product.cs" />
-        <Compile Include="Models\Product.cs" />
-        <Compile Include="Models\ProductsAboveAveragePrice.cs" />
-        <Compile Include="Models\ProductsAboveAveragePrice.cs" />
-        <Compile Include="Models\ProductSalesFor1997.cs" />
-        <Compile Include="Models\ProductSalesFor1997.cs" />
-        <Compile Include="Models\ProductsByCategory.cs" />
-        <Compile Include="Models\ProductsByCategory.cs" />
-        <Compile Include="Models\Products_Above_Average_Price.cs" />
-        <Compile Include="Models\Products_by_Category.cs" />
-        <Compile Include="Models\Product_Sales_for_1997.cs" />
-        <Compile Include="Models\QuarterlyOrder.cs" />
-        <Compile Include="Models\QuarterlyOrder.cs" />
-        <Compile Include="Models\Region.cs" />
-        <Compile Include="Models\Region.cs" />
-        <Compile Include="Models\RegionCustom.cs" />
-        <Compile Include="Models\SalesByCategory.cs" />
-        <Compile Include="Models\SalesByCategory.cs" />
-        <Compile Include="Models\SalesTotalsByAmount.cs" />
-        <Compile Include="Models\SalesTotalsByAmount.cs" />
-        <Compile Include="Models\Sales_by_Category.cs" />
-        <Compile Include="Models\Sales_Totals_by_Amount.cs" />
-        <Compile Include="Models\Shipper.cs" />
-        <Compile Include="Models\Shipper.cs" />
-        <Compile Include="Models\SummaryOfSalesByQuarter.cs" />
-        <Compile Include="Models\SummaryOfSalesByQuarter.cs" />
-        <Compile Include="Models\SummaryOfSalesByYear.cs" />
-        <Compile Include="Models\SummaryOfSalesByYear.cs" />
-        <Compile Include="Models\Summary_of_Sales_by_Quarter.cs" />
-        <Compile Include="Models\Summary_of_Sales_by_Year.cs" />
-        <Compile Include="Models\Supplier.cs" />
-        <Compile Include="Models\Supplier.cs" />
-        <Compile Include="Models\Territory.cs" />
-        <Compile Include="Models\Territory.cs" />
-        <None Remove="CodeTemplates\EFCore\*.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.SqlServer.Server.dll" />
-        <None Remove="CodeTemplates\EFCore\Microsoft.Win32.SystemEvents.dll" />
-        <None Remove="CodeTemplates\EFCore\Mono.TextTemplating.dll" />
-        <Compile Remove="Models\*" />
-        <Compile Remove="Context\*" />
-    </ItemGroup>
 
 </Project>
