@@ -34,7 +34,10 @@ public static class JsonSerializerExtensions {
 
         if (typeof(RuleBase).IsAssignableFrom(ti.Type)) ShouldSerializeNotEmptyProperty(nameof(RuleBase.Annotations));
 
-        if (ti.Type == typeof(DbContextRule)) ShouldSerializeNotEmptyProperty(nameof(DbContextRule.Schemas));
+        if (ti.Type == typeof(DbContextRule)) {
+            ShouldSerializeNotEmptyProperty(nameof(DbContextRule.Schemas));
+            ShouldSerializeNotEmptyProperty(nameof(DbContextRule.ForeignKeys));
+        }
 
         if (ti.Type == typeof(SchemaRule)) ShouldSerializeNotEmptyProperty(nameof(SchemaRule.Entities));
 

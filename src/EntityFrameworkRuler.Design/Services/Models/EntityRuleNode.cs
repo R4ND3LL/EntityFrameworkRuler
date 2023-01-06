@@ -13,6 +13,9 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public DbContextRuleNode DbContextRuleNode => Parent?.Parent;
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public EntityRuleNode BaseEntityRuleNode { get; set; }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -26,6 +29,9 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public EntityTypeBuilder Builder { get; private set; }
+
+    /// <summary> True if this entity has been mapped to an entity builder </summary>
+    public bool IsAlreadyMapped => Builder != null && DatabaseTable != null;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public void MapTo(EntityTypeBuilder builder) {

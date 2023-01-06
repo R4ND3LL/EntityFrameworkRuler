@@ -238,6 +238,28 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                         Debugger.Break();
 #endif
                     entityRule.Navigations.Add(navigationRule);
+
+                    if (navigation.Association is FkAssociation fkAssociation &&
+                        fkAssociation.ReferentialConstraint != null &&
+                        fkAssociation.Name.HasNonWhiteSpace() &&
+                        fkAssociation.ReferentialConstraint.StorageReferentialConstraint == null &&
+                        !fkAssociation.ReferentialConstraint.PrincipalProperties.IsNullOrEmpty() &&
+                        !fkAssociation.ReferentialConstraint.DependentProperties.IsNullOrEmpty() &&
+                        root.ForeignKeys.All(fk => fk.Name != fkAssociation.Name)
+                       ) {
+                        // FK association with no storage constraint (created via EDMX designer). Add to json so that the column mapping
+                        // is available during scaffolding
+                        var name = fkAssociation.Name;
+                        var constraint = fkAssociation.ReferentialConstraint;
+                        var fkr = new ForeignKeyRule() {
+                            Name = name,
+                            PrincipalEntity = constraint.PrincipalProperties[0].EntityName,
+                            DependentEntity = constraint.DependentProperties[0].EntityName,
+                            PrincipalProperties = constraint.PrincipalProperties.Select(pp => pp.Name).ToArray(),
+                            DependentProperties = constraint.DependentProperties.Select(pp => pp.Name).ToArray(),
+                        };
+                        root.ForeignKeys.Add(fkr);
+                    }
                 }
 
                 schemaRule.Entities.Add(entityRule);

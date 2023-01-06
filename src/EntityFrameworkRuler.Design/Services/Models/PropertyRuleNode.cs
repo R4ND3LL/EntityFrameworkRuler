@@ -8,6 +8,8 @@ public sealed class PropertyRuleNode : RuleNode<PropertyRule, EntityRuleNode> {
     /// <inheritdoc />
     public PropertyRuleNode(PropertyRule r, EntityRuleNode parent) : base(r, parent) { }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public DbContextRuleNode DbContextRuleNode => Parent?.DbContextRuleNode;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public IMutableProperty Property { get; private set; }

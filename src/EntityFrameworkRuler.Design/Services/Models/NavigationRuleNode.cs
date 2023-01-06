@@ -10,7 +10,23 @@ public sealed class NavigationRuleNode : RuleNode<NavigationRule, EntityRuleNode
     public NavigationRuleNode(NavigationRule r, EntityRuleNode parent) : base(r, parent) { }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public DbContextRuleNode DbContextRuleNode => Parent?.DbContextRuleNode;
+
+    /// <summary> The foreign key name for this relationship (if any). </summary>
     public string FkName => Rule.FkName;
+
+    /// <summary> True if, this is the principal end of the navigation.  False if this is the dependent end. </summary>
+    public bool IsPrincipal => Rule.IsPrincipal;
+
+    /// <summary> If false, omit this column during the scaffolding process. </summary>
+    public bool ShouldMap => Rule.Mapped;
+
+    /// <summary> True if this navigation has been mapped to an entity builder </summary>
+    public bool IsAlreadyMapped => Navigation != null;
+
+    /// <summary> True if this navigation has not been mapped yet but can be </summary>
+    public bool IsPendingMapping => ShouldMap && !IsAlreadyMapped && Parent.IsAlreadyMapped && Rule.ToEntity.HasNonWhiteSpace() &&
+                                    (Rule.Name.HasNonWhiteSpace() || Rule.NewName.HasNonWhiteSpace());
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public IMutableNavigation Navigation { get; private set; }

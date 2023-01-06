@@ -12,6 +12,7 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
     public DbContextRuleNode(DbContextRule r) : base(r, null) {
         r ??= DbContextRule.DefaultNoRulesFoundBehavior;
         Schemas = new(() => r.Schemas.Select(o => new SchemaRuleNode(o, this)));
+        ForeignKeys = new(() => r.ForeignKeys.Select(o => new ForeignKeyRuleNode(o, this)));
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -46,6 +47,9 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuleIndex<SchemaRuleNode> Schemas { get; }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public RuleIndex<ForeignKeyRuleNode> ForeignKeys { get; }
 
     private readonly Dictionary<string, EntityRuleNode> entityRulesByFinalName = new();
     private readonly Dictionary<DatabaseTable, DatabaseTableNode> entityRulesByTable = new();

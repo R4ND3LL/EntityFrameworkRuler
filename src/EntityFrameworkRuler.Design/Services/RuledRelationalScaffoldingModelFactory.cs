@@ -16,6 +16,7 @@ using IInterceptor = Castle.DynamicProxy.IInterceptor;
 using EntityFrameworkRuler.Common.Annotations;
 using Humanizer;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
@@ -54,6 +55,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     private RuledCSharpUniqueNamer<DatabaseTable, EntityRule> tableNamer;
     private RuledCSharpUniqueNamer<DatabaseTable, EntityRule> dbSetNamer;
     private ModelReverseEngineerOptions options;
+    private DatabaseModel generatingDatabaseModel;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledRelationalScaffoldingModelFactory(IServiceProvider serviceProvider,
@@ -111,6 +113,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     protected virtual IModel Create(DatabaseModel databaseModel, ModelReverseEngineerOptions ops,
         Func<DatabaseModel, ModelReverseEngineerOptions, IModel> baseCall) {
         options = ops;
+        generatingDatabaseModel = databaseModel;
         Func<DatabaseTable, NamedElementState<DatabaseTable, EntityRule>> tableNameAction;
         Func<DatabaseTable, NamedElementState<DatabaseTable, EntityRule>> dbSetNameAction;
 
@@ -595,6 +598,53 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var schemas = schemaNames.Select(o => dbContextRule?.Rule?.TryResolveRuleFor(o))
                 .Where(o => o?.UseManyToManyEntity == true).ToArray();
 
+            var dbModel = generatingDatabaseModel;
+            if (dbModel == null && foreignKeys.Count > 0) dbModel = foreignKeys[0].Table?.Database;
+            var knownFkNames = foreignKeys.Select(o => o.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var knownFksByTable = foreignKeys.GroupBy(o => o.Table).ToDictionary(o => o.Key, o => o.ToList());
+            var unknownFks = dbContextRule.ForeignKeys.Where(o => !knownFkNames.Contains(o.FkName) && o.IsRuleValid).ToList();
+            if (dbModel != null && unknownFks.Count > 0)
+                foreach (var unknownFk in unknownFks) {
+                    // add foreign keys based on rules
+                    // note, we must generate both navigations due to expectations of the T4s when generating navigation code.
+                    var pEntity = dbContextRule.TryResolveRuleForEntityName(unknownFk.Rule.PrincipalEntity);
+                    var dEntity = dbContextRule.TryResolveRuleForEntityName(unknownFk.Rule.DependentEntity);
+                    if (!pEntity.IsAlreadyMapped || !dEntity.IsAlreadyMapped) continue;
+                    var pTable = pEntity?.DatabaseTable;
+                    var dTable = dEntity?.DatabaseTable;
+                    if (pTable == null || dTable == null) {
+                        // for now at least, the entity must be mapped to a table
+                        continue;
+                    }
+
+                    var dbFk = new DatabaseForeignKey {
+                        PrincipalTable = pTable,
+                        Name = unknownFk.Rule?.Name,
+                        OnDelete = ReferentialAction.NoAction,
+                        Table = dTable,
+                    };
+                    dbFk.PrincipalColumns.AddRange(GetTableColumns(pTable, unknownFk.Rule?.PrincipalProperties));
+                    dbFk.Columns.AddRange(GetTableColumns(dTable, unknownFk.Rule?.DependentProperties));
+                    if (dbFk.Name.IsNullOrWhiteSpace() || dbFk.PrincipalColumns.IsNullOrEmpty() ||
+                        dbFk.Columns.Count != dbFk.PrincipalColumns.Count) {
+                        reporter.WriteWarning($"RULED: Skipping custom FK {dbFk.Name} because it does not form a valid constraint.");
+                        continue;
+                    }
+
+                    // validate that there is not already a FK with the same columns
+                    if (!IsUnique(dbFk, knownFksByTable)) {
+                        reporter.WriteWarning(
+                            $"RULED: Skipping custom FK {dbFk.Name} because it shares columns with an existing constraint.");
+                        continue;
+                    }
+
+                    var fksByTbl = knownFksByTable.GetOrAddNew(dbFk.Table, o => new List<DatabaseForeignKey>());
+                    fksByTbl.Add(dbFk);
+                    if (foreignKeys.IsReadOnly) foreignKeys = new List<DatabaseForeignKey>(foreignKeys);
+                    foreignKeys.Add(dbFk);
+                    reporter.WriteInformation($"RULED: Adding custom FK {dbFk.Name}.");
+                }
+
             if (OmittedTables.Count > 0) {
                 // check to see if the foreign key maps to an omitted table. if so, nuke it.
                 var fksToBeRemoved = new HashSet<DatabaseForeignKey>();
@@ -604,8 +654,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     else if (OmittedSchemas.Contains(foreignKey.PrincipalTable.Schema))
                         fksToBeRemoved.Add(foreignKey);
 
-                if (fksToBeRemoved.Count > 0)
-                    foreignKeys = foreignKeys.Where(o => !fksToBeRemoved.Contains(o)).ToList();
+                if (fksToBeRemoved.Count > 0) {
+                    if (foreignKeys.IsReadOnly) foreignKeys = new List<DatabaseForeignKey>(foreignKeys);
+                    fksToBeRemoved.ForAll(o => foreignKeys.Remove(o));
+                    //foreignKeys = foreignKeys.Where(o => !fksToBeRemoved.Contains(o)).ToList();
+                }
             }
 
             if (schemas.IsNullOrEmpty()) return baseCall(foreignKeys);
@@ -631,28 +684,66 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             return modelBuilder;
         } finally {
-            if (OmittedForeignKeys.Count > 0) {
-                // remove the omitted foreign keys now
-                foreach (var foreignKey in OmittedForeignKeys) {
-                    RemoveNavigationFromEntity(foreignKey.PrincipalToDependent);
-                    RemoveNavigationFromEntity(foreignKey.DependentToPrincipal);
-                    var dRemoved = foreignKey.DeclaringEntityType.RemoveForeignKey(foreignKey);
-                    Debug.Assert(dRemoved != null);
-                    reporter.WriteInformation($"RULED: Foreign key {foreignKey.GetConstraintName()} omitted.");
+            RemoveOmittedForeignKeys();
+        }
 
-                    void RemoveNavigationFromEntity(IMutableNavigation nav) {
-                        if (nav?.DeclaringEntityType is not EntityType et) return;
-                        var removed = et.RemoveNavigation(nav.Name);
-                        Debug.Assert(removed != null);
-                    }
-                }
+        IEnumerable<DatabaseColumn> GetTableColumns(DatabaseTable databaseTable, string[] props) {
+            if (databaseTable == null || props.IsNullOrEmpty()) return ArraySegment<DatabaseColumn>.Empty;
+            if (OmittedTables.Contains(databaseTable.GetFullName())) return ArraySegment<DatabaseColumn>.Empty;
+            var cols = props.Select(o => databaseTable.Columns.FirstOrDefault(c => c.Name == o)).ToList();
+            if (cols.Count == 0 || cols.Any(o => o == null)) return ArraySegment<DatabaseColumn>.Empty;
+            return cols;
+        }
+
+        bool IsUnique(DatabaseForeignKey dbForeignKey, Dictionary<DatabaseTable, List<DatabaseForeignKey>> knownFksByTable) {
+            var fksByTbl = knownFksByTable.TryGetValue(dbForeignKey.Table);
+            if (!(fksByTbl?.Count > 0)) return true;
+            foreach (var foreignKey in fksByTbl) {
+                // check for matching columns
+                if (AreColumnsEqual(foreignKey, dbForeignKey)) return false;
+            }
+
+            return true;
+        }
+
+        bool AreColumnsEqual(DatabaseForeignKey a, DatabaseForeignKey b) {
+            if (a.Columns.Count != b.Columns.Count) return false;
+            for (var i = 0; i < a.Columns.Count; i++) {
+                if (b.Columns[i] != a.Columns[i]) return false;
+            }
+
+            if (a.PrincipalColumns.Count != b.PrincipalColumns.Count) return false;
+            for (var i = 0; i < a.PrincipalColumns.Count; i++) {
+                if (b.PrincipalColumns[i] != a.PrincipalColumns[i]) return false;
+            }
+
+            return true;
+        }
+    }
+
+    private void RemoveOmittedForeignKeys() {
+        if (OmittedForeignKeys.Count <= 0) return;
+        // remove the omitted foreign keys now
+        foreach (var foreignKey in OmittedForeignKeys) {
+            var name = foreignKey.GetConstraintName();
+            RemoveNavigationFromEntity(foreignKey.PrincipalToDependent);
+            RemoveNavigationFromEntity(foreignKey.DependentToPrincipal);
+            var dRemoved = foreignKey.DeclaringEntityType.RemoveForeignKey(foreignKey);
+            Debug.Assert(dRemoved != null);
+            if (name.HasNonWhiteSpace())
+                reporter.WriteInformation($"RULED: Foreign key {name} omitted.");
+
+            void RemoveNavigationFromEntity(IMutableNavigation nav) {
+                if (nav?.DeclaringEntityType is not EntityType et) return;
+                var removed = et.RemoveNavigation(nav.Name);
+                Debug.Assert(removed != null);
             }
         }
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    protected virtual void InvokeVisitForeignKey(ModelBuilder modelBuilder, DatabaseForeignKey fk) {
-        visitForeignKeyMethod!.Invoke(proxy, new object[] { modelBuilder, fk });
+    protected virtual IMutableForeignKey InvokeVisitForeignKey(ModelBuilder modelBuilder, DatabaseForeignKey fk) {
+        return (IMutableForeignKey)visitForeignKeyMethod!.Invoke(proxy, new object[] { modelBuilder, fk });
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>

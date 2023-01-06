@@ -12,6 +12,7 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
     /// <summary> Creates a DB context rule </summary>
     public DbContextRule() {
         schemas = Observable ? new ObservableCollection<SchemaRule>() : new List<SchemaRule>();
+        foreignKeys = Observable ? new ObservableCollection<ForeignKeyRule>() : new List<ForeignKeyRule>();
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -50,6 +51,16 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
     public IList<SchemaRule> Schemas {
         get => schemas;
         set => UpdateCollection(ref schemas, value);
+    }
+
+    private IList<ForeignKeyRule> foreignKeys;
+
+    /// <summary> Foreign key rules </summary>
+    [DataMember(Order = 101)]
+    [DisplayName("ForeignKeys"), Category("ForeignKeys|ForeignKeys"), Description("The FK rules to apply to this DB context.")]
+    public IList<ForeignKeyRule> ForeignKeys {
+        get => foreignKeys;
+        set => UpdateCollection(ref foreignKeys, value);
     }
 
     /// <inheritdoc />
