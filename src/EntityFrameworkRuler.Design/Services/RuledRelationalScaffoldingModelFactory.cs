@@ -485,6 +485,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     Debug.Assert(removed);
                 }
             }
+
             foreach (var item in entity.GetIndexes()
                          .Where(o => o.Properties.Any(ip => ip == p)).ToArray()) {
                 var removed = entity.RemoveIndex(item);
@@ -509,6 +510,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     Debug.Assert(removed);
                 }
             }
+
             // attempt entity foreign key removal anyway:
             foreach (var item in entity.GetForeignKeys()
                          .Where(o => o.Properties.Any(ip => ip == p)).ToArray()) {
@@ -623,8 +625,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     InvokeVisitForeignKey(modelBuilder, fk);
 
                 foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-                    foreach (var foreignKey in entityType.GetForeignKeys())
-                        InvokeAddNavigationProperties(foreignKey);
+                foreach (var foreignKey in entityType.GetForeignKeys())
+                    InvokeAddNavigationProperties(foreignKey);
             }
 
             return modelBuilder;
@@ -637,6 +639,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     var dRemoved = foreignKey.DeclaringEntityType.RemoveForeignKey(foreignKey);
                     Debug.Assert(dRemoved != null);
                     reporter.WriteInformation($"RULED: Foreign key {foreignKey.GetConstraintName()} omitted.");
+
                     void RemoveNavigationFromEntity(IMutableNavigation nav) {
                         if (nav?.DeclaringEntityType is not EntityType et) return;
                         var removed = et.RemoveNavigation(nav.Name);
@@ -691,6 +694,20 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var navEntity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
             Debug.Assert(navEntity == entityType);
 
+            if (navigationRule?.Rule != null) {
+                // validate name.  pluralizer often changes custom names
+                var nn = navigationRule.Rule.NewName.NullIfEmpty()?.Trim();
+                if (nn != null && nn != navigation.Name) {
+                    if (thisIsPrincipal) {
+                        foreignKey.SetPrincipalToDependent((MemberInfo)null);
+                        navigation = foreignKey.SetPrincipalToDependent(nn);
+                    } else {
+                        foreignKey.SetDependentToPrincipal((MemberInfo)null);
+                        navigation = foreignKey.SetDependentToPrincipal(nn);
+                    }
+                }
+            }
+
             if (entityRule != null && navigationRule == null && entityRule.Rule.IncludeUnknownColumns)
                 navigationRule = entityRule.AddNavigation(navigation, fkName, thisIsPrincipal, isManyToMany);
 
@@ -738,104 +755,104 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     void IInterceptor.Intercept(IInvocation invocation) {
         switch (invocation.Method.Name) {
             case "GetTypeScaffoldingInfo" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseColumn dc: {
-                    TypeScaffoldingInfo BaseCall() {
-                        invocation.Proceed();
-                        return (TypeScaffoldingInfo)invocation.ReturnValue;
-                    }
-
-                    var response = GetTypeScaffoldingInfo(dc, BaseCall);
-                    invocation.ReturnValue = response;
-                    break;
+                TypeScaffoldingInfo BaseCall() {
+                    invocation.Proceed();
+                    return (TypeScaffoldingInfo)invocation.ReturnValue;
                 }
+
+                var response = GetTypeScaffoldingInfo(dc, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "VisitDatabaseModel" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                            invocation.Arguments[1] is DatabaseModel dbm: {
-                    ModelBuilder BaseCall() {
-                        invocation.Proceed();
-                        return (ModelBuilder)invocation.ReturnValue;
-                    }
-
-                    var response = VisitDatabaseModel(mb, dbm, BaseCall);
-                    invocation.ReturnValue = response;
-                    break;
+                ModelBuilder BaseCall() {
+                    invocation.Proceed();
+                    return (ModelBuilder)invocation.ReturnValue;
                 }
+
+                var response = VisitDatabaseModel(mb, dbm, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "VisitTables" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                     invocation.Arguments[1] is ICollection<DatabaseTable> dt: {
-                    // ModelBuilder BaseCall(ModelBuilder modelBuilder, ICollection<DatabaseTable> databaseTables) {
-                    //     invocation.Proceed();
-                    //     return (ModelBuilder)invocation.ReturnValue;
-                    // }
+                // ModelBuilder BaseCall(ModelBuilder modelBuilder, ICollection<DatabaseTable> databaseTables) {
+                //     invocation.Proceed();
+                //     return (ModelBuilder)invocation.ReturnValue;
+                // }
 
-                    var response = VisitTables(mb, dt);
-                    invocation.ReturnValue = response;
-                    break;
-                }
+                var response = VisitTables(mb, dt);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "VisitTable" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                    invocation.Arguments[1] is DatabaseTable dt: {
-                    EntityTypeBuilder BaseCall() {
-                        invocation.Proceed();
-                        return (EntityTypeBuilder)invocation.ReturnValue;
-                    }
-
-                    var response = VisitTable(mb, dt, BaseCall);
-                    invocation.ReturnValue = response;
-                    break;
+                EntityTypeBuilder BaseCall() {
+                    invocation.Proceed();
+                    return (EntityTypeBuilder)invocation.ReturnValue;
                 }
+
+                var response = VisitTable(mb, dt, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "VisitPrimaryKey" when invocation.Arguments.Length == 2 &&
                                         invocation.Arguments[0] is EntityTypeBuilder entityTypeBuilder &&
                                         invocation.Arguments[1] is DatabaseTable table: {
-                    KeyBuilder BaseCall() {
-                        invocation.Proceed();
-                        return (KeyBuilder)invocation.ReturnValue;
-                    }
-
-                    var response = VisitPrimaryKey(entityTypeBuilder, table, BaseCall);
-                    invocation.ReturnValue = response;
-                    break;
+                KeyBuilder BaseCall() {
+                    invocation.Proceed();
+                    return (KeyBuilder)invocation.ReturnValue;
                 }
+
+                var response = VisitPrimaryKey(entityTypeBuilder, table, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "VisitForeignKeys" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                          invocation.Arguments[1] is IList<DatabaseForeignKey> fks: {
-                    ModelBuilder BaseCall(IList<DatabaseForeignKey> databaseForeignKeys) {
-                        invocation.SetArgumentValue(1, databaseForeignKeys);
-                        invocation.Proceed();
-                        return (ModelBuilder)invocation.ReturnValue;
-                    }
-
-                    var response = VisitForeignKeys(mb, fks, BaseCall);
-                    invocation.ReturnValue = response;
-                    break;
+                ModelBuilder BaseCall(IList<DatabaseForeignKey> databaseForeignKeys) {
+                    invocation.SetArgumentValue(1, databaseForeignKeys);
+                    invocation.Proceed();
+                    return (ModelBuilder)invocation.ReturnValue;
                 }
+
+                var response = VisitForeignKeys(mb, fks, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "Create" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is DatabaseModel dm &&
                                invocation.Arguments[1] is ModelReverseEngineerOptions op: {
-                    IModel BaseCall(DatabaseModel databaseModel, ModelReverseEngineerOptions options2) {
-                        invocation.SetArgumentValue(0, databaseModel);
-                        invocation.SetArgumentValue(1, options2);
-                        invocation.Proceed();
-                        return (IModel)invocation.ReturnValue;
-                    }
-
-                    var response = Create(dm, op, BaseCall);
-                    invocation.ReturnValue = response;
-                    break;
+                IModel BaseCall(DatabaseModel databaseModel, ModelReverseEngineerOptions options2) {
+                    invocation.SetArgumentValue(0, databaseModel);
+                    invocation.SetArgumentValue(1, options2);
+                    invocation.Proceed();
+                    return (IModel)invocation.ReturnValue;
                 }
+
+                var response = Create(dm, op, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "GetEntityTypeName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
-                    var response = GetEntityTypeName(t);
-                    invocation.ReturnValue = response;
-                    break;
-                }
+                var response = GetEntityTypeName(t);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "GetDbSetName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
-                    var response = GetDbSetName(t);
-                    invocation.ReturnValue = response;
-                    break;
-                }
+                var response = GetDbSetName(t);
+                invocation.ReturnValue = response;
+                break;
+            }
             case "AddNavigationProperties" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is IMutableForeignKey fk: {
-                    void BaseCall(IMutableForeignKey fk1) {
-                        invocation.SetArgumentValue(0, fk1);
-                        invocation.Proceed();
-                    }
-
-                    AddNavigationProperties(fk, BaseCall);
-                    break;
+                void BaseCall(IMutableForeignKey fk1) {
+                    invocation.SetArgumentValue(0, fk1);
+                    invocation.Proceed();
                 }
+
+                AddNavigationProperties(fk, BaseCall);
+                break;
+            }
             default:
                 invocation.Proceed();
                 break;
