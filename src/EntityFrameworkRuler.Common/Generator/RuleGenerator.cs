@@ -160,6 +160,8 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                 Debug.Assert(entityRule.EntityName?.IsValidSymbolName() != false);
                 Debug.Assert(entityRule.NewName.IsValidSymbolName());
 
+                var isView = entity.StorageEntitySet?.Type?.StartsWithIgnoreCase("View") == true;
+
                 foreach (var property in entity.Properties) {
                     // if property name is different than db, it has to go into output
                     // Get the expected EF property identifier based on options.. just like EF would:
@@ -170,6 +172,12 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                         NewName = property.Name == expectedPropertyName ? null : property.Name,
                         NewType = property.EnumType?.ExternalTypeName ?? property.EnumType?.FullName
                     };
+
+                    if (isView) {
+                        // EF Core scaffolding does not infer primary keys on views, meaning navigations are not possible.
+                        // Identify the key here so that it can be applied to the reverse engineered model later.
+                        propertyRule.IsKey = property.IsStorageKey || property.IsConceptualKey;
+                    }
 
                     comment = property.ConceptualProperty?.Documentation?.GetComment();
                     if (comment.HasNonWhiteSpace()) propertyRule.SetComment(comment);

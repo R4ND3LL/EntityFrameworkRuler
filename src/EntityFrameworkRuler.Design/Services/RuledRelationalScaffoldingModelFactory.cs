@@ -291,7 +291,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             try {
                 // We have to call the base VisitTable in order to perform the basic wiring.
                 // The call will be captured, and the result of the wiring will be customized based on the rules.
-                var builder = VisitTable(modelBuilder, table);
+                var builder = this.InvokeVisitTable(modelBuilder, table);
                 Debug.Assert(entityRule == null || builder == null || ReferenceEquals(entityRule.Builder, builder));
                 table.EntityRules.Add(entityRule);
                 table.Builders.Add(builder);
@@ -329,13 +329,19 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    private EntityTypeBuilder VisitTable(ModelBuilder modelBuilder, DatabaseTable table) {
+    private EntityTypeBuilder InvokeVisitTable(ModelBuilder modelBuilder, DatabaseTable table) {
         return visitTableMethod?.Invoke(proxy, new object[] { modelBuilder, table }) as EntityTypeBuilder;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual EntityTypeBuilder VisitTable(ModelBuilder modelBuilder, DatabaseTable table, Func<EntityTypeBuilder> baseCall) {
         var entityRule = TryResolveRuleFor(table);
+        if (entityRule != null && table is DatabaseView view) {
+            // views require that keys are applied manually.  because nullability is changed here,
+            // it will then influence  the nullability of the resulting entity properties and increase
+            // likelihood that the entity key get is generated.
+            TryAddTableKey(view, entityRule);
+        }
         return ApplyEntityRules(modelBuilder, baseCall(), table, entityRule);
     }
 
@@ -451,7 +457,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     fksToBeRemoved.Add(foreignKey);
 
             foreach (var dbFk in fksToBeRemoved) {
-                var eFk = entity.GetForeignKeys().FirstOrDefault(o => o.GetConstraintName() == dbFk.Name);
+                var eFk = entity.GetForeignKeys().FirstOrDefault(o => o.GetConstraintNameForTableOrView() == dbFk.Name);
                 if (eFk == null) continue;
                 var removed = entity.RemoveForeignKey(eFk);
                 Debug.Assert(removed != null);
@@ -598,55 +604,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var schemas = schemaNames.Select(o => dbContextRule?.Rule?.TryResolveRuleFor(o))
                 .Where(o => o?.UseManyToManyEntity == true).ToArray();
 
-            var dbModel = generatingDatabaseModel;
-            if (dbModel == null && foreignKeys.Count > 0) dbModel = foreignKeys[0].Table?.Database;
-            var knownFkNames = foreignKeys.Select(o => o.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var knownFksByTable = foreignKeys.GroupBy(o => o.Table).ToDictionary(o => o.Key, o => o.ToList());
-            var unknownFks = dbContextRule.ForeignKeys.Where(o => !knownFkNames.Contains(o.FkName) && o.IsRuleValid).ToList();
-            if (dbModel != null && unknownFks.Count > 0)
-                foreach (var unknownFk in unknownFks) {
-                    // add foreign keys based on rules
-                    // note, we must generate both navigations due to expectations of the T4s when generating navigation code.
-                    var pEntity = dbContextRule.TryResolveRuleForEntityName(unknownFk.Rule.PrincipalEntity);
-                    var dEntity = dbContextRule.TryResolveRuleForEntityName(unknownFk.Rule.DependentEntity);
-                    if (!pEntity.IsAlreadyMapped || !dEntity.IsAlreadyMapped) continue;
-                    var pTable = pEntity?.DatabaseTable;
-                    var dTable = dEntity?.DatabaseTable;
-                    if (pTable == null || dTable == null) {
-                        // for now at least, the entity must be mapped to a table
-                        continue;
-                    }
-
-                    var dbFk = new DatabaseForeignKey {
-                        PrincipalTable = pTable,
-                        Name = unknownFk.Rule?.Name,
-                        OnDelete = ReferentialAction.NoAction,
-                        Table = dTable,
-                    };
-                    dbFk.PrincipalColumns.AddRange(GetTableColumns(pTable, unknownFk.Rule?.PrincipalProperties));
-                    dbFk.Columns.AddRange(GetTableColumns(dTable, unknownFk.Rule?.DependentProperties));
-                    if (dbFk.Name.IsNullOrWhiteSpace() || dbFk.PrincipalColumns.IsNullOrEmpty() ||
-                        dbFk.Columns.Count != dbFk.PrincipalColumns.Count) {
-                        reporter.WriteWarning($"RULED: Skipping custom FK {dbFk.Name} because it does not form a valid constraint.");
-                        continue;
-                    }
-
-                    // validate that there is not already a FK with the same columns
-                    if (!IsUnique(dbFk, knownFksByTable)) {
-                        reporter.WriteWarning(
-                            $"RULED: Skipping custom FK {dbFk.Name} because it shares columns with an existing constraint.");
-                        continue;
-                    }
-
-                    var fksByTbl = knownFksByTable.GetOrAddNew(dbFk.Table, o => new List<DatabaseForeignKey>());
-                    fksByTbl.Add(dbFk);
-                    if (foreignKeys.IsReadOnly) foreignKeys = new List<DatabaseForeignKey>(foreignKeys);
-                    foreignKeys.Add(dbFk);
-                    reporter.WriteInformation($"RULED: Adding custom FK {dbFk.Name}.");
-
-                    // Watch the following issue for necessary modification to this code to ensure these navs are code-only:
-                    // https://github.com/dotnet/efcore/issues/15854
-                }
+            foreignKeys = AddMissingDatabaseForeignKeys(foreignKeys);
 
             if (OmittedTables.Count > 0) {
                 // check to see if the foreign key maps to an omitted table. if so, nuke it.
@@ -681,33 +639,83 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     InvokeVisitForeignKey(modelBuilder, fk);
 
                 foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-                foreach (var foreignKey in entityType.GetForeignKeys())
-                    InvokeAddNavigationProperties(foreignKey);
+                    foreach (var foreignKey in entityType.GetForeignKeys())
+                        InvokeAddNavigationProperties(foreignKey);
             }
 
             return modelBuilder;
         } finally {
             RemoveOmittedForeignKeys();
         }
+    }
 
-        IEnumerable<DatabaseColumn> GetTableColumns(DatabaseTable databaseTable, string[] props) {
-            if (databaseTable == null || props.IsNullOrEmpty()) return ArraySegment<DatabaseColumn>.Empty;
-            if (OmittedTables.Contains(databaseTable.GetFullName())) return ArraySegment<DatabaseColumn>.Empty;
-            var cols = props.Select(o => databaseTable.Columns.FirstOrDefault(c => c.Name == o)).ToList();
-            if (cols.Count == 0 || cols.Any(o => o == null)) return ArraySegment<DatabaseColumn>.Empty;
-            return cols;
-        }
+    private IList<DatabaseForeignKey> AddMissingDatabaseForeignKeys(IList<DatabaseForeignKey> foreignKeys) {
+        var dbModel = generatingDatabaseModel;
+        if (dbModel == null && foreignKeys.Count > 0) dbModel = foreignKeys[0].Table?.Database;
+        var knownFkNames = foreignKeys.Select(o => o.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var knownFksByTable = foreignKeys.GroupBy(o => o.Table).ToDictionary(o => o.Key, o => o.ToList());
+        var unknownFks = dbContextRule.ForeignKeys.Where(o => !knownFkNames.Contains(o.FkName) && o.IsRuleValid)
+            .ToList();
+        if (dbModel == null || unknownFks.Count <= 0) return foreignKeys;
 
-        bool IsUnique(DatabaseForeignKey dbForeignKey, Dictionary<DatabaseTable, List<DatabaseForeignKey>> knownFksByTable) {
-            var fksByTbl = knownFksByTable.TryGetValue(dbForeignKey.Table);
-            if (!(fksByTbl?.Count > 0)) return true;
-            foreach (var foreignKey in fksByTbl) {
-                // check for matching columns
-                if (AreColumnsEqual(foreignKey, dbForeignKey)) return false;
+        foreach (var unknownFk in unknownFks) {
+            // add foreign keys based on rules
+            // note, we must generate both navigations due to expectations of the T4s when generating navigation code.
+            var pEntity = dbContextRule.TryResolveRuleForEntityName(unknownFk.Rule.PrincipalEntity);
+            var dEntity = dbContextRule.TryResolveRuleForEntityName(unknownFk.Rule.DependentEntity);
+            if (!pEntity.IsAlreadyMapped || !dEntity.IsAlreadyMapped) continue;
+            var pTable = pEntity?.DatabaseTable;
+            var dTable = dEntity?.DatabaseTable;
+            if (pTable == null || dTable == null) {
+                // for now at least, the entity must be mapped to a table
+                continue;
             }
 
-            return true;
+            var dbFk = new DatabaseForeignKey {
+                PrincipalTable = pTable,
+                Name = unknownFk.Rule?.Name,
+                OnDelete = ReferentialAction.NoAction,
+                Table = dTable,
+            };
+            dbFk.PrincipalColumns.AddRange(pTable.Table.GetTableColumns(unknownFk.Rule?.PrincipalProperties));
+            dbFk.Columns.AddRange(dTable.Table.GetTableColumns(unknownFk.Rule?.DependentProperties));
+            if (dbFk.Name.IsNullOrWhiteSpace() || dbFk.PrincipalColumns.IsNullOrEmpty() ||
+                dbFk.Columns.Count != dbFk.PrincipalColumns.Count) {
+                reporter.WriteWarning(
+                    $"RULED: Skipping custom FK {dbFk.Name} because it does not form a valid constraint.");
+                continue;
+            }
+
+            // validate that there is not already a FK with the same columns
+            if (!IsUnique(dbFk, knownFksByTable)) {
+                reporter.WriteWarning(
+                    $"RULED: Skipping custom FK {dbFk.Name} because it shares columns with an existing constraint.");
+                continue;
+            }
+
+            if (dbFk.Table.PrimaryKey == null || dbFk.Table.PrimaryKey.Columns.IsNullOrEmpty()) {
+                // Primary end navigation requires the primary key.
+                if (!TryAddTableKey(dTable, dEntity)) {
+                    reporter.WriteWarning(
+                        $"RULED: Skipping custom FK {dbFk.Name} because the declaring table {dbFk.Table.Schema}.{dbFk.Table} is keyless.");
+                    continue;
+                }
+            }
+
+            var fksByTbl = knownFksByTable.GetOrAddNew(dbFk.Table, o => new List<DatabaseForeignKey>());
+            fksByTbl.Add(dbFk);
+            if (foreignKeys.IsReadOnly) foreignKeys = new List<DatabaseForeignKey>(foreignKeys);
+            foreignKeys.Add(dbFk);
+            reporter.WriteInformation(
+                $"RULED: Adding custom FK {dbFk.Name} between {pTable.Schema}.{pTable.Name} and {dTable.Schema}.{dTable.Name}.");
+
+            // Watch the following issue for necessary modification to this code to ensure these navs are code-only:
+            // https://github.com/dotnet/efcore/issues/15854
         }
+
+        return foreignKeys;
+
+
 
         bool AreColumnsEqual(DatabaseForeignKey a, DatabaseForeignKey b) {
             if (a.Columns.Count != b.Columns.Count) return false;
@@ -722,13 +730,76 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             return true;
         }
+
+        bool IsUnique(DatabaseForeignKey dbForeignKey,
+            Dictionary<DatabaseTable, List<DatabaseForeignKey>> knownFksByTable) {
+            var fksByTbl = knownFksByTable.TryGetValue(dbForeignKey.Table);
+            if (!(fksByTbl?.Count > 0)) return true;
+            foreach (var foreignKey in fksByTbl) {
+                // check for matching columns
+                if (AreColumnsEqual(foreignKey, dbForeignKey)) return false;
+            }
+
+            return true;
+        }
+    }
+
+    private bool TryAddTableKey(DatabaseTable table, EntityRuleNode entityRuleNode) {
+        if (entityRuleNode is null) return false;
+        if (table is not DatabaseView view) return false;
+        // EF Core does not generate keys for views. But we might have it in the rules.
+        var keyColNames = entityRuleNode.Properties.Where(o => o.Rule.IsKey).Select(o => o.Rule.Name).ToArray();
+        var keyCols = view.GetTableColumns(keyColNames);
+        if (keyCols.IsNullOrEmpty()) return false;
+
+        foreach (var col in keyCols) {
+            // All properties on which a key is declared must be marked as non-nullable/required 
+            if (col.IsNullable) col.IsNullable = false;
+        }
+
+        // we can create a key on the view
+        view.PrimaryKey = new() {
+            Name = $"PK_{entityRuleNode.GetFinalName()}",
+            Table = view,
+        };
+        view.PrimaryKey.Columns.AddRange(keyCols);
+        reporter.WriteInformation(
+            $"RULED: Adding key {view.PrimaryKey.Name} to table {table.Schema}.{table.Name} for navigation support.");
+        return true;
+    }
+    private bool TryAddEntityKey(IMutableForeignKey foreignKey) {
+        if (foreignKey.DependentToPrincipal == null || foreignKey.PrincipalToDependent != null ||
+            !foreignKey.DeclaringEntityType.IsKeyless) return false;
+        return TryAddEntityKey(foreignKey.DeclaringEntityType);
+    }
+    private bool TryAddEntityKey(IMutableEntityType e) {
+        return TryAddEntityKey(e, dbContextRule.TryResolveRuleForEntityName(e.Name));
+    }
+    private bool TryAddEntityKey(IMutableEntityType e, EntityRuleNode entityRuleNode) {
+        if (entityRuleNode == null) return false;
+        var table = entityRuleNode.DatabaseTable?.Table;
+        if (table is not DatabaseView view || !(table?.PrimaryKey?.Columns.Count > 0)) return false;
+
+        // Even though we applied a key to the view, EF does not apply it to the entity. Attempt to do so now.
+        var propsByDbName = e.GetProperties().Select(o => (dbName: o.GetColumnNameNoDefault(), prop: o))
+            .Where(o => o.dbName.HasNonWhiteSpace())
+            .ToDictionary(o => o.dbName, o => o.prop);
+        var props = table.PrimaryKey.Columns.Select(o => propsByDbName.TryGetValue(o.Name)).ToArray();
+        if (props.Length <= 0 || props.Any(o => o == null)) return false;
+
+        e.IsKeyless = false;
+        e.SetPrimaryKey(props);
+        if (reporter.MinimumLevel >= LogType.Verbose)
+            reporter.WriteVerbose(
+                $"RULED: Adding primary key to entity {e.Name}: {props.Select(o => o.Name).Join()}");
+        return true;
     }
 
     private void RemoveOmittedForeignKeys() {
         if (OmittedForeignKeys.Count <= 0) return;
         // remove the omitted foreign keys now
         foreach (var foreignKey in OmittedForeignKeys) {
-            var name = foreignKey.GetConstraintName();
+            var name = foreignKey.GetConstraintNameForTableOrView();
             RemoveNavigationFromEntity(foreignKey.PrincipalToDependent);
             RemoveNavigationFromEntity(foreignKey.DependentToPrincipal);
             var dRemoved = foreignKey.DeclaringEntityType.RemoveForeignKey(foreignKey);
@@ -758,24 +829,26 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     protected virtual void AddNavigationProperties(IMutableForeignKey foreignKey, Action<IMutableForeignKey> baseCall) {
         dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRuleNode(DbContextRule.DefaultNoRulesFoundBehavior);
         baseCall(foreignKey);
-        var fkName = foreignKey.GetConstraintName();
+        var fkName = foreignKey.GetConstraintNameForTableOrView();
         var isManyToMany = foreignKey.IsManyToMany();
 
-        var dependentExcluded = true;
-        var principalExcluded = true;
-        if (foreignKey.DependentToPrincipal != null)
-            dependentExcluded = ApplyNavRule(foreignKey.DependentToPrincipal, foreignKey.DeclaringEntityType, false);
-
-        if (foreignKey.PrincipalToDependent != null)
-            principalExcluded = ApplyNavRule(foreignKey.PrincipalToDependent, foreignKey.PrincipalEntityType, true);
-
-        if (dependentExcluded && principalExcluded) {
+        if (foreignKey.DependentToPrincipal == null || foreignKey.PrincipalToDependent == null) {
             // technically, EF supports a single ended navigation (no inverse) but the T4s are built to iterate FKs
             // and generate navigations for both ends of the relation.  For this reason, if we omit one navigation then
             // an Null-Ref error will occur because the T4 code expects both ends to be set at all times.
             // We can mandate changes to the T4s such that each end is checked for null first, but for simplicity sake,
-            // we will only exclude a navigation if BOTH ends are excluded, thus, removing the FK altogether.
+            // if one end is not defined, we will eliminate the entire FK.
+            // Note, the principal end may not be defined when foreignKey.DeclaringEntityType.IsKeyless.
             OmittedForeignKeys.Add(foreignKey);
+        } else {
+            var dependentExcluded = ApplyNavRule(foreignKey.DependentToPrincipal, foreignKey.DeclaringEntityType, false);
+            var principalExcluded = ApplyNavRule(foreignKey.PrincipalToDependent, foreignKey.PrincipalEntityType, true);
+
+            if (dependentExcluded && principalExcluded) {
+                // we will only exclude a navigation if BOTH ends are excluded, thus, removing the FK altogether.
+                // see reasoning above
+                OmittedForeignKeys.Add(foreignKey);
+            }
         }
 
         bool ApplyNavRule(IMutableNavigation navigation, IMutableEntityType entityType, bool thisIsPrincipal) {
@@ -828,6 +901,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
     }
 
+
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual string GetEntityTypeName(DatabaseTable table) {
         if (explicitEntityRuleMapping.table == table && explicitEntityRuleMapping.entityRule?.Rule.NewName.HasNonWhiteSpace() == true)
@@ -849,104 +924,104 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     void IInterceptor.Intercept(IInvocation invocation) {
         switch (invocation.Method.Name) {
             case "GetTypeScaffoldingInfo" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseColumn dc: {
-                TypeScaffoldingInfo BaseCall() {
-                    invocation.Proceed();
-                    return (TypeScaffoldingInfo)invocation.ReturnValue;
-                }
+                    TypeScaffoldingInfo BaseCall() {
+                        invocation.Proceed();
+                        return (TypeScaffoldingInfo)invocation.ReturnValue;
+                    }
 
-                var response = GetTypeScaffoldingInfo(dc, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = GetTypeScaffoldingInfo(dc, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitDatabaseModel" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                            invocation.Arguments[1] is DatabaseModel dbm: {
-                ModelBuilder BaseCall() {
-                    invocation.Proceed();
-                    return (ModelBuilder)invocation.ReturnValue;
-                }
+                    ModelBuilder BaseCall() {
+                        invocation.Proceed();
+                        return (ModelBuilder)invocation.ReturnValue;
+                    }
 
-                var response = VisitDatabaseModel(mb, dbm, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitDatabaseModel(mb, dbm, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitTables" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                     invocation.Arguments[1] is ICollection<DatabaseTable> dt: {
-                // ModelBuilder BaseCall(ModelBuilder modelBuilder, ICollection<DatabaseTable> databaseTables) {
-                //     invocation.Proceed();
-                //     return (ModelBuilder)invocation.ReturnValue;
-                // }
+                    // ModelBuilder BaseCall(ModelBuilder modelBuilder, ICollection<DatabaseTable> databaseTables) {
+                    //     invocation.Proceed();
+                    //     return (ModelBuilder)invocation.ReturnValue;
+                    // }
 
-                var response = VisitTables(mb, dt);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitTables(mb, dt);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitTable" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                    invocation.Arguments[1] is DatabaseTable dt: {
-                EntityTypeBuilder BaseCall() {
-                    invocation.Proceed();
-                    return (EntityTypeBuilder)invocation.ReturnValue;
-                }
+                    EntityTypeBuilder BaseCall() {
+                        invocation.Proceed();
+                        return (EntityTypeBuilder)invocation.ReturnValue;
+                    }
 
-                var response = VisitTable(mb, dt, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitTable(mb, dt, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitPrimaryKey" when invocation.Arguments.Length == 2 &&
                                         invocation.Arguments[0] is EntityTypeBuilder entityTypeBuilder &&
                                         invocation.Arguments[1] is DatabaseTable table: {
-                KeyBuilder BaseCall() {
-                    invocation.Proceed();
-                    return (KeyBuilder)invocation.ReturnValue;
-                }
+                    KeyBuilder BaseCall() {
+                        invocation.Proceed();
+                        return (KeyBuilder)invocation.ReturnValue;
+                    }
 
-                var response = VisitPrimaryKey(entityTypeBuilder, table, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitPrimaryKey(entityTypeBuilder, table, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitForeignKeys" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                          invocation.Arguments[1] is IList<DatabaseForeignKey> fks: {
-                ModelBuilder BaseCall(IList<DatabaseForeignKey> databaseForeignKeys) {
-                    invocation.SetArgumentValue(1, databaseForeignKeys);
-                    invocation.Proceed();
-                    return (ModelBuilder)invocation.ReturnValue;
-                }
+                    ModelBuilder BaseCall(IList<DatabaseForeignKey> databaseForeignKeys) {
+                        invocation.SetArgumentValue(1, databaseForeignKeys);
+                        invocation.Proceed();
+                        return (ModelBuilder)invocation.ReturnValue;
+                    }
 
-                var response = VisitForeignKeys(mb, fks, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitForeignKeys(mb, fks, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "Create" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is DatabaseModel dm &&
                                invocation.Arguments[1] is ModelReverseEngineerOptions op: {
-                IModel BaseCall(DatabaseModel databaseModel, ModelReverseEngineerOptions options2) {
-                    invocation.SetArgumentValue(0, databaseModel);
-                    invocation.SetArgumentValue(1, options2);
-                    invocation.Proceed();
-                    return (IModel)invocation.ReturnValue;
-                }
+                    IModel BaseCall(DatabaseModel databaseModel, ModelReverseEngineerOptions options2) {
+                        invocation.SetArgumentValue(0, databaseModel);
+                        invocation.SetArgumentValue(1, options2);
+                        invocation.Proceed();
+                        return (IModel)invocation.ReturnValue;
+                    }
 
-                var response = Create(dm, op, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = Create(dm, op, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "GetEntityTypeName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
-                var response = GetEntityTypeName(t);
-                invocation.ReturnValue = response;
-                break;
-            }
-            case "GetDbSetName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
-                var response = GetDbSetName(t);
-                invocation.ReturnValue = response;
-                break;
-            }
-            case "AddNavigationProperties" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is IMutableForeignKey fk: {
-                void BaseCall(IMutableForeignKey fk1) {
-                    invocation.SetArgumentValue(0, fk1);
-                    invocation.Proceed();
+                    var response = GetEntityTypeName(t);
+                    invocation.ReturnValue = response;
+                    break;
                 }
+            case "GetDbSetName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
+                    var response = GetDbSetName(t);
+                    invocation.ReturnValue = response;
+                    break;
+                }
+            case "AddNavigationProperties" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is IMutableForeignKey fk: {
+                    void BaseCall(IMutableForeignKey fk1) {
+                        invocation.SetArgumentValue(0, fk1);
+                        invocation.Proceed();
+                    }
 
-                AddNavigationProperties(fk, BaseCall);
-                break;
-            }
+                    AddNavigationProperties(fk, BaseCall);
+                    break;
+                }
             default:
                 invocation.Proceed();
                 break;

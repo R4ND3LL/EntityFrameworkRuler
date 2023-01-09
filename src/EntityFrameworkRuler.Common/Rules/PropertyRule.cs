@@ -40,8 +40,13 @@ public sealed class PropertyRule : RuleBase, IPropertyRule {
     [DisplayName("New Type"), Category("Mapping"), Description("The new type to give the property. Optional.")]
     public string NewType { get; set; }
 
-    /// <summary> If true, omit this column during the scaffolding process. </summary>
+    /// <summary> True if this is a primary key member for the entity. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 5)]
+    [DisplayName("Is Key"), Category("Mapping"), Description("True if this is a primary key member for the entity.")]
+    public bool IsKey { get; set; }
+
+    /// <summary> If true, omit this column during the scaffolding process. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
     [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
     public bool NotMapped { get; set; }
 

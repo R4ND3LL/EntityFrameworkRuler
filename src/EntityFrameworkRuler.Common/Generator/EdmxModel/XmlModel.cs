@@ -307,6 +307,7 @@ public class StorageEntitySet {
         Namespace = "http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator")]
     public string Schema1 { get; set; }
 
+    /// <summary> Expected value Tables or Views identifies the kind of database object </summary>
     [XmlAttribute(
         AttributeName = "Type",
         Namespace = "http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator")]
@@ -626,6 +627,7 @@ public class ConceptualEntityType {
 public class ConceptualDocumentation {
     [XmlElement(ElementName = "Summary", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public string Summary { get; set; }
+
     [XmlElement(ElementName = "LongDescription", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public string LongDescription { get; set; }
 

@@ -192,7 +192,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
         if (defaultEfName == null) throw new ArgumentNullException(nameof(defaultEfName));
         dbContextRule ??= ResolveDbContextRule();
 
-        var fkName = foreignKey.GetConstraintName();
+        var fkName = foreignKey.GetConstraintNameForTableOrView();
         var entity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         // ReSharper disable once HeuristicUnreachableCode

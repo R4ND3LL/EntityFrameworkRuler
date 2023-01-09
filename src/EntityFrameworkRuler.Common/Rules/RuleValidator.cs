@@ -18,6 +18,7 @@ public class RuleValidator : IRuleValidator {
     private IValidator entityRule;
     private IValidator propertyRule;
     private IValidator navigationRule;
+    private IValidator foreignKeyRule;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public IEnumerable<EvaluationFailure> Validate(IRuleItem rule, bool withChildren = true) {
@@ -37,6 +38,9 @@ public class RuleValidator : IRuleValidator {
                 break;
             case NavigationRule:
                 validator = navigationRule ??= InitializeNavigationRuleValidator();
+                break;
+            case ForeignKeyRule:
+                validator = foreignKeyRule ??= InitializeForeignKeyRuleValidator();
                 break;
             default: yield break;
         }
@@ -60,6 +64,8 @@ public class RuleValidator : IRuleValidator {
                 .Assert(s => s.Length < 200, tooLong)
                 .For(o => o.Schemas)
                 .Assert(o => o.Select(r => r.SchemaName).Where(r => r.HasCharacters()).IsDistinct(), "Schema names should be unique")
+                .For(o => o.ForeignKeys)
+                .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Foreign key names should be unique")
                 .For(o => o.Annotations)
                 .Assert(o => o.All(r => r.Key.HasCharacters()), "Annotation keys are required")
                 .Assert(o => o.Select(r => r.Key).IsDistinct(), "Annotation keys should be unique")
@@ -98,7 +104,8 @@ public class RuleValidator : IRuleValidator {
                 .For(o => o.EntityName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.Properties)
                 .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Column Names should be unique")
-                .Assert(o => o.Select(r => r.PropertyName).Where(r => r.HasCharacters()).IsDistinct(), "Column PropertyNames should be unique")
+                .Assert(o => o.Select(r => r.PropertyName).Where(r => r.HasCharacters()).IsDistinct(),
+                    "Column PropertyNames should be unique")
                 .For(o => o.Navigations)
                 // .Assert(o => o.Where(r => r.FkName.HasCharacters())
                 //         .Select(r => (r.FkName, r.IsPrincipal)).IsDistinct(),
@@ -109,7 +116,6 @@ public class RuleValidator : IRuleValidator {
                 .For(o => o.Annotations)
                 .Assert(o => o.All(r => r.Key.HasCharacters()), "Annotation keys are required")
                 .Assert(o => o.Select(r => r.Key).IsDistinct(), "Annotation keys should be unique")
-
             ;
     }
 
@@ -142,6 +148,25 @@ public class RuleValidator : IRuleValidator {
                 .For(o => o.Annotations)
                 .Assert(o => o.All(r => r.Key.HasCharacters()), "Annotation keys are required")
                 .Assert(o => o.Select(r => r.Key).IsDistinct(), "Annotation keys should be unique")
+            ;
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual Validator<ForeignKeyRule> InitializeForeignKeyRuleValidator() {
+        return new Validator<ForeignKeyRule>()
+                .For(o => o.Name)
+                .Assert(s => s.IsNullOrWhiteSpace() || (s.IsValidSymbolName() && s.Length < 300), invalidSymbolName)
+                .For(o => o.Name).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
+                .For(o => o.PrincipalEntity)
+                .Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
+                .For(o => o.DependentEntity)
+                .Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
+                .For(o => o.PrincipalProperties)
+                .Assert(o => o.Where(r => r.HasCharacters()).IsDistinct(), "Principal Properties should be unique")
+                .For(o => o.DependentProperties)
+                .Assert(o => o.Where(r => r.HasCharacters()).IsDistinct(), "Dependent Properties should be unique")
+                .For(o => o.Annotations)
+                .Assert(o => o.Count == 0, "Foreign key annotations are not supported")
             ;
     }
 

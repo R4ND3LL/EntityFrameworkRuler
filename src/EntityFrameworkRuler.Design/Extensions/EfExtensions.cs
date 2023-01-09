@@ -41,9 +41,9 @@ internal static class EfExtensions {
             case IProperty p:
                 return p.Name;
             default: {
-                var prop = item?.GetType().GetProperty("Name");
-                return (string)prop?.GetValue(item);
-            }
+                    var prop = item?.GetType().GetProperty("Name");
+                    return (string)prop?.GetValue(item);
+                }
         }
     }
 
@@ -326,8 +326,7 @@ internal static class EfExtensions {
     /// </summary>
     /// <param name="table">The DatabaseTable to check.</param>
     /// <returns><see langword="true" /> if the DatabaseTable could be considered a join table.</returns>
-    public static bool IsSimpleManyToManyJoinEntityType(this DatabaseTable table)
-    {
+    public static bool IsSimpleManyToManyJoinEntityType(this DatabaseTable table) {
         //if (entityType.GetNavigations().Any() || entityType.GetSkipNavigations().Any()) return false;
         var primaryKey = table.PrimaryKey;
         var properties = table.Columns;
@@ -341,8 +340,8 @@ internal static class EfExtensions {
             && !foreignKeys[0].Columns.Intersect(foreignKeys[1].Columns).Any()
             && foreignKeys[0].Columns.All(o => !o.IsNullable)
             && foreignKeys[1].Columns.All(o => !o.IsNullable)
-            // && !foreignKeys[0].IsUnique
-            // && !foreignKeys[1].IsUnique
+           // && !foreignKeys[0].IsUnique
+           // && !foreignKeys[1].IsUnique
            ) {
             return true;
         }
@@ -432,6 +431,11 @@ internal static class EfExtensions {
         var viewName = entity?.FindAnnotation("Relational:ViewName");
         return viewName?.Value?.ToString();
     }
+    /// <summary> EF GetConstraintName() always returns null for views.  This method will pull the name annotation anyway. </summary>
+    public static string GetConstraintNameForTableOrView(this IReadOnlyForeignKey foreignKey) {
+        var fkName = foreignKey.GetConstraintName() ?? foreignKey.FindAnnotation(RelationalAnnotationNames.Name)?.Value as string;
+        return fkName;
+    }
 
     /// <summary> get DbType enum for a property </summary>
     public static System.Data.DbType? GetDbType(IProperty property) {
@@ -455,7 +459,13 @@ internal static class EfExtensions {
             typeScaffoldingInfo?.ScaffoldPrecision,
             typeScaffoldingInfo?.ScaffoldScale);
     }
-
+    public static IList<DatabaseColumn> GetTableColumns(this DatabaseTable databaseTable, string[] props) {
+        if (databaseTable == null || props.IsNullOrEmpty()) return ArraySegment<DatabaseColumn>.Empty;
+        //if (OmittedTables.Contains(databaseTable.GetFullName())) return ArraySegment<DatabaseColumn>.Empty;
+        var cols = props.Select(o => databaseTable.Columns.FirstOrDefault(c => c.Name == o)).ToArray();
+        if (cols.Length == 0 || cols.Any(o => o == null)) return ArraySegment<DatabaseColumn>.Empty;
+        return cols;
+    }
 
     /// <summary>
     ///     Adds a <see cref="ServiceLifetime.Singleton" /> service implemented by the given concrete
