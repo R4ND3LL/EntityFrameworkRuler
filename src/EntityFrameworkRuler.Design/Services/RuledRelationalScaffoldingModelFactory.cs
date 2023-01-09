@@ -695,11 +695,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             if (dbFk.Table.PrimaryKey == null || dbFk.Table.PrimaryKey.Columns.IsNullOrEmpty()) {
                 // Primary end navigation requires the primary key.
-                if (!TryAddTableKey(dTable, dEntity)) {
-                    reporter.WriteWarning(
-                        $"RULED: Skipping custom FK {dbFk.Name} because the declaring table {dbFk.Table.Schema}.{dbFk.Table} is keyless.");
-                    continue;
-                }
+                reporter.WriteWarning(
+                    $"RULED: Skipping custom FK {dbFk.Name} because the declaring table {dbFk.Table.Schema}.{dbFk.Table} is keyless.");
+                continue;
             }
 
             var fksByTbl = knownFksByTable.GetOrAddNew(dbFk.Table, o => new List<DatabaseForeignKey>());
