@@ -643,6 +643,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     if (foreignKeys.IsReadOnly) foreignKeys = new List<DatabaseForeignKey>(foreignKeys);
                     foreignKeys.Add(dbFk);
                     reporter.WriteInformation($"RULED: Adding custom FK {dbFk.Name}.");
+
+                    // Watch the following issue for necessary modification to this code to ensure these navs are code-only:
+                    // https://github.com/dotnet/efcore/issues/15854
                 }
 
             if (OmittedTables.Count > 0) {

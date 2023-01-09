@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using EntityFrameworkRuler.Editor.Models;
 using EntityFrameworkRuler.Rules;
 using PropertyTools.Wpf;
@@ -11,7 +12,6 @@ namespace EntityFrameworkRuler.Editor.Controls;
 /// Interaction logic for MainWindow.xaml
 /// </summary>
 public sealed partial class RuleEditorView {
-
     static RuleEditorView() {
         EventManager.RegisterClassHandler(typeof(Window), Keyboard.GotKeyboardFocusEvent,
             new KeyboardFocusChangedEventHandler(HandleGotKeyboardFocusEvent), true);
@@ -28,7 +28,19 @@ public sealed partial class RuleEditorView {
         Debug.WriteLine($"All properties changed raised for {selection.Name}");
     }
 
-    public RuleEditorView() => InitializeComponent();
+    public RuleEditorView() {
+        InitializeComponent();
+
+        // Register message listener
+        WeakReferenceMessenger.Default.Register<SelectedNodeChangedMessage>(this, (r, m) => {
+            if (m.Value == null || m.Value.Parent == null) return;
+            var view = (RuleEditorView)r;
+            _ = Task.Factory.StartNew(() => {
+                Thread.Sleep(100);
+                view.Dispatcher.InvokeAsync(() => view.ScrollToSelected(m.Value));
+            });
+        });
+    }
 
     // ReSharper disable once MemberCanBePrivate.Global
     public ThemeNames? Theme {
@@ -82,10 +94,11 @@ public sealed partial class RuleEditorView {
     }
 
     private void ModelBrowserOnSelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
-        //if (Model?.TreeProcessor?.IsProcessing == true) return;
-        //ScrollToSelected();
-        //var node = (TimeCodeNode)e.NewValue;
-        //if (Model != null) Model.CurrentTreeNode = node;
+        // if (DataContext is not RuleEditorViewModel vm) return;
+        // var selectionNode = vm.RootModel?.Selection?.Node;
+        // if (selectionNode != null && e.NewValue == selectionNode && selectionNode.Parent != null) {
+        //     ScrollToSelected();
+        // }
     }
 
     private void ModelBrowserOnLoaded(object sender, RoutedEventArgs e) { ScrollToSelected(); }
@@ -99,11 +112,20 @@ public sealed partial class RuleEditorView {
     private void ScrollToSelected() {
         if (DataContext is not RuleEditorViewModel vm) return;
         if (!scrollingToSelected && !scrolledOnce && vm?.RootModel?.Children?.Count > 0) {
+            var node = vm.RootModel.GetSelectedNode();
+            if (node == null) return;
+            ScrollToSelected(node);
+        }
+    }
+
+    private void ScrollToSelected(NodeViewModel<RuleBase> node) {
+        if (!scrollingToSelected) {
             scrollingToSelected = true;
             try {
-                var node = vm.RootModel.GetSelectedNode();
                 if (node == null) return;
                 var item = (TreeViewItem)ModelBrowser.ItemContainerGenerator.ContainerFromItem(node);
+                // item is often null because virtualization is on and/or the tree is recursive and each node has its own ItemContainerGenerator
+                // so only the root node is referenced in the ItemContainerGenerator used above.
                 if (item == null) return;
                 scrolledOnce = true;
                 item.Focus();

@@ -11,9 +11,9 @@ namespace EntityFrameworkRuler.Editor.Models;
 public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
     private readonly List<INotifyCollectionChanged> hookedCollections;
 
-    public RuleNodeViewModel(RuleBase item, NodeViewModel<RuleBase> parent, TreeFilter filter = null, bool expand = true,
-        RuleValidator validator = null) : base(item,
-        parent, expand, filter) {
+    public RuleNodeViewModel(RuleBase item, NodeViewModel<RuleBase> parent, bool expand = true,
+        TreeFilter filter = null, TreeSelection treeSelection = null, RuleValidator validator = null) : base(item,
+        parent, expand, filter, treeSelection) {
         Validator = validator ?? ((RuleNodeViewModel)parent)?.Validator ?? new RuleValidator();
         hookedCollections = new();
         HookCollectionChanges(item);
@@ -58,7 +58,7 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
             foreach (var child in currentChildren) {
                 if (nodeChildren.Any(o => ReferenceEquals(o.Item, child))) continue;
                 // doesnt exist. add it now
-                nodeChildren.Add(new RuleNodeViewModel((RuleBase)child, this, Filter, false));
+                nodeChildren.Add(new RuleNodeViewModel((RuleBase)child, this, false, Filter));
                 altered = true;
             }
 
@@ -73,6 +73,7 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
 
         if (altered) Children.Refresh();
     }
+
     protected override void OnItemChanged() {
         base.OnItemChanged();
         var i = Item;
@@ -97,7 +98,7 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
         var collection = new ObservableCollection<NodeViewModel<RuleBase>>();
         var expChildren = IsDbContext;
         foreach (var child in Item.GetChildren())
-            collection.Add(new RuleNodeViewModel((RuleBase)child, this, Filter, expChildren));
+            collection.Add(new RuleNodeViewModel((RuleBase)child, this, expChildren, Filter));
         return collection;
     }
 
@@ -171,8 +172,19 @@ public sealed partial class TreeFilter : ObservableObject {
 }
 
 public abstract partial class NodeViewModel<T> : ObservableObject {
+    /// <summary>
+    /// Single instance held by the all nodes of the tree.  Upon node selection, the Node instance is set.  Effectively
+    /// tracking the last selected node.
+    /// </summary>
     public sealed partial class TreeSelection : ObservableObject {
         [ObservableProperty] private NodeViewModel<T> node;
+
+        partial void OnNodeChanging(NodeViewModel<T> newValue) {
+            if (node != null) {
+                // ensure old selection IsSelected is changed to false otherwise reselection of same node will fail to set the node prop
+                node.IsSelected = false;
+            }
+        }
     }
 
     protected NodeViewModel(T item, NodeViewModel<T> parent, bool expand = true, TreeFilter filter = null,
@@ -181,8 +193,9 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
         Parent = parent;
         IsExpanded = expand;
         this.filter = filter ?? parent?.filter ?? new TreeFilter();
-        selection = treeSelection ?? parent?.Selection ?? new TreeSelection();
-        filter.PropertyChanged += Filter_PropertyChanged;
+        selection = treeSelection ?? parent?.Selection ?? throw new ArgumentNullException(nameof(treeSelection));
+        if (parent == null)
+            filter.PropertyChanged += Filter_PropertyChanged;
     }
 
     private void Filter_PropertyChanged(object sender, PropertyChangedEventArgs e) {
@@ -207,9 +220,19 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     public IList<NodeViewModel<T>> ChildrenUnfiltered => Children.Source;
     protected virtual bool CanFilter() => true;
 
-    private bool TheFilterPredicate(NodeViewModel<T> n) {
+    protected virtual bool TheFilterPredicate(NodeViewModel<T> n) {
         if (!CanFilter() || filter == null || filter.Term.IsNullOrWhiteSpace()) return true;
-        return n.Children.Count > 0 || filter.FilterType switch {
+
+        if (!ReferenceEquals(n, this)) {
+            if (TheFilterPredicate(this)) {
+                // if parent is match, then include all children automatically
+                return true;
+            }
+
+            if (n.Children.Count > 0) return true;
+        }
+
+        return filter.FilterType switch {
             TreeFilterType.Contains => n.Name?.ContainsIgnoreCase(filter.Term) == true,
             TreeFilterType.ExactMatch => n.Name?.EqualsIgnoreCase(filter.Term) == true,
             _ => n.Name?.EqualsIgnoreCase(filter.Term) == true
@@ -259,7 +282,7 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     }
 
     public void ApplyFilter() {
-        foreach (var child in Children) {
+        foreach (var child in ChildrenUnfiltered) {
             child.ApplyFilter();
         }
 

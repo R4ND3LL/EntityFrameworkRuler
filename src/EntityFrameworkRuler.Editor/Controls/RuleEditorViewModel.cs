@@ -3,6 +3,8 @@ using System.Text;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Messaging.Messages;
 using EntityFrameworkRuler.Editor.Dialogs;
 using EntityFrameworkRuler.Editor.Models;
 using EntityFrameworkRuler.Loader;
@@ -37,6 +39,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
             if (SuggestedRuleFiles.Count == 0) FindRuleFilesNear(targetProjectPath);
         }
     }
+
     [ObservableProperty] private ObservableCollection<ObservableFileInfo> suggestedRuleFiles;
     [ObservableProperty] private ObservableFileInfo selectedRuleFile;
     [ObservableProperty] private DbContextRule dbContextRule;
@@ -65,8 +68,7 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                 return;
             }
 
-            var selected = RootModel?.Selection?.Node;
-            var selectPath = (selected?.EnumerateParents())?.Reverse().Select(o => o.Name).ToArray();
+            var selectPath = GetSelectedPath();
 
             var ops = new LoadOptions(value.Path);
             var response = await loader.LoadRulesInProjectPath(ops).ConfigureAwait(true);
@@ -81,32 +83,45 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                 return;
             }
 
-            RootModel = new(DbContextRule, null, new(), true);
+            RootModel = new(DbContextRule, null, true, new(), new());
 
-            if (selectPath?.Length > 0) {
-                // try to maintain selection
-                var items = Root;
-                RuleNodeViewModel item = null;
-                foreach (var p in selectPath) {
-                    var temp = items.FirstOrDefault(o => o.Name == p);
-                    if (temp == null) {
-                        break;
-                    }
-
-                    item = temp;
-                    items = temp.Children.Cast<RuleNodeViewModel>();
-                }
-
-                if (item != null) {
-                    item.ExpandParents();
-                    item.IsSelected = true;
-                } else {
-                    RootModel.IsExpanded = true;
-                    RootModel.Children.ForAll(o => o.IsExpanded = true);
-                }
-            }
+            SetSelectedNodeViaPath(selectPath);
         } catch (Exception ex) {
             MessageBox.Show(ex.Message, "Something went wrong", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private string[] GetSelectedPath() {
+        var selected = RootModel?.Selection?.Node;
+        var selectPath = (selected?.EnumerateParents())?.Reverse().Select(o => o.Name).ToArray();
+        return selectPath;
+    }
+
+    private void SetSelectedNodeViaPath(string[] selectPath) {
+        if (!(selectPath?.Length > 0)) return;
+        // try to maintain selection
+        var items = Root;
+        RuleNodeViewModel item = null;
+        foreach (var p in selectPath) {
+            var temp = items.FirstOrDefault(o => o.Name == p);
+            if (temp == null) {
+                break;
+            }
+
+            item = temp;
+            items = temp.Children.Cast<RuleNodeViewModel>();
+        }
+
+        if (item != null) {
+            RootModel.ChildrenUnfiltered.ForAll(o => o.IsExpanded = false);
+            item.ExpandParents();
+            item.IsSelected = true;
+
+            // Send a message about the selection change
+            WeakReferenceMessenger.Default.Send(new SelectedNodeChangedMessage(item));
+        } else {
+            RootModel.IsExpanded = true;
+            RootModel.Children.ForAll(o => o.IsExpanded = true);
         }
     }
 
@@ -176,7 +191,12 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
         // ReSharper disable once ConstantConditionalAccessQualifier
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         if (RootModel?.Filter?.Term == null) return;
+
+        var selectPath = GetSelectedPath();
+
         RootModel.Filter.Term = null;
+
+        SetSelectedNodeViaPath(selectPath);
     }
 
     [RelayCommand]
@@ -223,5 +243,11 @@ public sealed partial class RuleEditorViewModel : ObservableObject {
                 }
             }
         } catch { }
+    }
+}
+
+// Create a message
+public class SelectedNodeChangedMessage : ValueChangedMessage<NodeViewModel<RuleBase>> {
+    public SelectedNodeChangedMessage(NodeViewModel<RuleBase> node) : base(node) {
     }
 }
