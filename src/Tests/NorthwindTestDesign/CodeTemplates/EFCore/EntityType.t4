@@ -1,4 +1,4 @@
-<#@ template hostSpecific="true" #>
+<#@ template hostSpecific="true" debug="true" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Relational" #>
@@ -19,7 +19,7 @@
         // Don't scaffold these
         return "";
     }
-
+ 
     var services = (IServiceProvider)Host;
     var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
     var code = services.GetRequiredService<ICSharpHelper>();
@@ -109,7 +109,17 @@ public partial class <#= EntityType.Name #> <# if (EntityType.BaseType?.Name!=nu
     foreach (var navigation in EntityType.GetNavigations())
     {
         WriteLine("");
-
+        
+        string comment = navigation?.FindAnnotation("Relational:Comment")?.Value as string;
+        if (!string.IsNullOrEmpty(comment))
+        {
+#>
+    /// <summary>
+    /// <#= code.XmlComment(comment, indent: 1) #>
+    /// </summary>
+<#
+        }        
+        
         if (Options.UseDataAnnotations)
         {
             foreach (var dataAnnotation in navigation.GetDataAnnotations(annotationCodeGenerator))
