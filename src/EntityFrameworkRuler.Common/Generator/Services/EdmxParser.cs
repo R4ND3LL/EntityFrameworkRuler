@@ -1,4 +1,4 @@
-﻿#define DEBUGPARSER2
+﻿#define DEBUGPARSER
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
@@ -168,6 +168,22 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
         var associationSetMappings = edmx.Mappings.Mapping.EntityContainerMapping?.AssociationSetMapping;
 
         var entitiesWithBaseTypes = new List<EntityType>();
+
+        // with all entities loaded, perform base type linking
+        foreach (var entity in Entities) {
+            if (!entity.ConceptualEntity.BaseType.HasNonWhiteSpace()) continue;
+
+            // resolve entity base type
+            EntityType baseType;
+            if (entity.ConceptualEntity.BaseType.Contains("."))
+                baseType = Entities.FirstOrDefault(o => o.FullName == entity.ConceptualEntity.BaseType);
+            else
+                baseType = Entities.FirstOrDefault(o => o.Name == entity.ConceptualEntity.BaseType);
+            Debug.Assert(baseType != null);
+            entity.BaseType = baseType;
+            entitiesWithBaseTypes.Add(entity);
+        }
+
         // with all entities loaded, perform association linking
         foreach (var entity in Entities) {
             foreach (var navigation in entity.NavigationProperties) {
@@ -184,7 +200,7 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
 
                 if (toEndRole == null || fromEndRole == null) {
 #if DEBUGPARSER
-                if (Debugger.IsAttached) Debugger.Break(); // invalid association!?
+                    if (Debugger.IsAttached) Debugger.Break(); // invalid association!?
 #endif
                     continue;
                 }
@@ -197,22 +213,10 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
                     ResolveFkAssociation(navigation, ass, endRoles, toEndRole, edmxModel);
                 }
 #if DEBUGPARSER
-            if (navigation.Association == null && Debugger.IsAttached)
-                Debugger.Break(); // invalid association. May be design time only?
+                if (navigation.Association == null && Debugger.IsAttached)
+                    Debugger.Break(); // invalid association. May be design time only?
 #endif
             }
-
-            if (!entity.ConceptualEntity.BaseType.HasNonWhiteSpace()) continue;
-
-            // resolve entity base type
-            EntityType baseType;
-            if (entity.ConceptualEntity.BaseType.Contains("."))
-                baseType = Entities.FirstOrDefault(o => o.FullName == entity.ConceptualEntity.BaseType);
-            else
-                baseType = Entities.FirstOrDefault(o => o.Name == entity.ConceptualEntity.BaseType);
-            Debug.Assert(baseType != null);
-            entity.BaseType = baseType;
-            entitiesWithBaseTypes.Add(entity);
         }
 
         var hierarchicalRoots = new HashSet<EntityType>();
@@ -272,9 +276,9 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
 #if DEBUGPARSER
         // ensure associations are properly linked.
         var navsWithNoAssociation = Entities.SelectMany(o => o.NavigationProperties).Where(o => o.Association == null)
-            .ToHashSet();
-        var associationsLinked = Entities.SelectMany(o => o.Associations).ToHashSet();
-        var allAssociations = edmx.ConceptualModels.Schema.Associations.ToHashSet();
+            .ToHashSetNew();
+        var associationsLinked = Entities.SelectMany(o => o.Associations).ToHashSetNew();
+        var allAssociations = edmx.ConceptualModels.Schema.Associations.ToHashSetNew();
         var associationsNotLinked = allAssociations.Where(o => !associationsLinked.Contains(o))
             .OrderBy(o => o.ReferentialConstraint.Principal.Role).ToArray();
         Debug.Assert(navsWithNoAssociation.Count == 0);
@@ -326,9 +330,19 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
             constraint.Dependent.PropertyRefs.Select(o => o.Name).ToArray());
         if (pProps.IsNullOrEmpty() || dProps.IsNullOrEmpty()) return;
         var inverseNavigation =
-            toEndRole.Entity.NavigationProperties.SingleOrDefault(o =>
+            toEndRole.Entity.GetNavigations().SingleOrDefault(o =>
                 o.Relationship == navigation.Relationship && o != navigation);
-        if (inverseNavigation == null || navigation == inverseNavigation) return;
+
+        if (navigation == inverseNavigation) {
+            Console.WriteLine($"Invalid navigation {navigation.Name}: navigation == inverse");
+            return;
+        }
+
+        if (inverseNavigation == null && !navigation.IsPrincipalEnd) {
+            Console.WriteLine($"Invalid navigation {navigation.Name}: inverse cannot be resolved");
+            return; // allow
+        }
+
         var a = new FkAssociation(ass, endRoles, navigation, inverseNavigation,
             new(constraint, pProps, dProps)
         );
@@ -386,7 +400,7 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
 
     private EntityProperty[] GetProperties(EntityType entity, string[] propNames) {
         if (entity == null) throw new ArgumentNullException(nameof(entity));
-        var props = propNames.Select(n => entity.Properties
+        var props = propNames.Select(n => entity.GetProperties()
                 .FirstOrDefault(o => o.Name.EqualsIgnoreCase(n)))
             .Where(o => o != null).ToArray();
         return props;

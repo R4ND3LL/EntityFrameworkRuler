@@ -70,7 +70,7 @@ public class RulerNamingService : IRulerNamingService {
                 var dep = deps?.FirstOrDefault();
                 if (dep == null) yield break;
 
-                var inverseEntity = navigation.InverseNavigation.Entity;
+                var inverseEntity = navigation.InverseEntity;
 
                 // EF methodology for determining names:
                 var dependentEndExistingIdentifiers =

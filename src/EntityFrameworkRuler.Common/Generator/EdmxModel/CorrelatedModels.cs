@@ -66,8 +66,19 @@ public sealed class EntityType : NotifyPropertyChanged {
 
     public IList<EntityProperty> Properties { get; } = new ObservableCollection<EntityProperty>();
 
-    public IEnumerable<EntityPropertyBase> AllProperties =>
-        Properties.OfType<EntityPropertyBase>().Union(NavigationProperties);
+    /// <summary> recursively get properties </summary>
+    public IEnumerable<EntityProperty> GetProperties() {
+        return BaseType != null ? BaseType.GetProperties().Concat(Properties) : Properties;
+    }
+
+    /// <summary> recursively get properties </summary>
+    public IEnumerable<NavigationProperty> GetNavigations() {
+        return BaseType != null ? BaseType.GetNavigations().Concat(NavigationProperties) : NavigationProperties;
+    }
+
+    /// <summary> recursively get all navigations and properties </summary>
+    public IEnumerable<EntityPropertyBase> AllPropertiesAndNavigations =>
+        GetProperties().Cast<EntityPropertyBase>().Union(GetNavigations());
 
     public IList<EndRole> EndRoles { get; } = new ObservableCollection<EndRole>();
     public Schema Schema { get; }
@@ -165,7 +176,7 @@ public sealed class EntityType : NotifyPropertyChanged {
     #endregion
 
 
-    public override string ToString() { return $"Entity: {Name}"; }
+    public override string ToString() { return BaseType != null ? $"Entity: {Name}: {BaseType.Name}" : $"Entity: {Name}"; }
 }
 
 [DebuggerDisplay("{value}")]
@@ -300,6 +311,9 @@ public sealed class NavigationProperty : EntityPropertyBase {
     /// <summary> The navigation property at the other end of this relationship (on the other entity). </summary>
     public NavigationProperty InverseNavigation { get; set; }
 
+    /// <summary> The EntityType at the other end of this relationship. </summary>
+    public EntityType InverseEntity => ToRole?.Entity;
+
     public override string ToString() { return $"NProp: {Name}"; }
 }
 
@@ -337,7 +351,7 @@ public sealed class FkAssociation : AssociationBase {
             var isPrincipal = navigation.FromRoleName == constraint.PrincipalRole;
             var isDependent = navigation.FromRoleName == constraint.DependentRole;
             Debug.Assert(isPrincipal ^ isDependent);
-            navigation.IsDependentEnd = isDependent;
+            Debug.Assert(navigation.IsDependentEnd == isDependent);
             navigation.FkProperties = isDependent ? constraint.DependentProperties : constraint.PrincipalProperties;
         }
     }
@@ -356,13 +370,20 @@ public abstract class AssociationBase : NotifyPropertyChanged {
         if (navigations is not { Length: 2 })
             throw new ArgumentException("Association should have 2 navigations", nameof(navigations));
         foreach (var navigation in navigations) {
+            if (navigation == null) continue;
             Navigations.Add(navigation);
             Debug.Assert(navigation.Association == null);
             navigation.Association = this;
             navigation.ToRole = roles.Single(o => o.Role == navigation.ToRoleName);
             navigation.FromRole = roles.Single(o => o.Role == navigation.FromRoleName);
             navigation.InverseNavigation = navigations.Single(o => o != navigation);
-            Debug.Assert(navigation.InverseNavigation.Entity == navigation.ToRole.Entity);
+            Debug.Assert(navigation.InverseNavigation == null || navigation.InverseNavigation.Entity == navigation.ToRole.Entity);
+
+            var constraint = conceptualAssociation?.ReferentialConstraint;
+            var isPrincipal = navigation.FromRoleName == constraint?.Principal?.Role;
+            var isDependent = navigation.FromRoleName == constraint?.Dependent?.Role;
+            Debug.Assert(isPrincipal ^ isDependent);
+            navigation.IsDependentEnd = isDependent;
         }
 
         Schema = Navigations.FirstOrDefault(o => o.Entity?.Schema != null)?.Entity.Schema ??

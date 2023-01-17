@@ -230,7 +230,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                     // fill in other metadata
                     var inverseNav = navigation.InverseNavigation;
                     var inverseEntity = inverseNav?.Entity;
-                    navigationRule.FkName = navigation.Association?.Name;
+                    navigationRule.FkName = navigation.Association?.Name ?? navigation.ConceptualAssociation?.Name;
                     navigationRule.Multiplicity = navigation.Multiplicity.ToMultiplicityString();
                     navigationRule.ToEntity =
                         inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameIdentifier;
