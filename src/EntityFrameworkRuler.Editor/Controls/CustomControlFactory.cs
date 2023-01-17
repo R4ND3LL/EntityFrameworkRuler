@@ -30,12 +30,15 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
             if (fe is not PropertyTools.Wpf.DataGrid) {
                 c.Background = AppearanceManager.Current.InputBackground;
             }
+
             c.Foreground = AppearanceManager.Current.InputText;
             var ff = AppearanceManager.Current.InputFontFamily;
             if (ff != null) c.FontFamily = ff;
         }
+
         return fe;
     }
+
     protected override FrameworkElement CreateGridControl(PropertyItem property) {
         // Create a custom data grid that hides columns that are not intended for use in the grid control
         MyDataGrid c;
@@ -66,12 +69,14 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
         c.GridLineBrush = AppearanceManager.Current.GrayBrush8;
         return c;
     }
+
     /// <inheritdoc />
     public override ContentControl CreateErrorControl(PropertyItem pi, object instance, Tab tab, PropertyControlFactoryOptions options) {
         var dataErrorInfoInstance = instance as IDataErrorInfo;
         var notifyDataErrorInfoInstance = instance as INotifyDataErrorInfo;
 
-        if (Application.Current.TryFindResource("ValidationErrorTemplateEx") != null) options.ValidationErrorTemplate = (DataTemplate)Application.Current.TryFindResource("ValidationErrorTemplateEx");
+        if (Application.Current.TryFindResource("ValidationErrorTemplateEx") != null)
+            options.ValidationErrorTemplate = (DataTemplate)Application.Current.TryFindResource("ValidationErrorTemplateEx");
 
         var errorControl = new ContentControl {
             ContentTemplate = options.ValidationErrorTemplate,
@@ -94,7 +99,6 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
                 //needed to refresh error control's binding also when error changes (i.e from Error to Warning)
                 errorControl.GetBindingExpression(ContentControl.ContentProperty).UpdateTarget();
             };
-
         }
 
         var visibilityBinding = new Binding(propertyPath) {
@@ -143,7 +147,8 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
 
             //tab.HasWarnings = tab.Groups.Any(g => g.Properties.Any(p => ndei.GetErrors(p.PropertyName).Cast<object>()
             //    .Any(a => a != null && a.GetType() == typeof(ValidationResultEx) && ((ValidationResultEx)a).Severity == Severity.Warning)));
-        } else if (errorInfo is IDataErrorInfo dei) tab.HasErrors = tab.Groups.Any(g => g.Properties.Any(p => !string.IsNullOrEmpty(dei[p.PropertyName])));
+        } else if (errorInfo is IDataErrorInfo dei)
+            tab.HasErrors = tab.Groups.Any(g => g.Properties.Any(p => !string.IsNullOrEmpty(dei[p.PropertyName])));
     }
 
     /// <inheritdoc />
@@ -154,10 +159,11 @@ public sealed class CustomControlFactory : PropertyGridControlFactory {
         }
     }
 }
+
 public sealed class AnnotationDataGrid : MyDataGrid {
     public AnnotationDataGrid() {
         CellDefinitionFactory = new MyCellDefinitionFactory(CellDefinitionFactory, CoerceCellDefinition);
-        //ControlFactory = new MyDataGridControlFactory(ControlFactory, CoerceEditControl);
+        ControlFactory = new MyDataGridControlFactory(ControlFactory, CoerceEditControl);
     }
 
     private CellDefinition CoerceCellDefinition(CellDescriptor descriptor, CellDefinition cellDefinition) {
@@ -165,30 +171,37 @@ public sealed class AnnotationDataGrid : MyDataGrid {
             // will cause combo box to bind to Text property, meaning user can set values outside of items source range.
             scd.IsEditable = true;
         }
+
         return cellDefinition;
     }
 
-    //private FrameworkElement CoerceEditControl(CellDefinition cellDefinition, FrameworkElement edit) { }
+    private FrameworkElement CoerceEditControl(CellDefinition cellDefinition, FrameworkElement edit) {
+        if (cellDefinition.BindingPath == "Value" && cellDefinition is TextCellDefinition) {
+            if (edit is TextBox tb) {
+                tb.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+            }
+        }
+
+        return edit;
+    }
 }
-
-
 
 /// <summary> Custom data grid that hides columns that are not intended for use in the grid control </summary>
 public class MyDataGrid : PropertyTools.Wpf.DataGrid {
     public MyDataGrid() {
     }
 
-
-
     protected override IDataGridOperator CreateOperator() {
         return new MyDataGridOperator(this, base.CreateOperator());
     }
 }
+
 public sealed class MyCellDefinitionFactory : ICellDefinitionFactory {
     private readonly ICellDefinitionFactory cellDefinitionFactory;
     private readonly Func<CellDescriptor, CellDefinition, CellDefinition> coerceCell;
 
-    public MyCellDefinitionFactory(ICellDefinitionFactory cellDefinitionFactory, Func<CellDescriptor, CellDefinition, CellDefinition> coerceCell) {
+    public MyCellDefinitionFactory(ICellDefinitionFactory cellDefinitionFactory,
+        Func<CellDescriptor, CellDefinition, CellDefinition> coerceCell) {
         this.cellDefinitionFactory = cellDefinitionFactory ?? throw new ArgumentNullException(nameof(cellDefinitionFactory));
         this.coerceCell = coerceCell;
     }
@@ -197,11 +210,13 @@ public sealed class MyCellDefinitionFactory : ICellDefinitionFactory {
         return coerceCell.Invoke(d, cellDefinitionFactory.CreateCellDefinition(d));
     }
 }
+
 public sealed class MyDataGridControlFactory : IDataGridControlFactory {
     private readonly IDataGridControlFactory controlFactory;
     private readonly Func<CellDefinition, FrameworkElement, FrameworkElement> coerceEdit;
 
-    public MyDataGridControlFactory(IDataGridControlFactory controlFactory, Func<CellDefinition, FrameworkElement, FrameworkElement> coerceEdit) {
+    public MyDataGridControlFactory(IDataGridControlFactory controlFactory,
+        Func<CellDefinition, FrameworkElement, FrameworkElement> coerceEdit) {
         this.controlFactory = controlFactory ?? throw new ArgumentNullException(nameof(controlFactory));
         this.coerceEdit = coerceEdit;
     }
@@ -231,13 +246,15 @@ public sealed class MyDataGridOperator : IDataGridOperator {
         op.AutoGenerateColumns();
         var remove = new List<PropertyDefinition>();
         foreach (var o in grid.ColumnDefinitions) {
-            if (o.Header is string s && (s.In("Tables", "Columns", "Properties", "Navigations", "UseSchemaName", "Annotations", "AnnotationsDictionary")
+            if (o.Header is string s && (s.In("Tables", "Columns", "Properties", "Navigations", "UseSchemaName", "Annotations",
+                                             "AnnotationsDictionary")
                                          || s.Contains("Regex") || s.Contains("Replace")))
                 remove.Add(o);
             else {
                 o.HorizontalAlignment = HorizontalAlignment.Left;
             }
         }
+
         remove.ForAll(o => grid.ColumnDefinitions.Remove(o));
     }
 

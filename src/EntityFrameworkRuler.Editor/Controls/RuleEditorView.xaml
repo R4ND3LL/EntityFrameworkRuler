@@ -9,6 +9,7 @@
              xmlns:controls="clr-namespace:EntityFrameworkRuler.Editor.Controls"
              xmlns:converters="clr-namespace:EntityFrameworkRuler.Editor.Converters"
              xmlns:models="clr-namespace:EntityFrameworkRuler.Editor.Models"
+             xmlns:rules="clr-namespace:EntityFrameworkRuler.Rules;assembly=EntityFrameworkRuler.Common"
              mc:Ignorable="d"
              MinHeight="450" MinWidth="550"
              d:Height="650" d:Width="950"
@@ -47,7 +48,7 @@
                                        Padding="0" />
                 </Grid>
                 <DataTemplate.Triggers>
-                    <DataTrigger Binding="{Binding Item.NotMapped}" Value="True">
+                    <DataTrigger Binding="{Binding Item.(rules:IRuleItem.NotMapped)}" Value="True">
                         <Setter TargetName="Text" Property="Opacity" Value="0.85" />
                         <Setter TargetName="Text" Property="TextDecorations" Value="Strikethrough" />
                     </DataTrigger>

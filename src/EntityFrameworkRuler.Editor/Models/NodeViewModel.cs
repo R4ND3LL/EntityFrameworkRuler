@@ -178,8 +178,7 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     /// </summary>
     public sealed partial class TreeSelection : ObservableObject {
         [ObservableProperty] private NodeViewModel<T> node;
-
-        partial void OnNodeChanging(NodeViewModel<T> newValue) {
+        partial void OnNodeChanging(NodeViewModel<T> value) {
             if (node != null) {
                 // ensure old selection IsSelected is changed to false otherwise reselection of same node will fail to set the node prop
                 node.IsSelected = false;

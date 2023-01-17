@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using EntityFrameworkRuler.Common.Annotations;
+
 // ReSharper disable MemberCanBeProtected.Global
 
 namespace EntityFrameworkRuler.Rules;
@@ -38,6 +39,11 @@ public abstract class RuleBase : IRuleItem {
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     public bool Mapped => !GetNotMapped();
 
+    /// <summary> Direct access to the Comment annotation.  This property exists to facilitate UI editing. </summary>
+    [IgnoreDataMember, JsonIgnore, XmlIgnore]
+    [DisplayName("Comment"), Category("Mapping"), Description("The comment to be added to the code element via Annotations.")]
+    public string Comment { get => this.GetComment(); set => this.SetComment(value); }
+
     string IRuleItem.GetExpectedEntityFrameworkName() => GetExpectedEntityFrameworkName();
     string IRuleItem.GetNewName() => GetNewName();
     string IRuleItem.GetDbName() => GetDbName();
@@ -69,7 +75,8 @@ public abstract class RuleBase : IRuleItem {
     }
 
     /// <summary> Intended for internal use only. </summary>
-    private static void UpdateAnnotations(AnnotationCollection c, SortedDictionary<string, object> value, Func<object, object> valueCleaner) {
+    private static void UpdateAnnotations(AnnotationCollection c, SortedDictionary<string, object> value,
+        Func<object, object> valueCleaner) {
         if (value?.Count > 0) {
             c.Clear();
             foreach (var kvp in value) c.Add(kvp.Key, valueCleaner(kvp.Value));

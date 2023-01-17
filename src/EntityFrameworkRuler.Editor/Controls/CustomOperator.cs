@@ -83,8 +83,12 @@ public sealed class CustomOperator : PropertyGridOperator {
         switch (pd.Name) {
             case "NotMapped" when instance is DbContextRule:
             case "FilePath" when instance is DbContextRule:
+            case "Comment" when instance is DbContextRule:
+            case "Annotations" when instance is DbContextRule:
             case "Columns" when instance is EntityRule:
             case "Tables" when instance is SchemaRule:
+            case "Comment" when instance is SchemaRule:
+            case "Annotations" when instance is SchemaRule:
             case "Mapped" or "AnnotationsDictionary":
                 return null;
         }
@@ -94,6 +98,12 @@ public sealed class CustomOperator : PropertyGridOperator {
         switch (pd.Name) {
             case "Multiplicity":
                 item.ItemsSource = new[] { "1", "0..1", "*" };
+                break;
+            case "Comment":
+                item.AcceptsReturn = true;
+                item.TextWrapping = TextWrapping.Wrap;
+                item.MinimumHeight = 32;
+                //item.Ver=TextWrapping.Wrap;
                 break;
             case "Annotations":
                 item.IsEasyInsertByKeyboardEnabled = true;
@@ -113,12 +123,12 @@ public sealed class CustomOperator : PropertyGridOperator {
                 });
                 break;
             default: {
-                    if (pd.PropertyType == typeof(RuleModelKind)) {
-                        return null;
-                    }
-
-                    break;
+                if (pd.PropertyType == typeof(RuleModelKind)) {
+                    return null;
                 }
+
+                break;
+            }
         }
 
         return item;
