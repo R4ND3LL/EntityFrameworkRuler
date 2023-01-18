@@ -1056,7 +1056,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     /* Beware, the following error may occur here: The property or navigation 'NewName' cannot be added to the
                      entity type 'TypeName' because a property or navigation with the same name already exists */
                     reporter.WriteVerbose(
-                        $"RULED: Correcting navigation {navigation.DeclaringEntityType.Name}.{navigation.Name} to '{newName}'...");
+                        $"RULED: Correcting navigation {navigation.DeclaringEntityType.Name}.{navigation.Name} name to '{newName}'...");
                     if (thisIsPrincipal) {
                         var existingNav = foreignKey.PrincipalEntityType.GetNavigations().FirstOrDefault(o => o.Name == newName);
                         if (existingNav == null) {
@@ -1088,7 +1088,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
                     var v = annotation.GetActualValue();
                     reporter.WriteVerbose(
-                        $"RULED: Applying navigation {entityType.Name}.{navigation.Name} annotation '{annotation.Key}' value '{v?.ToString()?.Truncate(20)}'.");
+                        $"RULED: Applying navigation {entityType.Name}.{navigation.Name} annotation '{annotation.Key}' value '{v?.ToString()?.Truncate(15)}'.");
                     navigation.SetOrRemoveAnnotation(annotation.Key, v);
                 }
             }
