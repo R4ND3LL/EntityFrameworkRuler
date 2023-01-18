@@ -68,6 +68,12 @@ public static class StringExtensions {
         return string.Join(separator, strs);
     }
 
+    /// <summary> Csv values to array </summary>
+    [DebuggerStepThrough]
+    public static string[] CsvToArray(this string value) {
+        return value?.Split(',').Select(o => o?.Trim()).Where(o => o.HasNonWhiteSpace()).ToArray() ?? Array.Empty<string>();
+    }
+
     /// <summary> Take the first string that is not null or empty </summary>
     [DebuggerStepThrough]
     public static string Coalesce(this string str, params string[] strings) {

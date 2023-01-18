@@ -352,6 +352,7 @@ public sealed class FkAssociation : AssociationBase {
             var isDependent = navigation.FromRoleName == constraint.DependentRole;
             Debug.Assert(isPrincipal ^ isDependent);
             Debug.Assert(navigation.IsDependentEnd == isDependent);
+            navigation.IsDependentEnd = isDependent;
             navigation.FkProperties = isDependent ? constraint.DependentProperties : constraint.PrincipalProperties;
         }
     }
@@ -378,10 +379,32 @@ public abstract class AssociationBase : NotifyPropertyChanged {
             navigation.FromRole = roles.Single(o => o.Role == navigation.FromRoleName);
             navigation.InverseNavigation = navigations.Single(o => o != navigation);
             Debug.Assert(navigation.InverseNavigation == null || navigation.InverseNavigation.Entity == navigation.ToRole.Entity);
+        }
 
+        foreach (var navigation in Navigations) {
             var constraint = conceptualAssociation?.ReferentialConstraint;
-            var isPrincipal = navigation.FromRoleName == constraint?.Principal?.Role;
-            var isDependent = navigation.FromRoleName == constraint?.Dependent?.Role;
+            var isMany = navigation.Multiplicity == Multiplicity.Many;
+            var isManyToMany = isMany && navigation.InverseNavigation?.Multiplicity == Multiplicity.Many;
+            var isPrincipal = isMany || navigation.FromRoleName == constraint?.Principal?.Role;
+            var isDependent = !isManyToMany && navigation.FromRoleName == constraint?.Dependent?.Role;
+
+            if (!(isPrincipal ^ isDependent)) {
+                // inconclusive.  check multiplicity for a clue
+                var inverseIsMany = navigation.InverseNavigation?.Multiplicity == Multiplicity.Many;
+                var inverseIsOne = navigation.InverseNavigation?.Multiplicity.In(Multiplicity.One, Multiplicity.ZeroOne) == true;
+                var thisIsOne = navigation.Multiplicity.In(Multiplicity.One, Multiplicity.ZeroOne);
+
+                if (isMany && inverseIsOne) {
+                    // collections are always principal
+                    isDependent = false;
+                    isPrincipal = true;
+                } else if (thisIsOne && inverseIsMany) {
+                    // collection inverse is always dependent
+                    isDependent = true;
+                    isPrincipal = false;
+                }
+            }
+
             Debug.Assert(isPrincipal ^ isDependent);
             navigation.IsDependentEnd = isDependent;
         }

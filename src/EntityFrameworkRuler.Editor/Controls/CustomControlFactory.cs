@@ -246,7 +246,9 @@ public sealed class MyDataGridOperator : IDataGridOperator {
         op.AutoGenerateColumns();
         var remove = new List<PropertyDefinition>();
         foreach (var o in grid.ColumnDefinitions) {
-            if (o.Header is string s && (s.In("Tables", "Columns", "Properties", "Navigations", "UseSchemaName", "Annotations",
+            if (o.Header is string s && (s.In("Tables", "Columns", "Properties", "Navigations",
+                                             "UseSchemaName", "Annotations", "Mapped",
+                                             "PrincipalProperties", "DependentProperties", "DiscriminatorConditions",
                                              "AnnotationsDictionary")
                                          || s.Contains("Regex") || s.Contains("Replace")))
                 remove.Add(o);

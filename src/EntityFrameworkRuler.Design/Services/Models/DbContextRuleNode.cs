@@ -63,6 +63,7 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public EntityRuleNode TryResolveRuleForEntityName(string entityName) {
+        if (entityName.IsNullOrWhiteSpace()) return null;
         return entityRulesByFinalName.TryGetValue(entityName);
     }
 

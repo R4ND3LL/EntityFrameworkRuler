@@ -233,13 +233,16 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                     navigationRule.FkName = navigation.Association?.Name ?? navigation.ConceptualAssociation?.Name;
                     navigationRule.Multiplicity = navigation.Multiplicity.ToMultiplicityString();
                     navigationRule.ToEntity =
-                        inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameIdentifier;
+                        inverseEntity?.ConceptualEntity?.Name ?? inverseEntity?.StorageNameIdentifier ??
+                        navigation.ToRole?.Entity?.Name ?? navigation.ToRoleName;
                     navigationRule.IsPrincipal = navigation.IsPrincipalEnd;
 
                     comment = navigation.ConceptualNavigationProperty?.Documentation?.GetComment();
                     if (comment.HasNonWhiteSpace()) navigationRule.SetComment(comment);
 
 #if DEBUG
+                    if (Debugger.IsAttached && navigationRule.ToEntity.IsNullOrWhiteSpace())
+                        Debugger.Break();
                     if (Debugger.IsAttached && navigationRule.FkName.IsNullOrWhiteSpace()
                                             && (navigation.Multiplicity != Multiplicity.Many ||
                                                 navigation.InverseNavigation?.Multiplicity != Multiplicity.Many))

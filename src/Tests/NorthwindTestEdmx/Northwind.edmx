@@ -962,7 +962,6 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <Property Name="TerritoryDescription" Type="String" MaxLength="50" FixedLength="true" Unicode="true" Nullable="false" />
           <Property Name="RegionID" Type="Int32" Nullable="false" />
           <NavigationProperty Name="RegionCustom" Relationship="Self.FK_Territories_Region" FromRole="Territories" ToRole="Region" />
-          <NavigationProperty Name="Employees" Relationship="Self.EmployeeTerritories" FromRole="Territories" ToRole="Employees" />
         </EntityType>
         <Association Name="FK_Products_Categories">
           <End Role="Categories" Type="Self.Category" Multiplicity="0..1" />

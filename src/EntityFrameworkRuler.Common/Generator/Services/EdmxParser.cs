@@ -1,4 +1,4 @@
-﻿#define DEBUGPARSER
+﻿#define DEBUGPARSER2
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
@@ -307,10 +307,18 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
         if (inverseEndProperty == null) return;
         var inverseEntity = toEndRole?.Entity;
         var inverseNavigation =
-                inverseEntity?.NavigationProperties?.FirstOrDefault(o => o.Name == inverseEndProperty.Name) ??
-                inverseEntity?.NavigationProperties?.FirstOrDefault(o => o.Relationship == navigation.Relationship)
+                inverseEntity?.GetNavigations()?.FirstOrDefault(o => o.Name == inverseEndProperty.Name) ??
+                inverseEntity?.GetNavigations()?.FirstOrDefault(o => o.Relationship == navigation.Relationship)
             ;
-        if (inverseNavigation == null || navigation == inverseNavigation) return;
+        if (navigation == inverseNavigation) {
+            Console.WriteLine($"Invalid design navigation {navigation.Name}: navigation == inverse");
+            return;
+        }
+
+        if (inverseNavigation == null && !navigation.IsPrincipalEnd) {
+            Console.WriteLine($"Invalid design navigation {navigation.Name}: inverse cannot be resolved");
+            return; // allow
+        }
         // Note, for a many-to-many, there are no dependents in the end entities. Rather, the FKs are all in the junction,
         // which has no conceptual representation.  Therefore, the ScalarProperties in the mapping ends refer to the junction only.
         var a = new DesignAssociation(ass, endRoles, navigation, inverseNavigation);

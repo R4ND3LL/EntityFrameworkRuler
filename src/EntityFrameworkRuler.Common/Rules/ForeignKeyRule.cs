@@ -2,6 +2,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
+using System.Xml.Serialization;
 
 namespace EntityFrameworkRuler.Rules;
 
@@ -25,6 +27,11 @@ public sealed class ForeignKeyRule : RuleBase, ISchemaRule {
     [DisplayName("Principal Properties"), Category("Mapping"), Description("Principal entity properties.  Required."), Required]
     public string[] PrincipalProperties { get; set; }
 
+    /// <summary> Principal entity properties </summary>
+    [IgnoreDataMember, JsonIgnore, XmlIgnore]
+    [DisplayName("Principal Properties"), Category("Mapping"), Description("Principal entity properties.  Required."), Required]
+    public string PrincipalPropertiesCsv { get => PrincipalProperties.Join(); set => PrincipalProperties = value.CsvToArray(); }
+
     /// <summary> Dependent entity name </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = true, Order = 4)]
     [DisplayName("Dependent Entity"), Category("Mapping"), Description("Dependent entity name.  Required."), Required]
@@ -34,6 +41,11 @@ public sealed class ForeignKeyRule : RuleBase, ISchemaRule {
     [DataMember(EmitDefaultValue = false, IsRequired = true, Order = 5)]
     [DisplayName("Dependent Properties"), Category("Mapping"), Description("Dependent entity properties.  Required."), Required]
     public string[] DependentProperties { get; set; }
+
+    /// <summary> Dependent entity properties </summary>
+    [IgnoreDataMember, JsonIgnore, XmlIgnore]
+    [DisplayName("Dependent Properties"), Category("Mapping"), Description("Dependent entity properties.  Required."), Required]
+    public string DependentPropertiesCsv { get => DependentProperties.Join(); set => DependentProperties = value.CsvToArray(); }
 
     /// <inheritdoc />
     protected override string GetNewName() => null;

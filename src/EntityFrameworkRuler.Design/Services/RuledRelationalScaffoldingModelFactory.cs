@@ -42,6 +42,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     private readonly MethodInfo addNavigationPropertiesMethod;
     private readonly MethodInfo visitTableMethod;
     private readonly MethodInfo getEntityTypeNameMethod;
+    private readonly MethodInfo assignOnDeleteActionMethod;
+
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected readonly HashSet<string> OmittedTables = new();
@@ -94,6 +96,10 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         // protected virtual EntityTypeBuilder? VisitTable(ModelBuilder modelBuilder, DatabaseTable table)
         visitTableMethod = GetMethodOrLog("VisitTable", o => t.GetMethod<ModelBuilder, DatabaseTable>(o));
+
+        // private static void AssignOnDeleteAction(DatabaseForeignKey databaseForeignKey, IMutableForeignKey foreignKey)
+        assignOnDeleteActionMethod =
+            GetMethodOrLog("AssignOnDeleteAction", o => t.GetStaticMethod<DatabaseForeignKey, IMutableForeignKey>(o));
 
         MethodInfo GetMethodOrLog(string name, Func<string, MethodInfo> getter) {
             var m = getter(name);
@@ -636,8 +642,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
                 // force simple ManyToMany junctions to be generated as entities
                 reporter.WriteInformation($"RULED: Simple many-to-many junctions in {schema} are being forced to generate entities.");
-                foreach (var fk in schemaForeignKeys)
-                    InvokeVisitForeignKey(modelBuilder, fk);
+                foreach (var fk in schemaForeignKeys) InvokeVisitForeignKey(modelBuilder, fk);
 
                 foreach (var entityType in modelBuilder.Model.GetEntityTypes())
                 foreach (var foreignKey in entityType.GetForeignKeys())
@@ -648,6 +653,169 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         } finally {
             RemoveOmittedForeignKeys();
             //TestNavigations(modelBuilder);
+        }
+    }
+
+    private IMutableForeignKey VisitForeignKey(ModelBuilder modelBuilder, DatabaseForeignKey fk, Func<IMutableForeignKey> baseCall) {
+        var newFk = baseCall();
+        newFk = ValidateForeignKey(modelBuilder, fk, newFk);
+        return newFk;
+    }
+
+    private IMutableForeignKey ValidateForeignKey(ModelBuilder modelBuilder, DatabaseForeignKey foreignKey,
+        IMutableForeignKey entityForeignKey) {
+
+        // if the FK was intended to be placed on a design time entity such as a split or derived type, then we may need to
+        // remove and re-add the FK using the correct entity types.  load the rule and find out.
+        var addedForeignKeyRule = dbContextRule.ForeignKeys.GetByFinalName(foreignKey.Name);
+        if (addedForeignKeyRule != null) {
+            if (entityForeignKey.PrincipalEntityType.Name != addedForeignKeyRule.Rule.PrincipalEntity ||
+                entityForeignKey.DeclaringEntityType.Name != addedForeignKeyRule.Rule.DependentEntity) {
+                entityForeignKey = RemapForeignKey(modelBuilder, foreignKey, entityForeignKey, addedForeignKeyRule);
+            }
+        }
+
+        return entityForeignKey;
+    }
+
+    private IMutableForeignKey RemapForeignKey(ModelBuilder modelBuilder,
+        DatabaseForeignKey foreignKey,
+        IMutableForeignKey entityForeignKey,
+        ForeignKeyRuleNode addedForeignKeyRule) {
+        // the FK definition states that it should map to different entities than the current.
+        // could be naming problem or could be table splitting/derived table issue
+        // verify that entities actually exist by the names identified on the FK.  if so, the mapping is wrong!
+        // if the underlying tables are equivalent in each case, then the FK wiring is correct, it just got mapped to the wrong
+        // entities.  then we can remove the FK and re-add against the correct entity types.
+        var dependentEntityRule = dbContextRule.TryResolveRuleForEntityName(addedForeignKeyRule.Rule.DependentEntity);
+        var principalEntityRule = dbContextRule.TryResolveRuleForEntityName(addedForeignKeyRule.Rule.PrincipalEntity);
+        var dependentNavRule = dependentEntityRule?.Navigations.FirstOrDefault(o => !o.IsPrincipal && o.FkName == foreignKey.Name);
+        var principalNavRule = principalEntityRule?.Navigations.FirstOrDefault(o => o.IsPrincipal && o.FkName == foreignKey.Name);
+        var currentPrincipal = entityForeignKey.PrincipalEntityType;
+        var currentDependent = entityForeignKey.DeclaringEntityType;
+        var principalEntityType = modelBuilder.Model.FindEntityType(addedForeignKeyRule.Rule.PrincipalEntity);
+        var dependentEntityType = modelBuilder.Model.FindEntityType(addedForeignKeyRule.Rule.DependentEntity);
+        if (principalEntityType == null || dependentEntityType == null) {
+            reporter.WriteWarning($"Unable to correctly map FK {foreignKey.Name} because the expected entities are not in the model");
+            return RemoveForeignKey();
+        }
+
+        if (principalEntityType == currentPrincipal && dependentEntityType == currentDependent) {
+            return entityForeignKey; // it is mapped correctly
+        }
+
+        // the targets actually exist, and dont match the current.
+        var rootPrincipal = GetRootType(principalEntityType);
+        var rootDependent = GetRootType(dependentEntityType);
+        var tgtPrincipalTable = rootPrincipal.GetTableName();
+        var tgtDependentTable = rootDependent.GetTableName();
+        var curPrincipalTable = GetRootType(currentPrincipal).GetTableName();
+        var curDependentTable = GetRootType(currentDependent).GetTableName();
+        if (tgtPrincipalTable != curPrincipalTable || tgtDependentTable != curDependentTable) {
+            reporter.WriteWarning(
+                $"Unable to correctly map FK {foreignKey.Name} because the actual FK is not mapped to expected base tables");
+            return entityForeignKey;
+        }
+
+        // tables are a match, which verifies that the FK wiring was good and entity selection was not.
+        // we can now begin remapping the FK properties
+        var dependentProperties = dependentEntityType
+            .GetPropertiesFromDbColumns(foreignKey.Columns)
+            .ToList()
+            .AsReadOnly();
+
+        if (dependentProperties.Any(o => o == null)) {
+            reporter.WriteWarning(
+                $"Unable to correctly map FK {foreignKey.Name} because dependent properties cannot be resolved on entity {dependentEntityType.Name}");
+            return RemoveForeignKey();
+        }
+
+        var principalPropertiesMap = foreignKey.PrincipalColumns
+            .Select(
+                fc => (property: principalEntityType.GetPropertyFromDbColumn(fc.Name), column: fc)).ToList();
+        if (principalPropertiesMap.Any(o => o.property == null)) {
+            reporter.WriteWarning(
+                $"Unable to correctly map FK {foreignKey.Name} because principal properties cannot be resolved on entity {principalEntityType.Name}");
+            return RemoveForeignKey();
+        }
+
+        var principalProperties = principalPropertiesMap
+            .Select(tuple => tuple.property)
+            .ToList();
+
+        var principalKey = principalEntityType.FindKey(principalProperties);
+        if (principalKey == null) {
+            var index = principalEntityType
+                .GetIndexes()
+                .FirstOrDefault(i => i.Properties.SequenceEqual(principalProperties) && i.IsUnique);
+            if (index != null) {
+                // ensure all principal properties are non-nullable even if the columns
+                // are nullable on the database. EF's concept of a key requires this.
+                var nullablePrincipalProperties =
+                    principalPropertiesMap.Where(tuple => tuple.property.IsNullable).ToList();
+                if (nullablePrincipalProperties.Count > 0) {
+                    reporter.WriteWarning(
+                        $"The principal end of the foreign key {foreignKey.Name} has nullable columns. Altering properties now...");
+                    nullablePrincipalProperties.ForEach(tuple => tuple.property.IsNullable = false);
+                }
+
+                principalKey = principalEntityType.AddKey(principalProperties);
+            } else {
+                //var principalColumns = foreignKey.PrincipalColumns.Select(c => c.Name).ToList();
+                reporter.WriteWarning($"Could not scaffold the foreign key {foreignKey.Name}.  The principal key was not found");
+                return RemoveForeignKey();
+            }
+        }
+
+        var empty = RemoveForeignKey();
+        if (empty != null) {
+            reporter.WriteWarning(
+                $"Could not correctly map foreign key {foreignKey.Name}.  The incorrect mapping could not be removed from the entity");
+            return empty; // could not be removed? we cannot continue
+        }
+
+        var existingForeignKey = dependentEntityType.FindForeignKey(dependentProperties, principalKey, principalEntityType);
+        if (existingForeignKey is not null) {
+            reporter.WriteWarning($"Could not scaffold the foreign key {foreignKey.Name}.  One with the same mapping already exists");
+            return RemoveForeignKey();
+        }
+
+        var newForeignKey = dependentEntityType.AddForeignKey(
+            dependentProperties, principalKey, principalEntityType);
+
+        var dependentKey = dependentEntityType.FindKey(dependentProperties);
+        var dependentIndexes = dependentEntityType.GetIndexes()
+            .Where(i => i.Properties.SequenceEqual(dependentProperties));
+        newForeignKey.IsUnique = dependentKey != null
+                                 || dependentIndexes.Any(i => i.IsUnique);
+
+        if (!string.IsNullOrEmpty(foreignKey.Name)
+            && foreignKey.Name != newForeignKey.GetDefaultName()) {
+            newForeignKey.SetConstraintName(foreignKey.Name);
+        }
+
+        InvokeAssignOnDeleteAction(foreignKey, newForeignKey);
+
+        newForeignKey.AddAnnotations(foreignKey.GetAnnotations());
+
+        return newForeignKey;
+
+
+        IMutableEntityType GetRootType(IMutableEntityType entityType) {
+            return entityType.GetAllBaseTypes().FirstOrDefault() ?? entityType;
+        }
+
+        IMutableForeignKey RemoveForeignKey() {
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+            if (addedForeignKeyRule == null || currentDependent == null) return entityForeignKey;
+
+            var removed = currentDependent.RemoveForeignKey(entityForeignKey);
+            Debug.Assert(removed == entityForeignKey);
+            return removed == entityForeignKey ? null : entityForeignKey;
+        }
+
+        void InvokeAssignOnDeleteAction(DatabaseForeignKey databaseForeignKey, IMutableForeignKey mutableForeignKey) {
+            assignOnDeleteActionMethod?.Invoke(null, new object[] { databaseForeignKey, mutableForeignKey });
         }
     }
 
@@ -801,10 +969,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (table is not DatabaseView view || !(table?.PrimaryKey?.Columns.Count > 0)) return false;
 
         // Even though we applied a key to the view, EF does not apply it to the entity. Attempt to do so now.
-        var propsByDbName = e.GetProperties().Select(o => (dbName: o.GetColumnNameNoDefault(), prop: o))
-            .Where(o => o.dbName.HasNonWhiteSpace())
-            .ToDictionary(o => o.dbName, o => o.prop);
-        var props = table.PrimaryKey.Columns.Select(o => propsByDbName.TryGetValue(o.Name)).ToArray();
+        var props = e.GetPropertiesFromDbColumns(table.PrimaryKey.Columns);
         if (props.Length <= 0 || props.Any(o => o == null)) return false;
 
         e.IsKeyless = false;
@@ -814,6 +979,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 $"RULED: Adding primary key to entity {e.Name}: {props.Select(o => o.Name).Join()}");
         return true;
     }
+
 
     private void RemoveOmittedForeignKeys() {
         if (OmittedForeignKeys.Count <= 0) return;
@@ -855,7 +1021,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (foreignKey.DependentToPrincipal == null || foreignKey.PrincipalToDependent == null) {
             // technically, EF supports a single ended navigation (no inverse) but the T4s are built to iterate FKs
             // and generate navigations for both ends of the relation.  For this reason, if we omit one navigation then
-            // an Null-Ref error will occur because the T4 code expects both ends to be set at all times.
+            // Null-Ref errors will occur because the T4 code expects both ends to be set at all times.
             // We can mandate changes to the T4s such that each end is checked for null first, but for simplicity sake,
             // if one end is not defined, we will eliminate the entire FK.
             // Note, the principal end may not be defined when foreignKey.DeclaringEntityType.IsKeyless.
@@ -878,19 +1044,31 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 thisIsPrincipal,
                 isManyToMany);
 
+            //var fkDefinition = dbContextRule.ForeignKeys.GetByFinalName(fkName);
+
             var navEntity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
             Debug.Assert(navEntity == entityType);
 
             if (navigationRule?.Rule != null) {
                 // validate name.  pluralizer often changes custom names
-                var nn = navigationRule.Rule.NewName.NullIfEmpty()?.Trim();
-                if (nn != null && nn != navigation.Name) {
+                var newName = navigationRule.Rule.NewName.NullIfEmpty()?.Trim();
+                if (newName != null && newName != navigation.Name) {
+                    /* Beware, the following error may occur here: The property or navigation 'NewName' cannot be added to the
+                     entity type 'TypeName' because a property or navigation with the same name already exists */
+                    reporter.WriteVerbose(
+                        $"RULED: Correcting navigation {navigation.DeclaringEntityType.Name}.{navigation.Name} to '{newName}'...");
                     if (thisIsPrincipal) {
-                        foreignKey.SetPrincipalToDependent((MemberInfo)null);
-                        navigation = foreignKey.SetPrincipalToDependent(nn);
+                        var existingNav = foreignKey.PrincipalEntityType.GetNavigations().FirstOrDefault(o => o.Name == newName);
+                        if (existingNav == null) {
+                            foreignKey.SetPrincipalToDependent((MemberInfo)null);
+                            navigation = foreignKey.SetPrincipalToDependent(newName);
+                        }
                     } else {
-                        foreignKey.SetDependentToPrincipal((MemberInfo)null);
-                        navigation = foreignKey.SetDependentToPrincipal(nn);
+                        var existingNav = foreignKey.DeclaringEntityType.GetNavigations().FirstOrDefault(o => o.Name == newName);
+                        if (existingNav == null) {
+                            foreignKey.SetDependentToPrincipal((MemberInfo)null);
+                            navigation = foreignKey.SetDependentToPrincipal(newName);
+                        }
                     }
                 }
             }
@@ -1006,6 +1184,18 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
 
                 var response = VisitForeignKeys(mb, fks, BaseCall);
+                invocation.ReturnValue = response;
+                break;
+            }
+            case "VisitForeignKey" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
+                                        invocation.Arguments[1] is DatabaseForeignKey fk: {
+                IMutableForeignKey BaseCall() {
+                    //invocation.SetArgumentValue(1, databaseForeignKeys);
+                    invocation.Proceed();
+                    return (IMutableForeignKey)invocation.ReturnValue;
+                }
+
+                var response = VisitForeignKey(mb, fk, BaseCall);
                 invocation.ReturnValue = response;
                 break;
             }

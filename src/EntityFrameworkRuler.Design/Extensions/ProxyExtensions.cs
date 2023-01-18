@@ -40,14 +40,32 @@ public static class ProxyExtensions {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static MethodInfo GetStaticMethod<TArg1>(this Type t, string name,
+        BindingFlags flags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public) {
+        return t.GetMethod(name, flags, null, new[] { typeof(TArg1) }, null);
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static MethodInfo GetMethod<TArg1, TArg2>(this Type t, string name,
         BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public) {
         return t.GetMethod(name, flags, null, new[] { typeof(TArg1), typeof(TArg2) }, null);
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static MethodInfo GetStaticMethod<TArg1, TArg2>(this Type t, string name,
+        BindingFlags flags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public) {
+        return t.GetMethod(name, flags, null, new[] { typeof(TArg1), typeof(TArg2) }, null);
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static MethodInfo GetMethod<TArg1, TArg2, TArg3>(this Type t, string name,
         BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public) {
+        return t.GetMethod(name, flags, null, new[] { typeof(TArg1), typeof(TArg2), typeof(TArg3) }, null);
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static MethodInfo GetStaticMethod<TArg1, TArg2, TArg3>(this Type t, string name,
+        BindingFlags flags = BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public) {
         return t.GetMethod(name, flags, null, new[] { typeof(TArg1), typeof(TArg2), typeof(TArg3) }, null);
     }
 }

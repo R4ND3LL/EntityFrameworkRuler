@@ -19,10 +19,12 @@
             {
               "Name": "ProductID",
               "PropertyName": "ProductId",
-              "NewName": "ProductID"
+              "NewName": "ProductID",
+              "IsKey": true
             },
             {
-              "Name": "ProductName"
+              "Name": "ProductName",
+              "IsKey": true
             },
             {
               "Name": "SupplierID",
@@ -51,10 +53,12 @@
               "Name": "ReorderLevel"
             },
             {
-              "Name": "Discontinued"
+              "Name": "Discontinued",
+              "IsKey": true
             },
             {
-              "Name": "CategoryName"
+              "Name": "CategoryName",
+              "IsKey": true
             }
           ]
         },
@@ -125,10 +129,7 @@
               }
             },
             {
-              "Name": "CategoryName",
-              "Annotations": {
-                "Relational:Comment": "Test comment for CategoryName"
-              }
+              "Name": "CategoryName"
             },
             {
               "Name": "Description"
@@ -161,7 +162,8 @@
           "IncludeUnknownColumns": false,
           "Properties": [
             {
-              "Name": "CategoryName"
+              "Name": "CategoryName",
+              "IsKey": true
             },
             {
               "Name": "CategorySales"
@@ -177,10 +179,12 @@
             {
               "Name": "ProductID",
               "PropertyName": "ProductId",
-              "NewName": "ProductID"
+              "NewName": "ProductID",
+              "IsKey": true
             },
             {
-              "Name": "ProductName"
+              "Name": "ProductName",
+              "IsKey": true
             }
           ]
         },
@@ -266,13 +270,15 @@
               "Name": "City"
             },
             {
-              "Name": "CompanyName"
+              "Name": "CompanyName",
+              "IsKey": true
             },
             {
               "Name": "ContactName"
             },
             {
-              "Name": "Relationship"
+              "Name": "Relationship",
+              "IsKey": true
             }
           ]
         },
@@ -506,7 +512,8 @@
               "NewName": "CustomerID"
             },
             {
-              "Name": "CustomerName"
+              "Name": "CustomerName",
+              "IsKey": true
             },
             {
               "Name": "Address"
@@ -525,12 +532,14 @@
               "Name": "Country"
             },
             {
-              "Name": "Salesperson"
+              "Name": "Salesperson",
+              "IsKey": true
             },
             {
               "Name": "OrderID",
               "PropertyName": "OrderId",
-              "NewName": "OrderID"
+              "NewName": "OrderID",
+              "IsKey": true
             },
             {
               "Name": "OrderDate"
@@ -542,25 +551,31 @@
               "Name": "ShippedDate"
             },
             {
-              "Name": "ShipperName"
+              "Name": "ShipperName",
+              "IsKey": true
             },
             {
               "Name": "ProductID",
               "PropertyName": "ProductId",
-              "NewName": "ProductID"
+              "NewName": "ProductID",
+              "IsKey": true
             },
             {
-              "Name": "ProductName"
+              "Name": "ProductName",
+              "IsKey": true
             },
             {
-              "Name": "UnitPrice"
+              "Name": "UnitPrice",
+              "IsKey": true
             },
             {
-              "Name": "Quantity"
+              "Name": "Quantity",
+              "IsKey": true
             },
             {
               "Name": "Discount",
-              "NewName": "DiscountCustom"
+              "NewName": "DiscountCustom",
+              "IsKey": true
             },
             {
               "Name": "ExtendedPrice"
@@ -712,26 +727,32 @@
             {
               "Name": "OrderID",
               "PropertyName": "OrderId",
-              "NewName": "OrderID"
+              "NewName": "OrderID",
+              "IsKey": true
             },
             {
               "Name": "ProductID",
               "PropertyName": "ProductId",
-              "NewName": "ProductID"
+              "NewName": "ProductID",
+              "IsKey": true
             },
             {
-              "Name": "ProductName"
+              "Name": "ProductName",
+              "IsKey": true
             },
             {
               "Name": "UnitPrice",
-              "NewName": "UnitPriceCustom"
+              "NewName": "UnitPriceCustom",
+              "IsKey": true
             },
             {
-              "Name": "Quantity"
+              "Name": "Quantity",
+              "IsKey": true
             },
             {
               "Name": "Discount",
-              "NewName": "DiscountCustom"
+              "NewName": "DiscountCustom",
+              "IsKey": true
             },
             {
               "Name": "ExtendedPrice"
@@ -747,7 +768,8 @@
             {
               "Name": "OrderID",
               "PropertyName": "OrderId",
-              "NewName": "OrderID"
+              "NewName": "OrderID",
+              "IsKey": true
             },
             {
               "Name": "Subtotal"
@@ -763,7 +785,8 @@
             {
               "Name": "OrderID",
               "PropertyName": "OrderId",
-              "NewName": "OrderID"
+              "NewName": "OrderID",
+              "IsKey": true
             },
             {
               "Name": "CustomerID",
@@ -809,7 +832,8 @@
               "Name": "ShipCountry"
             },
             {
-              "Name": "CompanyName"
+              "Name": "CompanyName",
+              "IsKey": true
             },
             {
               "Name": "Address"
@@ -903,10 +927,12 @@
           "IncludeUnknownColumns": false,
           "Properties": [
             {
-              "Name": "CategoryName"
+              "Name": "CategoryName",
+              "IsKey": true
             },
             {
-              "Name": "ProductName"
+              "Name": "ProductName",
+              "IsKey": true
             },
             {
               "Name": "ProductSales"
@@ -920,7 +946,8 @@
           "IncludeUnknownColumns": false,
           "Properties": [
             {
-              "Name": "ProductName"
+              "Name": "ProductName",
+              "IsKey": true
             },
             {
               "Name": "UnitPrice"
@@ -935,10 +962,12 @@
           "Properties": [
             {
               "Name": "CategoryName",
-              "NewName": "CategoryNameCustom"
+              "NewName": "CategoryNameCustom",
+              "IsKey": true
             },
             {
-              "Name": "ProductName"
+              "Name": "ProductName",
+              "IsKey": true
             },
             {
               "Name": "QuantityPerUnit"
@@ -949,7 +978,8 @@
               "NewType": "NorthwindModel.UnitsInStockEnum"
             },
             {
-              "Name": "Discontinued"
+              "Name": "Discontinued",
+              "IsKey": true
             }
           ]
         },
@@ -987,13 +1017,16 @@
             {
               "Name": "CategoryID",
               "PropertyName": "CategoryId",
-              "NewName": "CategoryID"
+              "NewName": "CategoryID",
+              "IsKey": true
             },
             {
-              "Name": "CategoryName"
+              "Name": "CategoryName",
+              "IsKey": true
             },
             {
-              "Name": "ProductName"
+              "Name": "ProductName",
+              "IsKey": true
             },
             {
               "Name": "ProductSales"
@@ -1012,11 +1045,13 @@
             {
               "Name": "OrderID",
               "PropertyName": "OrderId",
-              "NewName": "OrderIDCustom"
+              "NewName": "OrderIDCustom",
+              "IsKey": true
             },
             {
               "Name": "CompanyName",
-              "NewName": "CompanyNameCustom"
+              "NewName": "CompanyNameCustom",
+              "IsKey": true
             },
             {
               "Name": "ShippedDate",
@@ -1065,7 +1100,8 @@
             {
               "Name": "OrderID",
               "PropertyName": "OrderId",
-              "NewName": "OrderID"
+              "NewName": "OrderID",
+              "IsKey": true
             },
             {
               "Name": "Subtotal"
@@ -1084,7 +1120,8 @@
             {
               "Name": "OrderID",
               "PropertyName": "OrderId",
-              "NewName": "OrderID"
+              "NewName": "OrderID",
+              "IsKey": true
             },
             {
               "Name": "Subtotal"
@@ -1174,17 +1211,22 @@
               "FkName": "FK_Territories_Region",
               "ToEntity": "RegionCustom",
               "Multiplicity": "1"
-            },
-            {
-              "Name": null,
-              "NewName": "Employees",
-              "FkName": "EmployeeTerritories",
-              "ToEntity": "Employee",
-              "IsPrincipal": true,
-              "Multiplicity": "*"
             }
           ]
         }
+      ]
+    }
+  ],
+  "ForeignKeys": [
+    {
+      "Name": "EmployeeEmployeeBrief",
+      "PrincipalEntity": "Employee",
+      "PrincipalProperties": [
+        "EmployeeID"
+      ],
+      "DependentEntity": "EmployeeBrief",
+      "DependentProperties": [
+        "EmployeeID"
       ]
     }
   ]
