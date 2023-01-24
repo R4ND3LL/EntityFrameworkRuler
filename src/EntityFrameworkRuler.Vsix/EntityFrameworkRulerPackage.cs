@@ -160,6 +160,7 @@ internal static class VsixAssemblyResolver {
             assembly = Assembly.Load(requestedAssembly.Name);
         } catch (Exception ex) {
             Debug.WriteLine("AssemblyResolve error: " + ex.Message);
+            ex.Log("AssemblyResolve error");
         }
 
         AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;

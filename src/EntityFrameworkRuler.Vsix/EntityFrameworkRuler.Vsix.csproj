@@ -8,7 +8,7 @@
     </NuGetPackageImportStamp>
     <UseCodebase>true</UseCodebase>
     <TargetFrameworkProfile />
-    <UICulture>en</UICulture>
+<!--    <UICulture>en-US</UICulture>-->
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Resources\crown.ico</ApplicationIcon>
