@@ -97,7 +97,7 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
     public IList<EntityRule> Tables { get => Entities; set => Entities = value; }
 
     /// <inheritdoc />
-    protected override string GetDbName() => SchemaName;
+    protected override string GetDbName() => SchemaName.EmptyIfNullOrWhitespace();
 
     /// <inheritdoc />
     protected override string GetNewName() => null;
@@ -107,7 +107,7 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
 
     /// <inheritdoc />
     protected override void SetFinalName(string value) {
-        SchemaName = value;
+        SchemaName = value.EmptyIfNullOrWhitespace();
         //OnPropertyChanged(nameof(Name));
     }
 

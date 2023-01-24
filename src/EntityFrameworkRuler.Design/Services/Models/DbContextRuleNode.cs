@@ -77,19 +77,20 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
 
     /// <summary> Get the schema rule for the given target schema. Used during scaffolding phase. </summary>
     public SchemaRuleNode TryResolveRuleFor(string schema) {
-        SchemaRuleNode schemaRule;
         if (Schemas.Count == 0) return null;
+        if (schema.IsNullOrWhiteSpace()) schema = string.Empty;
 
-        if (schema.IsNullOrWhiteSpace()) {
+        var schemaRule = Schemas.GetByDbName(schema);
+
+        if (schemaRule == null && schema.IsNullOrWhiteSpace()) {
             // default to dbo, otherwise fail
-            if (Schemas.Count == 1 && (Schemas[0].DbName.IsNullOrWhiteSpace() || Schemas[0].DbName == "dbo")) schemaRule = Schemas[0];
-            else return null;
-        } else {
-            schemaRule = Schemas.GetByDbName(schema);
-            // if there is only one schema, and the name is not defined, default to that
-            if (schemaRule == null && Schemas.Count == 1 && Schemas[0].DbName.IsNullOrWhiteSpace())
-                schemaRule = Schemas[0];
+            if (Schemas.Count == 1 && (Schemas[0].Rule.SchemaName.IsNullOrWhiteSpace() || Schemas[0].Rule.SchemaName == "dbo")) return Schemas[0];
+            return null;
         }
+
+        // if there is only one schema, and the name is not defined, default to that
+        if (schemaRule == null && Schemas.Count == 1 && Schemas[0].Rule.SchemaName.IsNullOrWhiteSpace())
+            schemaRule = Schemas[0];
 
         return schemaRule;
     }
@@ -110,6 +111,7 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public SchemaRuleNode AddSchema(string schema) {
+        if (schema == null) throw new ArgumentNullException(nameof(schema));
         var schemaRule = new SchemaRuleNode(new SchemaRule {
             SchemaName = schema,
             IncludeUnknownTables = true,

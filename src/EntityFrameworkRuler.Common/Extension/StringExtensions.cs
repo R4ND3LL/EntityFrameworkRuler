@@ -39,6 +39,10 @@ public static class StringExtensions {
     [DebuggerStepThrough]
     public static string NullIfEmpty(this string str) { return string.IsNullOrEmpty(str) ? null : str; }
 
+    /// <summary> Return empty string if the given value is null or whitespace.  Return the original value otherwise. </summary>
+    [DebuggerStepThrough]
+    public static string EmptyIfNullOrWhitespace(this string str) { return string.IsNullOrWhiteSpace(str) ? null : str; }
+
     /// <summary> Return null if the given value is whitespace or empty.  Return the original value otherwise. </summary>
     [DebuggerStepThrough]
     public static string NullIfWhitespace(this string str) { return string.IsNullOrWhiteSpace(str) ? null : str; }

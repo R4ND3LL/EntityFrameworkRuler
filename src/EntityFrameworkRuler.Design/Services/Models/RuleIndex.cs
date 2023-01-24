@@ -1,5 +1,6 @@
 using System.Collections;
 using EntityFrameworkRuler.Rules;
+
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace EntityFrameworkRuler.Design.Services.Models;
@@ -26,7 +27,7 @@ public sealed class RuleIndex<T> : IEnumerable<T> where T : IRuleItem {
 
     /// <summary> Get rule by final element name </summary>
     public T GetByFinalName(string finalName) {
-        if (finalName.IsNullOrEmpty()) return default;
+        if (finalName == null) return default;
         rulesByFinalName ??= InitializeRuleIndex(Rules, r => r.GetFinalName());
         return rulesByFinalName.TryGetValue(finalName);
     }
@@ -34,14 +35,14 @@ public sealed class RuleIndex<T> : IEnumerable<T> where T : IRuleItem {
 
     /// <summary> Return true if rule exists in this collection with the DB name </summary>
     public bool ContainsDbName(string dbName) {
-        if (dbName.IsNullOrEmpty()) return default;
+        if (dbName == null) return default;
         rulesByDbName ??= InitializeRuleIndex(Rules, r => r.GetDbName());
         return rulesByDbName.ContainsKey(dbName);
     }
 
     /// <summary> Get rule by DB name </summary>
     public T GetByDbName(string dbName) {
-        if (dbName.IsNullOrEmpty()) return default;
+        if (dbName == null) return default;
         rulesByDbName ??= InitializeRuleIndex(Rules, r => r.GetDbName());
         return rulesByDbName.TryGetValue(dbName);
     }
@@ -49,8 +50,8 @@ public sealed class RuleIndex<T> : IEnumerable<T> where T : IRuleItem {
     private static Dictionary<string, T> InitializeRuleIndex(IEnumerable<T> rules, Func<T, string> keyGetter) {
         Dictionary<string, T> rulesByName = new();
         foreach (var rule in rules) {
-            var key = keyGetter(rule)?.Trim().NullIfEmpty();
-            if (string.IsNullOrEmpty(key)) continue;
+            var key = keyGetter(rule)?.Trim();
+            if (key == null) continue;
             if (rulesByName.ContainsKey(key)) continue;
             rulesByName.Add(key, rule);
         }
@@ -71,13 +72,13 @@ public sealed class RuleIndex<T> : IEnumerable<T> where T : IRuleItem {
         var list = (IList<T>)Rules;
         list.Add(r);
         if (rulesByDbName != null) {
-            var key = r.GetDbName();
-            if (!string.IsNullOrEmpty(key) && !rulesByDbName.ContainsKey(key)) rulesByDbName.Add(key, r);
+            var key = r.GetDbName()?.Trim();
+            if (key != null && !rulesByDbName.ContainsKey(key)) rulesByDbName.Add(key, r);
         }
 
         if (rulesByFinalName != null) {
-            var key = r.GetFinalName();
-            if (!string.IsNullOrEmpty(key) && !rulesByFinalName.ContainsKey(key)) rulesByFinalName.Add(key, r);
+            var key = r.GetFinalName()?.Trim();
+            if (key != null && !rulesByFinalName.ContainsKey(key)) rulesByFinalName.Add(key, r);
         }
     }
 }
