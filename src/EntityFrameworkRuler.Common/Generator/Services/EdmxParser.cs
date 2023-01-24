@@ -31,6 +31,9 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
         State.ContextName = schema.ConceptualSchema?.EntityContainer?.Name?.Trim();
 
         // weave the model data together starting with enums, then on to the conceptual entities
+        foreach (var enumType in edmx.ConceptualModels.Schema.EnumTypes)
+            enumType.ExternalTypeName = enumType.ExternalTypeName.ToFriendlyTypeName();
+
         var enums = edmx.ConceptualModels.Schema.EnumTypes
             .Select(enumItem => new EnumType(enumItem, schema)).ToArray();
         State.EnumsByName = enums.ToDictionary(o => o.Name);
@@ -111,7 +114,7 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
                         association.Ends.Any(end =>
                             end.Type == storageSelfName ||
                             end.Role == storageRole)).ToList();
-                Debug.Assert(entity.Associations.Count == 0 || 
+                Debug.Assert(entity.Associations.Count == 0 ||
                              entity.StorageEntitySet?.Type == "Views" ||
                              entity.StorageAssociations.Count > 0);
             }
@@ -138,7 +141,7 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
                 IdentifyKeys(entity, property);
 
                 // link up enums:
-                var typeNameParts = property.ClrTypeName.SplitNamespaceAndName();
+                var typeNameParts = property.ClrTypeName.ToFriendlyTypeName().SplitNamespaceAndName();
                 EnumType enumType;
                 if (typeNameParts.namespaceName.HasNonWhiteSpace()) {
                     // namespace itself it not reliable. just use the type name to see if we hit an enum

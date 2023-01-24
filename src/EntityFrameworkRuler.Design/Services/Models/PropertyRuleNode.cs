@@ -33,7 +33,7 @@ public sealed class PropertyRuleNode : RuleNode<PropertyRule, EntityRuleNode> {
             (Rule.PropertyName.HasNonWhiteSpace() || Property.Name != ColumnName))
             Rule.PropertyName = Property.Name;
 
-        if (Property.ClrType?.IsEnum == true) Rule.NewType = Property.ClrType.FullName;
+        if (Property.ClrType?.IsEnum == true) Rule.NewType = Property.ClrType.ToFriendlyTypeName();
     }
 
     /// <summary> implicit conversion </summary>

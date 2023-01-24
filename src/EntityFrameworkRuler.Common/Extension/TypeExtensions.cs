@@ -24,6 +24,11 @@ public static class TypeExtensions {
     public static IEnumerable<Type> GetGenericInterfaces(this Type type, Type openGeneric)
         => type.GetInterfaces().Where(q => q.IsGenericType && q.GetGenericTypeDefinition() == openGeneric);
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static string ToFriendlyTypeName(this Type type) => type?.FullName?.Replace('+', '.').Replace('#', '.');
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static string ToFriendlyTypeName(this string type) => type?.Replace('+', '.').Replace('#', '.');
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static Multiplicity ParseMultiplicity(this string s) {

@@ -170,7 +170,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                         Name = property.ColumnName,
                         PropertyName = expectedPropertyName == property.ColumnName ? null : expectedPropertyName,
                         NewName = property.ConceptualName == expectedPropertyName ? null : property.ConceptualName,
-                        NewType = property.EnumType?.ExternalTypeName ?? property.EnumType?.FullName
+                        NewType = (property.EnumType?.ExternalTypeName ?? property.EnumType?.FullName).ToFriendlyTypeName()
                     };
 
                     if (!property.IsMapped || property.ColumnName == null) {
