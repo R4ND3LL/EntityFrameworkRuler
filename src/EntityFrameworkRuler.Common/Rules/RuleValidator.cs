@@ -77,7 +77,7 @@ public class RuleValidator : IRuleValidator {
     protected virtual Validator<SchemaRule> InitializeSchemaRuleValidator() {
         return new Validator<SchemaRule>()
                 .For(o => o.SchemaName)
-                .Assert(s => s.IsValidDbIdentifier(), invalidSymbolName)
+                .Assert(s => s.IsNullOrEmpty() || s.IsValidDbIdentifier(), invalidSymbolName)
                 .Assert(s => s.Length < 200, tooLong)
                 .For(o => o.Namespace).Assert(o => o.IsNullOrWhiteSpace() || o.Split('.').All(p => p.IsValidSymbolName()),
                     "Invalid namespace")
