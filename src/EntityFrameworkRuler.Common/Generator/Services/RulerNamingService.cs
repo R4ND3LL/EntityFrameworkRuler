@@ -121,10 +121,10 @@ public class RulerNamingService : IRulerNamingService {
                 var prefix = navigation.IsDependentEnd ? string.Empty : inverseEntity.StorageNameIdentifier;
 
                 if (isMany) {
-                    yield return $"{prefix}{dep.Name.GenerateCandidateIdentifier()}Navigations";
+                    yield return $"{prefix}{dep.GetName().GenerateCandidateIdentifier()}Navigations";
                     yield return pluralizer.Pluralize(navigation.ToRole.Entity.StorageNameIdentifier);
                 } else {
-                    yield return $"{prefix}{dep.Name.GenerateCandidateIdentifier()}Navigation";
+                    yield return $"{prefix}{dep.GetName().GenerateCandidateIdentifier()}Navigation";
                     yield return navigation.ToRole.Entity.StorageNameIdentifier;
                 }
 
@@ -165,7 +165,7 @@ public class RulerNamingService : IRulerNamingService {
         CSharpUniqueNamer<IEntityProperty> Factory(EntityType _) {
             if (Options?.UseDatabaseNames == true)
                 return new CSharpUniqueNamer<IEntityProperty>(
-                    c => c.GetName(),
+                    c => c.GetName(false),
                     usedNames,
                     cSharpUtilities,
                     singularizePluralizer: null);
@@ -181,13 +181,13 @@ public class RulerNamingService : IRulerNamingService {
     public string GenerateCandidateIdentifier(EntityType originalTable) => originalTable.StorageNameIdentifier;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public string GenerateCandidateIdentifier(IEntityProperty originalColumn) => originalColumn.GetName().GenerateCandidateIdentifier();
+    public string GenerateCandidateIdentifier(IEntityProperty originalColumn) => originalColumn.GetName(false).GenerateCandidateIdentifier();
 
     /// <summary> Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService </summary>
     private string GetDependentEndCandidateNavigationPropertyName(ReferentialConstraint foreignKey) {
         //     Gets the foreign key properties in the dependent entity.
         var properties = foreignKey.DependentProperties;
-        var candidateName = FindCandidateNavigationName(properties);
+        var candidateName = FindCandidateNavigationName(properties, foreignKey.DependentEntity);
 
         return !string.IsNullOrEmpty(candidateName)
                 ? candidateName
@@ -209,16 +209,16 @@ public class RulerNamingService : IRulerNamingService {
     }
 
     /// <summary> Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService </summary>
-    private string FindCandidateNavigationName(IList<EntityProperty> properties) {
+    private string FindCandidateNavigationName(IList<EntityProperty> properties, EntityType table) {
         var count = properties.Count;
         if (count == 0) return string.Empty;
 
         var firstProperty = properties.First();
-        var firstPropertyName = GetExpectedPropertyName(firstProperty);
+        var firstPropertyName = GetExpectedPropertyName(firstProperty, table);
         return StripId(
             count == 1
                 ? firstPropertyName
-                : FindCommonPrefix(firstPropertyName, properties.Select(p => GetExpectedPropertyName(p))));
+                : FindCommonPrefix(firstPropertyName, properties.Select(p => GetExpectedPropertyName(p, table))));
     }
 
     /// <summary> Borrowed from Microsoft.EntityFrameworkCore.Scaffolding.Internal.CandidateNamingService </summary>

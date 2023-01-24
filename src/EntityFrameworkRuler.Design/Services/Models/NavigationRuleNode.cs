@@ -19,7 +19,7 @@ public sealed class NavigationRuleNode : RuleNode<NavigationRule, EntityRuleNode
     public bool IsPrincipal => Rule.IsPrincipal;
 
     /// <summary> If false, omit this column during the scaffolding process. </summary>
-    public bool ShouldMap => Rule.Mapped;
+    public bool ShouldMap => Rule.ShouldMap();
 
     /// <summary> True if this navigation has been mapped to an entity builder </summary>
     public bool IsAlreadyMapped => Navigation != null;

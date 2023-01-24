@@ -35,10 +35,6 @@ public abstract class RuleBase : IRuleItem {
     /// <summary> If true, omit this column during the scaffolding process. </summary>
     bool IRuleItem.NotMapped => GetNotMapped();
 
-    /// <summary> If false, omit this column during the scaffolding process. </summary>
-    [IgnoreDataMember, JsonIgnore, XmlIgnore]
-    public bool Mapped => !GetNotMapped();
-
     /// <summary> Direct access to the Comment annotation.  This property exists to facilitate UI editing. </summary>
     [IgnoreDataMember, JsonIgnore, XmlIgnore]
     [DisplayName("Comment"), Category("Mapping"), Description("The comment to be added to the code element via Annotations.")]
@@ -52,6 +48,19 @@ public abstract class RuleBase : IRuleItem {
     public string GetFinalName() => GetNewName().NullIfWhitespace() ?? GetExpectedEntityFrameworkName();
 
     void IRuleItem.SetFinalName(string value) => SetFinalName(value);
+
+    /// <summary> Return true if this item has to be mapped in the model. For runtime scaffolding use. </summary>
+    public virtual bool ShouldMap() {
+        if (mapOverride.HasValue) return mapOverride.Value;
+        return !GetNotMapped();
+    }
+
+    /// <summary> flag to indicate the map status has been overriden </summary>
+    [IgnoreDataMember, JsonIgnore, XmlIgnore]
+    private bool? mapOverride;
+
+    /// <summary> Override the mapping status without altering the rule properties. For runtime scaffolding use. </summary>
+    public void SetShouldMap(bool? b) => mapOverride = b;
 
     /// <summary> Intended for internal use only. </summary>
     protected static void UpdateCollection<T>(ref IList<T> c, IList<T> value) {

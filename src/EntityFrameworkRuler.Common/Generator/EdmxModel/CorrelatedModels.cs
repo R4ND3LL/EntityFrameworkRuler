@@ -67,8 +67,10 @@ public sealed class EntityType : NotifyPropertyChanged {
     public IList<EntityProperty> Properties { get; } = new ObservableCollection<EntityProperty>();
 
     /// <summary> recursively get properties </summary>
-    public IEnumerable<EntityProperty> GetProperties() {
-        return BaseType != null ? BaseType.GetProperties().Concat(Properties) : Properties;
+    public IEnumerable<EntityProperty> GetProperties(bool? isMapped = null) {
+        var props = BaseType != null ? BaseType.GetProperties().Concat(Properties) : Properties;
+        if (isMapped.HasValue) props = props.Where(o => o.IsMapped == isMapped.Value);
+        return props;
     }
 
     /// <summary> recursively get properties </summary>
@@ -92,18 +94,39 @@ public sealed class EntityType : NotifyPropertyChanged {
     public StorageEntityContainer StorageContainer { get; set; }
     public StorageEntitySet StorageEntitySet { get; set; }
     public IList<ConceptualAssociation> Associations { get; set; }
+    public IList<StorageAssociation> StorageAssociations { get; set; }
     public IList<EntityProperty> ConceptualKey { get; } = new List<EntityProperty>();
     public IList<EntityProperty> StorageKey { get; } = new List<EntityProperty>();
     public bool IsAbstract => ConceptualEntity?.Abstract == true;
 
+    private EntityType baseType;
+
     /// <summary> base class of this entity is another entity type </summary>
-    public EntityType BaseType { get; set; }
+    public EntityType BaseType {
+        get => baseType;
+        set {
+            if (baseType == value) return;
+            var old = baseType;
+            baseType = value;
+            OnBaseTypeChanged(old, value);
+        }
+    }
+
+    private void OnBaseTypeChanged(EntityType old, EntityType n) {
+        old?.DerivedTypes.Remove(this);
+        n?.DerivedTypes.Add(this);
+    }
 
     /// <summary> entity types that derive from this entity class </summary>
-    public List<EntityType> DerivedTypes { get; } = new List<EntityType>();
+    public HashSet<EntityType> DerivedTypes { get; } = new();
 
+    /// <summary> the discriminator column mapping condition used for a TPH inheritance strategy </summary>
     public MappingCondition Discriminator => MappingFragments.Select(mf => mf.Condition).FirstOrDefault(c => c != null);
-    public List<(StorageProperty Property, MappingCondition Condition, EntityType ToEntity)> DiscriminatorPropertyMappings { get; } = new();
+
+    /// <summary> the discriminator property mappings used for a TPH inheritance strategy </summary>
+    public List<(EntityProperty Property, MappingCondition Condition, EntityType ToEntity)> DiscriminatorPropertyMappings { get; } = new();
+
+    /// <summary> The inheritance mapping strategy.  TPH, TPT, TPC </summary>
     public string RelationalMappingStrategy { get; set; }
 
     /// <summary> get the inner most base type, or this if no base type exists </summary>
@@ -114,7 +137,8 @@ public sealed class EntityType : NotifyPropertyChanged {
     }
 
     /// <summary> recursively get all entity types that derive from this entity class </summary>
-    public IEnumerable<EntityType> GetAllDerivedTypes() {
+    public IEnumerable<EntityType> GetAllDerivedTypes(bool includeThis = false) {
+        if (includeThis) yield return this;
         foreach (var derivedType in DerivedTypes) {
             yield return derivedType;
             foreach (var grandChild in derivedType.GetAllDerivedTypes()) yield return grandChild;
@@ -167,8 +191,8 @@ public sealed class EntityType : NotifyPropertyChanged {
         var identifiers = GetExistingIdentifiersInternal(namingService);
         if (identifiers != null) return identifiers;
         identifiers = new();
-        identifiers.AddRange(Properties.Select(o => namingService.GetExpectedPropertyName(o)));
-        identifiers.AddRange(NavigationProperties.Where(o => o != skip).Select(o => o.Name));
+        identifiers.AddRange(Properties.Where(o => o.IsMapped).Select(o => namingService.GetExpectedPropertyName(o, this)));
+        identifiers.AddRange(NavigationProperties.Where(o => o != skip).Select(o => o.ConceptualName));
         SetExistingIdentifiers(namingService, identifiers);
         return identifiers;
     }
@@ -195,52 +219,21 @@ internal readonly struct NamingCache<T> {
 }
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-[DebuggerDisplay("{Name}")]
-public class EntityPropertyBase : NotifyPropertyChanged {
-    public EntityPropertyBase(EntityType e, IPropertyRef conceptualProperty) {
+public abstract class EntityPropertyBase : NotifyPropertyChanged, IEntityProperty {
+    protected EntityPropertyBase(EntityType e, IPropertyRef conceptualProperty) {
         ConceptualProperty = conceptualProperty;
         Entity = e;
     }
 
     /// <summary> The conceptual name of the property </summary>
-    public string Name => ConceptualProperty.Name;
+    public virtual string ConceptualName => ConceptualProperty?.Name;
+
+    /// <summary> true if this property is mapped in the EDMX </summary>
+    public bool IsMapped => ConceptualProperty?.Name != null;
 
     public EntityType Entity { get; }
     public IPropertyRef ConceptualProperty { get; }
     public string EntityName => Entity?.Name;
-}
-
-public interface IEntityProperty {
-    string GetExpectedEfCoreName(IRulerNamingService namingService);
-    string SetExpectedEfCoreName(IRulerNamingService namingService, string value);
-    string GetName();
-}
-
-/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-public sealed class EntityProperty : EntityPropertyBase, IEntityProperty {
-    public EntityProperty(EntityType entity, ConceptualProperty conceptualProperty) : base(entity, conceptualProperty) { }
-
-
-    /// <summary> the database type name </summary>
-    public string DbTypeName => StorageProperty?.Type;
-
-    /// <summary> the conceptual (code) type name </summary>
-    public string TypeName => ConceptualProperty?.Type;
-
-    private EnumType enumType;
-    public EnumType EnumType { get => enumType; set => SetProperty(ref enumType, value, OnEnumTypeChanged); }
-    private void OnEnumTypeChanged() { }
-
-    public bool Nullable => StorageProperty?.Nullable?.StartsWithIgnoreCase("t") == true;
-    public bool IsIdentity => StorageProperty?.StoreGeneratedPattern == "Identity";
-
-    public StorageProperty StorageProperty { get; set; }
-    public ScalarPropertyMapping Mapping { get; set; }
-    public string DbColumnName => Mapping?.ColumnName;
-
-    public new ConceptualProperty ConceptualProperty => (ConceptualProperty)base.ConceptualProperty;
-    public bool IsConceptualKey { get; set; }
-    public bool IsStorageKey { get; set; }
 
     #region naming cache
 
@@ -256,17 +249,60 @@ public sealed class EntityProperty : EntityPropertyBase, IEntityProperty {
         return value;
     }
 
-    string IEntityProperty.GetName() => DbColumnName;
+    public abstract string GetName(bool conceptualPreferred = true);
 
     #endregion
 
-    public override string ToString() { return $"Prop: {Name}"; }
+    public override string ToString() { return $"Prop: {GetName()}"; }
+}
+
+public interface IEntityProperty {
+    string GetExpectedEfCoreName(IRulerNamingService namingService);
+    string SetExpectedEfCoreName(IRulerNamingService namingService, string value);
+    string GetName(bool conceptualPreferred = true);
+    bool IsMapped { get; }
+}
+
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+public sealed class EntityProperty : EntityPropertyBase {
+    public EntityProperty(EntityType entity, ConceptualProperty conceptualProperty, StorageProperty storageProperty) : base(entity,
+        conceptualProperty) {
+        StorageProperty = storageProperty;
+    }
+
+    public override string ConceptualName => ConceptualProperty?.Name;
+    public string ColumnName => Mapping?.ColumnName ?? StorageProperty?.Name;
+
+    public override string GetName(bool conceptualPreferred = true) =>
+        conceptualPreferred ? ConceptualName ?? ColumnName : ColumnName ?? ConceptualName;
+
+    /// <summary> the database type name </summary>
+    public string DbTypeName => StorageProperty?.Type;
+
+    /// <summary> the conceptual (code) type name </summary>
+    public string ClrTypeName => ConceptualProperty?.Type;
+
+    private EnumType enumType;
+    public EnumType EnumType { get => enumType; set => SetProperty(ref enumType, value, OnEnumTypeChanged); }
+    private void OnEnumTypeChanged() { }
+
+    public bool Nullable => StorageProperty?.Nullable?.StartsWithIgnoreCase("t") == true;
+    public bool IsIdentity => StorageProperty?.StoreGeneratedPattern == "Identity";
+
+    public StorageProperty StorageProperty { get; set; }
+    public ScalarPropertyMapping Mapping { get; set; }
+    public new ConceptualProperty ConceptualProperty => base.ConceptualProperty as ConceptualProperty;
+    public bool IsConceptualKey { get; set; }
+    public bool IsStorageKey { get; set; }
+
+    public override string ToString() { return $"Prop: {GetName()}"; }
 }
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class NavigationProperty : EntityPropertyBase {
     public NavigationProperty(EntityType conceptualEntity, ConceptualNavigationProperty conceptualProperty)
         : base(conceptualEntity, conceptualProperty) {
+        if (conceptualProperty == null) throw new ArgumentNullException(nameof(conceptualProperty));
     }
 
     public string Relationship => ConceptualNavigationProperty?.Relationship;
@@ -281,8 +317,8 @@ public sealed class NavigationProperty : EntityPropertyBase {
     }
 
     private void OnAssociationChanged(AssociationBase o) {
-        if (o?.NavigationProperties.Contains(this) == true) o.NavigationProperties.Remove(this);
-        if (association?.NavigationProperties.Contains(this) == false) association.NavigationProperties.Add(this);
+        if (o?.Navigations.Contains(this) == true) o.Navigations.Remove(this);
+        if (association?.Navigations.Contains(this) == false) association.Navigations.Add(this);
     }
 
     public bool IsSelfReference => Association?.IsSelfReference == true;
@@ -298,6 +334,7 @@ public sealed class NavigationProperty : EntityPropertyBase {
         (ConceptualNavigationProperty)ConceptualProperty;
 
     public ConceptualAssociation ConceptualAssociation { get; set; }
+    public StorageAssociation StorageAssociation { get; set; }
 
     /// <summary> true if this is the dependent end of the association. </summary>
     public bool IsDependentEnd { get; set; }
@@ -314,7 +351,9 @@ public sealed class NavigationProperty : EntityPropertyBase {
     /// <summary> The EntityType at the other end of this relationship. </summary>
     public EntityType InverseEntity => ToRole?.Entity;
 
-    public override string ToString() { return $"NProp: {Name}"; }
+    public override string GetName(bool conceptualPreferred = true) => ConceptualName;
+
+    public override string ToString() { return $"NProp: {ConceptualName}"; }
 }
 
 /// <summary>
@@ -353,11 +392,12 @@ public sealed class FkAssociation : AssociationBase {
             Debug.Assert(isPrincipal ^ isDependent);
             Debug.Assert(navigation.IsDependentEnd == isDependent);
             navigation.IsDependentEnd = isDependent;
-            navigation.FkProperties = isDependent ? constraint.DependentProperties : constraint.PrincipalProperties;
+            navigation.FkProperties = (isDependent ? constraint.DependentProperties : constraint.PrincipalProperties) ??
+                                      Array.Empty<EntityProperty>();
         }
     }
 
-    public override string Name => ReferentialConstraint?.StorageReferentialConstraint?.Name ?? base.Name;
+    public override string Name => ReferentialConstraint?.StorageAssociation?.Name ?? base.Name;
 
     public ReferentialConstraint ReferentialConstraint { get; }
     public override string ToString() { return $"FK Association: {Name}"; }
@@ -372,9 +412,9 @@ public abstract class AssociationBase : NotifyPropertyChanged {
             throw new ArgumentException("Association should have 2 navigations", nameof(navigations));
         foreach (var navigation in navigations) {
             if (navigation == null) continue;
-            Navigations.Add(navigation);
             Debug.Assert(navigation.Association == null);
             navigation.Association = this;
+            Debug.Assert(Navigations.Contains(navigation));
             navigation.ToRole = roles.Single(o => o.Role == navigation.ToRoleName);
             navigation.FromRole = roles.Single(o => o.Role == navigation.FromRoleName);
             navigation.InverseNavigation = navigations.Single(o => o != navigation);
@@ -423,14 +463,13 @@ public abstract class AssociationBase : NotifyPropertyChanged {
     }
 
     /// <summary> navigations involved in this association </summary>
-    public IList<NavigationProperty> Navigations { get; set; } = new List<NavigationProperty>();
+    public IList<NavigationProperty> Navigations { get; } = new List<NavigationProperty>();
 
     /// <summary> Gets this is the relationship name. </summary>
     public virtual string Name => ConceptualAssociation.Name;
 
     public ConceptualAssociation ConceptualAssociation { get; }
     public IList<EndRole> EndRoles { get; }
-    public IList<NavigationProperty> NavigationProperties { get; } = new List<NavigationProperty>();
     public Schema Schema { get; }
 
     public bool IsSelfReference => EndRoles?.Count > 0 && EndRoles[0].Entity != null &&
@@ -519,10 +558,11 @@ public sealed class EndRole : NotifyPropertyChanged {
 /// </summary>
 public sealed class ReferentialConstraint : NotifyPropertyChanged {
     public ReferentialConstraint(
-        ConceptualReferentialConstraint conceptualReferentialConstraint,
+        List<IReferentialConstraint> constraints,
         EntityProperty[] principalProps,
-        EntityProperty[] depProps) {
-        ConceptualReferentialConstraint = conceptualReferentialConstraint;
+        EntityProperty[] depProps, EntityType principal, EntityType dependent) {
+        ConceptualReferentialConstraint = constraints.OfType<ConceptualReferentialConstraint>().FirstOrDefault();
+        StorageReferentialConstraint = constraints.OfType<StorageReferentialConstraint>().FirstOrDefault();
 #if DEBUG
         if (principalProps.IsNullOrEmpty()) throw new ArgumentNullException(nameof(principalProps));
         if (depProps.IsNullOrEmpty()) throw new ArgumentNullException(nameof(depProps));
@@ -530,12 +570,13 @@ public sealed class ReferentialConstraint : NotifyPropertyChanged {
 
         PrincipalProperties = principalProps?.ToArray() ?? Array.Empty<EntityProperty>();
         DependentProperties = depProps?.ToArray() ?? Array.Empty<EntityProperty>();
-        PrincipalEntity = PrincipalProperties.FirstOrDefault()?.Entity;
-        DependentEntity = DependentProperties.FirstOrDefault()?.Entity;
+        PrincipalEntity = principal; // PrincipalProperties.FirstOrDefault()?.Entity;
+        DependentEntity = dependent; //DependentProperties.FirstOrDefault()?.Entity;
     }
 
     public ConceptualReferentialConstraint ConceptualReferentialConstraint { get; }
-    public StorageAssociation StorageReferentialConstraint { get; set; }
+    public StorageReferentialConstraint StorageReferentialConstraint { get; }
+    public StorageAssociation StorageAssociation { get; set; }
 
 
     public string PrincipalRole => ConceptualReferentialConstraint.Principal.Role;

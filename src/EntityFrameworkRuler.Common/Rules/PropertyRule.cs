@@ -7,7 +7,6 @@ using System.Runtime.Serialization;
 namespace EntityFrameworkRuler.Rules;
 
 /// <summary> Property rule </summary>
-[DebuggerDisplay("Prop {Name} to {NewName}")]
 [DataContract]
 public sealed class PropertyRule : RuleBase, IPropertyRule {
     /// <inheritdoc />
@@ -83,8 +82,12 @@ public sealed class PropertyRule : RuleBase, IPropertyRule {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public bool ShouldMap() {
-        return !NotMapped || DiscriminatorConditions.Count > 0;
+    public override bool ShouldMap() => base.ShouldMap() || DiscriminatorConditions.Count > 0;
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public override string ToString() {
+        if (NewName != null) return $"Col {Name} to Prop {NewName}";
+        return $"Col {Name}";
     }
 }
 

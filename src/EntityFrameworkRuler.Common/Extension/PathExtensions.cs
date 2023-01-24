@@ -221,4 +221,20 @@ public static class PathExtensions {
             });
 #endif
     }
+
+    /// <summary> Create a relative path from first param to second </summary>
+    public static string MakeDirRelative(string root, string path) {
+        var relativeUri = new Uri(NormalizeDir(root)).MakeRelativeUri(new Uri(NormalizeDir(path)));
+        return Uri.UnescapeDataString(relativeUri.ToString()).Replace('/', Path.DirectorySeparatorChar);
+    }
+
+    private static string NormalizeDir(string path) {
+        if (string.IsNullOrEmpty(path)) return path;
+
+        var last = path[^1];
+        return last == Path.DirectorySeparatorChar
+               || last == Path.AltDirectorySeparatorChar
+            ? path
+            : path + Path.DirectorySeparatorChar;
+    }
 }

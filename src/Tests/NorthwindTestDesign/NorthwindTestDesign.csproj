@@ -25,16 +25,15 @@
         </PackageReference>
     </ItemGroup>
 
-    <ItemGroup>
+    <ItemGroup>       
         <None Remove="CodeTemplates\EFCore\*.dll" />
         <None Remove="CodeTemplates\EFCore\Microsoft.SqlServer.Server.dll" />
         <None Remove="CodeTemplates\EFCore\Microsoft.Win32.SystemEvents.dll" />
         <None Remove="CodeTemplates\EFCore\Mono.TextTemplating.dll" />
-        <Compile Remove="Models\*" />
-        <Compile Remove="Context\*" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />    
     </ItemGroup>
+
 </Project>

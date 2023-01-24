@@ -68,6 +68,7 @@ public abstract class ConstraintEnd : IConstraintEnd {
 public interface IReferentialConstraint : IEquatable<IReferentialConstraint> {
     IConstraintEnd Principal { get; }
     IConstraintEnd Dependent { get; }
+    bool IsConceptual { get; }
 }
 
 public abstract class ReferentialConstraintBase : IReferentialConstraint {
@@ -78,6 +79,8 @@ public abstract class ReferentialConstraintBase : IReferentialConstraint {
 
     [XmlIgnore]
     IConstraintEnd IReferentialConstraint.Dependent => GetDependent();
+
+    public abstract bool IsConceptual { get; }
 
     protected abstract IConstraintEnd GetDependent();
 
@@ -128,7 +131,7 @@ public class StorageEntityKey {
 
 [DebuggerDisplay("{Name}")]
 [XmlRoot(ElementName = "Property", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-public class StorageProperty : IEntityProperty {
+public class StorageProperty {
     [XmlAttribute(AttributeName = "Name")]
     public string Name { get; set; }
 
@@ -150,23 +153,23 @@ public class StorageProperty : IEntityProperty {
     [XmlAttribute(AttributeName = "Scale")]
     public string Scale { get; set; }
 
-    #region naming cache
-
-    /// <summary> internal use only to cache the expected EF Core identifier </summary>
-    private NamingCache<string> expectedEfCoreName;
-
-    string IEntityProperty.GetExpectedEfCoreName(IRulerNamingService namingService) {
-        return expectedEfCoreName.GetValue(namingService);
-    }
-
-    string IEntityProperty.SetExpectedEfCoreName(IRulerNamingService namingService, string value) {
-        expectedEfCoreName = new(namingService, value);
-        return value;
-    }
-
-    string IEntityProperty.GetName() => Name;
-
-    #endregion
+    // #region naming cache
+    //
+    // /// <summary> internal use only to cache the expected EF Core identifier </summary>
+    // private NamingCache<string> expectedEfCoreName;
+    //
+    // string IEntityProperty.GetExpectedEfCoreName(IRulerNamingService namingService) {
+    //     return expectedEfCoreName.GetValue(namingService);
+    // }
+    //
+    // string IEntityProperty.SetExpectedEfCoreName(IRulerNamingService namingService, string value) {
+    //     expectedEfCoreName = new(namingService, value);
+    //     return value;
+    // }
+    //
+    // string IEntityProperty.GetName(bool conceptualPreferred = true) => Name;
+    //
+    // #endregion
 }
 
 [DebuggerDisplay("Role={Role} Type={Type} Multiplicity={Multiplicity}")]
@@ -188,9 +191,9 @@ public class StorageEnd {
     public string EntitySet { get; set; }
 }
 
-[DebuggerDisplay("StoragePrincipal Role {Role}")]
+[DebuggerDisplay("ConstraintEnd Role {Role}")]
 [XmlRoot(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-public class StoragePrincipal : ConstraintEnd {
+public class StorageConstraintEnd : ConstraintEnd {
     [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
     public List<StoragePropertyRef> PropertyRefs { get; set; }
 
@@ -198,24 +201,17 @@ public class StoragePrincipal : ConstraintEnd {
     public override IEnumerable<IPropertyRef> Properties => PropertyRefs;
 }
 
-[DebuggerDisplay("StorageDependent Role {Role}")]
-[XmlRoot(ElementName = "Dependent", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-public class StorageDependent : ConstraintEnd {
-    [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-    public List<StoragePropertyRef> PropertyRefs { get; set; }
-
-    [XmlIgnore]
-    public override IEnumerable<IPropertyRef> Properties => PropertyRefs;
-}
 
 [DebuggerDisplay("Storage FK Principal {Principal} Dependent {Dependent}")]
 [XmlRoot(ElementName = "ReferentialConstraint", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
 public class StorageReferentialConstraint : ReferentialConstraintBase {
     [XmlElement(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-    public StoragePrincipal Principal { get; set; }
+    public StorageConstraintEnd Principal { get; set; }
 
     [XmlElement(ElementName = "Dependent", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
-    public StorageDependent Dependent { get; set; }
+    public StorageConstraintEnd Dependent { get; set; }
+
+    public override bool IsConceptual => false;
 
     protected override IConstraintEnd GetPrincipal() => Principal;
     protected override IConstraintEnd GetDependent() => Dependent;
@@ -642,7 +638,7 @@ public class ConceptualDocumentation {
 
 [DebuggerDisplay("{Role}")]
 [XmlRoot(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-public class ConceptualPrincipal : ConstraintEnd {
+public class ConceptualConstraintEnd : ConstraintEnd {
     [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
     public List<ConceptualPropertyRef> PropertyRefs { get; set; }
 
@@ -650,25 +646,17 @@ public class ConceptualPrincipal : ConstraintEnd {
     public override IEnumerable<IPropertyRef> Properties => PropertyRefs;
 }
 
-[DebuggerDisplay("{Role}")]
-[XmlRoot(ElementName = "Dependent", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-public class ConceptualDependent : ConstraintEnd {
-    [XmlElement(ElementName = "PropertyRef", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-    public List<ConceptualPropertyRef> PropertyRefs { get; set; }
-
-    [XmlIgnore]
-    public override IEnumerable<IPropertyRef> Properties => PropertyRefs;
-}
 
 [DebuggerDisplay("{Principal} {Dependent}")]
 [XmlRoot(ElementName = "ReferentialConstraint", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
 public class ConceptualReferentialConstraint : ReferentialConstraintBase {
     [XmlElement(ElementName = "Principal", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-    public ConceptualPrincipal Principal { get; set; }
+    public ConceptualConstraintEnd Principal { get; set; }
 
     [XmlElement(ElementName = "Dependent", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]
-    public ConceptualDependent Dependent { get; set; }
+    public ConceptualConstraintEnd Dependent { get; set; }
 
+    public override bool IsConceptual => true;
     protected override IConstraintEnd GetPrincipal() => Principal;
     protected override IConstraintEnd GetDependent() => Dependent;
 }

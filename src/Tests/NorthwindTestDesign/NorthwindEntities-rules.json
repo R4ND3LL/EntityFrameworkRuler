@@ -95,6 +95,10 @@
             },
             {
               "Name": "FavoriteToy"
+            },
+            {
+              "Name": "EducationLevel",
+              "NotMapped": true
             }
           ],
           "Annotations": {
@@ -233,6 +237,14 @@
                   "ToEntityName": "CustomerGreen"
                 }
               ]
+            },
+            {
+              "Name": "Phone",
+              "NotMapped": true
+            },
+            {
+              "Name": "Fax",
+              "NotMapped": true
             }
           ],
           "Navigations": [
@@ -412,7 +424,7 @@
           "Navigations": [
             {
               "Name": "InverseReportsToNavigation",
-              "NewName": "EmployeesCustom",
+              "NewName": "Subordinates",
               "FkName": "FK_Employees_Employees",
               "ToEntity": "Employee",
               "IsPrincipal": true,
@@ -420,7 +432,7 @@
             },
             {
               "Name": "ReportsToNavigation",
-              "NewName": "EmployeeOneCustom",
+              "NewName": "ReportsToEmployee",
               "FkName": "FK_Employees_Employees",
               "ToEntity": "Employee",
               "Multiplicity": "0..1"
@@ -470,6 +482,62 @@
             },
             {
               "Name": "Title"
+            },
+            {
+              "Name": "TitleOfCourtesy",
+              "NotMapped": true
+            },
+            {
+              "Name": "BirthDate",
+              "NotMapped": true
+            },
+            {
+              "Name": "HireDate",
+              "NotMapped": true
+            },
+            {
+              "Name": "Address",
+              "NotMapped": true
+            },
+            {
+              "Name": "City",
+              "NotMapped": true
+            },
+            {
+              "Name": "Region",
+              "NotMapped": true
+            },
+            {
+              "Name": "PostalCode",
+              "NotMapped": true
+            },
+            {
+              "Name": "Country",
+              "NotMapped": true
+            },
+            {
+              "Name": "HomePhone",
+              "NotMapped": true
+            },
+            {
+              "Name": "Extension",
+              "NotMapped": true
+            },
+            {
+              "Name": "Photo",
+              "NotMapped": true
+            },
+            {
+              "Name": "Notes",
+              "NotMapped": true
+            },
+            {
+              "Name": "ReportsTo",
+              "NotMapped": true
+            },
+            {
+              "Name": "PhotoPath",
+              "NotMapped": true
             }
           ],
           "Navigations": [

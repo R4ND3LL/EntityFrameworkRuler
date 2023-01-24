@@ -17,7 +17,7 @@ namespace NorthwindTestProject
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         public Employee()
         {
-            this.EmployeesCustom = new HashSet<Employee>();
+            this.Subordinates = new HashSet<Employee>();
             this.Orders = new HashSet<Order>();
             this.Territories = new HashSet<Territory>();
         }
@@ -42,8 +42,8 @@ namespace NorthwindTestProject
         public string PhotoPath { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Employee> EmployeesCustom { get; set; }
-        public virtual Employee EmployeeOneCustom { get; set; }
+        public virtual ICollection<Employee> Subordinates { get; set; }
+        public virtual Employee ReportsToEmployee { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Order> Orders { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]

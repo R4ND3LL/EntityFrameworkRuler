@@ -221,7 +221,7 @@ public static class RuleExtensions {
         }
 
 
-        schemaIncluded = schemaRule.Mapped;
+        schemaIncluded = schemaRule.ShouldMap();
         if (!schemaIncluded) return false;
         if (entityRule == null) {
             // table is unknown to rule file

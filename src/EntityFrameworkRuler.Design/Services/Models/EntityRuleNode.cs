@@ -103,12 +103,26 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
     public PropertyRuleNode TryResolveRuleFor(string column) {
         if (Properties == null || Properties.Count == 0 || column.IsNullOrWhiteSpace()) return null;
 
-        var entityRule = Properties.GetByDbName(column);
+        var entityRule = FindPropertyByColumn(column);
         if (entityRule != null) return entityRule;
 
-        entityRule = Properties.GetByFinalName(column);
+        entityRule = FindPropertyByFinalName(column);
         if (entityRule?.DbName.HasNonWhiteSpace() == true) entityRule = null;
 
+        return entityRule;
+    }
+
+    /// <summary> Get the property rule recursively for the given target column. Used during scaffolding phase. </summary>
+    public PropertyRuleNode FindPropertyByColumn(string column) {
+        if (Properties == null || Properties.Count == 0 || column.IsNullOrWhiteSpace()) return null;
+        var entityRule = Properties.GetByDbName(column) ?? BaseEntityRuleNode?.FindPropertyByColumn(column);
+        return entityRule;
+    }
+
+    /// <summary> Get the property rule recursively for the given target property name. Used during scaffolding phase. </summary>
+    public PropertyRuleNode FindPropertyByFinalName(string column) {
+        if (Properties == null || Properties.Count == 0 || column.IsNullOrWhiteSpace()) return null;
+        var entityRule = Properties.GetByFinalName(column) ?? BaseEntityRuleNode?.FindPropertyByFinalName(column);
         return entityRule;
     }
 

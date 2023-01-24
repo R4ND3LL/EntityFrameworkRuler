@@ -87,7 +87,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
             var edmxFilePath = request?.EdmxFilePath;
             try {
                 var parser = EdmxParser ?? new EdmxParser();
-                response.EdmxParsed ??= parser.Parse(edmxFilePath);
+                response.EdmxParsed ??= parser.Parse(edmxFilePath, response.Logger);
             } catch (Exception ex) {
                 response.GetInternals().LogError($"Error parsing EDMX: {ex.Message}");
                 return response;
@@ -167,11 +167,22 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                     // Get the expected EF property identifier based on options.. just like EF would:
                     var expectedPropertyName = namingService.GetExpectedPropertyName(property, expectedClassName);
                     var propertyRule = new PropertyRule() {
-                        Name = property.DbColumnName,
-                        PropertyName = expectedPropertyName == property.DbColumnName ? null : expectedPropertyName,
-                        NewName = property.Name == expectedPropertyName ? null : property.Name,
+                        Name = property.ColumnName,
+                        PropertyName = expectedPropertyName == property.ColumnName ? null : expectedPropertyName,
+                        NewName = property.ConceptualName == expectedPropertyName ? null : property.ConceptualName,
                         NewType = property.EnumType?.ExternalTypeName ?? property.EnumType?.FullName
                     };
+
+                    if (!property.IsMapped || property.ColumnName == null) {
+                        propertyRule.NotMapped = true;
+                        if (property.IsStorageKey || property.IsConceptualKey) {
+                            propertyRule.IsKey = true;
+                            if (property.ColumnName != null && (entity.BaseType == null || relationalMappingStrategy != "TPH")) {
+                                // this property should be included on the type because it's a primary key
+                                propertyRule.NotMapped = false;
+                            }
+                        }
+                    }
 
                     if (isView) {
                         // EF Core scaffolding does not infer primary keys on views, meaning navigations are not possible.
@@ -190,14 +201,14 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                 if (relationalMappingStrategy == "TPH" && entity.DiscriminatorPropertyMappings.Count > 0) {
                     foreach (var discriminatorPropertyMapping in entity.DiscriminatorPropertyMappings) {
                         var property = discriminatorPropertyMapping.Property;
-                        var propertyRule = entityRule.Properties.FirstOrDefault(o => o.Name == property.Name);
+                        if (property.ColumnName.IsNullOrWhiteSpace()) continue;
+                        var propertyRule = entityRule.Properties.FirstOrDefault(o => o.Name == property.ColumnName);
                         if (propertyRule == null) {
                             // Must add property rule for the column even though it's not mapped to a property in the EDMX
-                            var expectedPropertyName = namingService.GetExpectedPropertyName(property, entity, expectedClassName);
+                            var expectedPropertyName = namingService.GetExpectedPropertyName(property, expectedClassName);
                             propertyRule = new() {
-                                Name = property.Name,
-                                PropertyName = expectedPropertyName == property.Name ? null : expectedPropertyName,
-                                NewName = property.Name == expectedPropertyName ? null : property.Name,
+                                Name = property.ColumnName,
+                                PropertyName = expectedPropertyName == property.ColumnName ? null : expectedPropertyName,
                                 NotMapped = true
                             };
                             Debug.Assert(propertyRule.PropertyName == null || propertyRule.PropertyName.IsValidSymbolName());
@@ -206,7 +217,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                         }
 
                         // with discriminators for this property, set the value-to-entity mapping annotations
-                        entityRule.SetDiscriminatorColumn(property.Name);
+                        entityRule.SetDiscriminatorColumn(property.ColumnName);
 
                         var toEntity = discriminatorPropertyMapping.ToEntity;
                         var expectedToClassName = namingService.GetExpectedEntityTypeName(toEntity);
@@ -220,9 +231,9 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
 
                 foreach (var navigation in entity.NavigationProperties) {
                     var navigationRule = new NavigationRule {
-                        NewName = navigation.Name,
+                        NewName = navigation.ConceptualName,
                         Name = namingService.FindCandidateNavigationNames(navigation)
-                            .FirstOrDefault(o => o != navigation.Name)
+                            .FirstOrDefault(o => o != navigation.ConceptualName)
                     };
 
                     //if (!generateAll && navigationRename.Name.IsNullOrWhiteSpace()) continue;
@@ -253,7 +264,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                     if (navigation.Association is FkAssociation fkAssociation &&
                         fkAssociation.ReferentialConstraint != null &&
                         fkAssociation.Name.HasNonWhiteSpace() &&
-                        fkAssociation.ReferentialConstraint.StorageReferentialConstraint == null &&
+                        fkAssociation.ReferentialConstraint.StorageAssociation == null &&
                         !fkAssociation.ReferentialConstraint.PrincipalProperties.IsNullOrEmpty() &&
                         !fkAssociation.ReferentialConstraint.DependentProperties.IsNullOrEmpty() &&
                         root.ForeignKeys.All(fk => fk.Name != fkAssociation.Name)
@@ -266,8 +277,8 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                             Name = name,
                             PrincipalEntity = constraint.PrincipalProperties[0].EntityName,
                             DependentEntity = constraint.DependentProperties[0].EntityName,
-                            PrincipalProperties = constraint.PrincipalProperties.Select(pp => pp.Name).ToArray(),
-                            DependentProperties = constraint.DependentProperties.Select(pp => pp.Name).ToArray(),
+                            PrincipalProperties = constraint.PrincipalProperties.Select(pp => pp.ConceptualName).ToArray(),
+                            DependentProperties = constraint.DependentProperties.Select(pp => pp.ConceptualName).ToArray(),
                         };
                         root.ForeignKeys.Add(fkr);
                     }

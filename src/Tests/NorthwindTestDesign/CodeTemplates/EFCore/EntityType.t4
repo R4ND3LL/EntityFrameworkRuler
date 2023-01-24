@@ -106,7 +106,7 @@ public partial class <#= EntityType.Name #> <# if (EntityType.BaseType?.Name!=nu
         firstProperty = false;
     }
 
-    foreach (var navigation in EntityType.GetNavigations())
+    foreach (var navigation in EntityType.GetNavigations().Where(o => o.DeclaringEntityType == EntityType))
     {
         WriteLine("");
         

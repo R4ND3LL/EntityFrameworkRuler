@@ -190,7 +190,28 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         modelBuilder = baseCall();
 
         // Model post processing.
+#if DEBUG
+        var employee = modelBuilder.Model.FindEntityType("Employee");
+        if (employee != null) {
+            var navs = employee.GetNavigations().ToList();
+            var orders = navs.FirstOrDefault(o => o.Name == "Orders");
+            Debug.Assert(orders != null);
+        }
 
+        var BaseParasolidDefinition = modelBuilder.Model.FindEntityType("BaseParasolidDefinition");
+        if (BaseParasolidDefinition != null) {
+            var navs = BaseParasolidDefinition.GetNavigations().ToList();
+            var orders = navs.FirstOrDefault(o => o.Name == "Orders");
+            //Debug.Assert(orders != null);
+        }
+
+        var BaseParasolidLatheDefinition = modelBuilder.Model.FindEntityType("BaseParasolidLatheDefinition");
+        if (BaseParasolidLatheDefinition != null) {
+            var navs = BaseParasolidLatheDefinition.GetNavigations().ToList();
+            var orders = navs.FirstOrDefault(o => o.Name == "Orders");
+            //Debug.Assert(orders != null);
+        }
+#endif
         return modelBuilder;
     }
 
@@ -205,8 +226,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var tableName = entityRule.DbName ?? string.Empty;
             var schemaTables = tablesBySchema.TryGetValue(schemaName);
             var table = schemaTables?.TryGetValue(tableName);
-            var includeSchema = entityRule.Parent.Rule.Mapped;
-            var includeEntity = entityRule.Rule.Mapped && includeSchema;
+            var includeSchema = entityRule.Parent.Rule.ShouldMap();
+            var includeEntity = entityRule.Rule.ShouldMap() && includeSchema;
 
             if (table != null) {
                 entityRule.MapTo(table);
@@ -225,7 +246,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             if (table == null && entityRule.BaseEntityRuleNode == null) {
                 // invalid entry
-                if (entityRule.Rule.Mapped) {
+                if (entityRule.Rule.ShouldMap()) {
                     if (tableName.HasNonWhiteSpace())
                         reporter.WriteWarning(
                             $"RULED: Entity for {schemaName}.{tableName} cannot be generated because the table cannot be found.");
@@ -368,7 +389,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         if (entityRuleNode.BaseEntityRuleNode != null) {
             // get the base entity builder and reference the type directly.
-            Debug.Assert(entityRuleNode.Builder != null);
+            Debug.Assert(entityRuleNode.IsAlreadyMapped);
+
             var baseName = entityRuleNode.BaseEntityRuleNode.Builder?.Metadata.Name ?? entityRuleNode.BaseEntityRuleNode.GetFinalName();
             entityTypeBuilder.HasBaseType(baseName);
 
@@ -432,7 +454,24 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var propertyRule = entityRuleNode.TryResolveRuleFor(column);
             if (propertyRule == null && entityRule.IncludeUnknownColumns) propertyRule = entityRuleNode.AddProperty(property, column);
 
-            if (propertyRule?.Rule.ShouldMap() != true) excludedProperties.Add(property);
+            var shouldMapProperty = propertyRule?.Rule != null && propertyRule.Rule.ShouldMap();
+            if (!shouldMapProperty) {
+                // some property mappings are required by EF.  Check if the property is needed now and override any omission rule.
+
+                if (table != null) {
+                    var columnName = property.GetColumnNameNoDefault();
+                    if (columnName.HasNonWhiteSpace()) {
+                        var pks = table.PrimaryKey?.Columns.Where(o => o.Name == columnName).ToArray() ?? Array.Empty<DatabaseColumn>();
+                        // Should not remove primary key properties.  The entity will not work. UNLESS the pkey is in the base type
+                        if (pks.Length > 0 && !BaseHasColumn(columnName)) {
+                            propertyRule?.Rule?.SetShouldMap(true);
+                            shouldMapProperty = true;
+                        }
+                    }
+                }
+            }
+
+            if (!shouldMapProperty) excludedProperties.Add(property);
 
             propertyRule?.MapTo(property, column);
 
@@ -484,11 +523,39 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         return entityTypeBuilder;
 
+        bool BaseHasColumn(string checkColumn) {
+            // return true if the column is in the base type
+            if (entityRuleNode?.BaseEntityRuleNode?.Builder != null) {
+                var baseEntity = entityRuleNode.BaseEntityRuleNode.Builder;
+                var baseProperty = baseEntity.Metadata.GetProperties().FirstOrDefault(o => {
+                    var column = o.GetColumnNameNoDefault() ?? o.Name;
+                    return column == checkColumn;
+                });
+                return baseProperty != null;
+            } else {
+                var baseProperty = entityRuleNode?.BaseEntityRuleNode?.FindPropertyByColumn(checkColumn);
+                return baseProperty != null && baseProperty.Rule.ShouldMap();
+            }
+        }
+
         void RemovePropertyAndReferences(IMutableProperty p) {
             var columnName = p.GetColumnNameNoDefault();
+#if DEBUG
+            //if (columnName == "DefinitionID") Debugger.Break();
+            if (table != null) {
+                var pks = table.PrimaryKey?.Columns.Where(o => o.Name == columnName).ToArray() ?? Array.Empty<DatabaseColumn>();
+                Debug.Assert(pks.Length == 0 || BaseHasColumn(columnName),
+                    "Should not remove primary key properties.  The entity will not work.");
+            }
+#endif
+
             RemoveIndexesWith(p, columnName);
             RemoveKeysWith(p, columnName);
-            RemoveFKsWith(p, columnName);
+            if (!BaseHasColumn(columnName)) {
+                // FKs should be able to work if the key is in the base type
+                RemoveFKsWith(p, columnName);
+            }
+
             var removed = entity.RemoveProperty(p);
             Debug.Assert(removed != null);
         }
@@ -629,7 +696,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
             }
 
-            if (schemas.IsNullOrEmpty()) return baseCall(foreignKeys);
+            if (schemas.IsNullOrEmpty()) {
+                var fks = baseCall(foreignKeys);
+
+                return fks;
+            }
 
             foreach (var grp in foreignKeys.GroupBy(o => o.Table.Schema)) {
                 var schema = grp.Key;
@@ -645,8 +716,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 foreach (var fk in schemaForeignKeys) InvokeVisitForeignKey(modelBuilder, fk);
 
                 foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-                foreach (var foreignKey in entityType.GetForeignKeys())
-                    InvokeAddNavigationProperties(foreignKey);
+                    foreach (var foreignKey in entityType.GetForeignKeys())
+                        InvokeAddNavigationProperties(foreignKey);
             }
 
             return modelBuilder;
@@ -657,14 +728,24 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     }
 
     private IMutableForeignKey VisitForeignKey(ModelBuilder modelBuilder, DatabaseForeignKey fk, Func<IMutableForeignKey> baseCall) {
+#if DEBUG
+        if (fk.Name.StartsWithIgnoreCase("FK_Employees_Employees")) Debugger.Break();
+#endif
         var newFk = baseCall();
-        newFk = ValidateForeignKey(modelBuilder, fk, newFk);
+        if (newFk != null) {
+            newFk = ValidateForeignKey(modelBuilder, fk, newFk);
+        } else {
+            // FK was not created!
+#if DEBUG
+            reporter.WriteInformation($"Entity FK {fk.Name} was NOT created by EFCore");
+#endif
+        }
+
         return newFk;
     }
 
     private IMutableForeignKey ValidateForeignKey(ModelBuilder modelBuilder, DatabaseForeignKey foreignKey,
         IMutableForeignKey entityForeignKey) {
-
         // if the FK was intended to be placed on a design time entity such as a split or derived type, then we may need to
         // remove and re-add the FK using the correct entity types.  load the rule and find out.
         var addedForeignKeyRule = dbContextRule.ForeignKeys.GetByFinalName(foreignKey.Name);
@@ -1014,6 +1095,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual void AddNavigationProperties(IMutableForeignKey foreignKey, Action<IMutableForeignKey> baseCall) {
         dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRuleNode(DbContextRule.DefaultNoRulesFoundBehavior);
+#if DEBUG
+        if (foreignKey.GetConstraintName().StartsWithIgnoreCase("FK_Employees_Employees")) Debugger.Break();
+#endif
         baseCall(foreignKey);
         var fkName = foreignKey.GetConstraintNameForTableOrView();
         var isManyToMany = foreignKey.IsManyToMany();
@@ -1034,6 +1118,14 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 // we will only exclude a navigation if BOTH ends are excluded, thus, removing the FK altogether.
                 // see reasoning above
                 OmittedForeignKeys.Add(foreignKey);
+            } else {
+#if DEBUG
+                var dNavs = foreignKey.DeclaringEntityType.GetNavigations().ToList();
+                var pNavs = foreignKey.PrincipalEntityType.GetNavigations().ToList();
+                var dNav = dNavs.FirstOrDefault(o => o.ForeignKey == foreignKey);
+                var pNav = pNavs.FirstOrDefault(o => o.ForeignKey == foreignKey);
+                Debug.Assert(dNav != null && pNav != null);
+#endif
             }
         }
 
@@ -1048,28 +1140,35 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             var navEntity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
             Debug.Assert(navEntity == entityType);
-
+#if DEBUG
+            if (navigation.Name == "LatheSurfaceDefinition") Debugger.Break();
+#endif
             if (navigationRule?.Rule != null) {
                 // validate name.  pluralizer often changes custom names
                 var newName = navigationRule.Rule.NewName.NullIfEmpty()?.Trim();
                 if (newName != null && newName != navigation.Name) {
                     /* Beware, the following error may occur here: The property or navigation 'NewName' cannot be added to the
                      entity type 'TypeName' because a property or navigation with the same name already exists */
-                    reporter.WriteVerbose(
-                        $"RULED: Correcting navigation {navigation.DeclaringEntityType.Name}.{navigation.Name} name to '{newName}'...");
+                    var oldName = navigation.Name;
                     if (thisIsPrincipal) {
-                        var existingNav = foreignKey.PrincipalEntityType.GetNavigations().FirstOrDefault(o => o.Name == newName);
+                        var existingNav = navEntity.GetNavigations().FirstOrDefault(o => o.Name == newName);
                         if (existingNav == null) {
                             foreignKey.SetPrincipalToDependent((MemberInfo)null);
                             navigation = foreignKey.SetPrincipalToDependent(newName);
+                            LogNameChange();
                         }
                     } else {
-                        var existingNav = foreignKey.DeclaringEntityType.GetNavigations().FirstOrDefault(o => o.Name == newName);
+                        var existingNav = navEntity.GetNavigations().FirstOrDefault(o => o.Name == newName);
                         if (existingNav == null) {
                             foreignKey.SetDependentToPrincipal((MemberInfo)null);
                             navigation = foreignKey.SetDependentToPrincipal(newName);
+                            LogNameChange();
                         }
                     }
+
+                    void LogNameChange() =>
+                        reporter.WriteVerbose(
+                            $"RULED: Corrected navigation {navEntity.Name}.{oldName} name to '{newName}'");
                 }
             }
 
@@ -1094,7 +1193,24 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
 
             // exclude this navigation (when rule is null or explicitly not mapped)
-            var excluded = navigationRule?.Rule.Mapped != true;
+            var excluded = navigationRule?.Rule.ShouldMap() != true;
+
+            // Exception #1: if the navigation is a part of a required mapping back to a base type in a TPT hierarchy
+            // if (navigationRule != null && navigationRule.Parent != null) {
+            //     var hierarchyRoot = navigationRule.Parent.GetBaseTypes(true)
+            //         .FirstOrDefault(o => o.Rule.GetMappingStrategy() != null);
+            //     if (hierarchyRoot?.Builder != null) {
+            //         var strategy = hierarchyRoot.Rule.GetMappingStrategy();
+            //         if (strategy.In("TPT") && hierarchyRoot.Builder.Metadata != entityType) {
+            //             // if the navigation is specifically between the base type and leaf, then it must be included
+            //             if (navigation.Inverse.DeclaringEntityType.Name == hierarchyRoot.Builder.Metadata.Name) {
+            //                 excluded = false;
+            //                 navigationRule.Rule.SetShouldMap(true);
+            //             }
+            //         }
+            //     }
+            // }
+
             return excluded;
         }
     }
@@ -1121,116 +1237,116 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     void IInterceptor.Intercept(IInvocation invocation) {
         switch (invocation.Method.Name) {
             case "GetTypeScaffoldingInfo" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseColumn dc: {
-                TypeScaffoldingInfo BaseCall() {
-                    invocation.Proceed();
-                    return (TypeScaffoldingInfo)invocation.ReturnValue;
-                }
+                    TypeScaffoldingInfo BaseCall() {
+                        invocation.Proceed();
+                        return (TypeScaffoldingInfo)invocation.ReturnValue;
+                    }
 
-                var response = GetTypeScaffoldingInfo(dc, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = GetTypeScaffoldingInfo(dc, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitDatabaseModel" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                            invocation.Arguments[1] is DatabaseModel dbm: {
-                ModelBuilder BaseCall() {
-                    invocation.Proceed();
-                    return (ModelBuilder)invocation.ReturnValue;
-                }
+                    ModelBuilder BaseCall() {
+                        invocation.Proceed();
+                        return (ModelBuilder)invocation.ReturnValue;
+                    }
 
-                var response = VisitDatabaseModel(mb, dbm, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitDatabaseModel(mb, dbm, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitTables" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                     invocation.Arguments[1] is ICollection<DatabaseTable> dt: {
-                // ModelBuilder BaseCall(ModelBuilder modelBuilder, ICollection<DatabaseTable> databaseTables) {
-                //     invocation.Proceed();
-                //     return (ModelBuilder)invocation.ReturnValue;
-                // }
+                    // ModelBuilder BaseCall(ModelBuilder modelBuilder, ICollection<DatabaseTable> databaseTables) {
+                    //     invocation.Proceed();
+                    //     return (ModelBuilder)invocation.ReturnValue;
+                    // }
 
-                var response = VisitTables(mb, dt);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitTables(mb, dt);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitTable" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                    invocation.Arguments[1] is DatabaseTable dt: {
-                EntityTypeBuilder BaseCall() {
-                    invocation.Proceed();
-                    return (EntityTypeBuilder)invocation.ReturnValue;
-                }
+                    EntityTypeBuilder BaseCall() {
+                        invocation.Proceed();
+                        return (EntityTypeBuilder)invocation.ReturnValue;
+                    }
 
-                var response = VisitTable(mb, dt, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitTable(mb, dt, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitPrimaryKey" when invocation.Arguments.Length == 2 &&
                                         invocation.Arguments[0] is EntityTypeBuilder entityTypeBuilder &&
                                         invocation.Arguments[1] is DatabaseTable table: {
-                KeyBuilder BaseCall() {
-                    invocation.Proceed();
-                    return (KeyBuilder)invocation.ReturnValue;
-                }
+                    KeyBuilder BaseCall() {
+                        invocation.Proceed();
+                        return (KeyBuilder)invocation.ReturnValue;
+                    }
 
-                var response = VisitPrimaryKey(entityTypeBuilder, table, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitPrimaryKey(entityTypeBuilder, table, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitForeignKeys" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                          invocation.Arguments[1] is IList<DatabaseForeignKey> fks: {
-                ModelBuilder BaseCall(IList<DatabaseForeignKey> databaseForeignKeys) {
-                    invocation.SetArgumentValue(1, databaseForeignKeys);
-                    invocation.Proceed();
-                    return (ModelBuilder)invocation.ReturnValue;
-                }
+                    ModelBuilder BaseCall(IList<DatabaseForeignKey> databaseForeignKeys) {
+                        invocation.SetArgumentValue(1, databaseForeignKeys);
+                        invocation.Proceed();
+                        return (ModelBuilder)invocation.ReturnValue;
+                    }
 
-                var response = VisitForeignKeys(mb, fks, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitForeignKeys(mb, fks, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "VisitForeignKey" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                         invocation.Arguments[1] is DatabaseForeignKey fk: {
-                IMutableForeignKey BaseCall() {
-                    //invocation.SetArgumentValue(1, databaseForeignKeys);
-                    invocation.Proceed();
-                    return (IMutableForeignKey)invocation.ReturnValue;
-                }
+                    IMutableForeignKey BaseCall() {
+                        //invocation.SetArgumentValue(1, databaseForeignKeys);
+                        invocation.Proceed();
+                        return (IMutableForeignKey)invocation.ReturnValue;
+                    }
 
-                var response = VisitForeignKey(mb, fk, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = VisitForeignKey(mb, fk, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "Create" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is DatabaseModel dm &&
                                invocation.Arguments[1] is ModelReverseEngineerOptions op: {
-                IModel BaseCall(DatabaseModel databaseModel, ModelReverseEngineerOptions options2) {
-                    invocation.SetArgumentValue(0, databaseModel);
-                    invocation.SetArgumentValue(1, options2);
-                    invocation.Proceed();
-                    return (IModel)invocation.ReturnValue;
-                }
+                    IModel BaseCall(DatabaseModel databaseModel, ModelReverseEngineerOptions options2) {
+                        invocation.SetArgumentValue(0, databaseModel);
+                        invocation.SetArgumentValue(1, options2);
+                        invocation.Proceed();
+                        return (IModel)invocation.ReturnValue;
+                    }
 
-                var response = Create(dm, op, BaseCall);
-                invocation.ReturnValue = response;
-                break;
-            }
+                    var response = Create(dm, op, BaseCall);
+                    invocation.ReturnValue = response;
+                    break;
+                }
             case "GetEntityTypeName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
-                var response = GetEntityTypeName(t);
-                invocation.ReturnValue = response;
-                break;
-            }
-            case "GetDbSetName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
-                var response = GetDbSetName(t);
-                invocation.ReturnValue = response;
-                break;
-            }
-            case "AddNavigationProperties" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is IMutableForeignKey fk: {
-                void BaseCall(IMutableForeignKey fk1) {
-                    invocation.SetArgumentValue(0, fk1);
-                    invocation.Proceed();
+                    var response = GetEntityTypeName(t);
+                    invocation.ReturnValue = response;
+                    break;
                 }
+            case "GetDbSetName" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is DatabaseTable t: {
+                    var response = GetDbSetName(t);
+                    invocation.ReturnValue = response;
+                    break;
+                }
+            case "AddNavigationProperties" when invocation.Arguments.Length == 1 && invocation.Arguments[0] is IMutableForeignKey fk: {
+                    void BaseCall(IMutableForeignKey fk1) {
+                        invocation.SetArgumentValue(0, fk1);
+                        invocation.Proceed();
+                    }
 
-                AddNavigationProperties(fk, BaseCall);
-                break;
-            }
+                    AddNavigationProperties(fk, BaseCall);
+                    break;
+                }
             default:
                 invocation.Proceed();
                 break;
