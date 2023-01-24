@@ -111,7 +111,9 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
                         association.Ends.Any(end =>
                             end.Type == storageSelfName ||
                             end.Role == storageRole)).ToList();
-                Debug.Assert(entity.Associations.Count == 0 || entity.StorageAssociations.Count > 0);
+                Debug.Assert(entity.Associations.Count == 0 || 
+                             entity.StorageEntitySet?.Type == "Views" ||
+                             entity.StorageAssociations.Count > 0);
             }
 
             // link properties to storage elements
