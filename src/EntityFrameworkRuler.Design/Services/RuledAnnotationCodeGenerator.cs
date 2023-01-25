@@ -65,15 +65,12 @@ public sealed class RuledAnnotationCodeGenerator : AnnotationCodeGenerator {
     }
 
     private sealed class LastMethodCallCodeFragment : MethodCallCodeFragment {
-        public LastMethodCallCodeFragment(MethodInfo methodInfo, params object[] arguments) : base(methodInfo, arguments) {
-        }
+        public LastMethodCallCodeFragment(MethodInfo methodInfo, params object[] arguments) : base(methodInfo, arguments) { }
 
-        public LastMethodCallCodeFragment(string method, params object[] arguments) : base(method, arguments) {
-        }
+        [Obsolete("Obsolete according to base constructor")]
+        public LastMethodCallCodeFragment(string method, params object[] arguments) : base(method, arguments) { }
 
-        // public LastMethodCallCodeFragment(MethodInfo methodInfo, object[] arguments, MethodCallCodeFragment chainedCall) : base(methodInfo, arguments, chainedCall) {
-        // }
-
+        [Obsolete("Obsolete according to base constructor")]
         public LastMethodCallCodeFragment(string method, object[] arguments, MethodCallCodeFragment chainedCall) : base(method, arguments,
             chainedCall) {
         }

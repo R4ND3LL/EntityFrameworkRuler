@@ -405,6 +405,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         entityRuleNode.MapTo(entityTypeBuilder);
 
+        bool isTphLeaf = false;
         if (entityRuleNode.BaseEntityRuleNode != null) {
             // get the base entity builder and reference the type directly.
             Debug.Assert(entityRuleNode.IsAlreadyMapped);
@@ -418,6 +419,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 switch (baseStrategy) {
                     case "TPH":
                         // ToTable() and DbSet should be REMOVED for TPH leafs
+                        isTphLeaf = true;
                         entityTypeBuilder.ToTable((string)null);
                         entityTypeBuilder.Metadata.RemoveAnnotation(EfScaffoldingAnnotationNames.DbSetName);
                         entityTypeBuilder.Metadata.RemoveAnnotation(EfRelationalAnnotationNames.Schema);
@@ -453,7 +455,16 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     break;
             }
 
-        bool AnnotationFilter(AnnotationItem annotation) => !ignoreEntityAnnotations.Contains(annotation.Key);
+
+        bool AnnotationFilter(AnnotationItem annotation) {
+            if (ignoreEntityAnnotations.Contains(annotation.Key)) return false;
+            if (isTphLeaf && annotation.Key.In(EfScaffoldingAnnotationNames.DbSetName,
+                    EfRelationalAnnotationNames.Schema,
+                    EfRelationalAnnotationNames.TableName,
+                    EfRelationalAnnotationNames.Comment)) return false;
+            return true;
+        }
+
         entityTypeBuilder.Metadata.ApplyAnnotations(entityRule.Annotations, () => entityTypeBuilder.Metadata.Name, reporter,
             AnnotationFilter);
 
