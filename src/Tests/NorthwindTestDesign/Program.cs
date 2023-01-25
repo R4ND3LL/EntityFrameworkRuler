@@ -23,7 +23,7 @@ internal class Program {
 
         Console.WriteLine("This is a fake test project to illustrate rule application only!");
 
-#if DEBUG
+#if false
         using var dbContext = new NorthwindEntities(new DbContextOptions<NorthwindEntities>());
 
         // ReSharper disable once SuggestVarOrType_SimpleTypes
