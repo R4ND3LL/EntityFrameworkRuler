@@ -401,18 +401,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     case "TPH":
                         // ToTable() and DbSet should be REMOVED for TPH leafs
                         entityTypeBuilder.ToTable((string)null);
-                        var scaffoldingDbSetName = EfScaffoldingAnnotationNames.DbSetName;
-                        Debug.Assert(IsValidAnnotation(scaffoldingDbSetName));
-                        var removed = entityTypeBuilder.Metadata.RemoveAnnotation(scaffoldingDbSetName);
-                        Debug.Assert(removed != null);
-                        var efSchema = EfRelationalAnnotationNames.Schema;
-                        Debug.Assert(IsValidAnnotation(efSchema));
-                        removed = entityTypeBuilder.Metadata.RemoveAnnotation(efSchema);
-                        Debug.Assert(removed != null);
-                        var efTableName = EfRelationalAnnotationNames.TableName;
-                        Debug.Assert(IsValidAnnotation(efTableName));
-                        removed = entityTypeBuilder.Metadata.RemoveAnnotation(efTableName);
-                        Debug.Assert(removed != null);
+                        entityTypeBuilder.Metadata.RemoveAnnotation(EfScaffoldingAnnotationNames.DbSetName);
+                        entityTypeBuilder.Metadata.RemoveAnnotation(EfRelationalAnnotationNames.Schema);
+                        entityTypeBuilder.Metadata.RemoveAnnotation(EfRelationalAnnotationNames.TableName);
                         break;
                     case "TPT":
                         break;
@@ -436,7 +427,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
 
 
-        ApplyAnnotations(entityRule.Annotations, entityTypeBuilder.Metadata, () => entityTypeBuilder.Metadata.Name);
+        entityTypeBuilder.Metadata.ApplyAnnotations(entityRule.Annotations, () => entityTypeBuilder.Metadata.Name, reporter);
 
         var discriminatorColumn = entityRule.GetDiscriminatorColumn() ??
                                   entityRule.Properties.FirstOrDefault(o => o.DiscriminatorConditions.Count > 0)?.Name;
@@ -474,7 +465,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             propertyRule?.MapTo(property, column);
 
             if (propertyRule?.Rule.Annotations.Count > 0 && propertyRule.Rule.ShouldMap()) {
-                ApplyAnnotations(propertyRule.Rule.Annotations, property, () => $"{entityTypeBuilder.Metadata.Name}.{property.Name}");
+                property.ApplyAnnotations(propertyRule.Rule.Annotations, () => $"{entityTypeBuilder.Metadata.Name}.{property.Name}",
+                    reporter);
             }
         }
 
@@ -632,10 +624,6 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
     }
 
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    protected virtual bool IsValidAnnotation(string annotationKey) =>
-        AnnotationHelper.GetAnnotationIndex(annotationKey)?.Contains(annotationKey) == true;
-
     private KeyBuilder randomKeyBuilder;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -716,7 +704,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     private IMutableForeignKey VisitForeignKey(ModelBuilder modelBuilder, DatabaseForeignKey fk, Func<IMutableForeignKey> baseCall) {
 #if DEBUG
-        if (fk.Name.StartsWithIgnoreCase("FK_Employees_Employees")) Debugger.Break();
+        if (fk.Name.StartsWithIgnoreCase("FK_EntryExitBoolean_BaseEntryExit")) Debugger.Break();
 #endif
         var newFk = baseCall();
         if (newFk != null) {
@@ -740,6 +728,48 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             if (entityForeignKey.PrincipalEntityType.Name != addedForeignKeyRule.Rule.PrincipalEntity ||
                 entityForeignKey.DeclaringEntityType.Name != addedForeignKeyRule.Rule.DependentEntity) {
                 entityForeignKey = RemapForeignKey(modelBuilder, foreignKey, entityForeignKey, addedForeignKeyRule);
+            }
+        } else if (entityForeignKey.PrincipalEntityType.BaseType != null || entityForeignKey.DeclaringEntityType.BaseType != null) {
+            // check the ends that EFCore selected. If they have base types, and the FK props are in the base type, then the
+            // FK should be remapped to the base entity instead.
+            var correctPrincipal = GetCorrectEntity(entityForeignKey.PrincipalEntityType, foreignKey.PrincipalTable,
+                foreignKey.PrincipalColumns);
+            var correctDependent = GetCorrectEntity(entityForeignKey.DeclaringEntityType, foreignKey.Table, foreignKey.Columns);
+
+            if (entityForeignKey.PrincipalEntityType.Name != correctPrincipal.Name ||
+                entityForeignKey.DeclaringEntityType.Name != correctDependent.Name) {
+                // incorrectly mapped to derived entity
+                var foreignKeyRule = new ForeignKeyRule() {
+                    Name = foreignKey.Name,
+                    DependentEntity = correctDependent.Name,
+                    PrincipalEntity = correctPrincipal.Name,
+                    DependentProperties = entityForeignKey.Properties.Select(o => o.GetColumnNameNoDefault()).ToArray(),
+                    PrincipalProperties = entityForeignKey.PrincipalKey.Properties.Select(o => o.GetColumnNameNoDefault()).ToArray(),
+                };
+                addedForeignKeyRule = new(foreignKeyRule, dbContextRule);
+                entityForeignKey = RemapForeignKey(modelBuilder, foreignKey, entityForeignKey, addedForeignKeyRule);
+            }
+
+            static IMutableEntityType GetCorrectEntity(IMutableEntityType entityType, DatabaseTable table,
+                IList<DatabaseColumn> key) {
+                if (entityType.BaseType == null) return entityType;
+                var allBases = entityType.GetAllBaseTypes() // starting with root
+                    .Where(o => o.GetTableOrViewSchema() == table.Schema && o.GetTableOrViewName() == table.Name)
+                    .ToArray();
+                if (allBases.Length == 0) return entityType;
+                Debug.Assert(!allBases.Contains(entityType));
+
+                foreach (var baseType in allBases) {
+                    var keyOwners = baseType
+                        .GetPropertiesFromDbColumns(key)
+                        .Where(o => o != null && o.DeclaringEntityType == baseType)
+                        .Select(o => o.DeclaringEntityType)
+                        .Distinct().ToArray();
+                    if (keyOwners.Length == 1 && keyOwners[0] != entityType)
+                        return keyOwners[0];
+                }
+
+                return entityType;
             }
         }
 
@@ -1164,10 +1194,10 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             navigationRule?.MapTo(navigation, fkName, thisIsPrincipal, isManyToMany);
 
-            ApplyAnnotations(navigationRule?.Rule.Annotations, navigation, () => $"{entityType.Name}.{navigation?.Name}");
+            navigation.ApplyAnnotations(navigationRule?.Rule?.Annotations, () => $"{entityType.Name}.{navigation?.Name}", reporter);
 
             // exclude this navigation (when rule is null or explicitly not mapped)
-            var excluded = navigationRule?.Rule.ShouldMap() != true;
+            var excluded = navigationRule?.Rule?.ShouldMap() != true;
 
             // Exception #1: if the navigation is a part of a required mapping back to a base type in a TPT hierarchy
             // if (navigationRule != null && navigationRule.Parent != null) {
@@ -1186,26 +1216,6 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             // }
 
             return excluded;
-        }
-    }
-
-    private void ApplyAnnotations(AnnotationCollection annotations, IMutableAnnotatable target, Func<string> nameGetter) {
-        if (target == null || annotations == null || annotations.Count == 0) return;
-        foreach (var annotation in annotations) {
-            if (!IsValidAnnotation(annotation.Key)) {
-                reporter.WriteWarning(
-                    $"RULED: {nameGetter()} annotation '{annotation.Key}' is invalid. Skipping.");
-                continue;
-            }
-
-            var v = annotation.GetActualValue();
-            reporter.WriteVerbose(
-                $"RULED: Applying {nameGetter()} annotation '{annotation.Key}' value '{v?.ToString()?.Truncate(15)}'.");
-            target.SetOrRemoveAnnotation(annotation.Key, v);
-#if DEBUG
-            var v2 = target.FindAnnotation(annotation.Key)?.Value;
-            Debug.Assert(v == v2);
-#endif
         }
     }
 

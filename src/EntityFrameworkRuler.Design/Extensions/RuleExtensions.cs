@@ -1,6 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Common;
+using EntityFrameworkRuler.Common.Annotations;
 using EntityFrameworkRuler.Design.Services;
+using Humanizer;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 // ReSharper disable MemberCanBeInternal
 
@@ -84,16 +87,37 @@ public static class RuleExtensions {
         return clrType;
     }
 
-    
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static void ApplyAnnotations(this IMutableAnnotatable target, AnnotationCollection annotations, Func<string> nameGetter,
+        IMessageLogger reporter) {
+        if (target == null || annotations == null || annotations.Count == 0) return;
+        foreach (var annotation in annotations) {
+            if (!IsValidAnnotation(annotation.Key)) {
+                reporter.WriteWarning(
+                    $"RULED: {nameGetter()} annotation '{annotation.Key}' is invalid. Skipping.");
+                continue;
+            }
 
-    // /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    // public static DatabaseTable ResolveTable(this ICollection<DatabaseTable> tables, SchemaRule schemaRule, EntityRule entityRule) {
-    //     if (schemaRule == null || schemaRule.SchemaName.IsNullOrWhiteSpace()) return null;
-    //     if (entityRule == null || entityRule.Name.IsNullOrWhiteSpace()) return null;
-    //     var name = entityRule.Name.Trim();
-    //
-    //     var table = tables.FirstOrDefault(o => o.Name == name) ??
-    //                 tables.FirstOrDefault(o => o.Name.EqualsIgnoreCase(name));
-    //     return table;
-    // }
+            var v = annotation.GetActualValue();
+            reporter.WriteVerbose(
+                $"RULED: Applying {nameGetter()} annotation '{annotation.Key}' value '{v?.ToString()?.Truncate(15)}'.");
+            target.SetOrRemoveAnnotation(annotation.Key, v);
+#if DEBUG
+            var v2 = target.FindAnnotation(annotation.Key)?.Value;
+            Debug.Assert(v == v2);
+#endif
+        }
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static void RemoveAnnotation(this IMutableAnnotatable target, string annotationName, bool assertRemoved = true) {
+        //var scaffoldingDbSetName = EfScaffoldingAnnotationNames.DbSetName;
+        Debug.Assert(IsValidAnnotation(annotationName));
+        var removed = target.RemoveAnnotation(annotationName);
+        Debug.Assert(!assertRemoved || removed != null);
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    private static bool IsValidAnnotation(string annotationKey) =>
+        AnnotationHelper.GetAnnotationIndex(annotationKey)?.Contains(annotationKey) == true;
 }

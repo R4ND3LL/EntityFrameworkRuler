@@ -37,8 +37,12 @@ public sealed class NavigationRuleNode : RuleNode<NavigationRule, EntityRuleNode
 
         Rule.FkName = fkName;
         Rule.IsPrincipal = thisIsPrincipal || isManyToMany;
-        if (!string.IsNullOrWhiteSpace(navigation.TargetEntityType.Name))
+        if (!string.IsNullOrWhiteSpace(navigation.TargetEntityType.Name)) {
+#if DEBUG
+            if (Rule.ToEntity.HasNonWhiteSpace() && Rule.ToEntity != navigation.TargetEntityType.Name) Debugger.Break();
+#endif
             Rule.ToEntity = navigation.TargetEntityType.Name;
+        }
 
         var m = navigation.GetMultiplicity().ToMultiplicityString();
         if (Rule.Multiplicity != m) Rule.Multiplicity = m;

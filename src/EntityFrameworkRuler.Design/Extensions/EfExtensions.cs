@@ -62,6 +62,22 @@ internal static class EfExtensions {
         return tableName;
     }
 
+    /// <summary> Returns the table or view schema name of the supplied entity. </summary>
+    public static string GetTableOrViewSchema(this IMutableEntityType tb) {
+        if (tb is not IEntityType entityType) return null;
+        var schemaName = entityType.GetSchema();
+        schemaName ??= entityType.GetViewSchema();
+        return schemaName;
+    }
+
+    /// <summary> Returns the table or view name of the supplied entity. </summary>
+    public static string GetTableOrViewName(this IMutableEntityType tb) {
+        if (tb is not IEntityType entityType) return null;
+        var tableName = entityType.GetTableName();
+        tableName ??= entityType.GetViewName();
+        return tableName;
+    }
+
     /// <summary> Returns the table ident of the supplied entity. </summary>
     public static StoreObjectIdentifier GetStoreObjectIdentifier(this ITypeBase tb) {
         if (tb is not IEntityType entityType) return default;
@@ -491,13 +507,15 @@ internal static class EfExtensions {
 
     /// <summary> Get the entity properties for the given DB columns </summary>
     public static IMutableProperty[] GetPropertiesFromDbColumns(this IMutableEntityType e, IEnumerable<DatabaseColumn> columns) {
-        return GetPropertiesFromDbColumns(e, columns.Select(o => o.Name));
+        return GetPropertiesFromDbColumns(e, columns?.Select(o => o.Name));
     }
 
     /// <summary> Get the entity properties for the given DB columns </summary>
     public static IMutableProperty[] GetPropertiesFromDbColumns(this IMutableEntityType e, IEnumerable<string> columns) {
+        if (columns == null) return Array.Empty<IMutableProperty>();
         var propsByDbName = e.GetProperties().Select(o => (dbName: o.GetColumnNameNoDefault(), prop: o))
             .Where(o => o.dbName.HasNonWhiteSpace())
+            .DistinctBy(o => o.dbName)
             .ToDictionary(o => o.dbName, o => o.prop);
         var props = columns.Select(o => propsByDbName.TryGetValue(o)).ToArray();
         return props;
@@ -505,6 +523,7 @@ internal static class EfExtensions {
 
     /// <summary> Get the entity property for the given DB column </summary>
     public static IMutableProperty GetPropertyFromDbColumn(this IMutableEntityType e, string column) {
+        if (column.IsNullOrWhiteSpace()) return null;
         var prop = e.GetProperties().Select(o => (dbName: o.GetColumnNameNoDefault(), prop: o))
             .Where(o => o.dbName.HasNonWhiteSpace())
             .FirstOrDefault(o => o.dbName == column);

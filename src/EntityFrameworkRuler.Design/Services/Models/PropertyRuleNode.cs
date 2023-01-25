@@ -30,8 +30,10 @@ public sealed class PropertyRuleNode : RuleNode<PropertyRule, EntityRuleNode> {
 
         // can only update expect name if it wasn't already influenced by dynamic naming or NewName
         if (Rule.NewName.IsNullOrWhiteSpace() && !Parent.Parent.IsDynamicNamingColumns &&
-            (Rule.PropertyName.HasNonWhiteSpace() || Property.Name != ColumnName))
+            (Rule.PropertyName.HasNonWhiteSpace() || Property.Name != ColumnName)) {
             Rule.PropertyName = Property.Name;
+            if (Rule.Name == Rule.PropertyName) Rule.PropertyName = null;
+        }
 
         if (Property.ClrType?.IsEnum == true) Rule.NewType = Property.ClrType.ToFriendlyTypeName();
     }

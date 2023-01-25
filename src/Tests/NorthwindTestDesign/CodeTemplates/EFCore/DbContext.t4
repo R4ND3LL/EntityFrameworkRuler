@@ -65,12 +65,16 @@ public partial class <#= Options.ContextName #> : DbContext
     }
 
 <#
-    foreach (var entityType in Model.GetEntityTypes().Where(e => !e.IsSimpleManyToManyJoinEntityType()))
-    {
+    foreach (var entityType in Model.GetEntityTypes().Where(e => !e.IsSimpleManyToManyJoinEntityType())) {
+        var mappingRoot= entityType.GetAllBaseTypesAscending().FirstOrDefault(o=> o.GetMappingStrategy()?.Length > 0);
+        var mappingStrategy = mappingRoot?.GetMappingStrategy();
+        var dbSetName= mappingStrategy == "TPH" ? null : entityType.GetDbSetName();
+        if (!string.IsNullOrEmpty(dbSetName)) {
 #>
-    public virtual DbSet<<#= entityType.Name #>> <#= entityType.GetDbSetName() #> { get; set; }
+    public virtual DbSet<<#= entityType.Name #>> <#= dbSetName #> { get; set; }
 
 <#
+        }
     }
 
     if (!Options.SuppressOnConfiguring)
