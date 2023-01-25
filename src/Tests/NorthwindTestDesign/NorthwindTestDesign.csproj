@@ -9,6 +9,7 @@
         <!-- will copy package files to output folder -->
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <RootNamespace>NorthwindModel</RootNamespace>
+        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
@@ -34,6 +35,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />    
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Context" />
     </ItemGroup>
 
 </Project>
