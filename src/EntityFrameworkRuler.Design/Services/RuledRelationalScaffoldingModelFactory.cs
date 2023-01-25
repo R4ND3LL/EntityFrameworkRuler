@@ -797,8 +797,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             var schemaNames = foreignKeys.Select(o => o.Table.Schema).Where(o => o.HasNonWhiteSpace()).Distinct().ToArray();
 
-            var schemas = schemaNames.Select(o => dbContextRule?.Rule?.TryResolveRuleFor(o))
-                .Where(o => o?.UseManyToManyEntity == true).ToArray();
+            var schemas = schemaNames.Select(o => dbContextRule?.TryResolveRuleFor(o))
+                .Where(o => o?.Rule?.UseManyToManyEntity == true).ToArray();
 
             foreignKeys = AddMissingDatabaseForeignKeys(foreignKeys);
 
@@ -827,7 +827,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             foreach (var grp in foreignKeys.GroupBy(o => o.Table.Schema)) {
                 var schema = grp.Key;
                 var schemaForeignKeys = grp.ToArray();
-                var schemaReference = schemas.FirstOrDefault(o => o.SchemaName == schema);
+                var schemaReference = schemas.FirstOrDefault(o => o?.Rule?.SchemaName == schema);
                 if (schemaReference == null) {
                     modelBuilder = baseCall(schemaForeignKeys);
                     continue;
@@ -932,10 +932,10 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         // verify that entities actually exist by the names identified on the FK.  if so, the mapping is wrong!
         // if the underlying tables are equivalent in each case, then the FK wiring is correct, it just got mapped to the wrong
         // entities.  then we can remove the FK and re-add against the correct entity types.
-        var dependentEntityRule = dbContextRule.TryResolveRuleForEntityName(addedForeignKeyRule.Rule.DependentEntity);
-        var principalEntityRule = dbContextRule.TryResolveRuleForEntityName(addedForeignKeyRule.Rule.PrincipalEntity);
-        var dependentNavRule = dependentEntityRule?.Navigations.FirstOrDefault(o => !o.IsPrincipal && o.FkName == foreignKey.Name);
-        var principalNavRule = principalEntityRule?.Navigations.FirstOrDefault(o => o.IsPrincipal && o.FkName == foreignKey.Name);
+        // var dependentEntityRule = dbContextRule.TryResolveRuleForEntityName(addedForeignKeyRule.Rule.DependentEntity);
+        // var principalEntityRule = dbContextRule.TryResolveRuleForEntityName(addedForeignKeyRule.Rule.PrincipalEntity);
+        // var dependentNavRule = dependentEntityRule?.GetNavigations().FirstOrDefault(o => !o.IsPrincipal && o.FkName == foreignKey.Name);
+        // var principalNavRule = principalEntityRule?.GetNavigations().FirstOrDefault(o => o.IsPrincipal && o.FkName == foreignKey.Name);
         var currentPrincipal = entityForeignKey.PrincipalEntityType;
         var currentDependent = entityForeignKey.DeclaringEntityType;
         var principalEntityType = modelBuilder.Model.FindEntityType(addedForeignKeyRule.Rule.PrincipalEntity);
@@ -1178,7 +1178,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (entityRuleNode is null) return false;
         if (table is not DatabaseView view) return false;
         // EF Core does not generate keys for views. But we might have it in the rules.
-        var keyColNames = entityRuleNode.Properties.Where(o => o.Rule.IsKey).Select(o => o.Rule.Name).ToArray();
+        var keyColNames = entityRuleNode.GetProperties()
+            .Where(o => o.Rule.IsKey && o.Parent.DbName == view.Name)
+            .Select(o => o.Rule.Name).ToArray();
         var keyCols = view.GetTableColumns(keyColNames);
         if (keyCols.IsNullOrEmpty()) return false;
 

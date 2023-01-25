@@ -19,10 +19,24 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
     public EntityRuleNode BaseEntityRuleNode { get; set; }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public RuleIndex<PropertyRuleNode> Properties { get; }
+    private RuleIndex<PropertyRuleNode> Properties { get; }
+
+    /// <summary> Get properties recursively </summary>
+    public IEnumerable<PropertyRuleNode> GetProperties()
+        => BaseEntityRuleNode != null
+            ? BaseEntityRuleNode.GetProperties().Concat(Properties)
+            : Properties;
+
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public RuleIndex<NavigationRuleNode> Navigations { get; }
+    private RuleIndex<NavigationRuleNode> Navigations { get; }
+
+    /// <summary> Get navigations recursively </summary>
+    public IEnumerable<NavigationRuleNode> GetNavigations()
+        => BaseEntityRuleNode != null
+            ? BaseEntityRuleNode.GetNavigations().Concat(Navigations)
+            : Navigations;
+
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public DatabaseTableNode DatabaseTable { get; private set; }
@@ -101,7 +115,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
     /// <summary> Get the property rule for the given target column. Used during scaffolding phase. </summary>
     public PropertyRuleNode TryResolveRuleFor(string column) {
-        if (Properties == null || Properties.Count == 0 || column.IsNullOrWhiteSpace()) return null;
+        if (column.IsNullOrWhiteSpace()) return null;
 
         var entityRule = FindPropertyByColumn(column);
         if (entityRule != null) return entityRule;
@@ -114,43 +128,52 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
     /// <summary> Get the property rule recursively for the given target column. Used during scaffolding phase. </summary>
     public PropertyRuleNode FindPropertyByColumn(string column) {
-        if (Properties == null || Properties.Count == 0 || column.IsNullOrWhiteSpace()) return null;
+        if (column.IsNullOrWhiteSpace()) return null;
         var entityRule = Properties.GetByDbName(column) ?? BaseEntityRuleNode?.FindPropertyByColumn(column);
         return entityRule;
     }
 
     /// <summary> Get the property rule recursively for the given target property name. Used during scaffolding phase. </summary>
-    public PropertyRuleNode FindPropertyByFinalName(string column) {
-        if (Properties == null || Properties.Count == 0 || column.IsNullOrWhiteSpace()) return null;
-        var entityRule = Properties.GetByFinalName(column) ?? BaseEntityRuleNode?.FindPropertyByFinalName(column);
+    public PropertyRuleNode FindPropertyByFinalName(string propertyName) {
+        if (propertyName.IsNullOrWhiteSpace()) return null;
+        var entityRule = Properties.GetByFinalName(propertyName) ?? BaseEntityRuleNode?.FindPropertyByFinalName(propertyName);
         return entityRule;
     }
+
+    /// <summary> Get the navigation rule recursively for the given target property name. Used during scaffolding phase. </summary>
+    public NavigationRuleNode FindNavigationByFinalName(string propertyName) {
+        if (propertyName.IsNullOrWhiteSpace()) return null;
+        var entityRule = Navigations.GetByFinalName(propertyName) ?? BaseEntityRuleNode?.FindNavigationByFinalName(propertyName);
+        return entityRule;
+    }
+
 
     /// <summary> Return the navigation naming rule for the given navigation info </summary>
     public NavigationRuleNode TryResolveNavigationRuleFor(string fkName, Func<string> defaultEfName, bool thisIsPrincipal,
         bool isManyToMany) {
-        if (Navigations == null || Navigations.Count == 0) return null;
+        if ((Navigations == null || Navigations.Count == 0) && BaseEntityRuleNode == null) return null;
 
         // locate by fkName first, which is most reliable.
         var navigations = fkName.HasNonWhiteSpace()
-            ? Navigations
+            ? GetNavigations()
                 .Where(t => t.FkName == fkName)
                 .ToArray()
             : Array.Empty<NavigationRuleNode>();
 
         if (navigations.Length == 0) {
-            // Maybe FinalName is not defined?  if not, try to locate by expected target name instead
+            // Maybe FKName is not defined?  if not, try to locate by expected target name instead
             if (fkName.HasNonWhiteSpace()) {
-                var someFinalNamesEmpty = Navigations.Any(o => o.FkName.IsNullOrWhiteSpace());
-                if (!someFinalNamesEmpty)
-                    // Final names ARE defined, this property is just not found. Use default.
-                    return null;
+                if (!GetNavigations().Any(o => o.FkName.IsNullOrWhiteSpace()))
+                    return null; // FK names ARE defined, this property is just not found. Use default.
             }
 
-            var efName = defaultEfName();
-            navigations = Navigations.Where(o => o.Rule.Name.HasNonWhiteSpace() && o.Rule.Name.EqualsIgnoreCase(efName))
-                .ToArray();
-            if (navigations.Length == 0) return null; // expected EF name resolution failed to
+            var efName = defaultEfName?.Invoke();
+            if (efName.HasNonWhiteSpace()) {
+                navigations = Navigations?.Where(o => o.Rule.Name.EqualsIgnoreCase(efName)).ToArray();
+                if (navigations.IsNullOrEmpty()) return null; // expected EF name resolution failed to
+            }
+            // any other way to resolve it?
+            if (navigations!.Length == 0) return null;
         }
 
         // we have candidate matches (by fk name or expected target name). we may need to narrow further.

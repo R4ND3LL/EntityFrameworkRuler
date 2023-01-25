@@ -10,6 +10,7 @@ namespace EntityFrameworkRuler.Extension;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class RuleExtensions {
+#if false
     /// <summary> Get the primitive schema rule for the given target schema. Used during scaffolding phase. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public static bool TryResolveRuleFor(this DbContextRule rules, string schema, out SchemaRule schemaRule) =>
@@ -180,7 +181,7 @@ public static class RuleExtensions {
 
         return navigationRules.Length != 1 ? null : navigationRules[0];
     }
-
+#endif
     /// <summary> Get the rule elements within this element </summary>
     public static IEnumerable<IRuleItem> GetChildren(this IRuleItem item) {
         return item switch {

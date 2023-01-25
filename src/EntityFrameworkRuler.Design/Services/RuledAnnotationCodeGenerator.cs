@@ -29,7 +29,9 @@ public sealed class RuledAnnotationCodeGenerator : AnnotationCodeGenerator {
                 if (s.EndsWith(";")) s = s[..^1];
                 if (s.EndsWith("(true)")) s = s[..^"(true)".Length];
                 if (s.EndsWith("()")) s = s[..^2];
+#pragma warning disable CS0618
                 var m = new LastMethodCallCodeFragment(s);
+#pragma warning restore CS0618
                 return m;
             }
             default:

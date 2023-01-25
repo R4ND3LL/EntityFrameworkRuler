@@ -200,13 +200,13 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         var entityRule = dbContextRule.TryResolveRuleForEntityName(entity.Name);
 
-        if (entityRule == null || entityRule.Navigations.Count == 0) return defaultEfName();
+        if (entityRule == null || !entityRule.GetNavigations().Any()) return defaultEfName();
 
-        var navigationRule = entityRule.Rule.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
-        if (navigationRule?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
+        var navigationRule = entityRule.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
+        if (navigationRule?.Rule?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
 
-        logger?.WriteVerbose($"RULED: Navigation {entity.Name}.{navigationRule.NewName} defined");
-        return navigationRule.NewName.Trim();
+        logger?.WriteVerbose($"RULED: Navigation {entity.Name}.{navigationRule.Rule.NewName} defined");
+        return navigationRule.Rule.NewName.Trim();
     }
 
     /// <summary>
