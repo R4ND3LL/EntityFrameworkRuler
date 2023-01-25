@@ -1,4 +1,5 @@
 ﻿// ReSharper disable MemberCanBePrivate.Global
+
 namespace EntityFrameworkRuler.Common.Annotations;
 
 /// <summary> Ruler annotations </summary>
@@ -8,4 +9,7 @@ public static class RulerAnnotations {
 
     /// <summary> Type is Abstract. </summary>
     public const string Abstract = Prefix + "Abstract";
+
+    /// <summary> Code for discriminator configuration. </summary>
+    public const string DiscriminatorConfig = Prefix + "DiscriminatorConfig";
 }

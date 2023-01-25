@@ -15,8 +15,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using IInterceptor = Castle.DynamicProxy.IInterceptor;
 using EntityFrameworkRuler.Common.Annotations;
 using Humanizer;
+using Microsoft.EntityFrameworkCore.Design.Internal;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.EntityFrameworkCore.ValueGeneration;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
@@ -58,6 +63,19 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     private RuledCSharpUniqueNamer<DatabaseTable, EntityRule> dbSetNamer;
     private ModelReverseEngineerOptions options;
     private DatabaseModel generatingDatabaseModel;
+
+    /// <summary> enlists post creation actions to be executed after visiting database model </summary>
+    protected readonly List<Action<ModelBuilder>> PostCreationActions = new();
+
+    private readonly HashSet<string> ignoreEntityAnnotations = new(new[] {
+        EfCoreAnnotationNames.DiscriminatorProperty,
+        EfCoreAnnotationNames.DiscriminatorValue,
+        EfCoreAnnotationNames.DiscriminatorMappingComplete
+    });
+
+    private KeyBuilder randomKeyBuilder;
+    private CSharpHelper code;
+
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledRelationalScaffoldingModelFactory(IServiceProvider serviceProvider,
@@ -188,7 +206,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     // ReSharper disable once RedundantAssignment
     protected virtual ModelBuilder VisitDatabaseModel(ModelBuilder modelBuilder, DatabaseModel databaseModel, Func<ModelBuilder> baseCall) {
         modelBuilder = baseCall();
-
+        foreach (var action in PostCreationActions) action(modelBuilder);
         // Model post processing.
 #if DEBUG
         var employee = modelBuilder.Model.FindEntityType("Employee");
@@ -419,6 +437,15 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 case "TPH":
                     // ToTable() and DbSet should be defined for TPH root
                     entityTypeBuilder.ToTable(table.Name);
+                    var discriminatorColumn = entityRule.GetDiscriminatorColumn() ??
+                                              entityRule.Properties.FirstOrDefault(o => o.DiscriminatorConditions.Count > 0)?.Name;
+
+                    if (discriminatorColumn.HasNonWhiteSpace()) {
+                        //var assets = new DiscriminatorMappingAssets(entityTypeBuilder, discriminatorColumn, table, entityRule);
+                        //DiscriminatorMappings.Add(assets);
+                        PostCreationActions.Add(m => ApplyDiscriminator(m, entityTypeBuilder, discriminatorColumn, table, entityRule));
+                    }
+
                     break;
                 case "TPT":
                     break;
@@ -426,13 +453,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     break;
             }
 
-
-        entityTypeBuilder.Metadata.ApplyAnnotations(entityRule.Annotations, () => entityTypeBuilder.Metadata.Name, reporter);
-
-        var discriminatorColumn = entityRule.GetDiscriminatorColumn() ??
-                                  entityRule.Properties.FirstOrDefault(o => o.DiscriminatorConditions.Count > 0)?.Name;
-
-        if (discriminatorColumn.HasNonWhiteSpace()) ApplyDiscriminator(entityTypeBuilder, discriminatorColumn, table, entityRule);
+        bool AnnotationFilter(AnnotationItem annotation) => !ignoreEntityAnnotations.Contains(annotation.Key);
+        entityTypeBuilder.Metadata.ApplyAnnotations(entityRule.Annotations, () => entityTypeBuilder.Metadata.Name, reporter,
+            AnnotationFilter);
 
         var entity = entityTypeBuilder.Metadata;
 
@@ -583,9 +606,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    protected virtual void ApplyDiscriminator(EntityTypeBuilder entityTypeBuilder,
-        string discriminatorColumn, DatabaseTable table,
-        EntityRule entityRule) {
+    protected virtual void ApplyDiscriminator(ModelBuilder modelBuilder, EntityTypeBuilder entityTypeBuilder,
+        string discriminatorColumn, DatabaseTable table, EntityRule entityRule) {
         var column = table.Columns.FirstOrDefault(o => o.Name == discriminatorColumn);
         if (column == null) {
             reporter.WriteWarning(
@@ -605,6 +627,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var discriminatorBuilder = entityTypeBuilder.HasDiscriminator(property.Name, type);
         var propertyRule = entityRule.Properties.FirstOrDefault(o => o.Name == column.Name);
         if (propertyRule == null) return;
+        var mapping = new List<(object Value, string ToEntityName)>();
         foreach (var condition in propertyRule.DiscriminatorConditions) {
             object value;
             try {
@@ -618,13 +641,126 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 return;
             }
 
-            discriminatorBuilder.HasValue(condition.ToEntityName, value);
-            reporter.WriteVerbose(
-                $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator value '{value?.ToString()?.Truncate(20)}' mapped to entity {condition.ToEntityName}");
+            var toEntity = modelBuilder.Model.FindEntityType(condition.ToEntityName);
+            Debug.Assert(toEntity != null);
+            if (toEntity != null) {
+                mapping.Add((value, toEntity.Name));
+                discriminatorBuilder.HasValue(toEntity.Name, value);
+                reporter.WriteVerbose(
+                    $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator value '{value?.ToString()?.Truncate(20)}' mapped to entity {condition.ToEntityName}");
+            } else
+                reporter.WriteVerbose(
+                    $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator value '{value?.ToString()?.Truncate(20)}' could not be mapped to missing entity: {condition.ToEntityName}");
         }
+
+        discriminatorBuilder.IsComplete(true);
+
+        var config = GenerateEntityTypeAnnotations("entity", entityTypeBuilder.Metadata, mapping).ToString();
+        entityTypeBuilder.Metadata.SetOrRemoveAnnotation(RulerAnnotations.DiscriminatorConfig, config);
     }
 
-    private KeyBuilder randomKeyBuilder;
+    /// <summary> Construct the discriminator configuration code. </summary>
+    /// <param name="entityTypeBuilderName">entity type variable name</param>
+    /// <param name="entityType">entity type</param>
+    /// <param name="mapping"> value mapping </param>
+    /// <param name="stringBuilder">string builder to add text to</param>
+    protected virtual IndentedStringBuilder GenerateEntityTypeAnnotations(string entityTypeBuilderName, IMutableEntityType entityType,
+        List<(object Value, string ToEntityName)> mapping,
+        IndentedStringBuilder stringBuilder = null) {
+        IAnnotation discriminatorPropertyAnnotation = null;
+        IAnnotation discriminatorValueAnnotation = null;
+        IAnnotation discriminatorMappingCompleteAnnotation = null;
+        stringBuilder ??= new IndentedStringBuilder();
+        code ??= new CSharpHelper(new MockTypeMappingSource());
+        foreach (var annotation in entityType.GetAnnotations()) {
+            switch (annotation.Name) {
+                case EfCoreAnnotationNames.DiscriminatorProperty:
+                    discriminatorPropertyAnnotation = annotation;
+                    break;
+                case EfCoreAnnotationNames.DiscriminatorValue:
+                    discriminatorValueAnnotation = annotation;
+                    break;
+                case EfCoreAnnotationNames.DiscriminatorMappingComplete:
+                    discriminatorMappingCompleteAnnotation = annotation;
+                    break;
+            }
+        }
+
+        if ((discriminatorPropertyAnnotation?.Value
+             ?? discriminatorMappingCompleteAnnotation?.Value
+             ?? discriminatorValueAnnotation?.Value)
+            == null) return stringBuilder;
+        stringBuilder
+            .AppendLine()
+            .Append(entityTypeBuilderName)
+            .Append(".")
+            .Append("HasDiscriminator");
+
+        if (discriminatorPropertyAnnotation?.Value != null) {
+            var discriminatorProperty = entityType.FindProperty((string)discriminatorPropertyAnnotation.Value)!;
+            var propertyClrType = FindValueConverter(discriminatorProperty)?.ProviderClrType
+                                      .MakeNullable(discriminatorProperty.IsNullable)
+                                  ?? discriminatorProperty.ClrType;
+            stringBuilder
+                .Append("<")
+                .Append(code.Reference(propertyClrType))
+                .Append(">(")
+                .Append(code.Literal((string)discriminatorPropertyAnnotation.Value))
+                .Append(")");
+            if (mapping?.Count > 0) {
+                foreach (var map in mapping) {
+                    stringBuilder
+                        .Append(".")
+                        .Append("HasValue")
+                        .Append("(typeof(")
+                        .Append(map.ToEntityName)
+                        .Append("), ")
+                        .Append(code.UnknownLiteral(map.Value))
+                        .Append(")");
+                }
+            }
+        } else {
+            stringBuilder
+                .Append("()");
+        }
+
+        if (discriminatorMappingCompleteAnnotation?.Value != null) {
+            var value = (bool)discriminatorMappingCompleteAnnotation.Value;
+
+            stringBuilder
+                .Append(".")
+                .Append("IsComplete")
+                .Append("(")
+                .Append(code.Literal(value))
+                .Append(")");
+        }
+
+        if (discriminatorValueAnnotation?.Value != null) {
+            var value = discriminatorValueAnnotation.Value;
+            var discriminatorProperty = entityType.FindDiscriminatorProperty();
+            if (discriminatorProperty != null) {
+                var valueConverter = FindValueConverter(discriminatorProperty);
+                if (valueConverter != null) {
+                    value = valueConverter.ConvertToProvider(value);
+                }
+            }
+
+            stringBuilder
+                .Append(".")
+                .Append("HasValue")
+                .Append("(")
+                .Append(code.UnknownLiteral(value))
+                .Append(")");
+        }
+
+        stringBuilder.AppendLine(";");
+
+        return stringBuilder;
+
+        ValueConverter FindValueConverter(IMutableProperty property)
+            => property.GetValueConverter() ?? property.FindTypeMapping()?.Converter;
+    }
+
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual KeyBuilder VisitPrimaryKey(EntityTypeBuilder builder, DatabaseTable table, Func<KeyBuilder> baseCall) {
@@ -1356,4 +1492,19 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 break;
         }
     }
+}
+
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+public class MockTypeMappingSource : ITypeMappingSource {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public CoreTypeMapping FindMapping(IProperty property) => throw new NotSupportedException();
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public CoreTypeMapping FindMapping(MemberInfo member) => throw new NotSupportedException();
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public CoreTypeMapping FindMapping(Type type) => throw new NotSupportedException();
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public CoreTypeMapping FindMapping(Type type, IModel model) => throw new NotSupportedException();
 }

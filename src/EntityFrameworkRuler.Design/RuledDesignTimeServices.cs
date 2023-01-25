@@ -37,6 +37,7 @@ namespace EntityFrameworkRuler.Design {
                 //.AddSingleton<ICandidateNamingService, CandidateNamingService>()
                 .AddSingleton<IDesignTimeRuleLoader, DesignTimeRuleLoader>()
                 .AddSingleton<IRuleModelUpdater, RuleModelUpdater>()
+                .AddSingleton<IAnnotationCodeGenerator,RuledAnnotationCodeGenerator>()
                 //.TryAddSingletonEnumerable<IModelCodeGenerator, RuledTemplatedModelGenerator>()
                 .AddRuler()
                 .AddSingleton<IMessageLogger, EfConsoleMessageLogger>();

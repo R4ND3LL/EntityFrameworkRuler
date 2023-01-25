@@ -9,6 +9,14 @@ public static class TypeExtensions {
         => Nullable.GetUnderlyingType(type) ?? type;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static Type MakeNullable(this Type type, bool nullable = true)
+        => type.IsNullableGenericType() == nullable
+            ? type
+            : nullable
+                ? typeof(Nullable<>).MakeGenericType(type)
+                : type.UnwrapNullableType();
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static object GetDefaultValue(this Type type) => type.IsValueType ? Activator.CreateInstance(type) : null;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>

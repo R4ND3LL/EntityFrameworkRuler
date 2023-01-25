@@ -150,6 +150,19 @@ public static class ListExtensions {
     /// This will search the given collection for an items that satisfies the given expression, and return the first
     /// index that returns true
     /// </summary>
+    public static int IndexOf<TSource>(this IReadOnlyList<TSource> source, Predicate<TSource> searchFunc) {
+        for (var i = 0; i < source.Count; i++) {
+            var x = source[i];
+            if (searchFunc(x)) return i;
+        }
+
+        return -1;
+    }
+
+    /// <summary>
+    /// This will search the given collection for an items that satisfies the given expression, and return the first
+    /// index that returns true
+    /// </summary>
     public static int IndexOf(this IList source, Predicate<object> searchFunc) {
         for (var i = 0; i < source.Count; i++) {
             var x = source[i];

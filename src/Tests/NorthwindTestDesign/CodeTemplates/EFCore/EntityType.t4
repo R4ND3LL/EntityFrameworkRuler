@@ -63,8 +63,9 @@ namespace <#= NamespaceHint #>;
 <#
         }
     }
+    var abstractStr = EntityType["Ruler:Abstract"] != null ? " abstract" : "";
 #>
-public partial class <#= EntityType.Name #> <# if (EntityType.BaseType?.Name!=null) { #>: <#= EntityType.BaseType.Name #><# } #> 
+public<#= abstractStr #> partial class <#= EntityType.Name #> <# if (EntityType.BaseType?.Name!=null) { #>: <#= EntityType.BaseType.Name #><# } #> 
 {
 <#
     var firstProperty = true;

@@ -89,9 +89,10 @@ public static class RuleExtensions {
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static void ApplyAnnotations(this IMutableAnnotatable target, AnnotationCollection annotations, Func<string> nameGetter,
-        IMessageLogger reporter) {
+        IMessageLogger reporter, Predicate<AnnotationItem> filter = null) {
         if (target == null || annotations == null || annotations.Count == 0) return;
         foreach (var annotation in annotations) {
+            if (filter != null && !filter(annotation)) continue;
             if (!IsValidAnnotation(annotation.Key)) {
                 reporter.WriteWarning(
                     $"RULED: {nameGetter()} annotation '{annotation.Key}' is invalid. Skipping.");
