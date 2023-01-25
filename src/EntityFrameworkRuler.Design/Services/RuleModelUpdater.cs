@@ -35,6 +35,10 @@ public class RuleModelUpdater : IRuleModelUpdater {
             contextRules = new(new() {
                 IncludeUnknownSchemas = true
             });
+        } else if (contextRules.Rule.Name.HasNonWhiteSpace() && contextName.IsNullOrWhiteSpace() && ruleLoader.CodeGenOptions != null) {
+            // we can actually set the context name because it is missing from the options, and defined in the rules
+            if (contextRules.Rule.Name.IsValidSymbolName())
+                ruleLoader.CodeGenOptions.ContextName = contextRules.Rule.Name;
         }
 
         var start = DateTimeExtensions.GetTime();
