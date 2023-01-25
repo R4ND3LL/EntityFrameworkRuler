@@ -394,9 +394,10 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var baseName = entityRuleNode.BaseEntityRuleNode.Builder?.Metadata.Name ?? entityRuleNode.BaseEntityRuleNode.GetFinalName();
             entityTypeBuilder.HasBaseType(baseName);
 
-            var strategy = entityRuleNode.BaseEntityRuleNode.Rule.GetMappingStrategy()?.ToUpper();
-            if (strategy?.Length == 3)
-                switch (strategy) {
+            var baseStrategy = entityRuleNode.GetBaseTypes().Select(o => o.Rule.GetMappingStrategy()?.ToUpper())
+                .FirstOrDefault(o => o.HasNonWhiteSpace());
+            if (baseStrategy?.Length == 3)
+                switch (baseStrategy) {
                     case "TPH":
                         // ToTable() and DbSet should be REMOVED for TPH leafs
                         entityTypeBuilder.ToTable((string)null);
@@ -404,20 +405,14 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                         Debug.Assert(IsValidAnnotation(scaffoldingDbSetName));
                         var removed = entityTypeBuilder.Metadata.RemoveAnnotation(scaffoldingDbSetName);
                         Debug.Assert(removed != null);
-                        break;
-                    case "TPT":
-                        break;
-                    case "TPC":
-                        break;
-                }
-        } else {
-            var strategy = entityRule.GetMappingStrategy()?.ToUpper();
-            if (strategy?.Length == 3)
-                // This is root of a hierarchy
-                switch (strategy) {
-                    case "TPH":
-                        // ToTable() and DbSet should be defined for TPH root
-                        entityTypeBuilder.ToTable(table.Name);
+                        var efSchema = EfRelationalAnnotationNames.Schema;
+                        Debug.Assert(IsValidAnnotation(efSchema));
+                        removed = entityTypeBuilder.Metadata.RemoveAnnotation(efSchema);
+                        Debug.Assert(removed != null);
+                        var efTableName = EfRelationalAnnotationNames.TableName;
+                        Debug.Assert(IsValidAnnotation(efTableName));
+                        removed = entityTypeBuilder.Metadata.RemoveAnnotation(efTableName);
+                        Debug.Assert(removed != null);
                         break;
                     case "TPT":
                         break;
@@ -426,19 +421,22 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
         }
 
-
-        foreach (var annotation in entityRule.Annotations) {
-            if (!IsValidAnnotation(annotation.Key)) {
-                reporter.WriteWarning(
-                    $"RULED: Entity {entityTypeBuilder.Metadata.Name} annotation '{annotation.Key}' is invalid. Skipping.");
-                continue;
+        var strategy = entityRule.GetMappingStrategy()?.ToUpper();
+        if (strategy?.Length == 3)
+            // This is root of a hierarchy
+            switch (strategy) {
+                case "TPH":
+                    // ToTable() and DbSet should be defined for TPH root
+                    entityTypeBuilder.ToTable(table.Name);
+                    break;
+                case "TPT":
+                    break;
+                case "TPC":
+                    break;
             }
 
-            var v = annotation.GetActualValue();
-            reporter.WriteVerbose(
-                $"RULED: Applying entity {entityTypeBuilder.Metadata.Name} annotation '{annotation.Key}' value '{v?.ToString()?.Truncate(20)}'.");
-            entityTypeBuilder.Metadata.SetOrRemoveAnnotation(annotation.Key, v);
-        }
+
+        ApplyAnnotations(entityRule.Annotations, entityTypeBuilder.Metadata, () => entityTypeBuilder.Metadata.Name);
 
         var discriminatorColumn = entityRule.GetDiscriminatorColumn() ??
                                   entityRule.Properties.FirstOrDefault(o => o.DiscriminatorConditions.Count > 0)?.Name;
@@ -476,18 +474,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             propertyRule?.MapTo(property, column);
 
             if (propertyRule?.Rule.Annotations.Count > 0 && propertyRule.Rule.ShouldMap()) {
-                foreach (var annotation in propertyRule.Rule.Annotations) {
-                    if (!IsValidAnnotation(annotation.Key)) {
-                        reporter.WriteWarning(
-                            $"RULED: Property {entityTypeBuilder.Metadata.Name}.{property.Name} annotation '{annotation.Key}' is invalid. Skipping.");
-                        continue;
-                    }
-
-                    var v = annotation.GetActualValue();
-                    reporter.WriteVerbose(
-                        $"RULED: Applying property {entityTypeBuilder.Metadata.Name}.{property.Name} annotation '{annotation.Key}' value '{v?.ToString()?.Truncate(20)}'.");
-                    property.SetOrRemoveAnnotation(annotation.Key, v);
-                }
+                ApplyAnnotations(propertyRule.Rule.Annotations, property, () => $"{entityTypeBuilder.Metadata.Name}.{property.Name}");
             }
         }
 
@@ -1177,20 +1164,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             navigationRule?.MapTo(navigation, fkName, thisIsPrincipal, isManyToMany);
 
-            if (navigationRule?.Rule.Annotations.Count > 0) {
-                foreach (var annotation in navigationRule.Rule.Annotations) {
-                    if (!IsValidAnnotation(annotation.Key)) {
-                        reporter.WriteWarning(
-                            $"RULED: Navigation {entityType.Name}.{navigation.Name} annotation '{annotation.Key}' is invalid. Skipping.");
-                        continue;
-                    }
-
-                    var v = annotation.GetActualValue();
-                    reporter.WriteVerbose(
-                        $"RULED: Applying navigation {entityType.Name}.{navigation.Name} annotation '{annotation.Key}' value '{v?.ToString()?.Truncate(15)}'.");
-                    navigation.SetOrRemoveAnnotation(annotation.Key, v);
-                }
-            }
+            ApplyAnnotations(navigationRule?.Rule.Annotations, navigation, () => $"{entityType.Name}.{navigation?.Name}");
 
             // exclude this navigation (when rule is null or explicitly not mapped)
             var excluded = navigationRule?.Rule.ShouldMap() != true;
@@ -1212,6 +1186,26 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             // }
 
             return excluded;
+        }
+    }
+
+    private void ApplyAnnotations(AnnotationCollection annotations, IMutableAnnotatable target, Func<string> nameGetter) {
+        if (target == null || annotations == null || annotations.Count == 0) return;
+        foreach (var annotation in annotations) {
+            if (!IsValidAnnotation(annotation.Key)) {
+                reporter.WriteWarning(
+                    $"RULED: {nameGetter()} annotation '{annotation.Key}' is invalid. Skipping.");
+                continue;
+            }
+
+            var v = annotation.GetActualValue();
+            reporter.WriteVerbose(
+                $"RULED: Applying {nameGetter()} annotation '{annotation.Key}' value '{v?.ToString()?.Truncate(15)}'.");
+            target.SetOrRemoveAnnotation(annotation.Key, v);
+#if DEBUG
+            var v2 = target.FindAnnotation(annotation.Key)?.Value;
+            Debug.Assert(v == v2);
+#endif
         }
     }
 

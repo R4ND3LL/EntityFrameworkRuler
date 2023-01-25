@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
-using System.Linq;
-using System.Linq.Expressions;
+using System.Diagnostics;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
@@ -89,6 +88,7 @@ public sealed class AnnotationCollection : ObservableCollection<AnnotationItem> 
 }
 
 /// <summary> Annotation item </summary>
+[DebuggerDisplay("{Key}: {Value}")]
 public sealed class AnnotationItem {
     /// <summary> Create annotation item </summary>
     public AnnotationItem() { }
@@ -111,4 +111,7 @@ public sealed class AnnotationItem {
         if (v is string s) v = s.NullIfEmpty();
         return v;
     }
+
+    /// <inheritdoc />
+    public override string ToString() => $"{Key}: {GetActualValue()}";
 }

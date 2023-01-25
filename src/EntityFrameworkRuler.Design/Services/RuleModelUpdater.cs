@@ -2,6 +2,7 @@
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Saver;
 using Microsoft.EntityFrameworkCore.Metadata;
+
 // ReSharper disable ClassCanBeSealed.Global
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
@@ -43,7 +44,7 @@ public class RuleModelUpdater : IRuleModelUpdater {
             if (projectDir.IsNullOrWhiteSpace()) return;
         }
 
-        contextRules.Rule.Name = contextName;
+        if (contextName.HasNonWhiteSpace()) contextRules.Rule.Name = contextName;
 
         // initialize a rule file from the current reverse engineered model
         var saver = ruleSaver ?? new RuleSaver();
