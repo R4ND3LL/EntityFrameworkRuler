@@ -27,6 +27,8 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
             ? BaseEntityRuleNode.GetProperties().Concat(Properties)
             : Properties;
 
+    /// <summary> sum of local properties and navigations </summary>
+    public int LocalPropertyCount => Properties.Count + Navigations.Count;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     private RuleIndex<NavigationRuleNode> Navigations { get; }
@@ -38,28 +40,37 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
             : Navigations;
 
 
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    /// <summary> The underlying table for this entity.  May or may not have been omitted yet. </summary>
     public DatabaseTableNode DatabaseTable { get; private set; }
 
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    /// <summary> The entity type builder used to scaffold this table.  Presence of this value implies the entity was not omitted. </summary>
     public EntityTypeBuilder Builder { get; private set; }
 
-    /// <summary> True if this entity has been mapped to an entity builder </summary>
-    public bool IsAlreadyMapped => Builder != null && DatabaseTable != null;
+    /// <summary> True if this entity has been scaffolded with an entity builder.
+    /// Note, will be false if table was identified but entity omitted. </summary>
+    public bool IsAlreadyScaffolded => Builder != null && DatabaseTable != null;
 
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    /// <summary> True if this entity has been mapped to a database table (or view).  May or may not have been omitted. </summary>
+    public bool IsMappedToTable => DatabaseTable != null;
+
+    /// <inheritdoc />
+    public override string GetFinalName() => Builder?.Metadata.Name ?? base.GetFinalName();
+
+    /// <summary> Link this entity rule to the scaffolded entity type builder. </summary>
     public void MapTo(EntityTypeBuilder builder) {
-        Debug.Assert(Builder == null);
+        Debug.Assert(Builder == null, "Builder was previously set");
+        Debug.Assert(Rule.ShouldMap(), "Entity should not be scaffolded");
+        if (DatabaseTable == null) throw new Exception("Cannot set entity builder without DatabaseTable");
         Builder = builder;
         Parent.Parent.Map(builder, this);
         UpdateRuleMetadata();
     }
 
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    /// <summary> Link this entity rule to the underlying database table. </summary>
     public void MapTo(DatabaseTableNode table) {
         Debug.Assert(DatabaseTable == null);
         DatabaseTable = table;
-        Parent.Parent.Map(table, this);
+        table.MapTo(this);
         UpdateRuleMetadata();
     }
 
@@ -172,6 +183,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
                 navigations = Navigations?.Where(o => o.Rule.Name.EqualsIgnoreCase(efName)).ToArray();
                 if (navigations.IsNullOrEmpty()) return null; // expected EF name resolution failed to
             }
+
             // any other way to resolve it?
             if (navigations!.Length == 0) return null;
         }

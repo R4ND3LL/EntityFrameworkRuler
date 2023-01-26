@@ -7,7 +7,7 @@ using System.Runtime.Serialization;
 namespace EntityFrameworkRuler.Rules;
 
 /// <summary> Table rule </summary>
-[DebuggerDisplay("Entity {Name} to {NewName}")]
+[DebuggerDisplay("Entity {NewName} : {BaseTypeName} (from table {Name})")]
 [DataContract]
 public sealed class EntityRule : RuleBase, IEntityRule {
     /// <summary> Creates a table rule </summary>

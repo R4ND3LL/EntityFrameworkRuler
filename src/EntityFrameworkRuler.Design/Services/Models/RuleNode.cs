@@ -30,7 +30,7 @@ public abstract class RuleNode<T, TParent> : IRuleItem where T : IRuleItem {
     public string GetDbName() => Rule.GetDbName();
 
     /// <inheritdoc />
-    public string GetFinalName() => Rule.GetFinalName();
+    public virtual string GetFinalName() => Rule.GetFinalName();
 
     /// <inheritdoc />
     public void SetFinalName(string value) => Rule.SetFinalName(value);

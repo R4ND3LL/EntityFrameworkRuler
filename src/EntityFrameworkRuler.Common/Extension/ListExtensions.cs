@@ -108,6 +108,12 @@ public static class ListExtensions {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static SortedSet<TSource> ToSortedSet<TSource>(this IEnumerable<TSource> source, IComparer<TSource> comparer) {
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        return new(source, comparer);
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static TValue GetOrAddNew<TKey, TValue>(this IDictionary<TKey, TValue> source, TKey key) where TValue : new() {
         return GetOrAddNew(source, key, _ => new());
     }

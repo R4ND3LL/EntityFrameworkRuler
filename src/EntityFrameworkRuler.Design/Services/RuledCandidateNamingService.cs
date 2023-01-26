@@ -64,17 +64,17 @@ public class RuledCandidateNamingService : CandidateNamingService {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
         dbContextRule ??= ResolveDbContextRule();
 
-        var entityRule = dbContextRule.TryResolveRuleFor(table.Schema, table.Name);
-        if (entityRule == null) {
-            var state = NameToState(base.GenerateCandidateIdentifier(table));
-            logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} not found in rule file. Auto-named {state.Name}");
-            return state;
-        }
+        EntityRuleNode entityRule = null;
+        var entityRules = dbContextRule.TryResolveRuleFor(table);
+        if (entityRules.Count == 0) return InvokeBaseCall();
+        Debug.Assert(entityRules.Count == 1, "How do we reliably select the correct rule when splitting?");
+        entityRule = entityRules.FirstOrDefault(o => o.Rule.ShouldMap());
+        if (entityRule == null) return InvokeBaseCall();
 
         if (forDbSetName && entityRule?.Rule.DbSetName.HasNonWhiteSpace() == true) {
             // Name explicitly set by user. cannot be altered by pluralizer so set FROZEN
             var state = NameToState(entityRule.Rule.DbSetName, true);
-            logger?.WriteVerbose($"RULED: Table {table.Schema}.{table.Name} mapped to DbSet name {state.Name}");
+            logger?.WriteVerbose($"RULED: Table {table.GetFullName()} mapped to DbSet name {state.Name}");
             return state;
         }
 
@@ -82,12 +82,13 @@ public class RuledCandidateNamingService : CandidateNamingService {
             // Name explicitly set by user. if not naming the DbSet then this cannot be altered by pluralizer so set FROZEN
             var state = NameToState(entityRule.Rule.NewName, !forDbSetName);
             logger?.WriteVerbose(
-                $"RULED: Table {table.Schema}.{table.Name} mapped to {(forDbSetName ? "DbSet" : "entity")} name {state.Name}");
+                $"RULED: Table {table.GetFullName()} mapped to {(forDbSetName ? "DbSet" : "entity")} name {state.Name}");
             return state;
         }
 
         var schema = entityRule.Parent.Rule;
         var candidateStringBuilder = new StringBuilder();
+        if (schema?.UseSchemaName == true && schema.SchemaName.IsNullOrWhiteSpace()) schema.UseSchemaName = false;
         if (schema?.UseSchemaName == true) candidateStringBuilder.Append(GenerateIdentifier(table.Schema));
         bool usedRegex;
         string newTableName;
@@ -113,11 +114,17 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         var state2 = NameToState(candidateStringBuilder.ToString());
         logger?.WriteVerbose(
-            $"RULED: {(table is DatabaseView ? "View" : "Table")} {table.Schema}.{table.Name} auto-named {(forDbSetName ? "DbSet" : "entity")} {state2.Name}{(usedRegex ? " using regex" : "")}");
+            $"RULED: {(table is DatabaseView ? "View" : "Table")} {table.GetFullName()} auto-named {(forDbSetName ? "DbSet" : "entity")} {state2.Name}{(usedRegex ? " using regex" : "")}");
         return state2;
 
         NamedElementState<DatabaseTable, EntityRule> NameToState(string newName, bool isFrozen = false) {
             var state = new NamedElementState<DatabaseTable, EntityRule>(newName, table, entityRule, isFrozen);
+            return state;
+        }
+
+        NamedElementState<DatabaseTable, EntityRule> InvokeBaseCall() {
+            var state = NameToState(base.GenerateCandidateIdentifier(table));
+            logger?.WriteVerbose($"RULED: Table {table.GetFullName()} not found in rule file. Auto-named {state.Name}");
             return state;
         }
     }
@@ -135,19 +142,24 @@ public class RuledCandidateNamingService : CandidateNamingService {
         if (column is null) throw new ArgumentNullException(nameof(column));
         dbContextRule ??= ResolveDbContextRule();
 
-        var entityRule = dbContextRule.TryResolveRuleFor(column.Table.Schema, column.Table.Name);
-        if (entityRule == null)
+        var entityRules = dbContextRule.TryResolveRuleFor(column.Table);
+        if (entityRules.Count == 0)
             return base.GenerateCandidateIdentifier(column);
-        var propertyRule = entityRule.TryResolveRuleFor(column.Name);
+        var propertyRules = entityRules
+            .Select(o => o.TryResolveRuleFor(column.Name))
+            .Where(o => o?.Rule?.ShouldMap() == true).Distinct().ToArray();
+        if (propertyRules.Length == 0) return base.GenerateCandidateIdentifier(column);
+        //Debug.Assert(propertyRules.Length == 1, "How do we reliably select the correct rule when splitting?");
+        var propertyRule = propertyRules.FirstOrDefault(o => o.Rule.NewName.HasNonWhiteSpace()) ?? propertyRules.First();
         if (propertyRule == null) return base.GenerateCandidateIdentifier(column);
 
         if (propertyRule.Rule.NewName.HasNonWhiteSpace()) {
             logger?.WriteVerbose(
-                $"RULED: Column {column.Table.Schema}.{column.Table.Name}.{propertyRule.Rule.Name} property name set to {propertyRule.Rule.NewName}");
+                $"RULED: Column {column.Table.GetFullName()}.{propertyRule.Rule.Name} property name set to {propertyRule.Rule.NewName}");
             return propertyRule.Rule.NewName;
         }
 
-        var schema = entityRule.Parent.Rule;
+        var schema = propertyRule.Parent.Parent.Rule;
         if (!string.IsNullOrEmpty(schema.ColumnRegexPattern) && schema.ColumnPatternReplaceWith != null) {
             var candidateStringBuilder = new StringBuilder();
             string newColumnName;

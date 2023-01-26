@@ -52,13 +52,12 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
     public RuleIndex<ForeignKeyRuleNode> ForeignKeys { get; }
 
     private readonly Dictionary<string, EntityRuleNode> entityRulesByFinalName = new();
-    private readonly Dictionary<DatabaseTable, DatabaseTableNode> entityRulesByTable = new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public void Map(EntityTypeBuilder entityTypeBuilder, EntityRuleNode entityRule) {
+    internal void Map(EntityTypeBuilder entityTypeBuilder, EntityRuleNode entityRule) {
         if (entityTypeBuilder == null) throw new ArgumentNullException(nameof(entityTypeBuilder));
         entityRulesByFinalName.Add(entityTypeBuilder.Metadata.Name, entityRule);
-        if (entityRule?.DatabaseTable != null) entityRulesByTable[entityRule.DatabaseTable].Builders.Add(entityTypeBuilder);
+        Debug.Assert(entityRule?.DatabaseTable != null && entityRule.DatabaseTable.EntityRules.Contains(entityRule));
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -67,13 +66,6 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
         return entityRulesByFinalName.TryGetValue(entityName);
     }
 
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public void Map(DatabaseTableNode table, EntityRuleNode entityRule) {
-        if (table == null) throw new ArgumentNullException(nameof(table));
-        entityRulesByTable[table.Table] = table;
-        table.EntityRules.Add(entityRule);
-        if (entityRule?.Builder != null) table.Builders.Add(entityRule.Builder);
-    }
 
     /// <summary> Get the schema rule for the given target schema. Used during scaffolding phase. </summary>
     public SchemaRuleNode TryResolveRuleFor(string schema) {
@@ -84,7 +76,8 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
 
         if (schemaRule == null && schema.IsNullOrWhiteSpace()) {
             // default to dbo, otherwise fail
-            if (Schemas.Count == 1 && (Schemas[0].Rule.SchemaName.IsNullOrWhiteSpace() || Schemas[0].Rule.SchemaName == "dbo")) return Schemas[0];
+            if (Schemas.Count == 1 && (Schemas[0].Rule.SchemaName.IsNullOrWhiteSpace() || Schemas[0].Rule.SchemaName == "dbo"))
+                return Schemas[0];
             return null;
         }
 
@@ -96,9 +89,14 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
     }
 
     /// <summary> Get the table rule for the given target table. Used during scaffolding phase. </summary>
-    public EntityRuleNode TryResolveRuleFor(string schema, string table) => TryResolveRuleFor(schema)?.TryResolveRuleFor(table);
+    public ICollection<EntityRuleNode> TryResolveRuleFor(DatabaseTable table) =>
+        TryResolveRuleFor(table.Schema, table.Name);
 
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    /// <summary> Get the table rule for the given target table. Used during scaffolding phase. </summary>
+    public ICollection<EntityRuleNode> TryResolveRuleFor(string schema, string table) =>
+        TryResolveRuleFor(schema)?.TryResolveRuleFor(table) ?? Array.Empty<EntityRuleNode>();
+
+    /// <summary> Return true if the given scheme can be mapped. </summary>
     public bool ShouldMapSchema(string schema) {
         var x = Schemas.GetByDbName(schema);
         if (x?.NotMapped == true) return false;
@@ -111,9 +109,8 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public SchemaRuleNode AddSchema(string schema) {
-        if (schema == null) throw new ArgumentNullException(nameof(schema));
         var schemaRule = new SchemaRuleNode(new SchemaRule {
-            SchemaName = schema,
+            SchemaName = schema.EmptyIfNullOrWhitespace(),
             IncludeUnknownTables = true,
             IncludeUnknownViews = true,
         }, this);

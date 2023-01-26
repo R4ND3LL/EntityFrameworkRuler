@@ -24,7 +24,6 @@ public sealed class RuleIndex<T> : IEnumerable<T> where T : IRuleItem {
     private Dictionary<string, T> rulesByFinalName;
     private Dictionary<string, T> rulesByDbName;
 
-
     /// <summary> Get rule by final element name </summary>
     public T GetByFinalName(string finalName) {
         if (finalName == null) return default;

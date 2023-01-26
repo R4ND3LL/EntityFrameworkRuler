@@ -444,7 +444,8 @@ internal static class EfExtensions {
     public static bool IsView(this IEntityType entity) => GetViewName(entity).HasNonWhiteSpace();
 
     /// <summary> Get schema.tableName </summary>
-    public static string GetFullName(this DatabaseTable table) => table?.Name != null ? $"{table.Schema}.{table.Name}" : "";
+    public static string GetFullName(this DatabaseTable table) =>
+        table?.Schema.IsNullOrEmpty() == false ? $"{table.Schema}.{table.Name}" : table?.Name ?? "";
 
     public static string GetViewName(this IEntityType entity) {
         var viewName = entity?.FindAnnotation("Relational:ViewName");

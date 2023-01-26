@@ -17,6 +17,9 @@ public sealed class PropertyRuleNode : RuleNode<PropertyRule, EntityRuleNode> {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string ColumnName { get; private set; }
 
+    /// <inheritdoc />
+    public override string GetFinalName() => Property?.Name ?? base.GetFinalName();
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public void MapTo(IMutableProperty property, string column) {
         Property = property;

@@ -25,16 +25,26 @@ public sealed class SchemaRuleNode : RuleNode<SchemaRule, DbContextRuleNode> {
         (Rule.ColumnRegexPattern.HasNonWhiteSpace() && Rule.ColumnPatternReplaceWith != null);
 
     /// <summary> Get the table rule for the given target table. Used during scaffolding phase. </summary>
-    public EntityRuleNode TryResolveRuleFor(string table) {
+    public ICollection<EntityRuleNode> TryResolveRuleFor(string table) {
         if (Entities == null || Entities.Count == 0 || table.IsNullOrWhiteSpace()) return null;
 
         var entityRule = Entities?.GetByDbName(table);
-        if (entityRule != null) return entityRule;
+        if (entityRule != null) {
+            // scan is required to find all entities by the table name since there may be split tables
+            var set = Entities.Where(o => o.DbName == table).ToSortedSet(EntitySizeComparer.Instance);
+            Debug.Assert(set.Contains(entityRule));
+            if (set.Contains(entityRule)) return set;
+#if DEBUG
+            Debugger.Break(); // the initially found entity should always be included
+#endif
+            set.Add(entityRule);
+            return set;
+        }
 
         entityRule = Entities?.GetByFinalName(table);
         if (entityRule?.DbName.HasNonWhiteSpace() == true) entityRule = null;
 
-        return entityRule;
+        return entityRule != null ? new[] { entityRule } : Array.Empty<EntityRuleNode>();
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
