@@ -65,7 +65,7 @@ public partial class <#= EntityType.Name #>Configuration : IEntityTypeConfigurat
 
         var anyEntityTypeConfiguration = false;
         var key = EntityType.FindPrimaryKey();
-        if (key != null && key.DeclaringEntityType == EntityType)
+        if (key != null && (EntityType.BaseType == null || key.Properties.Any(o=> o.DeclaringEntityType == EntityType)))
         {
             var keyFluentApiCalls = key.GetFluentApiCalls(annotationCodeGenerator);
             if (keyFluentApiCalls != null

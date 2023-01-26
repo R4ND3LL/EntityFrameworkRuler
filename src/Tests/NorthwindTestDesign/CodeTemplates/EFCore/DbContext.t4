@@ -128,7 +128,7 @@ public partial class <#= Options.ContextName #> : DbContext
         {
 <#
         var key = entityType.FindPrimaryKey();
-        if (key != null)
+        if (key != null && (entityType.BaseType == null || key.Properties.Any(o=> o.DeclaringEntityType == entityType)))
         {
             var keyFluentApiCalls = key.GetFluentApiCalls(annotationCodeGenerator);
             if (keyFluentApiCalls != null

@@ -841,11 +841,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> Performed after scaffolding all entities, this method will visit a database FK and convert it to an entity FK. </summary>
     private IMutableForeignKey VisitForeignKey(ModelBuilder modelBuilder, DatabaseForeignKey fk, Func<IMutableForeignKey> baseCall) {
-#if DEBUG
+#if DEBUG2
         if (fk.Name.StartsWithIgnoreCase("FK_JobSessions_ToolingDefinition")) Debugger.Break();
 #endif
         IMutableForeignKey newFk;
-        bool isValidFk = false;
+        var isValidFk = false;
         try {
             explicitFkEntityMapping = ResolveForeignKeyEntities(fk);
             isValidFk = explicitFkEntityMapping.Dependent?.Builder != null && explicitFkEntityMapping.Principal?.Builder != null &&
@@ -1369,7 +1369,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             var navEntity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
             Debug.Assert(navEntity == entityType);
-#if DEBUG
+#if DEBUG2
             if (navigation.Name == "LatheSurfaceDefinition") Debugger.Break();
 #endif
             if (navigationRule?.Rule != null) {
