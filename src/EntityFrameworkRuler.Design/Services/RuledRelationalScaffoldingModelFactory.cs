@@ -71,6 +71,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     private KeyBuilder randomKeyBuilder;
     private CSharpHelper code;
 
+    /// <summary>
+    /// As of v7, mixing TPT with TPH results in the following error:
+    /// The mapping strategy 'TPT' specified on 'BaseDefinition' is not supported for entity types with a discriminator.
+    /// </summary>
+    protected bool PreventTphInheritanceMixing = true;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuledRelationalScaffoldingModelFactory(IServiceProvider serviceProvider,
@@ -405,17 +410,28 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         entityRuleNode.MapTo(entityTypeBuilder);
         bool isTphLeaf = false;
+        var strategy = entityRule.GetMappingStrategy()?.ToUpper();
+        var entity = entityTypeBuilder.Metadata;
+
         if (entityRuleNode.BaseEntityRuleNode != null) {
             // get the base entity builder and reference the type directly.
             Debug.Assert(entityRuleNode.IsAlreadyScaffolded);
 
             var baseName = entityRuleNode.BaseEntityRuleNode.Builder?.Metadata.Name ?? entityRuleNode.BaseEntityRuleNode.GetFinalName();
-
-            // Note, upon setting the base type, shared properties will be removed from the derived type
-            entityTypeBuilder.HasBaseType(baseName);
-
             var baseStrategy = entityRuleNode.GetBaseTypes().Select(o => o.Rule.GetMappingStrategy()?.ToUpper())
                 .FirstOrDefault(o => o.HasNonWhiteSpace());
+
+            if (PreventTphInheritanceMixing && strategy == "TPH" && baseStrategy.In("TPT", "TPC")) {
+                reporter.WriteWarning(
+                    $"The mapping strategy '{baseStrategy}' specified on '{entityTypeBuilder.Metadata.Name}' is not supported by EF CORE for entity types with a discriminator.");
+                baseName = null;
+                entityRuleNode.BaseEntityRuleNode = null;
+                baseStrategy = null;
+            }
+
+            // Note, upon setting the base type, shared properties will be removed from the derived type
+            if (baseName.HasNonWhiteSpace()) entityTypeBuilder.HasBaseType(baseName);
+
             if (baseStrategy?.Length == 3)
                 switch (baseStrategy) {
                     case "TPH":
@@ -433,7 +449,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
         }
 
-        var strategy = entityRule.GetMappingStrategy()?.ToUpper();
+
         if (strategy?.Length == 3)
             // This is root of a hierarchy
             switch (strategy) {
@@ -469,7 +485,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         entityTypeBuilder.Metadata.ApplyAnnotations(entityRule.Annotations, () => entityTypeBuilder.Metadata.Name, reporter,
             AnnotationFilter);
 
-        var entity = entityTypeBuilder.Metadata;
+        EnsurePrimaryKey();
 
         // process properties
         var excludedProperties = new HashSet<IMutableProperty>();
@@ -581,6 +597,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
         }
 
+
         void RemoveKeysWith(IMutableProperty p) {
             foreach (var item in entity.GetKeys()
                          .Where(o => o.Properties.Any(ip => ip == p)).ToArray()) {
@@ -589,6 +606,17 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
         }
 
+        void EnsurePrimaryKey() {
+            if (entity.BaseType == null) return;
+            var pkey = entity.FindPrimaryKey();
+            if (pkey != null || !(table?.PrimaryKey?.Columns?.Count > 0)) return;
+
+            // EF Core omits a key sometimes.  The reason is as yet unidentified, but this resolves it anyway
+            var props = entity.GetPropertiesFromDbColumns(table.PrimaryKey.Columns);
+            if (props.Length > 0 && props.All(o => o != null)) {
+                entityTypeBuilder.HasKey(props.Select(o => o.Name).ToArray());
+            }
+        }
         // void RemoveFKsWith(IMutableProperty p, string columnName) {
         //     // Note, FKs are not linked to entities until VisitForeignKeys. Must remove FKs from table instead.
         //     if (table != null && columnName.HasCharacters()) {
@@ -861,7 +889,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 reporter.WriteInformation($"Entity FK {fk.Name} was NOT created by EFCore");
 #endif
             }
-        } catch (ArgumentException ex) {
+        } catch (ArgumentException) {
             // may be error related to missing FK cols that were omitted by rules.
             if (dbContextRule == null || (isValidFk && !ScaffoldTracker.IsOmitted(fk))) throw;
 
