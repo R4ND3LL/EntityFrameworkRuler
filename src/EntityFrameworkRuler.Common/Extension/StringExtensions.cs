@@ -37,52 +37,48 @@ public static class StringExtensions {
 
     /// <summary> Return null if the given value is empty.  Return the original value otherwise. </summary>
     [DebuggerStepThrough]
-    public static string NullIfEmpty(this string str) { return string.IsNullOrEmpty(str) ? null : str; }
+    public static string NullIfEmpty(this string str) => string.IsNullOrEmpty(str) ? null : str;
 
     /// <summary> Return empty string if the given value is null or whitespace.  Return the original value otherwise. </summary>
     [DebuggerStepThrough]
-    public static string EmptyIfNullOrWhitespace(this string str) { return string.IsNullOrWhiteSpace(str) ? null : str; }
+    public static string EmptyIfNullOrWhitespace(this string str) => string.IsNullOrWhiteSpace(str) ? string.Empty : str;
 
     /// <summary> Return null if the given value is whitespace or empty.  Return the original value otherwise. </summary>
     [DebuggerStepThrough]
-    public static string NullIfWhitespace(this string str) { return string.IsNullOrWhiteSpace(str) ? null : str; }
+    public static string NullIfWhitespace(this string str) => string.IsNullOrWhiteSpace(str) ? null : str;
 
     /// <summary> Indicates whether the specified string is null or an System.String.Empty string. </summary>
     [DebuggerStepThrough]
-    public static bool IsNullOrEmpty([NotNullWhen(false)] this string str) { return string.IsNullOrEmpty(str); }
+    public static bool IsNullOrEmpty([NotNullWhen(false)] this string str) => string.IsNullOrEmpty(str);
 
     /// <summary> Indicates whether the specified string is null or an System.String.Empty string. </summary>
     [DebuggerStepThrough]
-    public static bool HasCharacters([NotNullWhen(true)] this string str) { return !string.IsNullOrEmpty(str); }
+    public static bool HasCharacters([NotNullWhen(true)] this string str) => !string.IsNullOrEmpty(str);
 
     /// <summary> Indicates whether a specified string is null, empty, or consists only of white-space characters. </summary>
     [DebuggerStepThrough]
-    public static bool IsNullOrWhiteSpace([NotNullWhen(false)] this string str) { return string.IsNullOrWhiteSpace(str); }
+    public static bool IsNullOrWhiteSpace([NotNullWhen(false)] this string str) => string.IsNullOrWhiteSpace(str);
 
     /// <summary> Indicates whether a specified string is null, empty, or consists only of white-space characters. </summary>
     [DebuggerStepThrough]
-    public static bool HasNonWhiteSpace([NotNullWhen(true)] this string str) { return !string.IsNullOrWhiteSpace(str); }
+    public static bool HasNonWhiteSpace([NotNullWhen(true)] this string str) => !string.IsNullOrWhiteSpace(str);
 
     /// <summary>
     /// Concatenates the members of a constructed System.Collections.Generic.IEnumerable&lt;T&gt;
     /// collection of type System.String, using the specified separator between each member.
     /// </summary>
     [DebuggerStepThrough]
-    public static string Join(this IEnumerable<string> strs, string separator = ", ") {
-        return string.Join(separator, strs);
-    }
+    public static string Join(this IEnumerable<string> strs, string separator = ", ") => string.Join(separator, strs);
 
     /// <summary> Csv values to array </summary>
     [DebuggerStepThrough]
-    public static string[] CsvToArray(this string value) {
-        return value?.Split(',').Select(o => o?.Trim()).Where(o => o.HasNonWhiteSpace()).ToArray() ?? Array.Empty<string>();
-    }
+    public static string[] CsvToArray(this string value) =>
+        value?.Split(',').Select(o => o?.Trim()).Where(o => o.HasNonWhiteSpace()).ToArray() ?? Array.Empty<string>();
 
     /// <summary> Take the first string that is not null or empty </summary>
     [DebuggerStepThrough]
-    public static string Coalesce(this string str, params string[] strings) {
-        return string.IsNullOrEmpty(str) ? strings.FirstOrDefault(s => !string.IsNullOrEmpty(s)) : str;
-    }
+    public static string Coalesce(this string str, params string[] strings) =>
+        string.IsNullOrEmpty(str) ? strings.FirstOrDefault(s => !string.IsNullOrEmpty(s)) : str;
 
     /// <summary> Take the first string that is not null or empty </summary>
     [DebuggerStepThrough]

@@ -223,7 +223,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         modelBuilder = baseCall();
         foreach (var action in PostCreationActions) action(modelBuilder);
         // Model post processing.
-#if DEBUG
+#if DEBUG2
         var employee = modelBuilder.Model.FindEntityType("Employee");
         if (employee != null) {
             var navs = employee.GetNavigations().ToList();
@@ -257,39 +257,45 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var schemaName = entityRule.Parent.Rule.SchemaName.EmptyIfNullOrWhitespace();
             var tableName = entityRule.DbName ?? string.Empty;
             var table = ScaffoldTracker.FindTableNode(schemaName, tableName);
-            var includeSchema = entityRule.Parent.Rule.ShouldMap();
-            var includeEntity = entityRule.Rule.ShouldMap() && includeSchema;
+            var includeSchema = entityRule.Parent.ShouldMap();
+            var includeEntity = entityRule.ShouldMap() && includeSchema;
 
             if (table != null) {
                 entityRule.MapTo(table);
                 Debug.Assert(table.EntityRules.Contains(entityRule));
-
-                if (!includeSchema) {
-                    ScaffoldTracker.OmitSchema(table.Schema);
-                    continue;
-                }
-
-                if (!includeEntity) {
-                    ScaffoldTracker.OmitTable(table);
-                    continue;
-                }
             }
 
-            if (table == null && entityRule.BaseEntityRuleNode == null) {
-                // invalid entry
-                if (entityRule.Rule.ShouldMap()) {
-                    if (tableName.HasNonWhiteSpace())
-                        reporter.WriteWarning(
-                            $"RULED: Entity for {schemaName}.{tableName} cannot be generated because the table cannot be found.");
-                    else {
-                        var name = entityRule.GetFinalName();
-                        if (name.HasNonWhiteSpace())
-                            reporter.WriteVerbose(
-                                $"RULED: Entity for rule '{name}' cannot be generated because no table or base type is defined.");
-                    }
-                }
-
+            if (!includeSchema) {
+                ScaffoldTracker.OmitSchema(schemaName.CoalesceWhiteSpace(table?.Schema));
                 continue;
+            }
+
+            if (!includeEntity) {
+                ScaffoldTracker.Omit(entityRule);
+                continue;
+            }
+
+            if (table == null) {
+                // table not found
+                if (entityRule.BaseEntityRuleNode == null) {
+                    // invalid entry
+                    if (entityRule.ShouldMap()) {
+                        if (tableName.HasNonWhiteSpace())
+                            reporter.WriteWarning(
+                                $"RULED: Entity for {schemaName}.{tableName} cannot be generated because the table cannot be found.");
+                        else {
+                            var name = entityRule.GetFinalName();
+                            if (name.HasNonWhiteSpace())
+                                reporter.WriteVerbose(
+                                    $"RULED: Entity for rule '{name}' cannot be generated because no table or base type is defined.");
+                        }
+                    }
+
+                    continue;
+                }
+                // else {
+                //     var baseTable = entityRule.GetBaseTypes().Select(o => o.DatabaseTable).FirstOrDefault(o => o != null);
+                // }
             }
 
             if (table != null)
@@ -318,7 +324,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         foreach (var kvp in ScaffoldTracker.Tables) {
             var schema = kvp.Schema;
             var schemaRule = dbContextRule.Schemas.GetByDbName(schema);
-            var includeSchema = schemaRule?.NotMapped == false || (schemaRule == null && dbContextRule.Rule.IncludeUnknownSchemas);
+            var includeSchema = schemaRule?.ShouldMap() ?? dbContextRule.Rule.IncludeUnknownSchemas;
             if (!includeSchema) {
                 ScaffoldTracker.OmitSchema(schema);
                 continue;
@@ -329,11 +335,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             foreach (var table in kvp.Tables) {
                 if (table.EntityRules.Count > 0 || table.Builders.Any()) continue; // it's already been mapped
                 var entityRules = schemaRule.TryResolveRuleFor(table.Name);
-                var includeEntity = CanGenerateEntity(schemaRule, entityRules, table);
-                if (!includeEntity) {
-                    ScaffoldTracker.OmitTable(table);
-                    continue;
-                }
+                var canGenerateEntity = CanGenerateEntity(schemaRule, entityRules, table);
+                if (!canGenerateEntity) continue;
 
                 // Note, we ONLY generate entities at this point when NO rule exists. Therefore, we always add on the fly now
                 var entityRule = schemaRule.AddEntity(table.Name);
@@ -359,6 +362,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
 
         bool CanGenerateEntity(SchemaRuleNode schemaRule, ICollection<EntityRuleNode> entityRule, DatabaseTableNode table) {
+            // used only for generating entities NOT known to the rules file.  If a rule exists, exclude it (it was handled elsewhere).
             if (entityRule?.Any(o => o != null) == true) return false;
             if (schemaRule == null) return true;
 
@@ -383,7 +387,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual EntityTypeBuilder VisitTable(ModelBuilder modelBuilder, DatabaseTable table, Func<EntityTypeBuilder> baseCall) {
         var entityRules = TryResolveRuleFor(table);
-        entityRules = entityRules.Count > 1 ? entityRules.Where(o => o.Rule.ShouldMap()).ToArray() : entityRules;
+        entityRules = entityRules.Count > 1 ? entityRules.Where(o => o.ShouldMap()).ToArray() : entityRules;
         Debug.Assert(entityRules.Count <= 1);
         var entityRule = entityRules.FirstOrDefault();
         if (entityRule != null && table is DatabaseView view) {
@@ -408,7 +412,10 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         Debug.Assert(entityRule.ShouldMap());
         if (entityTypeBuilder == null) return null;
 
-        entityRuleNode.MapTo(entityTypeBuilder);
+        var tableNode = ScaffoldTracker.FindTableNode(table);
+        Debug.Assert(table == null || tableNode != null);
+
+        entityRuleNode.MapTo(entityTypeBuilder, tableNode);
         bool isTphLeaf = false;
         var strategy = entityRule.GetMappingStrategy()?.ToUpper();
         var entity = entityTypeBuilder.Metadata;
@@ -488,13 +495,13 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         EnsurePrimaryKey();
 
         // process properties
-        var excludedProperties = new HashSet<IMutableProperty>();
+        var excludedProperties = new HashSet<(IMutableProperty Property, PropertyRuleNode Rule)>();
         foreach (var property in entity.GetProperties().Where(o => o.DeclaringEntityType == entity)) {
             var column = property.GetColumnNameNoDefault() ?? property.Name;
             var propertyRule = entityRuleNode.TryResolveRuleFor(column);
             if (propertyRule == null && entityRule.IncludeUnknownColumns) propertyRule = entityRuleNode.AddProperty(property, column);
 
-            var shouldMapProperty = propertyRule?.Rule != null && propertyRule.Rule.ShouldMap();
+            var shouldMapProperty = propertyRule?.Rule != null && propertyRule.ShouldMap();
             if (!shouldMapProperty) {
                 // some property mappings are required by EF.  Check if the property is needed now and override any omission rule.
 
@@ -511,11 +518,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
             }
 
-            if (!shouldMapProperty) excludedProperties.Add(property);
+            if (!shouldMapProperty) excludedProperties.Add((property, propertyRule));
 
             propertyRule?.MapTo(property, column);
 
-            if (propertyRule?.Rule.Annotations.Count > 0 && propertyRule.Rule.ShouldMap()) {
+            if (propertyRule?.Rule.Annotations.Count > 0 && propertyRule.ShouldMap()) {
                 property.ApplyAnnotations(propertyRule.Rule.Annotations, () => $"{entityTypeBuilder.Metadata.Name}.{property.Name}",
                     reporter);
             }
@@ -525,31 +532,16 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         // Note, there are no Navigations yet because FKs are processed after visiting tables
 
-        if (table.ForeignKeys.Count > 0 && ScaffoldTracker.HasOmissions) {
-            // check to see if any of the foreign keys map to omitted tables. if so, nuke them.
-            var fksToBeRemoved = new HashSet<DatabaseForeignKey>();
-            foreach (var foreignKey in table.ForeignKeys)
-                if (ScaffoldTracker.IsOmitted(foreignKey))
-                    fksToBeRemoved.Add(foreignKey);
-
-            foreach (var dbFk in fksToBeRemoved) {
-                var eFk = entity.GetForeignKeys().FirstOrDefault(o => o.GetConstraintNameForTableOrView() == dbFk.Name);
-                if (eFk == null) continue;
-                var removed = entity.RemoveForeignKey(eFk);
-                Debug.Assert(removed != null);
-            }
-        }
-
         if (!entity.GetProperties().Any() && entityRuleNode.BaseEntityRuleNode == null) {
-            // remove the entire table
-            ScaffoldTracker.OmitTable(table);
+            // remove the entire entity
+            ScaffoldTracker.Omit(entityRuleNode);
             modelBuilder.Model.RemoveEntityType(entityTypeBuilder.Metadata);
             reporter.WriteInformation($"RULED: Entity {entityTypeBuilder.Metadata.Name} omitted.");
             return null;
         }
 
         foreach (var excludedProperty in excludedProperties)
-            reporter.WriteInformation($"RULED: Property {entityTypeBuilder.Metadata.Name}.{excludedProperty.Name} omitted.");
+            reporter.WriteInformation($"RULED: Property {entityTypeBuilder.Metadata.Name}.{excludedProperty.Property.Name} omitted.");
 
         return entityTypeBuilder;
 
@@ -564,11 +556,12 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 return baseProperty != null;
             } else {
                 var baseProperty = entityRuleNode?.BaseEntityRuleNode?.FindPropertyByColumn(checkColumn);
-                return baseProperty != null && baseProperty.Rule.ShouldMap();
+                return baseProperty != null && baseProperty.ShouldMap();
             }
         }
 
-        void RemovePropertyAndReferences(IMutableProperty p) {
+        void RemovePropertyAndReferences((IMutableProperty Property, PropertyRuleNode Rule) tuple) {
+            var p = tuple.Property;
 #if DEBUG
             if (table != null) {
                 var columnName = p.GetColumnNameNoDefault();
@@ -587,6 +580,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             var removed = entity.RemoveProperty(p);
             Debug.Assert(removed != null);
+            ScaffoldTracker.Omit(tuple.Rule);
         }
 
         void RemoveIndexesWith(IMutableProperty p) {
@@ -825,10 +819,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             if (ScaffoldTracker.HasOmissions) {
                 // check to see if the foreign key maps to an omitted table. if so, nuke it.
-                var fksToBeRemoved = new HashSet<DatabaseForeignKey>();
-                foreach (var foreignKey in foreignKeys)
-                    if (ScaffoldTracker.IsOmitted(foreignKey))
-                        fksToBeRemoved.Add(foreignKey);
+                var fksToBeRemoved = foreignKeys
+                    .Where(o => ScaffoldTracker.IsOmitted(o)).ToHashSetNew();
 
                 if (fksToBeRemoved.Count > 0) {
                     if (foreignKeys.IsReadOnly) foreignKeys = new List<DatabaseForeignKey>(foreignKeys);
@@ -863,7 +855,6 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             return modelBuilder;
         } finally {
             RemoveOmittedForeignKeys();
-            //TestNavigations(modelBuilder);
         }
     }
 
@@ -1266,7 +1257,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (table is not DatabaseView view) return false;
         var keyedEntity = entityRuleNodes
                               .FirstOrDefault(e =>
-                                  e.Rule.ShouldMap() && e.GetProperties().Any(o => o.Rule.IsKey && o.Parent.DbName == view.Name))
+                                  e.ShouldMap() && e.GetProperties().Any(o => o.Rule.IsKey && o.Parent.DbName == view.Name))
                           ?? entityRuleNodes
                               .FirstOrDefault(e => e.GetProperties().Any(o => o.Rule.IsKey && o.Parent.DbName == view.Name));
         if (keyedEntity == null) return false;
@@ -1366,25 +1357,28 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             // We can mandate changes to the T4s such that each end is checked for null first, but for simplicity sake,
             // if one end is not defined, we will eliminate the entire FK.
             // Note, the principal end may not be defined when foreignKey.DeclaringEntityType.IsKeyless.
-            ScaffoldTracker.Omit(foreignKey);
-        } else {
-            var dependentExcluded = ApplyNavRule(foreignKey.DependentToPrincipal, foreignKey.DeclaringEntityType, false);
-            var principalExcluded = ApplyNavRule(foreignKey.PrincipalToDependent, foreignKey.PrincipalEntityType, true);
-
-            if (dependentExcluded && principalExcluded) {
-                // we will only exclude a navigation if BOTH ends are excluded, thus, removing the FK altogether.
-                // see reasoning above
-                ScaffoldTracker.Omit(foreignKey);
-            } else {
-#if DEBUG
-                var dNavs = foreignKey.DeclaringEntityType.GetNavigations().ToList();
-                var pNavs = foreignKey.PrincipalEntityType.GetNavigations().ToList();
-                var dNav = dNavs.FirstOrDefault(o => o.ForeignKey == foreignKey);
-                var pNav = pNavs.FirstOrDefault(o => o.ForeignKey == foreignKey);
-                Debug.Assert(dNav != null && pNav != null);
-#endif
-            }
+            ScaffoldTracker.CountForeignKeyUsage(foreignKey, fkName, false);
+            return;
         }
+
+        var dependentExcluded = ApplyNavRule(foreignKey.DependentToPrincipal, foreignKey.DeclaringEntityType, false);
+        var principalExcluded = ApplyNavRule(foreignKey.PrincipalToDependent, foreignKey.PrincipalEntityType, true);
+
+        if (dependentExcluded && principalExcluded) {
+            // we will only exclude a navigation if BOTH ends are excluded, thus, removing the FK altogether.
+            // see reasoning above
+            ScaffoldTracker.CountForeignKeyUsage(foreignKey, fkName, false);
+            return;
+        }
+
+        ScaffoldTracker.CountForeignKeyUsage(foreignKey, fkName, true);
+#if DEBUG
+        var dNavs = foreignKey.DeclaringEntityType.GetNavigations().ToList();
+        var pNavs = foreignKey.PrincipalEntityType.GetNavigations().ToList();
+        var dNav = dNavs.FirstOrDefault(o => o.ForeignKey == foreignKey);
+        var pNav = pNavs.FirstOrDefault(o => o.ForeignKey == foreignKey);
+        Debug.Assert(dNav != null && pNav != null);
+#endif
 
         bool ApplyNavRule(IMutableNavigation navigation, IMutableEntityType entityType, bool thisIsPrincipal) {
             var entityRule = dbContextRule.TryResolveRuleForEntityName(entityType.Name);
@@ -1437,7 +1431,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             navigation.ApplyAnnotations(navigationRule?.Rule?.Annotations, () => $"{entityType.Name}.{navigation?.Name}", reporter);
 
             // exclude this navigation (when rule is null or explicitly not mapped)
-            var excluded = navigationRule?.Rule?.ShouldMap() != true;
+            var excluded = navigationRule?.ShouldMap() != true;
 
             // Exception #1: if the navigation is a part of a required mapping back to a base type in a TPT hierarchy
             // if (navigationRule != null && navigationRule.Parent != null) {

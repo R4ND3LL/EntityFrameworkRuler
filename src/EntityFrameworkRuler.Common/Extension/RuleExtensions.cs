@@ -201,7 +201,7 @@ public static class RuleExtensions {
             _ => false
         };
     }
-
+#if false
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     public static bool CanIncludeEntity(this DbContextRule dbContextRule,
@@ -236,6 +236,7 @@ public static class RuleExtensions {
         return entityRule.BaseTypeName.HasNonWhiteSpace() ||
                (entityRule.Properties.Count > 0 && entityRule.Properties.Any(o => o.ShouldMap()));
     }
+#endif
 
     #region Annotations
 

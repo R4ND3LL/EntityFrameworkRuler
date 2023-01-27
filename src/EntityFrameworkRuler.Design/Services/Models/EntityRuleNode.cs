@@ -48,7 +48,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
     /// <summary> True if this entity has been scaffolded with an entity builder.
     /// Note, will be false if table was identified but entity omitted. </summary>
-    public bool IsAlreadyScaffolded => Builder != null && DatabaseTable != null;
+    public bool IsAlreadyScaffolded => !IsOmitted && Builder != null && DatabaseTable != null;
 
     /// <summary> True if this entity has been mapped to a database table (or view).  May or may not have been omitted. </summary>
     public bool IsMappedToTable => DatabaseTable != null;
@@ -57,16 +57,23 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
     public override string GetFinalName() => Builder?.Metadata.Name ?? base.GetFinalName();
 
     /// <summary> Link this entity rule to the scaffolded entity type builder. </summary>
-    public void MapTo(EntityTypeBuilder builder) {
+    public void MapTo(EntityTypeBuilder builder, DatabaseTableNode databaseTable) {
         Debug.Assert(Builder == null, "Builder was previously set");
         Debug.Assert(Rule.ShouldMap(), "Entity should not be scaffolded");
-        if (DatabaseTable == null) throw new Exception("Cannot set entity builder without DatabaseTable");
+        if (DatabaseTable == null) {
+            if (databaseTable != null) MapTo(databaseTable);
+            if (DatabaseTable == null) throw new("Cannot set entity builder without DatabaseTable");
+        } else {
+            if (databaseTable != null && !ReferenceEquals(DatabaseTable, databaseTable))
+                throw new("DatabaseTable instance mismatch");
+        }
+
         Builder = builder;
         Parent.Parent.Map(builder, this);
         UpdateRuleMetadata();
     }
 
-    /// <summary> Link this entity rule to the underlying database table. </summary>
+    /// <summary> Link this entity rule to the underlying database table.  This will be linked whether the entity is omitted or not. </summary>
     public void MapTo(DatabaseTableNode table) {
         Debug.Assert(DatabaseTable == null);
         DatabaseTable = table;
@@ -205,7 +212,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public PropertyRuleNode AddProperty(IMutableProperty property, string column) {
-        var rule = new PropertyRuleNode(new PropertyRule {
+        var rule = new PropertyRuleNode(new() {
             Name = column,
             PropertyName = property.Name
         }, this);
@@ -216,7 +223,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public NavigationRuleNode AddNavigation(IMutableNavigation navigation, string fkName, bool thisIsPrincipal, bool isManyToMany) {
-        var rule = new NavigationRuleNode(new NavigationRule {
+        var rule = new NavigationRuleNode(new() {
             Name = navigation.Name,
             FkName = fkName,
             IsPrincipal = thisIsPrincipal || isManyToMany

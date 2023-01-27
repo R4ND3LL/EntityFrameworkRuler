@@ -32,17 +32,8 @@ public sealed class DatabaseTableNode {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string FullName => Table.GetFullName();
 
-    /// <summary> True if this table is forbidden to be mapped to an entity </summary>
-    public bool GetIsOmitted() => tracker.IsOmitted(this);
-
     /// <summary> Associate this table to the entity rule, and thus the scaffolded entity type </summary>
     public void MapTo(EntityRuleNode entityRule) {
-        if (GetIsOmitted()) {
-            // check to ensure we are not scaffolding this entity
-            if (entityRule.Builder != null || entityRule.Rule.ShouldMap())
-                throw new($"Entity {entityRule.GetFinalName() ?? Table.Name} is being scaffolded, but was previously omitted");
-        }
-
         EntityRules.Add(entityRule);
     }
 

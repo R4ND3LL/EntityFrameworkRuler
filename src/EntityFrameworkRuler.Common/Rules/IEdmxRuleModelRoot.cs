@@ -58,8 +58,11 @@ public interface IRuleItem {
     /// <summary> Sets the conceptual name of the model. That is, the name that this element should have after the reverse engineer. </summary>
     void SetFinalName(string value);
 
-    /// <summary> If true, omit this item and all containing elements during the scaffolding process. Default is false. </summary>
-    bool NotMapped { get; }
+    // /// <summary> If true, omit this item and all containing elements during the scaffolding process. Default is false. </summary>
+    // bool NotMapped { get; }
+
+    /// <summary> Consider the NotMapped flag as well as other concerns to determine whether this rule should be mapped </summary>
+    bool ShouldMap();
 }
 
 /// <summary> Extra information about the navigation property </summary>

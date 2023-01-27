@@ -99,8 +99,7 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
     /// <summary> Return true if the given scheme can be mapped. </summary>
     public bool ShouldMapSchema(string schema) {
         var x = Schemas.GetByDbName(schema);
-        if (x?.NotMapped == true) return false;
-        return Rule.IncludeUnknownSchemas || x != null;
+        return x?.ShouldMap() ?? Rule.IncludeUnknownSchemas;
     }
 
     /// <summary> implicit conversion </summary>

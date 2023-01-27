@@ -5,6 +5,7 @@ using System.Windows.Data;
 using System.Windows.Markup;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using EntityFrameworkRuler.Rules;
 
 namespace EntityFrameworkRuler.Editor.Converters;
 
@@ -18,6 +19,7 @@ public static class UiConverters {
     public static NullToVisibleConverter NullToVisible { get; } = new();
     public static NullToVisibleConverter NotNullToVisible { get; } = new() { Invert = true };
     public static FirstOrDefaultConverter FirstOrDefault { get; } = new();
+    public static RuleShouldMapConverter RuleShouldMap { get; } = new();
 
 
     /// <summary> Detect when converter value is DisconnectedObject </summary>
@@ -154,6 +156,24 @@ public sealed class FirstOrDefaultConverter : IValueConverter {
             return e.Cast<object>().FirstOrDefault();
         }
         return null;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+        return null;
+    }
+}
+public sealed class RuleShouldMapConverter : IValueConverter {
+    #region Singleton Implementation
+
+    public static RuleShouldMapConverter Instance { get; } = new();
+
+    #endregion
+
+    public RuleShouldMapConverter() { }
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+        if (!value.IsDependencyPropertyUnsetValue() && value is IRuleItem e) return e.ShouldMap();
+        return true;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {

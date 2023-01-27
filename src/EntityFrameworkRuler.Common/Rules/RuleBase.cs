@@ -32,8 +32,8 @@ public abstract class RuleBase : IRuleItem {
     /// <summary> If true, omit this item and all containing elements during the scaffolding process. Default is false. </summary>
     protected abstract bool GetNotMapped();
 
-    /// <summary> If true, omit this column during the scaffolding process. </summary>
-    bool IRuleItem.NotMapped => GetNotMapped();
+    // /// <summary> If true, omit this column during the scaffolding process. </summary>
+    // bool IRuleItem.NotMapped => GetNotMapped();
 
     /// <summary> Direct access to the Comment annotation.  This property exists to facilitate UI editing. </summary>
     [IgnoreDataMember, JsonIgnore, XmlIgnore]

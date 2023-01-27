@@ -68,7 +68,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
         var entityRules = dbContextRule.TryResolveRuleFor(table);
         if (entityRules.Count == 0) return InvokeBaseCall();
         Debug.Assert(entityRules.Count == 1, "How do we reliably select the correct rule when splitting?");
-        entityRule = entityRules.FirstOrDefault(o => o.Rule.ShouldMap());
+        entityRule = entityRules.FirstOrDefault(o => o.ShouldMap());
         if (entityRule == null) return InvokeBaseCall();
 
         if (forDbSetName && entityRule?.Rule.DbSetName.HasNonWhiteSpace() == true) {
@@ -147,7 +147,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
             return base.GenerateCandidateIdentifier(column);
         var propertyRules = entityRules
             .Select(o => o.TryResolveRuleFor(column.Name))
-            .Where(o => o?.Rule?.ShouldMap() == true).Distinct().ToArray();
+            .Where(o => o?.ShouldMap() == true).Distinct().ToArray();
         if (propertyRules.Length == 0) return base.GenerateCandidateIdentifier(column);
         //Debug.Assert(propertyRules.Length == 1, "How do we reliably select the correct rule when splitting?");
         var propertyRule = propertyRules.FirstOrDefault(o => o.Rule.NewName.HasNonWhiteSpace()) ?? propertyRules.First();

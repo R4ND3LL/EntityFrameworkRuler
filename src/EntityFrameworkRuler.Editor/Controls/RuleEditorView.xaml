@@ -48,7 +48,7 @@
                                        Padding="0" />
                 </Grid>
                 <DataTemplate.Triggers>
-                    <DataTrigger Binding="{Binding Item.(rules:IRuleItem.NotMapped)}" Value="True">
+                    <DataTrigger Binding="{Binding Item, Converter={x:Static converters:UiConverters.RuleShouldMap}}" Value="False">
                         <Setter TargetName="Text" Property="Opacity" Value="0.85" />
                         <Setter TargetName="Text" Property="TextDecorations" Value="Strikethrough" />
                     </DataTrigger>

@@ -36,5 +36,13 @@ public abstract class RuleNode<T, TParent> : IRuleItem where T : IRuleItem {
     public void SetFinalName(string value) => Rule.SetFinalName(value);
 
     /// <inheritdoc />
-    public bool NotMapped => Rule.NotMapped;
+    public bool ShouldMap() => Rule.ShouldMap() && !IsOmitted;
+
+    /// <summary> Element has been omitted during scaffolding </summary>
+    protected bool IsOmitted { get; private set; }
+
+    /// <summary> Element has been omitted during scaffolding </summary>
+    public void SetOmitted(bool omit = true) {
+        IsOmitted = omit;
+    }
 }
