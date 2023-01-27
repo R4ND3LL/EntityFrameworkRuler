@@ -7,12 +7,17 @@
 [![Common](http://img.shields.io/nuget/v/EntityFrameworkRuler.Common.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Common/)
 
 Automate the customization of the EF Core Reverse Engineered model. Features include:
+- Legacy EF6 (EDMX) migration support
 - Class renaming
 - Property renaming (including both primitives and navigations)
 - Type changing (useful for enum mapping)
-- Skipping non-mapped columns.
-- Forcing inclusion of simple many-to-many entities into the model.
-- Entity type configuration file splitting.
+- Custom navigations that have no database foreign key, such as adding navigations to views
+- Table splitting (multiple entities using subsets of columns from the same table)
+- Entity inheritance (TPH, TPT, TPC)
+- Auto-naming tables and columns using regex
+- Skipping tables or columns
+- Forcing inclusion of simple many-to-many entities into the model
+- Entity type configuration file splitting
 
 EF Ruler applies customizations from a rule document stored in the project folder.  Rules can be initialized with a call to [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli), or they can be fully generated from an EDMX such that the scaffolding output will align with the old EF6 EDMX-based model.
 
