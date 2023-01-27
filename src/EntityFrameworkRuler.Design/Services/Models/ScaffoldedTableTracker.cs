@@ -16,9 +16,6 @@ public sealed class ScaffoldedTableTracker {
     }
 
     /// <summary> An omitted schema implies the mapping of any entity to this table is forbidden. </summary>
-    private readonly Dictionary<string, EntityRuleNode> omittedEntitiesByFinalName = new();
-
-    /// <summary> An omitted schema implies the mapping of any entity to this table is forbidden. </summary>
     private readonly HashSet<EntityRuleNode> omittedEntities = new();
 
     /// <summary> An omitted schema implies the mapping of any object within that schema is forbidden. </summary>
@@ -35,7 +32,7 @@ public sealed class ScaffoldedTableTracker {
         tablesBySchema.Select(o => (o.Key, o.Value.Values.Select(n => n)));
 
     /// <summary> True if there are schema or table omissions so far </summary>
-    public bool HasOmissions => omittedSchemas.Count > 0 || omittedEntitiesByFinalName.Count > 0;
+    public bool HasOmissions => omittedSchemas.Count > 0 || omittedEntities.Count > 0;
 
     /// <summary> Initialize data for tracking </summary>
     public void InitializeScope(IEnumerable<DatabaseTable> tables, DbContextRuleNode dbContextRuleNode) {
@@ -60,11 +57,11 @@ public sealed class ScaffoldedTableTracker {
     public void Omit(EntityRuleNode entityRule) {
         if (entityRule == null) throw new ArgumentNullException(nameof(entityRule));
         var omitted = omittedEntities.Add(entityRule);
-        var entityName = entityRule.GetFinalName();
-        if (omitted && entityName.HasNonWhiteSpace())
-            omittedEntitiesByFinalName.GetOrAddNew(entityName, AddFactory);
-
-        EntityRuleNode AddFactory(string entityName2) => entityRule;
+        //var entityName = entityRule.GetFinalName();
+        // if (omitted && entityName.HasNonWhiteSpace())
+        //     omittedEntitiesByFinalName.GetOrAddNew(entityName, AddFactory);
+        //
+        // EntityRuleNode AddFactory(string entityName2) => entityRule;
 
         if (omitted) OnEntityOmitted(entityRule);
     }
@@ -137,11 +134,13 @@ public sealed class ScaffoldedTableTracker {
     private bool IsOmitted(DatabaseTable table) {
         if (table?.Name == null) return false;
         if (IsSchemaOmitted(table)) return true;
-        var node = FindTableNode(table) ?? throw new($"Table node not found: " + table.GetFullName());
-        return node.EntityRules.Count == 0 || node.EntityRules.All(o => !o.ShouldMap());
+        var node = FindTableNode(table);
+        Debug.Assert(node != null);
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+        return node == null || node.EntityRules.Count == 0 || node.EntityRules.All(o => !o.ShouldMap());
     }
 
-    /// <summary> true if omitted </summary>
+    /// <summary> true if omitted.  To be evaluated only AFTER all entities and properties have been scaffolded. </summary>
     public bool IsOmitted(DatabaseForeignKey fk) {
         if (fk?.Name == null) return false;
         if (IsOmitted(fk.Table) || IsOmitted(fk.PrincipalTable)) return true;
@@ -150,8 +149,8 @@ public sealed class ScaffoldedTableTracker {
         bool IsOmittedCols(IList<DatabaseColumn> columns) {
             if (columns == null || columns.Count == 0) return false;
             var entityRules = dbContextRule.TryResolveRuleFor(columns[0].Table);
-            Debug.Assert(entityRules?.Any(o => o.ShouldMap()) == true, "Rule should exist since table/schema has not been omitted");
-            if (entityRules.Count == 0) return false;
+            Debug.Assert(entityRules.Any(o => o.ShouldMap()) == true, "Rule should exist since table/schema has not been omitted");
+            if (entityRules.Count == 0) return true; // rules are missing, has to have been omitted. 
             foreach (var column in columns) {
                 var propertyRuleNodes = entityRules
                     .Select(o => o.TryResolveRuleFor(column.Name))
