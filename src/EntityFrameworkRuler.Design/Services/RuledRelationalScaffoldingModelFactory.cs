@@ -601,14 +601,18 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
 
         void EnsurePrimaryKey() {
-            if (entity.BaseType == null) return;
+            if (entity.BaseType != null || entity.IsKeyless) return;
             var pkey = entity.FindPrimaryKey();
             if (pkey != null || !(table?.PrimaryKey?.Columns?.Count > 0)) return;
 
             // EF Core omits a key sometimes.  The reason is as yet unidentified, but this resolves it anyway
             var props = entity.GetPropertiesFromDbColumns(table.PrimaryKey.Columns);
             if (props.Length > 0 && props.All(o => o != null)) {
-                entityTypeBuilder.HasKey(props.Select(o => o.Name).ToArray());
+                try {
+                    entityTypeBuilder.HasKey(props.Select(o => o.Name).ToArray());
+                } catch {
+                    // ignored
+                }
             }
         }
         // void RemoveFKsWith(IMutableProperty p, string columnName) {
