@@ -481,10 +481,10 @@ internal static class EfExtensions {
             typeScaffoldingInfo?.ScaffoldScale);
     }
 
-    public static IList<DatabaseColumn> GetTableColumns(this DatabaseTable databaseTable, string[] props) {
+    public static IList<DatabaseColumn> GetTableColumns(this DatabaseTable databaseTable, string[] props, StringComparer comparer) {
         if (databaseTable == null || props.IsNullOrEmpty()) return ArraySegment<DatabaseColumn>.Empty;
         //if (OmittedTables.Contains(databaseTable.GetFullName())) return ArraySegment<DatabaseColumn>.Empty;
-        var cols = props.Select(o => databaseTable.Columns.FirstOrDefault(c => c.Name == o)).ToArray();
+        var cols = props.Select(o => databaseTable.Columns.FirstOrDefault(c => comparer.Compare(c.Name, o) == 0)).ToArray();
         if (cols.Length == 0 || cols.Any(o => o == null)) return ArraySegment<DatabaseColumn>.Empty;
         return cols;
     }
@@ -507,27 +507,30 @@ internal static class EfExtensions {
     }
 
     /// <summary> Get the entity properties for the given DB columns </summary>
-    public static IMutableProperty[] GetPropertiesFromDbColumns(this IMutableEntityType e, IEnumerable<DatabaseColumn> columns) {
-        return GetPropertiesFromDbColumns(e, columns?.Select(o => o.Name));
+    public static IMutableProperty[] GetPropertiesFromDbColumns(this IMutableEntityType e, IEnumerable<DatabaseColumn> columns,
+        IEqualityComparer<string> stringComparer) {
+        return GetPropertiesFromDbColumns(e, columns?.Select(o => o.Name), stringComparer);
     }
 
     /// <summary> Get the entity properties for the given DB columns </summary>
-    public static IMutableProperty[] GetPropertiesFromDbColumns(this IMutableEntityType e, IEnumerable<string> columns) {
+    public static IMutableProperty[] GetPropertiesFromDbColumns(this IMutableEntityType e, IEnumerable<string> columns,
+        IEqualityComparer<string> stringComparer) {
         if (columns == null) return Array.Empty<IMutableProperty>();
         var propsByDbName = e.GetProperties().Select(o => (dbName: o.GetColumnNameNoDefault(), prop: o))
             .Where(o => o.dbName.HasNonWhiteSpace())
             .DistinctBy(o => o.dbName)
-            .ToDictionary(o => o.dbName, o => o.prop);
+            .ToDictionary(o => o.dbName, o => o.prop, stringComparer);
         var props = columns.Select(o => propsByDbName.TryGetValue(o)).ToArray();
         return props;
     }
 
     /// <summary> Get the entity property for the given DB column </summary>
-    public static IMutableProperty GetPropertyFromDbColumn(this IMutableEntityType e, string column) {
+    public static IMutableProperty GetPropertyFromDbColumn(this IMutableEntityType e, string column,
+        StringComparison stringComparison) {
         if (column.IsNullOrWhiteSpace()) return null;
         var prop = e.GetProperties().Select(o => (dbName: o.GetColumnNameNoDefault(), prop: o))
             .Where(o => o.dbName.HasNonWhiteSpace())
-            .FirstOrDefault(o => o.dbName == column);
+            .FirstOrDefault(o => string.Equals(o.dbName, column, stringComparison));
         return prop.prop;
     }
 }

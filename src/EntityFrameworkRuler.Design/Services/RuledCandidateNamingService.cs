@@ -206,6 +206,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         var fkName = foreignKey.GetConstraintNameForTableOrView();
         var entity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
+        var inverseEntity = thisIsPrincipal ? foreignKey.DeclaringEntityType : foreignKey.PrincipalEntityType;
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         // ReSharper disable once HeuristicUnreachableCode
         if (entity == null) return defaultEfName();
@@ -214,7 +215,8 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         if (entityRule == null || !entityRule.GetNavigations().Any()) return defaultEfName();
 
-        var navigationRule = entityRule.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany());
+        var navigationRule = entityRule.TryResolveNavigationRuleFor(fkName, defaultEfName, thisIsPrincipal, foreignKey.IsManyToMany(),
+            inverseEntity?.Name);
         if (navigationRule?.Rule?.NewName.IsNullOrWhiteSpace() != false) return defaultEfName();
 
         logger?.WriteVerbose($"RULED: Navigation {entity.Name}.{navigationRule.Rule.NewName} defined");

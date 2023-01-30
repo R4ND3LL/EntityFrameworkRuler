@@ -58,6 +58,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     private RuledCSharpUniqueNamer<DatabaseTable, EntityRule> dbSetNamer;
     private ModelReverseEngineerOptions options;
     private DatabaseModel generatingDatabaseModel;
+    private StringComparer stringComparer = StringComparer.OrdinalIgnoreCase;
+    private StringComparison stringComparison = StringComparison.OrdinalIgnoreCase;
 
     /// <summary> enlists post creation actions to be executed after visiting database model </summary>
     protected readonly List<Action<ModelBuilder>> PostCreationActions = new();
@@ -212,9 +214,19 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
         }
 
-        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRuleNode(DbContextRule.DefaultNoRulesFoundBehavior);
+        dbContextRule ??= GetDbContextRules();
         var tableNodes = dbContextRule.TryResolveRuleFor(table);
         return tableNodes ?? Array.Empty<EntityRuleNode>();
+    }
+
+    private DbContextRuleNode GetDbContextRules() {
+        var rules = designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRuleNode(DbContextRule.DefaultNoRulesFoundBehavior);
+        if (rules.Rule.CaseSensitive) {
+            stringComparer = StringComparer.Ordinal;
+            stringComparison = StringComparison.Ordinal;
+        }
+
+        return rules;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -250,7 +262,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual ModelBuilder VisitTables(ModelBuilder modelBuilder, ICollection<DatabaseTable> tables) {
-        dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRuleNode(DbContextRule.DefaultNoRulesFoundBehavior);
+        dbContextRule ??= GetDbContextRules();
         ScaffoldTracker.InitializeScope(tables, dbContextRule);
 
         foreach (var entityRule in dbContextRule.Entities) {
@@ -606,7 +618,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             if (pkey != null || !(table?.PrimaryKey?.Columns?.Count > 0)) return;
 
             // EF Core omits a key sometimes.  The reason is as yet unidentified, but this resolves it anyway
-            var props = entity.GetPropertiesFromDbColumns(table.PrimaryKey.Columns);
+            var props = entity.GetPropertiesFromDbColumns(table.PrimaryKey.Columns, stringComparer);
             if (props.Length > 0 && props.All(o => o != null)) {
                 try {
                     entityTypeBuilder.HasKey(props.Select(o => o.Name).ToArray());
@@ -958,7 +970,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             return null;
         }
 
-        static IMutableEntityType GetCorrectEntityOrNull(IMutableEntityType entityType, DatabaseTable table,
+        IMutableEntityType GetCorrectEntityOrNull(IMutableEntityType entityType, DatabaseTable table,
             IList<DatabaseColumn> key) {
             if (table == null) return null;
             if (entityType?.BaseType == null) return ReturnIfHasColumns(entityType, key);
@@ -976,13 +988,13 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             return ReturnIfHasColumns(entityType, key);
         }
 
-        static IMutableEntityType ReturnIfHasColumns(IMutableEntityType entityType, IList<DatabaseColumn> key) {
+        IMutableEntityType ReturnIfHasColumns(IMutableEntityType entityType, IList<DatabaseColumn> key) {
             if (entityType != null && HasColumns(entityType, key)) return entityType;
             return null;
         }
 
-        static bool HasColumns(IMutableEntityType entityType, IList<DatabaseColumn> key) {
-            var properties = entityType?.GetPropertiesFromDbColumns(key);
+        bool HasColumns(IMutableEntityType entityType, IList<DatabaseColumn> key) {
+            var properties = entityType?.GetPropertiesFromDbColumns(key, stringComparer);
             var validCount = properties?.Count(o => o != null && o.DeclaringEntityType == entityType);
             return validCount == key.Count;
         }
@@ -1058,7 +1070,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         // tables are a match, which verifies that the FK wiring was good and entity selection was not.
         // we can now begin remapping the FK properties
         var dependentProperties = dependentEntityType
-            .GetPropertiesFromDbColumns(foreignKey.Columns)
+            .GetPropertiesFromDbColumns(foreignKey.Columns, stringComparer)
             .ToList()
             .AsReadOnly();
 
@@ -1070,7 +1082,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         var principalPropertiesMap = foreignKey.PrincipalColumns
             .Select(
-                fc => (property: principalEntityType.GetPropertyFromDbColumn(fc.Name), column: fc)).ToList();
+                fc => (property: principalEntityType.GetPropertyFromDbColumn(fc.Name, stringComparison), column: fc)).ToList();
         if (principalPropertiesMap.Any(o => o.property == null)) {
             reporter.WriteWarning(
                 $"Unable to correctly map FK {foreignKey.Name} because principal properties cannot be resolved on entity {principalEntityType.Name}");
@@ -1174,13 +1186,12 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             // note, we must generate both navigations due to expectations of the T4s when generating navigation code.
             var pEntity = dbContextRule.TryResolveRuleForEntityName(unknownFk.Rule.PrincipalEntity);
             var dEntity = dbContextRule.TryResolveRuleForEntityName(unknownFk.Rule.DependentEntity);
-            if (!pEntity.IsAlreadyScaffolded || !dEntity.IsAlreadyScaffolded) continue;
             var pTable = pEntity?.DatabaseTable;
             var dTable = dEntity?.DatabaseTable;
-            if (pTable == null || dTable == null) {
-                // for now at least, the entity must be mapped to a table
-                continue;
-            }
+            if (pTable == null || dTable == null)
+                continue; // for now at least, the entity must be mapped to a table
+
+            if (!pEntity.IsAlreadyScaffolded || !dEntity.IsAlreadyScaffolded) continue;
 
             if (unknownFk.Rule.Name.IsNullOrWhiteSpace())
                 unknownFk.Rule.Name = $"FK_Ruled_{dEntity.GetFinalName()}_{pEntity.GetFinalName()}";
@@ -1191,8 +1202,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 OnDelete = ReferentialAction.NoAction,
                 Table = dTable,
             };
-            dbFk.PrincipalColumns.AddRange(pTable.Table.GetTableColumns(unknownFk.Rule?.PrincipalProperties));
-            dbFk.Columns.AddRange(dTable.Table.GetTableColumns(unknownFk.Rule?.DependentProperties));
+            dbFk.PrincipalColumns.AddRange(pTable.Table.GetTableColumns(unknownFk.Rule?.PrincipalProperties, stringComparer));
+            dbFk.Columns.AddRange(dTable.Table.GetTableColumns(unknownFk.Rule?.DependentProperties, stringComparer));
             if (dbFk.Name.IsNullOrWhiteSpace() || dbFk.PrincipalColumns.IsNullOrEmpty() ||
                 dbFk.Columns.Count != dbFk.PrincipalColumns.Count) {
                 reporter.WriteWarning(
@@ -1232,12 +1243,12 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         bool AreColumnsEqual(DatabaseForeignKey a, DatabaseForeignKey b) {
             if (a.Columns.Count != b.Columns.Count) return false;
             for (var i = 0; i < a.Columns.Count; i++) {
-                if (b.Columns[i] != a.Columns[i]) return false;
+                if (!string.Equals(b.Columns[i].Name, a.Columns[i].Name, stringComparison)) return false;
             }
 
             if (a.PrincipalColumns.Count != b.PrincipalColumns.Count) return false;
             for (var i = 0; i < a.PrincipalColumns.Count; i++) {
-                if (b.PrincipalColumns[i] != a.PrincipalColumns[i]) return false;
+                if (!string.Equals(b.PrincipalColumns[i].Name, a.PrincipalColumns[i].Name, stringComparison)) return false;
             }
 
             return true;
@@ -1269,7 +1280,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var keyColNames = keyedEntity.GetProperties()
             .Where(o => o.Rule.IsKey && o.Parent.DbName == view.Name)
             .Select(o => o.Rule.Name).ToArray();
-        var keyCols = view.GetTableColumns(keyColNames);
+        var keyCols = view.GetTableColumns(keyColNames, stringComparer);
         if (keyCols.IsNullOrEmpty()) return false;
 
         foreach (var col in keyCols) {
@@ -1304,7 +1315,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (table is not DatabaseView view || !(table?.PrimaryKey?.Columns.Count > 0)) return false;
 
         // Even though we applied a key to the view, EF does not apply it to the entity. Attempt to do so now.
-        var props = e.GetPropertiesFromDbColumns(table.PrimaryKey.Columns);
+        var props = e.GetPropertiesFromDbColumns(table.PrimaryKey.Columns, stringComparer);
         if (props.Length <= 0 || props.Any(o => o == null)) return false;
 
         e.IsKeyless = false;
@@ -1385,16 +1396,17 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 #endif
 
         bool ApplyNavRule(IMutableNavigation navigation, IMutableEntityType entityType, bool thisIsPrincipal) {
+            var thisEntity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
+            var inverseEntity = thisIsPrincipal ? foreignKey.DeclaringEntityType : foreignKey.PrincipalEntityType;
+            Debug.Assert(thisEntity == entityType);
+            Debug.Assert(thisEntity == navigation.DeclaringEntityType);
+
             var entityRule = dbContextRule.TryResolveRuleForEntityName(entityType.Name);
             var navigationRule = entityRule?.TryResolveNavigationRuleFor(fkName,
-                () => entityType.Name,
+                () => navigation.Name,
                 thisIsPrincipal,
-                isManyToMany);
+                isManyToMany, inverseEntity?.Name);
 
-            //var fkDefinition = dbContextRule.ForeignKeys.GetByFinalName(fkName);
-
-            var navEntity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
-            Debug.Assert(navEntity == entityType);
 #if DEBUG2
             if (navigation.Name == "LatheSurfaceDefinition") Debugger.Break();
 #endif
@@ -1406,14 +1418,14 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                      entity type 'TypeName' because a property or navigation with the same name already exists */
                     var oldName = navigation.Name;
                     if (thisIsPrincipal) {
-                        var existingNav = navEntity.GetNavigations().FirstOrDefault(o => o.Name == newName);
+                        var existingNav = thisEntity.GetNavigations().FirstOrDefault(o => o.Name == newName);
                         if (existingNav == null) {
                             foreignKey.SetPrincipalToDependent((MemberInfo)null);
                             navigation = foreignKey.SetPrincipalToDependent(newName);
                             LogNameChange();
                         }
                     } else {
-                        var existingNav = navEntity.GetNavigations().FirstOrDefault(o => o.Name == newName);
+                        var existingNav = thisEntity.GetNavigations().FirstOrDefault(o => o.Name == newName);
                         if (existingNav == null) {
                             foreignKey.SetDependentToPrincipal((MemberInfo)null);
                             navigation = foreignKey.SetDependentToPrincipal(newName);
@@ -1423,7 +1435,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
                     void LogNameChange() =>
                         reporter.WriteVerbose(
-                            $"RULED: Corrected navigation {navEntity.Name}.{oldName} name to '{newName}'");
+                            $"RULED: Corrected navigation {thisEntity.Name}.{oldName} name to '{newName}'");
                 }
             }
 

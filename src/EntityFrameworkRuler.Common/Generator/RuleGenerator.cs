@@ -277,8 +277,8 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                             Name = name,
                             PrincipalEntity = constraint.PrincipalProperties[0].EntityName,
                             DependentEntity = constraint.DependentProperties[0].EntityName,
-                            PrincipalProperties = constraint.PrincipalProperties.Select(pp => pp.ConceptualName).ToArray(),
-                            DependentProperties = constraint.DependentProperties.Select(pp => pp.ConceptualName).ToArray(),
+                            PrincipalProperties = constraint.PrincipalProperties.Select(pp => pp.ColumnName ?? pp.ConceptualName).ToArray(),
+                            DependentProperties = constraint.DependentProperties.Select(pp => pp.ColumnName ?? pp.ConceptualName).ToArray(),
                         };
                         root.ForeignKeys.Add(fkr);
                     }

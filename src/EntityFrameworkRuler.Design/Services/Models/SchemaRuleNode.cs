@@ -6,7 +6,7 @@ namespace EntityFrameworkRuler.Design.Services.Models;
 public sealed class SchemaRuleNode : RuleNode<SchemaRule, DbContextRuleNode> {
     /// <inheritdoc />
     public SchemaRuleNode(SchemaRule r, DbContextRuleNode parent) : base(r, parent) {
-        Entities = new(() => r.Entities.Select(o => new EntityRuleNode(o, this)));
+        Entities = new(() => r.Entities.Select(o => new EntityRuleNode(o, this)), parent.Rule.CaseSensitive);
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>

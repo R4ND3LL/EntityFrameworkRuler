@@ -8,11 +8,13 @@ namespace EntityFrameworkRuler.Design.Services.Models;
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class RuleIndex<T> : IEnumerable<T> where T : IRuleItem {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public RuleIndex(Func<IEnumerable<T>> rules) {
+    public RuleIndex(Func<IEnumerable<T>> rules, bool caseSensitiveDb) {
         rulesGetter = rules;
+        this.caseSensitiveDb = caseSensitiveDb;
     }
 
     private readonly Func<IEnumerable<T>> rulesGetter;
+    private readonly bool caseSensitiveDb;
     private IList<T> rules;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -27,7 +29,7 @@ public sealed class RuleIndex<T> : IEnumerable<T> where T : IRuleItem {
     /// <summary> Get rule by final element name </summary>
     public T GetByFinalName(string finalName) {
         if (finalName == null) return default;
-        rulesByFinalName ??= InitializeRuleIndex(Rules, r => r.GetFinalName());
+        rulesByFinalName ??= InitializeRuleIndex(Rules, r => r.GetFinalName(), false);
         return rulesByFinalName.TryGetValue(finalName);
     }
 
@@ -35,19 +37,19 @@ public sealed class RuleIndex<T> : IEnumerable<T> where T : IRuleItem {
     /// <summary> Return true if rule exists in this collection with the DB name </summary>
     public bool ContainsDbName(string dbName) {
         if (dbName == null) return default;
-        rulesByDbName ??= InitializeRuleIndex(Rules, r => r.GetDbName());
+        rulesByDbName ??= InitializeRuleIndex(Rules, r => r.GetDbName(), caseSensitiveDb);
         return rulesByDbName.ContainsKey(dbName);
     }
 
     /// <summary> Get rule by DB name </summary>
     public T GetByDbName(string dbName) {
         if (dbName == null) return default;
-        rulesByDbName ??= InitializeRuleIndex(Rules, r => r.GetDbName());
+        rulesByDbName ??= InitializeRuleIndex(Rules, r => r.GetDbName(), caseSensitiveDb);
         return rulesByDbName.TryGetValue(dbName);
     }
 
-    private static Dictionary<string, T> InitializeRuleIndex(IEnumerable<T> rules, Func<T, string> keyGetter) {
-        Dictionary<string, T> rulesByName = new();
+    private static Dictionary<string, T> InitializeRuleIndex(IEnumerable<T> rules, Func<T, string> keyGetter, bool caseSensitive) {
+        Dictionary<string, T> rulesByName = new(caseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase);
         foreach (var rule in rules) {
             var key = keyGetter(rule)?.Trim();
             if (key == null) continue;

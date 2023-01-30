@@ -8,8 +8,8 @@ namespace EntityFrameworkRuler.Design.Services.Models;
 public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
     /// <inheritdoc />
     public EntityRuleNode(EntityRule r, SchemaRuleNode parent) : base(r, parent) {
-        Properties = new(() => r.Properties.Select(o => new PropertyRuleNode(o, this)));
-        Navigations = new(() => r.Navigations.Select(o => new NavigationRuleNode(o, this)));
+        Properties = new(() => r.Properties.Select(o => new PropertyRuleNode(o, this)), parent.Parent.Rule.CaseSensitive);
+        Navigations = new(() => r.Navigations.Select(o => new NavigationRuleNode(o, this)), parent.Parent.Rule.CaseSensitive);
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -168,46 +168,38 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
     /// <summary> Return the navigation naming rule for the given navigation info </summary>
     public NavigationRuleNode TryResolveNavigationRuleFor(string fkName, Func<string> defaultEfName, bool thisIsPrincipal,
-        bool isManyToMany) {
+        bool isManyToMany, string inverseEntityName) {
         if ((Navigations == null || Navigations.Count == 0) && BaseEntityRuleNode == null) return null;
+
+        if (isManyToMany) thisIsPrincipal = true; // many-to-many relationships always set IsPrincipal=true for both ends in the rule file.
 
         // locate by fkName first, which is most reliable.
         var navigations = fkName.HasNonWhiteSpace()
             ? GetNavigations()
-                .Where(t => t.FkName == fkName)
+                .Where(o => o.FkName == fkName && o.Rule.IsPrincipal == thisIsPrincipal)
                 .ToArray()
             : Array.Empty<NavigationRuleNode>();
 
-        if (navigations.Length == 0) {
-            // Maybe FKName is not defined?  if not, try to locate by expected target name instead
-            if (fkName.HasNonWhiteSpace()) {
-                if (!GetNavigations().Any(o => o.FkName.IsNullOrWhiteSpace()))
-                    return null; // FK names ARE defined, this property is just not found. Use default.
+        IEnumerable<NavigationRuleNode> GetNavs() => navigations.Length > 0 ? navigations : GetNavigations();
+
+        if (navigations.Length != 1) {
+            // Maybe FkName is not defined or is inconsistent with DB.  Try to locate by expected name or inverse types
+            if (inverseEntityName.HasNonWhiteSpace()) {
+                navigations = GetNavs()
+                    .Where(o => o.Rule.ToEntity == inverseEntityName && o.Rule.IsPrincipal == thisIsPrincipal)
+                    .ToArray();
             }
 
-            var efName = defaultEfName?.Invoke();
-            if (efName.HasNonWhiteSpace()) {
-                navigations = Navigations?.Where(o => o.Rule.Name.EqualsIgnoreCase(efName)).ToArray();
-                if (navigations.IsNullOrEmpty()) return null; // expected EF name resolution failed to
+            if (navigations.Length != 1) {
+                var efName = defaultEfName?.Invoke();
+                if (efName.HasNonWhiteSpace()) {
+                    navigations = GetNavs()?.Where(o => o.Rule.Name.EqualsIgnoreCase(efName)).ToArray();
+                    if (navigations.IsNullOrEmpty()) return null; // expected EF name resolution failed to
+                }
             }
-
-            // any other way to resolve it?
-            if (navigations!.Length == 0) return null;
         }
 
-        // we have candidate matches (by fk name or expected target name). we may need to narrow further.
-        // ReSharper disable once InvertIf
-        if (navigations.Length > 1) {
-            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-            if (isManyToMany)
-                // many-to-many relationships always set IsPrincipal=true for both ends in the rule file.
-                navigations = navigations.Where(o => o.Rule.IsPrincipal).ToArray();
-            else
-                // filter for this end only
-                navigations = navigations.Where(o => o.Rule.IsPrincipal == thisIsPrincipal).ToArray();
-        }
-
-        return navigations.Length != 1 ? null : navigations[0];
+        return navigations!.Length != 1 ? null : navigations[0];
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>

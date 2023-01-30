@@ -43,6 +43,12 @@ public sealed class DbContextRule : RuleBase, IRuleModelRoot {
          "If true, EntityTypeConfigurations will be split into separate files using EntityTypeConfiguration.t4 for EF >= 7.  Default is false.")]
     public bool SplitEntityTypeConfigurations { get; set; }
 
+    /// <summary> If true, EntityTypeConfigurations will be split into separate files using EntityTypeConfiguration.t4 for EF >= 7.  Default is false. </summary>
+    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 5)]
+    [DisplayName("Case Sensitive"), Category("Mapping"),
+     Description("If true, schema structure matching will be performed with case sensitivity.  Default is false.")]
+    public bool CaseSensitive { get; set; }
+
     private IList<SchemaRule> schemas;
 
     /// <summary> Schema rules </summary>
