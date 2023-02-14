@@ -843,7 +843,6 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
             }
 
-
             if (schemas.IsNullOrEmpty()) {
                 var fks = baseCall(foreignKeys);
 
