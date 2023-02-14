@@ -23,14 +23,14 @@ jobs:
         fetch-depth: 0 # required by MinVer to determine the version correctly
         
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v3.0.3
       with:
         dotnet-version: 7.0.x
         
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1        
       with:
-        vs-version: '[17.4'
+        vs-version: '[17.4,17.5)'
         
     - name: Restore dependencies
       run: dotnet restore src/EntityFrameworkRuler.sln --v:m
