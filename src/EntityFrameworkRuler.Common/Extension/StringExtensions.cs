@@ -146,6 +146,26 @@ public static class StringExtensions {
         return true;
     }
 
+    /// <summary> will return true if the string has valid ASCII characters </summary>
+    internal static bool IsValidAsciiString(this string str) {
+        if (string.IsNullOrEmpty(str)) return false;
+        for (var i = 0; i < str.Length; i++) {
+            var c = str[i];
+            if (!IsAscii(c)) return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if <paramref name="c"/> is an ASCII
+    /// character ([ U+0000..U+007F ]).
+    /// </summary>
+    /// <remarks>
+    /// Per http://www.unicode.org/glossary/#ASCII, ASCII is only U+0000..U+007F.
+    /// </remarks>
+    public static bool IsAscii(this char c) => (uint)c <= '\x007f';
+
     /// <summary>
     /// Will return _ in place of invalid chars such as spaces.
     /// EF6 standard policy in dealing with spaces is to just convert to underscore.
