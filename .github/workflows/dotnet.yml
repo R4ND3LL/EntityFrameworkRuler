@@ -57,7 +57,7 @@ jobs:
  
     
     - name: Create NuGet packages
-      run: dotnet pack --configuration Release --no-build --no-restore .\src\EntityFrameworkRuler.sln --output .\nupkg 
+      run: dotnet pack --configuration Release --no-build --no-restore .\src\EntityFrameworkRuler.sln --property:PackageOutputPath=..\..\nupkg
       
     - name: Publish Packages to NuGet 
       run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate --api-key ${{ secrets.NUGET_TOKEN }}
