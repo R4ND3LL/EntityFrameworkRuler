@@ -98,6 +98,10 @@ public class CSharpUtilities : ICSharpUtilities {
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual bool IsCSharpKeyword(string identifier)
+        => IsCSharpKeywordStatic(identifier);
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static bool IsCSharpKeywordStatic(string identifier)
         => CSharpKeywords.Contains(identifier);
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -146,6 +150,20 @@ public class CSharpUtilities : ICSharpUtilities {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static bool IsValidIdentifierStatic(string name, bool checkKeyword = true) {
+        if (string.IsNullOrEmpty(name)) return false;
+
+        if (!IsIdentifierStartCharacter(name[0])) return false;
+
+        var nameLength = name.Length;
+        for (var i = 1; i < nameLength; i++)
+            if (!IsIdentifierPartCharacter(name[i]))
+                return false;
+        if (checkKeyword && IsCSharpKeywordStatic(name)) return false;
+        return true;
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual bool IsValidIdentifier(string name) {
         if (string.IsNullOrEmpty(name)) return false;
 
@@ -155,7 +173,7 @@ public class CSharpUtilities : ICSharpUtilities {
         for (var i = 1; i < nameLength; i++)
             if (!IsIdentifierPartCharacter(name[i]))
                 return false;
-
+        //if (IsCSharpKeyword(name)) return false;
         return true;
     }
 

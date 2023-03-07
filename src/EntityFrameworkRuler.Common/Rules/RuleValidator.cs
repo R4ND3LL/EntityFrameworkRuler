@@ -98,7 +98,7 @@ public class RuleValidator : IRuleValidator {
     protected virtual Validator<EntityRule> InitializeEntityRuleValidator() {
         return new Validator<EntityRule>()
                 .For(o => o.Name)
-                .Assert(s => s.IsValidAsciiString(), invalidSymbolName)
+                .Assert(s => s.HasCharacters(), invalidSymbolName)
                 .Assert(s => s.Length < 200, tooLong)
                 .For(o => o.NewName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.EntityName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
@@ -123,7 +123,7 @@ public class RuleValidator : IRuleValidator {
     protected virtual Validator<PropertyRule> InitializePropertyRuleValidator() {
         return new Validator<PropertyRule>()
                 .For(o => o.Name)
-                .Assert(s => s.IsValidAsciiString(), invalidSymbolName)
+                .Assert(s => s.HasCharacters(), invalidSymbolName)
                 .Assert(s => s.Length < 200, tooLong)
                 .For(o => o.NewName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.PropertyName)

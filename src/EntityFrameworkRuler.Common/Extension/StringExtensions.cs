@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using EntityFrameworkRuler.Common;
 
 // ReSharper disable MemberCanBePrivate.Global
 
@@ -126,25 +127,26 @@ public static class StringExtensions {
     /// <summary> will return true if the string is a valid symbol name </summary>
     public static bool IsValidSymbolName(this string str) {
         if (string.IsNullOrEmpty(str)) return false;
-        for (var i = 0; i < str.Length; i++) {
-            var c = str[i];
-            if (!IsValidInIdentifier(c, i == 0)) return false;
-        }
-
-        return true;
+        return CSharpUtilities.IsValidIdentifierStatic(str);
+        // for (var i = 0; i < str.Length; i++) {
+        //     var c = str[i];
+        //     if (!IsValidInIdentifier(c, i == 0)) return false;
+        // }
+        //
+        // return true;
     }
 
-    /// <summary> will return true if the string is a valid symbol name </summary>
-    internal static bool IsValidDbIdentifier(this string str) {
-        if (string.IsNullOrEmpty(str)) return false;
-        for (var i = 0; i < str.Length; i++) {
-            var c = str[i];
-            if (c == ' ') continue;
-            if (!IsValidInIdentifier(c, i == 0)) return false;
-        }
-
-        return true;
-    }
+    // /// <summary> will return true if the string is a valid symbol name </summary>
+    // internal static bool IsValidDbIdentifier(this string str) {
+    //     if (string.IsNullOrEmpty(str)) return false;
+    //     for (var i = 0; i < str.Length; i++) {
+    //         var c = str[i];
+    //         if (c == ' ') continue;
+    //         if (!IsValidInIdentifier(c, i == 0)) return false;
+    //     }
+    //
+    //     return true;
+    // }
 
     /// <summary> will return true if the string has valid ASCII characters </summary>
     internal static bool IsValidAsciiString(this string str) {
