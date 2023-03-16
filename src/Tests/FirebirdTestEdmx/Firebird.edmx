@@ -1,0 +1,902 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="Model.Store" Provider="FirebirdSql.Data.FirebirdClient" ProviderManifestToken="3.0" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="COUNTRY">
+          <Key>
+            <PropertyRef Name="COUNTRY" />
+          </Key>
+          <Property Name="COUNTRY" Type="varchar" MaxLength="15" Unicode="true" Nullable="false" />
+          <Property Name="CURRENCY" Type="varchar" MaxLength="10" Unicode="true" Nullable="false" />
+        </EntityType>
+        <EntityType Name="CUSTOMER">
+          <Key>
+            <PropertyRef Name="CUST_NO" />
+          </Key>
+          <Property Name="CUST_NO" Type="int" Nullable="false" />
+          <Property Name="CUSTOMER" Type="varchar" MaxLength="25" Unicode="true" Nullable="false" />
+          <Property Name="CONTACT_FIRST" Type="varchar" MaxLength="15" Unicode="true" />
+          <Property Name="CONTACT_LAST" Type="varchar" MaxLength="20" Unicode="true" />
+          <Property Name="PHONE_NO" Type="varchar" MaxLength="20" Unicode="true" />
+          <Property Name="ADDRESS_LINE1" Type="varchar" MaxLength="30" Unicode="true" />
+          <Property Name="ADDRESS_LINE2" Type="varchar" MaxLength="30" Unicode="true" />
+          <Property Name="CITY" Type="varchar" MaxLength="25" Unicode="true" />
+          <Property Name="STATE_PROVINCE" Type="varchar" MaxLength="15" Unicode="true" />
+          <Property Name="COUNTRY" Type="varchar" MaxLength="15" Unicode="true" />
+          <Property Name="POSTAL_CODE" Type="varchar" MaxLength="12" Unicode="true" />
+          <Property Name="ON_HOLD" Type="char" MaxLength="1" Unicode="false" />
+        </EntityType>
+        <EntityType Name="DEPARTMENT">
+          <Key>
+            <PropertyRef Name="DEPT_NO" />
+          </Key>
+          <Property Name="DEPT_NO" Type="char" MaxLength="3" Unicode="false" Nullable="false" />
+          <Property Name="DEPARTMENT" Type="varchar" MaxLength="25" Unicode="true" Nullable="false" />
+          <Property Name="HEAD_DEPT" Type="char" MaxLength="3" Unicode="false" />
+          <Property Name="MNGR_NO" Type="smallint" />
+          <Property Name="BUDGET" Type="decimal" Precision="12" Scale="2" />
+          <Property Name="LOCATION" Type="varchar" MaxLength="15" Unicode="true" />
+          <Property Name="PHONE_NO" Type="varchar" MaxLength="20" Unicode="true" />
+        </EntityType>
+        <EntityType Name="EMPLOYEE">
+          <Key>
+            <PropertyRef Name="EMP_NO" />
+          </Key>
+          <Property Name="EMP_NO" Type="smallint" Nullable="false" />
+          <Property Name="FIRST_NAME" Type="varchar" MaxLength="15" Unicode="true" Nullable="false" />
+          <Property Name="LAST_NAME" Type="varchar" MaxLength="20" Unicode="true" Nullable="false" />
+          <Property Name="PHONE_EXT" Type="varchar" MaxLength="4" Unicode="true" />
+          <Property Name="HIRE_DATE" Type="timestamp" Nullable="false" />
+          <Property Name="DEPT_NO" Type="char" MaxLength="3" Unicode="false" Nullable="false" />
+          <Property Name="JOB_CODE" Type="varchar" MaxLength="5" Unicode="true" Nullable="false" />
+          <Property Name="JOB_GRADE" Type="smallint" Nullable="false" />
+          <Property Name="JOB_COUNTRY" Type="varchar" MaxLength="15" Unicode="true" Nullable="false" />
+          <Property Name="SALARY" Type="numeric" Precision="10" Scale="2" Nullable="false" />
+          <Property Name="FULL_NAME" Type="varchar" MaxLength="37" Unicode="true" StoreGeneratedPattern="Computed" />
+        </EntityType>
+        <EntityType Name="EMPLOYEE_PROJECT">
+          <Key>
+            <PropertyRef Name="EMP_NO" />
+            <PropertyRef Name="PROJ_ID" />
+          </Key>
+          <Property Name="EMP_NO" Type="smallint" Nullable="false" />
+          <Property Name="PROJ_ID" Type="char" MaxLength="5" Unicode="false" Nullable="false" />
+        </EntityType>
+        <EntityType Name="JOB">
+          <Key>
+            <PropertyRef Name="JOB_CODE" />
+            <PropertyRef Name="JOB_GRADE" />
+            <PropertyRef Name="JOB_COUNTRY" />
+          </Key>
+          <Property Name="JOB_CODE" Type="varchar" MaxLength="5" Unicode="true" Nullable="false" />
+          <Property Name="JOB_GRADE" Type="smallint" Nullable="false" />
+          <Property Name="JOB_COUNTRY" Type="varchar" MaxLength="15" Unicode="true" Nullable="false" />
+          <Property Name="JOB_TITLE" Type="varchar" MaxLength="25" Unicode="true" Nullable="false" />
+          <Property Name="MIN_SALARY" Type="numeric" Precision="10" Scale="2" Nullable="false" />
+          <Property Name="MAX_SALARY" Type="numeric" Precision="10" Scale="2" Nullable="false" />
+          <Property Name="JOB_REQUIREMENT" Type="clob" Unicode="true" />
+          <Property Name="LANGUAGE_REQ" Type="varchar" MaxLength="15" Unicode="true" />
+        </EntityType>
+        <EntityType Name="PROJ_DEPT_BUDGET">
+          <Key>
+            <PropertyRef Name="FISCAL_YEAR" />
+            <PropertyRef Name="PROJ_ID" />
+            <PropertyRef Name="DEPT_NO" />
+          </Key>
+          <Property Name="FISCAL_YEAR" Type="int" Nullable="false" />
+          <Property Name="PROJ_ID" Type="char" MaxLength="5" Unicode="false" Nullable="false" />
+          <Property Name="DEPT_NO" Type="char" MaxLength="3" Unicode="false" Nullable="false" />
+          <Property Name="QUART_HEAD_CNT" Type="int" />
+          <Property Name="PROJECTED_BUDGET" Type="decimal" Precision="12" Scale="2" />
+        </EntityType>
+        <EntityType Name="PROJECT">
+          <Key>
+            <PropertyRef Name="PROJ_ID" />
+          </Key>
+          <Property Name="PROJ_ID" Type="char" MaxLength="5" Unicode="false" Nullable="false" />
+          <Property Name="PROJ_NAME" Type="varchar" MaxLength="20" Unicode="true" Nullable="false" />
+          <Property Name="PROJ_DESC" Type="clob" Unicode="true" />
+          <Property Name="TEAM_LEADER" Type="smallint" />
+          <Property Name="PRODUCT" Type="varchar" MaxLength="12" Unicode="true" Nullable="false" />
+        </EntityType>
+        <EntityType Name="SALARY_HISTORY">
+          <Key>
+            <PropertyRef Name="EMP_NO" />
+            <PropertyRef Name="CHANGE_DATE" />
+            <PropertyRef Name="UPDATER_ID" />
+          </Key>
+          <Property Name="EMP_NO" Type="smallint" Nullable="false" />
+          <Property Name="CHANGE_DATE" Type="timestamp" Nullable="false" />
+          <Property Name="UPDATER_ID" Type="varchar" MaxLength="20" Unicode="true" Nullable="false" />
+          <Property Name="OLD_SALARY" Type="numeric" Precision="10" Scale="2" Nullable="false" />
+          <Property Name="PERCENT_CHANGE" Type="double" Nullable="false" />
+          <Property Name="NEW_SALARY" Type="double" StoreGeneratedPattern="Computed" />
+        </EntityType>
+        <EntityType Name="SALES">
+          <Key>
+            <PropertyRef Name="PO_NUMBER" />
+          </Key>
+          <Property Name="PO_NUMBER" Type="char" MaxLength="8" Unicode="false" Nullable="false" />
+          <Property Name="CUST_NO" Type="int" Nullable="false" />
+          <Property Name="SALES_REP" Type="smallint" />
+          <Property Name="ORDER_STATUS" Type="varchar" MaxLength="7" Unicode="true" Nullable="false" />
+          <Property Name="ORDER_DATE" Type="timestamp" Nullable="false" />
+          <Property Name="SHIP_DATE" Type="timestamp" />
+          <Property Name="DATE_NEEDED" Type="timestamp" />
+          <Property Name="PAID" Type="char" MaxLength="1" Unicode="false" />
+          <Property Name="QTY_ORDERED" Type="int" Nullable="false" />
+          <Property Name="TOTAL_VALUE" Type="decimal" Precision="9" Scale="2" Nullable="false" />
+          <Property Name="DISCOUNT" Type="float" Nullable="false" />
+          <Property Name="ITEM_TYPE" Type="varchar" MaxLength="12" Unicode="true" Nullable="false" />
+          <Property Name="AGED" Type="numeric" Precision="18" Scale="9" StoreGeneratedPattern="Computed" />
+        </EntityType>
+        <Association Name="INTEG_11">
+          <End Role="COUNTRY" Type="Self.COUNTRY" Multiplicity="1" />
+          <End Role="JOB" Type="Self.JOB" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="COUNTRY">
+              <PropertyRef Name="COUNTRY" />
+            </Principal>
+            <Dependent Role="JOB">
+              <PropertyRef Name="JOB_COUNTRY" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_17">
+          <End Role="DEPARTMENT" Type="Self.DEPARTMENT" Multiplicity="0..1" />
+          <End Role="DEPARTMENT1" Type="Self.DEPARTMENT" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DEPARTMENT">
+              <PropertyRef Name="DEPT_NO" />
+            </Principal>
+            <Dependent Role="DEPARTMENT1">
+              <PropertyRef Name="HEAD_DEPT" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_28">
+          <End Role="DEPARTMENT" Type="Self.DEPARTMENT" Multiplicity="1" />
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DEPARTMENT">
+              <PropertyRef Name="DEPT_NO" />
+            </Principal>
+            <Dependent Role="EMPLOYEE">
+              <PropertyRef Name="DEPT_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_29">
+          <End Role="JOB" Type="Self.JOB" Multiplicity="1" />
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="JOB">
+              <PropertyRef Name="JOB_CODE" />
+              <PropertyRef Name="JOB_GRADE" />
+              <PropertyRef Name="JOB_COUNTRY" />
+            </Principal>
+            <Dependent Role="EMPLOYEE">
+              <PropertyRef Name="JOB_CODE" />
+              <PropertyRef Name="JOB_GRADE" />
+              <PropertyRef Name="JOB_COUNTRY" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_31">
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="0..1" />
+          <End Role="DEPARTMENT" Type="Self.DEPARTMENT" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="EMPLOYEE">
+              <PropertyRef Name="EMP_NO" />
+            </Principal>
+            <Dependent Role="DEPARTMENT">
+              <PropertyRef Name="MNGR_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_36">
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="0..1" />
+          <End Role="PROJECT" Type="Self.PROJECT" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="EMPLOYEE">
+              <PropertyRef Name="EMP_NO" />
+            </Principal>
+            <Dependent Role="PROJECT">
+              <PropertyRef Name="TEAM_LEADER" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_40">
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="1" />
+          <End Role="EMPLOYEE_PROJECT" Type="Self.EMPLOYEE_PROJECT" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="EMPLOYEE">
+              <PropertyRef Name="EMP_NO" />
+            </Principal>
+            <Dependent Role="EMPLOYEE_PROJECT">
+              <PropertyRef Name="EMP_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_41">
+          <End Role="PROJECT" Type="Self.PROJECT" Multiplicity="1" />
+          <End Role="EMPLOYEE_PROJECT" Type="Self.EMPLOYEE_PROJECT" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="PROJECT">
+              <PropertyRef Name="PROJ_ID" />
+            </Principal>
+            <Dependent Role="EMPLOYEE_PROJECT">
+              <PropertyRef Name="PROJ_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_47">
+          <End Role="DEPARTMENT" Type="Self.DEPARTMENT" Multiplicity="1" />
+          <End Role="PROJ_DEPT_BUDGET" Type="Self.PROJ_DEPT_BUDGET" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DEPARTMENT">
+              <PropertyRef Name="DEPT_NO" />
+            </Principal>
+            <Dependent Role="PROJ_DEPT_BUDGET">
+              <PropertyRef Name="DEPT_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_48">
+          <End Role="PROJECT" Type="Self.PROJECT" Multiplicity="1" />
+          <End Role="PROJ_DEPT_BUDGET" Type="Self.PROJ_DEPT_BUDGET" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="PROJECT">
+              <PropertyRef Name="PROJ_ID" />
+            </Principal>
+            <Dependent Role="PROJ_DEPT_BUDGET">
+              <PropertyRef Name="PROJ_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_56">
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="1" />
+          <End Role="SALARY_HISTORY" Type="Self.SALARY_HISTORY" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="EMPLOYEE">
+              <PropertyRef Name="EMP_NO" />
+            </Principal>
+            <Dependent Role="SALARY_HISTORY">
+              <PropertyRef Name="EMP_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_61">
+          <End Role="COUNTRY" Type="Self.COUNTRY" Multiplicity="0..1" />
+          <End Role="CUSTOMER" Type="Self.CUSTOMER" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="COUNTRY">
+              <PropertyRef Name="COUNTRY" />
+            </Principal>
+            <Dependent Role="CUSTOMER">
+              <PropertyRef Name="COUNTRY" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_77">
+          <End Role="CUSTOMER" Type="Self.CUSTOMER" Multiplicity="1" />
+          <End Role="SALES" Type="Self.SALES" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="CUSTOMER">
+              <PropertyRef Name="CUST_NO" />
+            </Principal>
+            <Dependent Role="SALES">
+              <PropertyRef Name="CUST_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_78">
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="0..1" />
+          <End Role="SALES" Type="Self.SALES" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="EMPLOYEE">
+              <PropertyRef Name="EMP_NO" />
+            </Principal>
+            <Dependent Role="SALES">
+              <PropertyRef Name="SALES_REP" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="ModelStoreContainer">
+          <EntitySet Name="COUNTRY" EntityType="Self.COUNTRY" Schema="Firebird" store:Type="Tables" />
+          <EntitySet Name="CUSTOMER" EntityType="Self.CUSTOMER" Schema="Firebird" store:Type="Tables" />
+          <EntitySet Name="DEPARTMENT" EntityType="Self.DEPARTMENT" Schema="Firebird" store:Type="Tables" />
+          <EntitySet Name="EMPLOYEE" EntityType="Self.EMPLOYEE" Schema="Firebird" store:Type="Tables" />
+          <EntitySet Name="EMPLOYEE_PROJECT" EntityType="Self.EMPLOYEE_PROJECT" Schema="Firebird" store:Type="Tables" />
+          <EntitySet Name="JOB" EntityType="Self.JOB" Schema="Firebird" store:Type="Tables" />
+          <EntitySet Name="PROJ_DEPT_BUDGET" EntityType="Self.PROJ_DEPT_BUDGET" Schema="Firebird" store:Type="Tables" />
+          <EntitySet Name="PROJECT" EntityType="Self.PROJECT" Schema="Firebird" store:Type="Tables" />
+          <EntitySet Name="SALARY_HISTORY" EntityType="Self.SALARY_HISTORY" Schema="Firebird" store:Type="Tables" />
+          <EntitySet Name="SALES" EntityType="Self.SALES" Schema="Firebird" store:Type="Tables" />
+          <AssociationSet Name="INTEG_11" Association="Self.INTEG_11">
+            <End Role="COUNTRY" EntitySet="COUNTRY" />
+            <End Role="JOB" EntitySet="JOB" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_17" Association="Self.INTEG_17">
+            <End Role="DEPARTMENT" EntitySet="DEPARTMENT" />
+            <End Role="DEPARTMENT1" EntitySet="DEPARTMENT" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_28" Association="Self.INTEG_28">
+            <End Role="DEPARTMENT" EntitySet="DEPARTMENT" />
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_29" Association="Self.INTEG_29">
+            <End Role="JOB" EntitySet="JOB" />
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_31" Association="Self.INTEG_31">
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+            <End Role="DEPARTMENT" EntitySet="DEPARTMENT" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_36" Association="Self.INTEG_36">
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+            <End Role="PROJECT" EntitySet="PROJECT" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_40" Association="Self.INTEG_40">
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+            <End Role="EMPLOYEE_PROJECT" EntitySet="EMPLOYEE_PROJECT" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_41" Association="Self.INTEG_41">
+            <End Role="PROJECT" EntitySet="PROJECT" />
+            <End Role="EMPLOYEE_PROJECT" EntitySet="EMPLOYEE_PROJECT" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_47" Association="Self.INTEG_47">
+            <End Role="DEPARTMENT" EntitySet="DEPARTMENT" />
+            <End Role="PROJ_DEPT_BUDGET" EntitySet="PROJ_DEPT_BUDGET" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_48" Association="Self.INTEG_48">
+            <End Role="PROJECT" EntitySet="PROJECT" />
+            <End Role="PROJ_DEPT_BUDGET" EntitySet="PROJ_DEPT_BUDGET" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_56" Association="Self.INTEG_56">
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+            <End Role="SALARY_HISTORY" EntitySet="SALARY_HISTORY" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_61" Association="Self.INTEG_61">
+            <End Role="COUNTRY" EntitySet="COUNTRY" />
+            <End Role="CUSTOMER" EntitySet="CUSTOMER" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_77" Association="Self.INTEG_77">
+            <End Role="CUSTOMER" EntitySet="CUSTOMER" />
+            <End Role="SALES" EntitySet="SALES" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_78" Association="Self.INTEG_78">
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+            <End Role="SALES" EntitySet="SALES" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="Model" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="COUNTRY">
+          <Key>
+            <PropertyRef Name="COUNTRY1" />
+          </Key>
+          <Property Name="COUNTRY1" Type="String" MaxLength="15" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="CURRENCY" Type="String" MaxLength="10" FixedLength="false" Unicode="true" Nullable="false" />
+          <NavigationProperty Name="JOB" Relationship="Self.INTEG_11" FromRole="COUNTRY" ToRole="JOB" />
+          <NavigationProperty Name="CUSTOMER" Relationship="Self.INTEG_61" FromRole="COUNTRY" ToRole="CUSTOMER" />
+        </EntityType>
+        <EntityType Name="CUSTOMER">
+          <Key>
+            <PropertyRef Name="CUST_NO" />
+          </Key>
+          <Property Name="CUST_NO" Type="Int32" Nullable="false" />
+          <Property Name="CUSTOMER1" Type="String" MaxLength="25" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="CONTACT_FIRST" Type="String" MaxLength="15" FixedLength="false" Unicode="true" />
+          <Property Name="CONTACT_LAST" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="PHONE_NO" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="ADDRESS_LINE1" Type="String" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="ADDRESS_LINE2" Type="String" MaxLength="30" FixedLength="false" Unicode="true" />
+          <Property Name="CITY" Type="String" MaxLength="25" FixedLength="false" Unicode="true" />
+          <Property Name="STATE_PROVINCE" Type="String" MaxLength="15" FixedLength="false" Unicode="true" />
+          <Property Name="COUNTRY" Type="String" MaxLength="15" FixedLength="false" Unicode="true" />
+          <Property Name="POSTAL_CODE" Type="String" MaxLength="12" FixedLength="false" Unicode="true" />
+          <Property Name="ON_HOLD" Type="String" MaxLength="1" FixedLength="true" Unicode="true" />
+          <NavigationProperty Name="COUNTRY1" Relationship="Self.INTEG_61" FromRole="CUSTOMER" ToRole="COUNTRY" />
+          <NavigationProperty Name="SALES" Relationship="Self.INTEG_77" FromRole="CUSTOMER" ToRole="SALES" />
+        </EntityType>
+        <EntityType Name="DEPARTMENT">
+          <Key>
+            <PropertyRef Name="DEPT_NO" />
+          </Key>
+          <Property Name="DEPT_NO" Type="String" MaxLength="3" FixedLength="true" Unicode="true" Nullable="false" />
+          <Property Name="DEPARTMENT1" Type="String" MaxLength="25" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="HEAD_DEPT" Type="String" MaxLength="3" FixedLength="true" Unicode="true" />
+          <Property Name="MNGR_NO" Type="Int16" />
+          <Property Name="BUDGET" Type="Decimal" Precision="12" Scale="2" />
+          <Property Name="LOCATION" Type="String" MaxLength="15" FixedLength="false" Unicode="true" />
+          <Property Name="PHONE_NO" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="DEPARTMENT11" Relationship="Self.INTEG_17" FromRole="DEPARTMENT" ToRole="DEPARTMENT1" />
+          <NavigationProperty Name="DEPARTMENT2" Relationship="Self.INTEG_17" FromRole="DEPARTMENT1" ToRole="DEPARTMENT" />
+          <NavigationProperty Name="EMPLOYEE" Relationship="Self.INTEG_28" FromRole="DEPARTMENT" ToRole="EMPLOYEE" />
+          <NavigationProperty Name="EMPLOYEE1" Relationship="Self.INTEG_31" FromRole="DEPARTMENT" ToRole="EMPLOYEE" />
+          <NavigationProperty Name="PROJ_DEPT_BUDGET" Relationship="Self.INTEG_47" FromRole="DEPARTMENT" ToRole="PROJ_DEPT_BUDGET" />
+        </EntityType>
+        <EntityType Name="EMPLOYEE">
+          <Key>
+            <PropertyRef Name="EMP_NO" />
+          </Key>
+          <Property Name="EMP_NO" Type="Int16" Nullable="false" />
+          <Property Name="FIRST_NAME" Type="String" MaxLength="15" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="LAST_NAME" Type="String" MaxLength="20" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="PHONE_EXT" Type="String" MaxLength="4" FixedLength="false" Unicode="true" />
+          <Property Name="HIRE_DATE" Type="DateTime" Nullable="false" />
+          <Property Name="DEPT_NO" Type="String" MaxLength="3" FixedLength="true" Unicode="true" Nullable="false" />
+          <Property Name="JOB_CODE" Type="String" MaxLength="5" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="JOB_GRADE" Type="Int16" Nullable="false" />
+          <Property Name="JOB_COUNTRY" Type="String" MaxLength="15" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="SALARY" Type="Decimal" Precision="10" Scale="2" Nullable="false" />
+          <Property Name="FULL_NAME" Type="String" MaxLength="37" FixedLength="false" Unicode="true" annotation:StoreGeneratedPattern="Computed" />
+          <NavigationProperty Name="DEPARTMENT" Relationship="Self.INTEG_28" FromRole="EMPLOYEE" ToRole="DEPARTMENT" />
+          <NavigationProperty Name="DEPARTMENT1" Relationship="Self.INTEG_31" FromRole="EMPLOYEE" ToRole="DEPARTMENT" />
+          <NavigationProperty Name="JOB" Relationship="Self.INTEG_29" FromRole="EMPLOYEE" ToRole="JOB" />
+          <NavigationProperty Name="PROJECT" Relationship="Self.INTEG_36" FromRole="EMPLOYEE" ToRole="PROJECT" />
+          <NavigationProperty Name="SALARY_HISTORY" Relationship="Self.INTEG_56" FromRole="EMPLOYEE" ToRole="SALARY_HISTORY" />
+          <NavigationProperty Name="SALES" Relationship="Self.INTEG_78" FromRole="EMPLOYEE" ToRole="SALES" />
+          <NavigationProperty Name="PROJECT1" Relationship="Self.EMPLOYEE_PROJECT" FromRole="EMPLOYEE" ToRole="PROJECT" />
+        </EntityType>
+        <EntityType Name="JOB">
+          <Key>
+            <PropertyRef Name="JOB_CODE" />
+            <PropertyRef Name="JOB_GRADE" />
+            <PropertyRef Name="JOB_COUNTRY" />
+          </Key>
+          <Property Name="JOB_CODE" Type="String" MaxLength="5" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="JOB_GRADE" Type="Int16" Nullable="false" />
+          <Property Name="JOB_COUNTRY" Type="String" MaxLength="15" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="JOB_TITLE" Type="String" MaxLength="25" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="MIN_SALARY" Type="Decimal" Precision="10" Scale="2" Nullable="false" />
+          <Property Name="MAX_SALARY" Type="Decimal" Precision="10" Scale="2" Nullable="false" />
+          <Property Name="JOB_REQUIREMENT" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="LANGUAGE_REQ" Type="String" MaxLength="15" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="COUNTRY" Relationship="Self.INTEG_11" FromRole="JOB" ToRole="COUNTRY" />
+          <NavigationProperty Name="EMPLOYEE" Relationship="Self.INTEG_29" FromRole="JOB" ToRole="EMPLOYEE" />
+        </EntityType>
+        <EntityType Name="PROJ_DEPT_BUDGET">
+          <Key>
+            <PropertyRef Name="FISCAL_YEAR" />
+            <PropertyRef Name="PROJ_ID" />
+            <PropertyRef Name="DEPT_NO" />
+          </Key>
+          <Property Name="FISCAL_YEAR" Type="Int32" Nullable="false" />
+          <Property Name="PROJ_ID" Type="String" MaxLength="5" FixedLength="true" Unicode="true" Nullable="false" />
+          <Property Name="DEPT_NO" Type="String" MaxLength="3" FixedLength="true" Unicode="true" Nullable="false" />
+          <Property Name="QUART_HEAD_CNT" Type="Int32" />
+          <Property Name="PROJECTED_BUDGET" Type="Decimal" Precision="12" Scale="2" />
+          <NavigationProperty Name="DEPARTMENT" Relationship="Self.INTEG_47" FromRole="PROJ_DEPT_BUDGET" ToRole="DEPARTMENT" />
+          <NavigationProperty Name="PROJECT" Relationship="Self.INTEG_48" FromRole="PROJ_DEPT_BUDGET" ToRole="PROJECT" />
+        </EntityType>
+        <EntityType Name="PROJECT">
+          <Key>
+            <PropertyRef Name="PROJ_ID" />
+          </Key>
+          <Property Name="PROJ_ID" Type="String" MaxLength="5" FixedLength="true" Unicode="true" Nullable="false" />
+          <Property Name="PROJ_NAME" Type="String" MaxLength="20" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="PROJ_DESC" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="TEAM_LEADER" Type="Int16" />
+          <Property Name="PRODUCT" Type="String" MaxLength="12" FixedLength="false" Unicode="true" Nullable="false" />
+          <NavigationProperty Name="EMPLOYEE" Relationship="Self.INTEG_36" FromRole="PROJECT" ToRole="EMPLOYEE" />
+          <NavigationProperty Name="PROJ_DEPT_BUDGET" Relationship="Self.INTEG_48" FromRole="PROJECT" ToRole="PROJ_DEPT_BUDGET" />
+          <NavigationProperty Name="EMPLOYEE1" Relationship="Self.EMPLOYEE_PROJECT" FromRole="PROJECT" ToRole="EMPLOYEE" />
+        </EntityType>
+        <EntityType Name="SALARY_HISTORY">
+          <Key>
+            <PropertyRef Name="EMP_NO" />
+            <PropertyRef Name="CHANGE_DATE" />
+            <PropertyRef Name="UPDATER_ID" />
+          </Key>
+          <Property Name="EMP_NO" Type="Int16" Nullable="false" />
+          <Property Name="CHANGE_DATE" Type="DateTime" Nullable="false" />
+          <Property Name="UPDATER_ID" Type="String" MaxLength="20" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="OLD_SALARY" Type="Decimal" Precision="10" Scale="2" Nullable="false" />
+          <Property Name="PERCENT_CHANGE" Type="Double" Nullable="false" />
+          <Property Name="NEW_SALARY" Type="Double" annotation:StoreGeneratedPattern="Computed" />
+          <NavigationProperty Name="EMPLOYEE" Relationship="Self.INTEG_56" FromRole="SALARY_HISTORY" ToRole="EMPLOYEE" />
+        </EntityType>
+        <EntityType Name="SALES">
+          <Key>
+            <PropertyRef Name="PO_NUMBER" />
+          </Key>
+          <Property Name="PO_NUMBER" Type="String" MaxLength="8" FixedLength="true" Unicode="true" Nullable="false" />
+          <Property Name="CUST_NO" Type="Int32" Nullable="false" />
+          <Property Name="SALES_REP" Type="Int16" />
+          <Property Name="ORDER_STATUS" Type="String" MaxLength="7" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="ORDER_DATE" Type="DateTime" Nullable="false" />
+          <Property Name="SHIP_DATE" Type="DateTime" />
+          <Property Name="DATE_NEEDED" Type="DateTime" />
+          <Property Name="PAID" Type="String" MaxLength="1" FixedLength="true" Unicode="true" />
+          <Property Name="QTY_ORDERED" Type="Int32" Nullable="false" />
+          <Property Name="TOTAL_VALUE" Type="Decimal" Precision="9" Scale="2" Nullable="false" />
+          <Property Name="DISCOUNT" Type="Single" Nullable="false" />
+          <Property Name="ITEM_TYPE" Type="String" MaxLength="12" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="AGED" Type="Decimal" Precision="18" Scale="9" annotation:StoreGeneratedPattern="Computed" />
+          <NavigationProperty Name="CUSTOMER" Relationship="Self.INTEG_77" FromRole="SALES" ToRole="CUSTOMER" />
+          <NavigationProperty Name="EMPLOYEE" Relationship="Self.INTEG_78" FromRole="SALES" ToRole="EMPLOYEE" />
+        </EntityType>
+        <Association Name="INTEG_11">
+          <End Role="COUNTRY" Type="Self.COUNTRY" Multiplicity="1" />
+          <End Role="JOB" Type="Self.JOB" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="COUNTRY">
+              <PropertyRef Name="COUNTRY1" />
+            </Principal>
+            <Dependent Role="JOB">
+              <PropertyRef Name="JOB_COUNTRY" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_61">
+          <End Role="COUNTRY" Type="Self.COUNTRY" Multiplicity="0..1" />
+          <End Role="CUSTOMER" Type="Self.CUSTOMER" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="COUNTRY">
+              <PropertyRef Name="COUNTRY1" />
+            </Principal>
+            <Dependent Role="CUSTOMER">
+              <PropertyRef Name="COUNTRY" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_77">
+          <End Role="CUSTOMER" Type="Self.CUSTOMER" Multiplicity="1" />
+          <End Role="SALES" Type="Self.SALES" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="CUSTOMER">
+              <PropertyRef Name="CUST_NO" />
+            </Principal>
+            <Dependent Role="SALES">
+              <PropertyRef Name="CUST_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_17">
+          <End Role="DEPARTMENT" Type="Self.DEPARTMENT" Multiplicity="0..1" />
+          <End Role="DEPARTMENT1" Type="Self.DEPARTMENT" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DEPARTMENT">
+              <PropertyRef Name="DEPT_NO" />
+            </Principal>
+            <Dependent Role="DEPARTMENT1">
+              <PropertyRef Name="HEAD_DEPT" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_28">
+          <End Role="DEPARTMENT" Type="Self.DEPARTMENT" Multiplicity="1" />
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DEPARTMENT">
+              <PropertyRef Name="DEPT_NO" />
+            </Principal>
+            <Dependent Role="EMPLOYEE">
+              <PropertyRef Name="DEPT_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_31">
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="0..1" />
+          <End Role="DEPARTMENT" Type="Self.DEPARTMENT" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="EMPLOYEE">
+              <PropertyRef Name="EMP_NO" />
+            </Principal>
+            <Dependent Role="DEPARTMENT">
+              <PropertyRef Name="MNGR_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_47">
+          <End Role="DEPARTMENT" Type="Self.DEPARTMENT" Multiplicity="1" />
+          <End Role="PROJ_DEPT_BUDGET" Type="Self.PROJ_DEPT_BUDGET" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="DEPARTMENT">
+              <PropertyRef Name="DEPT_NO" />
+            </Principal>
+            <Dependent Role="PROJ_DEPT_BUDGET">
+              <PropertyRef Name="DEPT_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_29">
+          <End Role="JOB" Type="Self.JOB" Multiplicity="1" />
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="JOB">
+              <PropertyRef Name="JOB_CODE" />
+              <PropertyRef Name="JOB_GRADE" />
+              <PropertyRef Name="JOB_COUNTRY" />
+            </Principal>
+            <Dependent Role="EMPLOYEE">
+              <PropertyRef Name="JOB_CODE" />
+              <PropertyRef Name="JOB_GRADE" />
+              <PropertyRef Name="JOB_COUNTRY" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_36">
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="0..1" />
+          <End Role="PROJECT" Type="Self.PROJECT" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="EMPLOYEE">
+              <PropertyRef Name="EMP_NO" />
+            </Principal>
+            <Dependent Role="PROJECT">
+              <PropertyRef Name="TEAM_LEADER" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_56">
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="1" />
+          <End Role="SALARY_HISTORY" Type="Self.SALARY_HISTORY" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="EMPLOYEE">
+              <PropertyRef Name="EMP_NO" />
+            </Principal>
+            <Dependent Role="SALARY_HISTORY">
+              <PropertyRef Name="EMP_NO" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_78">
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="0..1" />
+          <End Role="SALES" Type="Self.SALES" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="EMPLOYEE">
+              <PropertyRef Name="EMP_NO" />
+            </Principal>
+            <Dependent Role="SALES">
+              <PropertyRef Name="SALES_REP" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="INTEG_48">
+          <End Role="PROJECT" Type="Self.PROJECT" Multiplicity="1" />
+          <End Role="PROJ_DEPT_BUDGET" Type="Self.PROJ_DEPT_BUDGET" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="PROJECT">
+              <PropertyRef Name="PROJ_ID" />
+            </Principal>
+            <Dependent Role="PROJ_DEPT_BUDGET">
+              <PropertyRef Name="PROJ_ID" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="EMPLOYEE_PROJECT">
+          <End Role="EMPLOYEE" Type="Self.EMPLOYEE" Multiplicity="*" />
+          <End Role="PROJECT" Type="Self.PROJECT" Multiplicity="*" />
+        </Association>
+        <EntityContainer Name="Entities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="COUNTRY" EntityType="Self.COUNTRY" />
+          <EntitySet Name="CUSTOMER" EntityType="Self.CUSTOMER" />
+          <EntitySet Name="DEPARTMENT" EntityType="Self.DEPARTMENT" />
+          <EntitySet Name="EMPLOYEE" EntityType="Self.EMPLOYEE" />
+          <EntitySet Name="JOB" EntityType="Self.JOB" />
+          <EntitySet Name="PROJ_DEPT_BUDGET" EntityType="Self.PROJ_DEPT_BUDGET" />
+          <EntitySet Name="PROJECT" EntityType="Self.PROJECT" />
+          <EntitySet Name="SALARY_HISTORY" EntityType="Self.SALARY_HISTORY" />
+          <EntitySet Name="SALES" EntityType="Self.SALES" />
+          <AssociationSet Name="INTEG_11" Association="Self.INTEG_11">
+            <End Role="COUNTRY" EntitySet="COUNTRY" />
+            <End Role="JOB" EntitySet="JOB" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_61" Association="Self.INTEG_61">
+            <End Role="COUNTRY" EntitySet="COUNTRY" />
+            <End Role="CUSTOMER" EntitySet="CUSTOMER" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_77" Association="Self.INTEG_77">
+            <End Role="CUSTOMER" EntitySet="CUSTOMER" />
+            <End Role="SALES" EntitySet="SALES" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_17" Association="Self.INTEG_17">
+            <End Role="DEPARTMENT" EntitySet="DEPARTMENT" />
+            <End Role="DEPARTMENT1" EntitySet="DEPARTMENT" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_28" Association="Self.INTEG_28">
+            <End Role="DEPARTMENT" EntitySet="DEPARTMENT" />
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_31" Association="Self.INTEG_31">
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+            <End Role="DEPARTMENT" EntitySet="DEPARTMENT" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_47" Association="Self.INTEG_47">
+            <End Role="DEPARTMENT" EntitySet="DEPARTMENT" />
+            <End Role="PROJ_DEPT_BUDGET" EntitySet="PROJ_DEPT_BUDGET" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_29" Association="Self.INTEG_29">
+            <End Role="JOB" EntitySet="JOB" />
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_36" Association="Self.INTEG_36">
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+            <End Role="PROJECT" EntitySet="PROJECT" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_56" Association="Self.INTEG_56">
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+            <End Role="SALARY_HISTORY" EntitySet="SALARY_HISTORY" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_78" Association="Self.INTEG_78">
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+            <End Role="SALES" EntitySet="SALES" />
+          </AssociationSet>
+          <AssociationSet Name="INTEG_48" Association="Self.INTEG_48">
+            <End Role="PROJECT" EntitySet="PROJECT" />
+            <End Role="PROJ_DEPT_BUDGET" EntitySet="PROJ_DEPT_BUDGET" />
+          </AssociationSet>
+          <AssociationSet Name="EMPLOYEE_PROJECT" Association="Self.EMPLOYEE_PROJECT">
+            <End Role="EMPLOYEE" EntitySet="EMPLOYEE" />
+            <End Role="PROJECT" EntitySet="PROJECT" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="ModelStoreContainer" CdmEntityContainer="Entities">
+          <EntitySetMapping Name="COUNTRY">
+            <EntityTypeMapping TypeName="Model.COUNTRY">
+              <MappingFragment StoreEntitySet="COUNTRY">
+                <ScalarProperty Name="COUNTRY1" ColumnName="COUNTRY" />
+                <ScalarProperty Name="CURRENCY" ColumnName="CURRENCY" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="CUSTOMER">
+            <EntityTypeMapping TypeName="Model.CUSTOMER">
+              <MappingFragment StoreEntitySet="CUSTOMER">
+                <ScalarProperty Name="CUST_NO" ColumnName="CUST_NO" />
+                <ScalarProperty Name="CUSTOMER1" ColumnName="CUSTOMER" />
+                <ScalarProperty Name="CONTACT_FIRST" ColumnName="CONTACT_FIRST" />
+                <ScalarProperty Name="CONTACT_LAST" ColumnName="CONTACT_LAST" />
+                <ScalarProperty Name="PHONE_NO" ColumnName="PHONE_NO" />
+                <ScalarProperty Name="ADDRESS_LINE1" ColumnName="ADDRESS_LINE1" />
+                <ScalarProperty Name="ADDRESS_LINE2" ColumnName="ADDRESS_LINE2" />
+                <ScalarProperty Name="CITY" ColumnName="CITY" />
+                <ScalarProperty Name="STATE_PROVINCE" ColumnName="STATE_PROVINCE" />
+                <ScalarProperty Name="COUNTRY" ColumnName="COUNTRY" />
+                <ScalarProperty Name="POSTAL_CODE" ColumnName="POSTAL_CODE" />
+                <ScalarProperty Name="ON_HOLD" ColumnName="ON_HOLD" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="DEPARTMENT">
+            <EntityTypeMapping TypeName="Model.DEPARTMENT">
+              <MappingFragment StoreEntitySet="DEPARTMENT">
+                <ScalarProperty Name="DEPT_NO" ColumnName="DEPT_NO" />
+                <ScalarProperty Name="DEPARTMENT1" ColumnName="DEPARTMENT" />
+                <ScalarProperty Name="HEAD_DEPT" ColumnName="HEAD_DEPT" />
+                <ScalarProperty Name="MNGR_NO" ColumnName="MNGR_NO" />
+                <ScalarProperty Name="BUDGET" ColumnName="BUDGET" />
+                <ScalarProperty Name="LOCATION" ColumnName="LOCATION" />
+                <ScalarProperty Name="PHONE_NO" ColumnName="PHONE_NO" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="EMPLOYEE">
+            <EntityTypeMapping TypeName="Model.EMPLOYEE">
+              <MappingFragment StoreEntitySet="EMPLOYEE">
+                <ScalarProperty Name="EMP_NO" ColumnName="EMP_NO" />
+                <ScalarProperty Name="FIRST_NAME" ColumnName="FIRST_NAME" />
+                <ScalarProperty Name="LAST_NAME" ColumnName="LAST_NAME" />
+                <ScalarProperty Name="PHONE_EXT" ColumnName="PHONE_EXT" />
+                <ScalarProperty Name="HIRE_DATE" ColumnName="HIRE_DATE" />
+                <ScalarProperty Name="DEPT_NO" ColumnName="DEPT_NO" />
+                <ScalarProperty Name="JOB_CODE" ColumnName="JOB_CODE" />
+                <ScalarProperty Name="JOB_GRADE" ColumnName="JOB_GRADE" />
+                <ScalarProperty Name="JOB_COUNTRY" ColumnName="JOB_COUNTRY" />
+                <ScalarProperty Name="SALARY" ColumnName="SALARY" />
+                <ScalarProperty Name="FULL_NAME" ColumnName="FULL_NAME" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="JOB">
+            <EntityTypeMapping TypeName="Model.JOB">
+              <MappingFragment StoreEntitySet="JOB">
+                <ScalarProperty Name="JOB_CODE" ColumnName="JOB_CODE" />
+                <ScalarProperty Name="JOB_GRADE" ColumnName="JOB_GRADE" />
+                <ScalarProperty Name="JOB_COUNTRY" ColumnName="JOB_COUNTRY" />
+                <ScalarProperty Name="JOB_TITLE" ColumnName="JOB_TITLE" />
+                <ScalarProperty Name="MIN_SALARY" ColumnName="MIN_SALARY" />
+                <ScalarProperty Name="MAX_SALARY" ColumnName="MAX_SALARY" />
+                <ScalarProperty Name="JOB_REQUIREMENT" ColumnName="JOB_REQUIREMENT" />
+                <ScalarProperty Name="LANGUAGE_REQ" ColumnName="LANGUAGE_REQ" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="PROJ_DEPT_BUDGET">
+            <EntityTypeMapping TypeName="Model.PROJ_DEPT_BUDGET">
+              <MappingFragment StoreEntitySet="PROJ_DEPT_BUDGET">
+                <ScalarProperty Name="FISCAL_YEAR" ColumnName="FISCAL_YEAR" />
+                <ScalarProperty Name="PROJ_ID" ColumnName="PROJ_ID" />
+                <ScalarProperty Name="DEPT_NO" ColumnName="DEPT_NO" />
+                <ScalarProperty Name="QUART_HEAD_CNT" ColumnName="QUART_HEAD_CNT" />
+                <ScalarProperty Name="PROJECTED_BUDGET" ColumnName="PROJECTED_BUDGET" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="PROJECT">
+            <EntityTypeMapping TypeName="Model.PROJECT">
+              <MappingFragment StoreEntitySet="PROJECT">
+                <ScalarProperty Name="PROJ_ID" ColumnName="PROJ_ID" />
+                <ScalarProperty Name="PROJ_NAME" ColumnName="PROJ_NAME" />
+                <ScalarProperty Name="PROJ_DESC" ColumnName="PROJ_DESC" />
+                <ScalarProperty Name="TEAM_LEADER" ColumnName="TEAM_LEADER" />
+                <ScalarProperty Name="PRODUCT" ColumnName="PRODUCT" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="SALARY_HISTORY">
+            <EntityTypeMapping TypeName="Model.SALARY_HISTORY">
+              <MappingFragment StoreEntitySet="SALARY_HISTORY">
+                <ScalarProperty Name="EMP_NO" ColumnName="EMP_NO" />
+                <ScalarProperty Name="CHANGE_DATE" ColumnName="CHANGE_DATE" />
+                <ScalarProperty Name="UPDATER_ID" ColumnName="UPDATER_ID" />
+                <ScalarProperty Name="OLD_SALARY" ColumnName="OLD_SALARY" />
+                <ScalarProperty Name="PERCENT_CHANGE" ColumnName="PERCENT_CHANGE" />
+                <ScalarProperty Name="NEW_SALARY" ColumnName="NEW_SALARY" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="SALES">
+            <EntityTypeMapping TypeName="Model.SALES">
+              <MappingFragment StoreEntitySet="SALES">
+                <ScalarProperty Name="PO_NUMBER" ColumnName="PO_NUMBER" />
+                <ScalarProperty Name="CUST_NO" ColumnName="CUST_NO" />
+                <ScalarProperty Name="SALES_REP" ColumnName="SALES_REP" />
+                <ScalarProperty Name="ORDER_STATUS" ColumnName="ORDER_STATUS" />
+                <ScalarProperty Name="ORDER_DATE" ColumnName="ORDER_DATE" />
+                <ScalarProperty Name="SHIP_DATE" ColumnName="SHIP_DATE" />
+                <ScalarProperty Name="DATE_NEEDED" ColumnName="DATE_NEEDED" />
+                <ScalarProperty Name="PAID" ColumnName="PAID" />
+                <ScalarProperty Name="QTY_ORDERED" ColumnName="QTY_ORDERED" />
+                <ScalarProperty Name="TOTAL_VALUE" ColumnName="TOTAL_VALUE" />
+                <ScalarProperty Name="DISCOUNT" ColumnName="DISCOUNT" />
+                <ScalarProperty Name="ITEM_TYPE" ColumnName="ITEM_TYPE" />
+                <ScalarProperty Name="AGED" ColumnName="AGED" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <AssociationSetMapping Name="EMPLOYEE_PROJECT" TypeName="Model.EMPLOYEE_PROJECT" StoreEntitySet="EMPLOYEE_PROJECT">
+            <EndProperty Name="EMPLOYEE">
+              <ScalarProperty Name="EMP_NO" ColumnName="EMP_NO" />
+            </EndProperty>
+            <EndProperty Name="PROJECT">
+              <ScalarProperty Name="PROJ_ID" ColumnName="PROJ_ID" />
+            </EndProperty>
+          </AssociationSetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="false" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

@@ -3,6 +3,7 @@
   "PreserveCasingUsingRegex": false,
   "IncludeUnknownSchemas": false,
   "SplitEntityTypeConfigurations": true,
+  "CaseSensitive": false,
   "Schemas": [
     {
       "SchemaName": "dbo",
@@ -114,7 +115,8 @@
           "IncludeUnknownColumns": false,
           "Properties": [
             {
-              "Name": "EducationLevel"
+              "Name": "EducationLevel\u00AA",
+              "PropertyName": "void2"
             }
           ]
         },

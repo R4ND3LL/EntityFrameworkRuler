@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>disable</Nullable>
+        <UseWindowsForms>false</UseWindowsForms>
+        <ImplicitUsings>disable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+        <!-- will copy package files to output folder -->
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    </PropertyGroup>
+
+    <ItemGroup> 
+        <PackageReference Include="FirebirdSql.Data.FirebirdClient" Version="9.1.1" />
+        <PackageReference Include="FirebirdSql.EntityFrameworkCore.Firebird" Version="9.1.1" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.14">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Context" />
+    </ItemGroup>
+
+</Project>

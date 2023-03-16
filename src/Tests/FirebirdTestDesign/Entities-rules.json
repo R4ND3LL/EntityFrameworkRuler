@@ -1,0 +1,663 @@
+{
+  "Name": "Entities",
+  "PreserveCasingUsingRegex": false,
+  "IncludeUnknownSchemas": false,
+  "SplitEntityTypeConfigurations": false,
+  "CaseSensitive": false,
+  "Schemas": [
+    {
+      "SchemaName": "",
+      "IncludeUnknownTables": false,
+      "IncludeUnknownViews": false,
+      "Namespace": null,
+      "Entities": [
+        {
+          "Name": "COUNTRY",
+          "EntityName": "Country",
+          "NewName": "COUNTRY",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "COUNTRY",
+              "PropertyName": "Country1",
+              "NewName": "COUNTRY1"
+            },
+            {
+              "Name": "CURRENCY",
+              "PropertyName": "Currency",
+              "NewName": "CURRENCY"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "Jobs",
+              "NewName": "JOB",
+              "FkName": "INTEG_11",
+              "ToEntity": "JOB",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "Customers",
+              "NewName": "CUSTOMER",
+              "FkName": "INTEG_61",
+              "ToEntity": "CUSTOMER",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ]
+        },
+        {
+          "Name": "CUSTOMER",
+          "EntityName": "Customer",
+          "NewName": "CUSTOMER",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "CUST_NO",
+              "PropertyName": "CustNo",
+              "NewName": "CUST_NO"
+            },
+            {
+              "Name": "CUSTOMER",
+              "PropertyName": "Customer1",
+              "NewName": "CUSTOMER1"
+            },
+            {
+              "Name": "CONTACT_FIRST",
+              "PropertyName": "ContactFirst",
+              "NewName": "CONTACT_FIRST"
+            },
+            {
+              "Name": "CONTACT_LAST",
+              "PropertyName": "ContactLast",
+              "NewName": "CONTACT_LAST"
+            },
+            {
+              "Name": "PHONE_NO",
+              "PropertyName": "PhoneNo",
+              "NewName": "PHONE_NO"
+            },
+            {
+              "Name": "ADDRESS_LINE1",
+              "PropertyName": "AddressLine1",
+              "NewName": "ADDRESS_LINE1"
+            },
+            {
+              "Name": "ADDRESS_LINE2",
+              "PropertyName": "AddressLine2",
+              "NewName": "ADDRESS_LINE2"
+            },
+            {
+              "Name": "CITY",
+              "PropertyName": "City",
+              "NewName": "CITY"
+            },
+            {
+              "Name": "STATE_PROVINCE",
+              "PropertyName": "StateProvince",
+              "NewName": "STATE_PROVINCE"
+            },
+            {
+              "Name": "COUNTRY",
+              "PropertyName": "Country",
+              "NewName": "COUNTRY"
+            },
+            {
+              "Name": "POSTAL_CODE",
+              "PropertyName": "PostalCode",
+              "NewName": "POSTAL_CODE"
+            },
+            {
+              "Name": "ON_HOLD",
+              "PropertyName": "OnHold",
+              "NewName": "ON_HOLD"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "CountryNavigation",
+              "NewName": "COUNTRY1",
+              "FkName": "INTEG_61",
+              "ToEntity": "COUNTRY",
+              "Multiplicity": "0..1"
+            },
+            {
+              "Name": "Sales",
+              "NewName": "SALES",
+              "FkName": "INTEG_77",
+              "ToEntity": "SALES",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ]
+        },
+        {
+          "Name": "DEPARTMENT",
+          "EntityName": "Department",
+          "NewName": "DEPARTMENT",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "DEPT_NO",
+              "PropertyName": "DeptNo",
+              "NewName": "DEPT_NO"
+            },
+            {
+              "Name": "DEPARTMENT",
+              "PropertyName": "Department1",
+              "NewName": "DEPARTMENT1"
+            },
+            {
+              "Name": "HEAD_DEPT",
+              "PropertyName": "HeadDept",
+              "NewName": "HEAD_DEPT"
+            },
+            {
+              "Name": "MNGR_NO",
+              "PropertyName": "MngrNo",
+              "NewName": "MNGR_NO"
+            },
+            {
+              "Name": "BUDGET",
+              "PropertyName": "Budget",
+              "NewName": "BUDGET"
+            },
+            {
+              "Name": "LOCATION",
+              "PropertyName": "Location",
+              "NewName": "LOCATION"
+            },
+            {
+              "Name": "PHONE_NO",
+              "PropertyName": "PhoneNo",
+              "NewName": "PHONE_NO"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "InverseHeadDeptNavigation",
+              "NewName": "DEPARTMENT11",
+              "FkName": "INTEG_17",
+              "ToEntity": "DEPARTMENT",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "HeadDeptNavigation",
+              "NewName": "DEPARTMENT2",
+              "FkName": "INTEG_17",
+              "ToEntity": "DEPARTMENT",
+              "Multiplicity": "0..1"
+            },
+            {
+              "Name": "Employees",
+              "NewName": "EMPLOYEE",
+              "FkName": "INTEG_28",
+              "ToEntity": "EMPLOYEE",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "MngrNoNavigation",
+              "NewName": "EMPLOYEE1",
+              "FkName": "INTEG_31",
+              "ToEntity": "EMPLOYEE",
+              "Multiplicity": "0..1"
+            },
+            {
+              "Name": "ProjDeptBudgets",
+              "NewName": "PROJ_DEPT_BUDGET",
+              "FkName": "INTEG_47",
+              "ToEntity": "PROJ_DEPT_BUDGET",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ]
+        },
+        {
+          "Name": "EMPLOYEE",
+          "EntityName": "Employee",
+          "NewName": "EMPLOYEE",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "EMP_NO",
+              "PropertyName": "EmpNo",
+              "NewName": "EMP_NO"
+            },
+            {
+              "Name": "FIRST_NAME",
+              "PropertyName": "FirstName",
+              "NewName": "FIRST_NAME"
+            },
+            {
+              "Name": "LAST_NAME",
+              "PropertyName": "LastName",
+              "NewName": "LAST_NAME"
+            },
+            {
+              "Name": "PHONE_EXT",
+              "PropertyName": "PhoneExt",
+              "NewName": "PHONE_EXT"
+            },
+            {
+              "Name": "HIRE_DATE",
+              "PropertyName": "HireDate",
+              "NewName": "HIRE_DATE"
+            },
+            {
+              "Name": "DEPT_NO",
+              "PropertyName": "DeptNo",
+              "NewName": "DEPT_NO"
+            },
+            {
+              "Name": "JOB_CODE",
+              "PropertyName": "JobCode",
+              "NewName": "JOB_CODE"
+            },
+            {
+              "Name": "JOB_GRADE",
+              "PropertyName": "JobGrade",
+              "NewName": "JOB_GRADE"
+            },
+            {
+              "Name": "JOB_COUNTRY",
+              "PropertyName": "JobCountry",
+              "NewName": "JOB_COUNTRY"
+            },
+            {
+              "Name": "SALARY",
+              "PropertyName": "Salary",
+              "NewName": "SALARY"
+            },
+            {
+              "Name": "FULL_NAME",
+              "PropertyName": "FullName",
+              "NewName": "FULL_NAME"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "DeptNoNavigation",
+              "NewName": "DEPARTMENT",
+              "FkName": "INTEG_28",
+              "ToEntity": "DEPARTMENT",
+              "Multiplicity": "1"
+            },
+            {
+              "Name": "Departments",
+              "NewName": "DEPARTMENT1",
+              "FkName": "INTEG_31",
+              "ToEntity": "DEPARTMENT",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "Job",
+              "NewName": "JOB",
+              "FkName": "INTEG_29",
+              "ToEntity": "JOB",
+              "Multiplicity": "1"
+            },
+            {
+              "Name": "Projects",
+              "NewName": "PROJECT",
+              "FkName": "INTEG_36",
+              "ToEntity": "PROJECT",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "SalaryHistories",
+              "NewName": "SALARY_HISTORY",
+              "FkName": "INTEG_56",
+              "ToEntity": "SALARY_HISTORY",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": "Sales",
+              "NewName": "SALES",
+              "FkName": "INTEG_78",
+              "ToEntity": "SALES",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": null,
+              "NewName": "PROJECT1",
+              "FkName": "EMPLOYEE_PROJECT",
+              "ToEntity": "PROJECT",
+              "IsPrincipal": true,
+              "Multiplicity": ""
+            }
+          ]
+        },
+        {
+          "Name": "JOB",
+          "EntityName": "Job",
+          "NewName": "JOB",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "JOB_CODE",
+              "PropertyName": "JobCode",
+              "NewName": "JOB_CODE"
+            },
+            {
+              "Name": "JOB_GRADE",
+              "PropertyName": "JobGrade",
+              "NewName": "JOB_GRADE"
+            },
+            {
+              "Name": "JOB_COUNTRY",
+              "PropertyName": "JobCountry",
+              "NewName": "JOB_COUNTRY"
+            },
+            {
+              "Name": "JOB_TITLE",
+              "PropertyName": "JobTitle",
+              "NewName": "JOB_TITLE"
+            },
+            {
+              "Name": "MIN_SALARY",
+              "PropertyName": "MinSalary",
+              "NewName": "MIN_SALARY"
+            },
+            {
+              "Name": "MAX_SALARY",
+              "PropertyName": "MaxSalary",
+              "NewName": "MAX_SALARY"
+            },
+            {
+              "Name": "JOB_REQUIREMENT",
+              "PropertyName": "JobRequirement",
+              "NewName": "JOB_REQUIREMENT"
+            },
+            {
+              "Name": "LANGUAGE_REQ",
+              "PropertyName": "LanguageReq",
+              "NewName": "LANGUAGE_REQ"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "JobCountryNavigation",
+              "NewName": "COUNTRY",
+              "FkName": "INTEG_11",
+              "ToEntity": "COUNTRY",
+              "Multiplicity": "1"
+            },
+            {
+              "Name": "Employees",
+              "NewName": "EMPLOYEE",
+              "FkName": "INTEG_29",
+              "ToEntity": "EMPLOYEE",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            }
+          ]
+        },
+        {
+          "Name": "PROJ_DEPT_BUDGET",
+          "EntityName": "ProjDeptBudget",
+          "NewName": "PROJ_DEPT_BUDGET",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "FISCAL_YEAR",
+              "PropertyName": "FiscalYear",
+              "NewName": "FISCAL_YEAR"
+            },
+            {
+              "Name": "PROJ_ID",
+              "PropertyName": "ProjId",
+              "NewName": "PROJ_ID"
+            },
+            {
+              "Name": "DEPT_NO",
+              "PropertyName": "DeptNo",
+              "NewName": "DEPT_NO"
+            },
+            {
+              "Name": "QUART_HEAD_CNT",
+              "PropertyName": "QuartHeadCnt",
+              "NewName": "QUART_HEAD_CNT"
+            },
+            {
+              "Name": "PROJECTED_BUDGET",
+              "PropertyName": "ProjectedBudget",
+              "NewName": "PROJECTED_BUDGET"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "DeptNoNavigation",
+              "NewName": "DEPARTMENT",
+              "FkName": "INTEG_47",
+              "ToEntity": "DEPARTMENT",
+              "Multiplicity": "1"
+            },
+            {
+              "Name": "Proj",
+              "NewName": "PROJECT",
+              "FkName": "INTEG_48",
+              "ToEntity": "PROJECT",
+              "Multiplicity": "1"
+            }
+          ]
+        },
+        {
+          "Name": "PROJECT",
+          "EntityName": "Project",
+          "NewName": "PROJECT",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "PROJ_ID",
+              "PropertyName": "ProjId",
+              "NewName": "PROJ_ID"
+            },
+            {
+              "Name": "PROJ_NAME",
+              "PropertyName": "ProjName",
+              "NewName": "PROJ_NAME"
+            },
+            {
+              "Name": "PROJ_DESC",
+              "PropertyName": "ProjDesc",
+              "NewName": "PROJ_DESC"
+            },
+            {
+              "Name": "TEAM_LEADER",
+              "PropertyName": "TeamLeader",
+              "NewName": "TEAM_LEADER"
+            },
+            {
+              "Name": "PRODUCT",
+              "PropertyName": "Product",
+              "NewName": "PRODUCT"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "TeamLeaderNavigation",
+              "NewName": "EMPLOYEE",
+              "FkName": "INTEG_36",
+              "ToEntity": "EMPLOYEE",
+              "Multiplicity": "0..1"
+            },
+            {
+              "Name": "ProjDeptBudgets",
+              "NewName": "PROJ_DEPT_BUDGET",
+              "FkName": "INTEG_48",
+              "ToEntity": "PROJ_DEPT_BUDGET",
+              "IsPrincipal": true,
+              "Multiplicity": "*"
+            },
+            {
+              "Name": null,
+              "NewName": "EMPLOYEE1",
+              "FkName": "EMPLOYEE_PROJECT",
+              "ToEntity": "EMPLOYEE",
+              "IsPrincipal": true,
+              "Multiplicity": ""
+            }
+          ]
+        },
+        {
+          "Name": "SALARY_HISTORY",
+          "EntityName": "SalaryHistory",
+          "NewName": "SALARY_HISTORY",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "EMP_NO",
+              "PropertyName": "EmpNo",
+              "NewName": "EMP_NO"
+            },
+            {
+              "Name": "CHANGE_DATE",
+              "PropertyName": "ChangeDate",
+              "NewName": "CHANGE_DATE"
+            },
+            {
+              "Name": "UPDATER_ID",
+              "PropertyName": "UpdaterId",
+              "NewName": "UPDATER_ID"
+            },
+            {
+              "Name": "OLD_SALARY",
+              "PropertyName": "OldSalary",
+              "NewName": "OLD_SALARY"
+            },
+            {
+              "Name": "PERCENT_CHANGE",
+              "PropertyName": "PercentChange",
+              "NewName": "PERCENT_CHANGE"
+            },
+            {
+              "Name": "NEW_SALARY",
+              "PropertyName": "NewSalary",
+              "NewName": "NEW_SALARY"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "EmpNoNavigation",
+              "NewName": "EMPLOYEE",
+              "FkName": "INTEG_56",
+              "ToEntity": "EMPLOYEE",
+              "Multiplicity": "1"
+            }
+          ]
+        },
+        {
+          "Name": "SALES",
+          "EntityName": "Sale",
+          "NewName": "SALES",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "PO_NUMBER",
+              "PropertyName": "PoNumber",
+              "NewName": "PO_NUMBER"
+            },
+            {
+              "Name": "CUST_NO",
+              "PropertyName": "CustNo",
+              "NewName": "CUST_NO"
+            },
+            {
+              "Name": "SALES_REP",
+              "PropertyName": "SalesRep",
+              "NewName": "SALES_REP"
+            },
+            {
+              "Name": "ORDER_STATUS",
+              "PropertyName": "OrderStatus",
+              "NewName": "ORDER_STATUS"
+            },
+            {
+              "Name": "ORDER_DATE",
+              "PropertyName": "OrderDate",
+              "NewName": "ORDER_DATE"
+            },
+            {
+              "Name": "SHIP_DATE",
+              "PropertyName": "ShipDate",
+              "NewName": "SHIP_DATE"
+            },
+            {
+              "Name": "DATE_NEEDED",
+              "PropertyName": "DateNeeded",
+              "NewName": "DATE_NEEDED"
+            },
+            {
+              "Name": "PAID",
+              "PropertyName": "Paid",
+              "NewName": "PAID"
+            },
+            {
+              "Name": "QTY_ORDERED",
+              "PropertyName": "QtyOrdered",
+              "NewName": "QTY_ORDERED"
+            },
+            {
+              "Name": "TOTAL_VALUE",
+              "PropertyName": "TotalValue",
+              "NewName": "TOTAL_VALUE"
+            },
+            {
+              "Name": "DISCOUNT",
+              "PropertyName": "Discount",
+              "NewName": "DISCOUNT"
+            },
+            {
+              "Name": "ITEM_TYPE",
+              "PropertyName": "ItemType",
+              "NewName": "ITEM_TYPE"
+            },
+            {
+              "Name": "AGED",
+              "PropertyName": "Aged",
+              "NewName": "AGED"
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "CustNoNavigation",
+              "NewName": "CUSTOMER",
+              "FkName": "INTEG_77",
+              "ToEntity": "CUSTOMER",
+              "Multiplicity": "1"
+            },
+            {
+              "Name": "SalesRepNavigation",
+              "NewName": "EMPLOYEE",
+              "FkName": "INTEG_78",
+              "ToEntity": "EMPLOYEE",
+              "Multiplicity": "0..1"
+            }
+          ]
+        },
+        {
+          "Name": "EMPLOYEE_PROJECT",
+          "EntityName": "EmployeeProject",
+          "IncludeUnknownColumns": true,
+          "Properties": [
+            {
+              "Name": "EMP_NO",
+              "PropertyName": "EmpNo"
+            },
+            {
+              "Name": "PROJ_ID",
+              "PropertyName": "ProjId"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

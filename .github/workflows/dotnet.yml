@@ -1,5 +1,6 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+# For build server .NET Core Tools version support see: https://github.com/actions/runner-images/blob/main/images/win/Windows2022-Readme.md
 
 name: .NET
 

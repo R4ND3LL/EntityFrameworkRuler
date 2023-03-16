@@ -3,8 +3,8 @@
     "dotnet": "7.0.102"
   },
   "sdk": {
-    "version": "7.0.200",
-    "allowPrerelease": true,
+    "version": "7.0.201",
+    "allowPrerelease": false,
     "rollForward": "disable"
   }
  
