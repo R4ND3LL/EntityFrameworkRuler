@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 using System.Xml;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator.EdmxModel;
@@ -16,13 +17,27 @@ namespace EntityFrameworkRuler.Generator.Services;
 public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
     private IMessageLogger logger;
 
+    private static Regex ver2Regex =
+        new Regex(@"\<\w+:Edmx\s+Version=""(?<ver>2\.\d)""\s+\w+:edmx=""http:\/\/schemas.microsoft.com\/ado\/2008\/10\/edmx""\s*\>");
+
     /// <inheritdoc />
     public EdmxParsed Parse(string fileInstancePath, IMessageLogger logger) {
         State = new(fileInstancePath); // FYI, this is not thread safe
         if (!File.Exists(fileInstancePath)) throw new InvalidDataException($"Could not find file {fileInstancePath}");
         this.logger = logger ?? NullMessageLogger.Instance;
 
-        var edmxModel = EdmxSerializer.Deserialize(File.ReadAllText(fileInstancePath));
+        var edmxContent = File.ReadAllText(fileInstancePath);
+        var m = ver2Regex.Match(edmxContent);
+
+        if (m.Success) {
+            var verStr = m.Groups["ver"]?.Value;
+            if (verStr.HasNonWhiteSpace() && double.TryParse(verStr, out var ver) && ver < 3) {
+                this.logger.WriteWarning($"EDMX ver {ver} detected.  This version is not fully supported and may not yield accurate model results.");
+                TryUpgrade(ref edmxContent);
+            }
+        }
+
+        var edmxModel = EdmxSerializer.Deserialize(edmxContent);
         var edmx = edmxModel.Runtime;
 
         var schema = new Schema(edmx.ConceptualModels.Schema, edmx.StorageModels.Schema);
@@ -319,6 +334,20 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
         //     .GroupBy(o => o.Name)
         //     .ToDictionary(o => o.Key, o => o.First(), StringComparer.InvariantCultureIgnoreCase);
         return State;
+    }
+
+    private void TryUpgrade(ref string edmxContent) {
+        var nsPairs = new string[][] {
+            new[] { @"""http://schemas.microsoft.com/ado/2008/10/edmx""", @"""http://schemas.microsoft.com/ado/2009/11/edmx""" },
+            new[] { @"""http://schemas.microsoft.com/ado/2008/09/mapping/cs""", @"""http://schemas.microsoft.com/ado/2009/11/mapping/cs""" },
+            new[] { @"""http://schemas.microsoft.com/ado/2008/10/edmx""", @"""http://schemas.microsoft.com/ado/2009/11/edmx""" },
+            new[] { @"""http://schemas.microsoft.com/ado/2009/02/edm/ssdl""", @"""http://schemas.microsoft.com/ado/2009/11/edm/ssdl""" },
+            new[] { @"""http://schemas.microsoft.com/ado/2008/09/edm""", @"""http://schemas.microsoft.com/ado/2009/11/edm""" },
+        };
+        foreach (var nsPair in nsPairs) {
+            Debug.Assert(edmxContent.Contains(nsPair[0]));
+            edmxContent = edmxContent.Replace(nsPair[0], nsPair[1]);
+        }
     }
 
     private static void IdentifyKeys(EntityType entity, EntityProperty property) {

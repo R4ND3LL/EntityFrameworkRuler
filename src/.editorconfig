@@ -8,7 +8,7 @@
 #use soft tabs (spaces) for indentation
 indent_style = space 
 trim_trailing_whitespace = true 
-max_line_length = 140
+max_line_length = 180
 
 #Formatting - indentation options
 
