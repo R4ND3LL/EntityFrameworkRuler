@@ -554,6 +554,19 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         foreach (var excludedProperty in excludedProperties)
             reporter.WriteInformation($"RULED: Property {entityTypeBuilder.Metadata.Name}.{excludedProperty.Property.Name} omitted.");
 
+        if (designTimeRuleLoader.EfVersion?.Major < 7) {
+            // hack to fix error thrown by EF Core 6 when inspecting views that have no table name annotations (they have a view name instead)
+            var tableName = entityTypeBuilder.Metadata.FindAnnotation(EfRelationalAnnotationNames.TableName)?.Value as string;
+            var viewName = entityTypeBuilder.Metadata.FindAnnotation(EfRelationalAnnotationNames.ViewName)?.Value as string;
+            if (tableName.IsNullOrEmpty()) {
+                entityTypeBuilder.Metadata.SetOrRemoveAnnotation(EfRelationalAnnotationNames.TableName, entityRule.Name);
+                if (viewName.HasNonWhiteSpace())
+                    reporter
+                        .WriteInformation(
+                            $"RULED: Specifying EF Core 6 required table name annotation for a view. You may want to remove the resulting line from configuration: entity.ToTable(\"{entityRule.Name}\");");
+            }
+        }
+
         return entityTypeBuilder;
 
         bool BaseHasColumn(string checkColumn) {
