@@ -33,6 +33,13 @@ public static class ProxyExtensions {
         }
     }
 
+    /// <summary> Create class proxy for the given object. </summary>
+    public static T CreateInterfaceProxy<T,T2>(this T objectToProxy, T2 interceptors) where T : class where T2 : T, IInterceptor {
+        var generator = new ProxyGenerator();
+        var proxy = generator.CreateInterfaceProxyWithTarget(objectToProxy, ProxyGenerationOptions.Default, interceptors);
+        return proxy;
+    }
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static MethodInfo GetMethod<TArg1>(this Type t, string name,
         BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public) {

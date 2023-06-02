@@ -184,11 +184,10 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
         if (navigations.Length != 1) {
             // Maybe FkName is not defined or is inconsistent with DB.  Try to locate by expected name or inverse types
-            if (inverseEntityName.HasNonWhiteSpace()) {
+            if (inverseEntityName.HasNonWhiteSpace())
                 navigations = GetNavs()
                     .Where(o => o.Rule.ToEntity == inverseEntityName && o.Rule.IsPrincipal == thisIsPrincipal)
                     .ToArray();
-            }
 
             if (navigations.Length != 1) {
                 var efName = defaultEfName?.Invoke();

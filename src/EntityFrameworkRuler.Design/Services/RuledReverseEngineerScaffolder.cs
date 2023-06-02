@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using EntityFrameworkRuler.Design.Extensions;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding;
@@ -20,6 +22,7 @@ namespace EntityFrameworkRuler.Design.Services;
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
+    private readonly IDatabaseModelFactory databaseModelFactory;
 
     /// <inheritdoc />
     public RuledReverseEngineerScaffolder(IDatabaseModelFactory databaseModelFactory,
@@ -29,7 +32,7 @@ public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
         ICSharpHelper cSharpHelper,
         IDesignTimeConnectionStringResolver connectionStringResolver,
         IOperationReporter reporter,
-        IDesignTimeRuleLoader designTimeRuleLoader) : base(databaseModelFactory,
+        IDesignTimeRuleLoader designTimeRuleLoader, IServiceProvider serviceProvider) : base(MakeDatabaseModelFactoryProxy(databaseModelFactory, reporter, serviceProvider),
         scaffoldingModelFactory,
         modelCodeGeneratorSelector,
         cSharpUtilities,
@@ -37,6 +40,17 @@ public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
         connectionStringResolver,
         reporter) {
         this.designTimeRuleLoader = designTimeRuleLoader;
+        this.databaseModelFactory = databaseModelFactory;
+    }
+
+    private static IDatabaseModelFactory MakeDatabaseModelFactoryProxy(IDatabaseModelFactory databaseModelFactory, IOperationReporter reporter, IServiceProvider serviceProvider) {
+        try {
+            var proxy = new RuledDatabaseModelFactory(serviceProvider,databaseModelFactory, reporter);
+            return proxy;
+        } catch (Exception ex) {
+            reporter.WriteError($"Error creating proxy of IDatabaseModelFactory: {ex.Message}");
+            return databaseModelFactory;
+        }
     }
 
     /// <inheritdoc />
@@ -48,7 +62,6 @@ public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
         // DatabaseTable objects from the database.  The DatabaseModel is then converted to an IModel by
         // IScaffoldingModelFactory.Create(), and then code generated.
         var m = base.ScaffoldModel(connectionString, databaseOptions, modelOptions, codeOptions);
-
         return m;
     }
 }

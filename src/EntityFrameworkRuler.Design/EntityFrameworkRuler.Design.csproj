@@ -36,7 +36,8 @@
         <PackageReference Include="MinVer" Version="4.2.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
+        </PackageReference>  
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
     </ItemGroup>
 
     <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
