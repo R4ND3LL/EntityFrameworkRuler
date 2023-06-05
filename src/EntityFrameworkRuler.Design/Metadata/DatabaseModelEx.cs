@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 
-namespace EntityFrameworkRuler.Design.Services.Models;
+namespace EntityFrameworkRuler.Design.Metadata;
 
 /// <inheritdoc />
 public sealed class DatabaseModelEx : DatabaseModel {

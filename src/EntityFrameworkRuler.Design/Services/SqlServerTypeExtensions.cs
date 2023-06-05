@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Data;
+using EntityFrameworkRuler.Design.Metadata;
 using EntityFrameworkRuler.Design.Services.Models;
 
 namespace EntityFrameworkRuler.Design.Services;

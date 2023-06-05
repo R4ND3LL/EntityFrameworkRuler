@@ -371,3 +371,4 @@ MigrationBackup/
 /src/Tests/OtherRules/
 /src/Tests/NorthwindTestDesign/Models
 /src/Tests/NorthwindTestDesign/Context
+/src/Tests/NorthwindTestDesign/CodeTemplates/EFCore/Routine.t4

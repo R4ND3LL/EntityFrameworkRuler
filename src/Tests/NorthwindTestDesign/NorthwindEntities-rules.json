@@ -535,6 +535,7 @@
             },
             {
               "Name": "ReportsTo",
+              "PropertyName": "ReportsToCustom",
               "NotMapped": true
             },
             {
@@ -1282,6 +1283,35 @@
               "FkName": "FK_Territories_Region",
               "ToEntity": "RegionCustom",
               "Multiplicity": "1"
+            }
+          ]
+        },
+        {
+          "Name": "CustomerCustomerDemo",
+          "IncludeUnknownColumns": true,
+          "Properties": [
+            {
+              "Name": "CustomerID",
+              "PropertyName": "CustomerId"
+            },
+            {
+              "Name": "CustomerTypeID",
+              "PropertyName": "CustomerTypeId"
+            }
+          ]
+        },
+        {
+          "Name": "EmployeeTerritories",
+          "EntityName": "EmployeeTerritory",
+          "IncludeUnknownColumns": true,
+          "Properties": [
+            {
+              "Name": "EmployeeID",
+              "PropertyName": "EmployeeId"
+            },
+            {
+              "Name": "TerritoryID",
+              "PropertyName": "TerritoryId"
             }
           ]
         }

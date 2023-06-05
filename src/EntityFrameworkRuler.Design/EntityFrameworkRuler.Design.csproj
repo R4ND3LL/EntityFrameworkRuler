@@ -61,6 +61,8 @@
     
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+        <PackageReference Include="Mono.TextTemplating" Version="2.2.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="7.0.0" /> 
     </ItemGroup>
 
     <ItemGroup>
@@ -69,6 +71,7 @@
 
     <ItemGroup>
         <EmbeddedResource Remove="nupkg\**" />
+        <EmbeddedResource Include="Resources\Routine.t4" />
         <None Remove="Resources\EntityTypeConfiguration.t4" />
         <EmbeddedResource Include="Resources\EntityTypeConfiguration.t4" />
     </ItemGroup>

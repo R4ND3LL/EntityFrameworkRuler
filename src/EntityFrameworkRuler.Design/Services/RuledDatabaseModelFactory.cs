@@ -2,6 +2,7 @@
 using System.Data.Common;
 using System.Globalization;
 using Castle.DynamicProxy;
+using EntityFrameworkRuler.Design.Metadata;
 using EntityFrameworkRuler.Design.Services.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Design.Internal;

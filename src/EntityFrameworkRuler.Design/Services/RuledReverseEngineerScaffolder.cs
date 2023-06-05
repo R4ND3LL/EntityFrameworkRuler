@@ -1,8 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Design.Extensions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.EntityFrameworkCore.Scaffolding.Internal;
 using ICSharpUtilities = Microsoft.EntityFrameworkCore.Scaffolding.Internal.ICSharpUtilities;
@@ -22,7 +24,7 @@ namespace EntityFrameworkRuler.Design.Services;
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
-    private readonly IDatabaseModelFactory databaseModelFactory;
+    private readonly IEnumerable<IRuledModelCodeGenerator> ruledModelCodeGenerators; 
 
     /// <inheritdoc />
     public RuledReverseEngineerScaffolder(IDatabaseModelFactory databaseModelFactory,
@@ -32,20 +34,21 @@ public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
         ICSharpHelper cSharpHelper,
         IDesignTimeConnectionStringResolver connectionStringResolver,
         IOperationReporter reporter,
-        IDesignTimeRuleLoader designTimeRuleLoader, IServiceProvider serviceProvider) : base(MakeDatabaseModelFactoryProxy(databaseModelFactory, reporter, serviceProvider),
+        IDesignTimeRuleLoader designTimeRuleLoader,
+        IServiceProvider serviceProvider
+    ) : base(MakeDatabaseModelFactoryProxy(databaseModelFactory, reporter, serviceProvider),
         scaffoldingModelFactory,
         modelCodeGeneratorSelector,
         cSharpUtilities,
         cSharpHelper,
         connectionStringResolver,
-        reporter) {
-        this.designTimeRuleLoader = designTimeRuleLoader;
-        this.databaseModelFactory = databaseModelFactory;
+        reporter) { 
+        this.designTimeRuleLoader = designTimeRuleLoader;  
     }
 
     private static IDatabaseModelFactory MakeDatabaseModelFactoryProxy(IDatabaseModelFactory databaseModelFactory, IOperationReporter reporter, IServiceProvider serviceProvider) {
         try {
-            var proxy = new RuledDatabaseModelFactory(serviceProvider,databaseModelFactory, reporter);
+            var proxy = new RuledDatabaseModelFactory(serviceProvider, databaseModelFactory, reporter);
             return proxy;
         } catch (Exception ex) {
             reporter.WriteError($"Error creating proxy of IDatabaseModelFactory: {ex.Message}");
@@ -64,4 +67,6 @@ public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
         var m = base.ScaffoldModel(connectionString, databaseOptions, modelOptions, codeOptions);
         return m;
     }
+
+  
 }

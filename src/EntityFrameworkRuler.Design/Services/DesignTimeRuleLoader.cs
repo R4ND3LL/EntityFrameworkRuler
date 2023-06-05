@@ -122,6 +122,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         if (!dir.Exists) return this;
         InitializeTargetAssemblies(options, projectDir);
         InitializeConfigurationSplitting(projectDir);
+        InitializeOtherTemplates(projectDir);
         return this;
     }
 
@@ -204,6 +205,32 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
                 }
             } catch (Exception ex) {
                 logger?.WriteError($"Error removing EntityTypeConfiguration.t4 file: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public virtual void InitializeOtherTemplates(string projectDir) {
+        if (projectDir.IsNullOrWhiteSpace()) return;
+
+        List<(string src, FileInfo tgt)> templates = new() {
+            ("EntityFrameworkRuler.Design.Resources.Routine.t4", RuledTemplatedModelGenerator.GetRoutineFile(projectDir))
+        };
+        foreach (var (src, template) in templates) {
+            if (template?.Directory == null) return;
+#if !DEBUG
+            if (template.Exists) return;
+#endif
+
+            // we need to create the t4
+            var assembly = GetType().Assembly;
+            try {
+                var text = assembly.GetResourceText(src);
+                if (text.IsNullOrWhiteSpace()) return;
+                if (!template.Directory.FullName.EnsurePathExists()) return; // could not create directory
+                File.WriteAllText(template.FullName, text, Encoding.UTF8);
+            } catch (Exception ex) {
+                logger?.WriteError($"Error generating {template.Name} file: {ex.Message}");
             }
         }
     }

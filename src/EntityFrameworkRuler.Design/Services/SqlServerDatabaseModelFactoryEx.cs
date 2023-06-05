@@ -2,6 +2,7 @@
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using EntityFrameworkRuler.Design.Metadata;
 using EntityFrameworkRuler.Design.Services.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Design.Internal;

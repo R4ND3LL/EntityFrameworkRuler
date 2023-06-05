@@ -1,50 +1,32 @@
-﻿#pragma warning disable CS1591
-namespace EntityFrameworkRuler.Design.Services.Models;
+﻿using EntityFrameworkRuler.Design.Services.Models;
 
-public class Procedure : Routine { }
-
-public class Function : Routine {
-    public bool IsScalar { get; set; }
-}
+#pragma warning disable CS1591
+namespace EntityFrameworkRuler.Design.Metadata;
 
 /// <summary>
 /// Base object for functions and stored procedures.
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "DTO")]
-public class Routine : SqlObjectBase {
+public abstract class Routine : SqlObjectBase {
     public bool HasValidResultSet { get; set; }
-
     public int UnnamedColumnCount { get; set; }
-
-    public bool SupportsMultipleResultSet {
-        get {
-            return Results.Count > 1;
-        }
-    }
-
-    public bool NoResultSet {
-        get {
-            return Results.Count == 1 && Results[0].Count == 0 && HasValidResultSet;
-        }
-    }
+    public abstract bool IsScalar { get; set; }
+    public bool SupportsMultipleResultSet => Results.Count > 1;
+    public bool NoResultSet => Results.Count == 1 && Results[0].Count == 0 && HasValidResultSet;
 
     public string MappedType { get; set; }
-
     public List<ModuleParameter> Parameters { get; set; } = new List<ModuleParameter>();
     public List<List<ModuleResultElement>> Results { get; set; } = new List<List<ModuleResultElement>>();
 }
 
-public class SqlObjectBase {
-    public virtual string Name { get; set; }
-    public virtual string NewName { get; set; }
-    public virtual string Schema { get; set; }
-
-    public override string ToString() {
-        return $"{Schema}.{(NewName ?? Name)}";
-    }
+public sealed class Procedure : Routine {
+    public override bool IsScalar { get => false; set { } }
 }
 
-public class ModuleParameter {
+public sealed class Function : Routine {
+    public override bool IsScalar { get; set; }
+}
+public sealed class ModuleParameter {
     public string Name { get; set; }
     public string StoreType { get; set; }
     public int? Length { get; set; }
@@ -60,7 +42,7 @@ public class ModuleParameter {
     public string RoutineSchema { get; set; }
 }
 
-public class ModuleResultElement {
+public sealed class ModuleResultElement {
     public string Name { get; set; }
     public string StoreType { get; set; }
     public int Ordinal { get; set; }
