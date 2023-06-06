@@ -41,4 +41,20 @@
       <Folder Include="Context" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="ModelsScaffold\*" />
+      <Compile Remove="Context\CustomerCustomerDemoConfiguration.cs" />
+      <Compile Remove="Context\CustomerGreenConfiguration.cs" />
+      <Compile Remove="Context\CustomerRedConfiguration.cs" />
+      <Compile Remove="Context\EmployeeTerritoryConfiguration.cs" />
+      <Compile Remove="Context\NorthwindEntities.cs" />
+      <Compile Remove="Ten Most Expensive Products.cs" />
+      <Compile Remove="SalesByCategory.cs" />
+      <Compile Remove="Sales by Year.cs" />
+      <Compile Remove="Employee Sales by Country.cs" />
+      <Compile Remove="CustOrdersOrders.cs" />
+      <Compile Remove="CustOrdersDetail.cs" />
+      <Compile Remove="CustOrderHist.cs" />
+    </ItemGroup>
+
 </Project>

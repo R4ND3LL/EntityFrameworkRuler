@@ -9,7 +9,6 @@ public sealed class DatabaseModelEx : DatabaseModel {
     /// <inheritdoc />
     public DatabaseModelEx(DatabaseModel model) {
         ConsumeModel(model);
-        AddAnnotation(RulerAnnotations.Functions, Functions);
     }
 
     private void ConsumeModel(DatabaseModel model) {

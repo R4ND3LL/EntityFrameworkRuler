@@ -413,3 +413,4 @@ MigrationBackup/
 /src/Tests/NorthwindTestDesign/ModelsScaffold/Summary_of_Sales_by_Year.cs
 /src/Tests/NorthwindTestDesign/ModelsScaffold/Supplier.cs
 /src/Tests/NorthwindTestDesign/ModelsScaffold/Territory.cs
+/src/Tests/NorthwindTestDesign/ModelsScaffold/NorthwindEntitiesFunctions.cs
