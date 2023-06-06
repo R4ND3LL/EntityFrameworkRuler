@@ -18,16 +18,16 @@ internal class RuledTemplatedModelGenerator {
     private const string DbContextTemplate = "DbContext.t4";
     private const string EntityTypeTemplate = "EntityType.t4";
     private const string EntityTypeConfigurationTemplate = "EntityTypeConfiguration.t4";
-    private const string RoutineTemplate = "Routine.t4";
+    private const string FunctionTemplate = "Functions.t4";
 
 
     internal static FileInfo GetEntityTypeConfigurationFile(string projectDir) {
         if (projectDir.IsNullOrWhiteSpace()) return null;
         return new(Path.Combine(projectDir!, TemplatesDirectory, EntityTypeConfigurationTemplate));
     }
-    internal static FileInfo GetRoutineFile(string projectDir) {
+    internal static FileInfo GetFunctionFile(string projectDir) {
         if (projectDir.IsNullOrWhiteSpace()) return null;
-        return new(Path.Combine(projectDir!, TemplatesDirectory, RoutineTemplate));
+        return new(Path.Combine(projectDir!, TemplatesDirectory, FunctionTemplate));
     }
 
     /// <summary>

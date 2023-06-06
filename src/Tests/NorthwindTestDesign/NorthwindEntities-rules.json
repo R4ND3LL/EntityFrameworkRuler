@@ -115,8 +115,7 @@
           "IncludeUnknownColumns": false,
           "Properties": [
             {
-              "Name": "EducationLevel\u00AA",
-              "PropertyName": "void2"
+              "Name": "EducationLevel"
             }
           ]
         },
@@ -1314,6 +1313,121 @@
               "PropertyName": "TerritoryId"
             }
           ]
+        }
+      ],
+      "Functions": [
+        {
+          "Name": "CustOrderHist",
+          "Parameters": [
+            {
+              "Name": "CustomerID",
+              "TypeName": "String"
+            }
+          ],
+          "ResultTypeName": "NorthwindModel.CustOrderHist_Result"
+        },
+        {
+          "Name": "CustOrdersDetail",
+          "Parameters": [
+            {
+              "Name": "OrderID",
+              "TypeName": "Int32"
+            }
+          ],
+          "ResultTypeName": "NorthwindModel.CustOrdersDetail_Result"
+        },
+        {
+          "Name": "CustOrdersOrders",
+          "Parameters": [
+            {
+              "Name": "CustomerID",
+              "TypeName": "String"
+            }
+          ],
+          "ResultTypeName": "NorthwindModel.CustOrdersOrders_Result"
+        },
+        {
+          "Name": "Employee Sales by Country",
+          "NewName": "Employee_Sales_by_Country",
+          "Parameters": [
+            {
+              "Name": "Beginning_Date",
+              "TypeName": "DateTime"
+            },
+            {
+              "Name": "Ending_Date",
+              "TypeName": "DateTime"
+            }
+          ],
+          "ResultTypeName": "NorthwindModel.Employee_Sales_by_Country_Result"
+        },
+        {
+          "Name": "fn_diagramobjects",
+          "NotMapped": true,
+          "Parameters": []
+        },
+        {
+          "Name": "Sales by Year",
+          "NewName": "Sales_by_Year",
+          "Parameters": [
+            {
+              "Name": "Beginning_Date",
+              "TypeName": "DateTime"
+            },
+            {
+              "Name": "Ending_Date",
+              "TypeName": "DateTime"
+            }
+          ],
+          "ResultTypeName": "NorthwindModel.Sales_by_Year_Result"
+        },
+        {
+          "Name": "SalesByCategory",
+          "Parameters": [
+            {
+              "Name": "CategoryName",
+              "TypeName": "String"
+            },
+            {
+              "Name": "OrdYear",
+              "TypeName": "String"
+            }
+          ],
+          "ResultTypeName": "NorthwindModel.SalesByCategory_Result"
+        },
+        {
+          "Name": "sp_helpdiagramdefinition",
+          "Parameters": [
+            {
+              "Name": "diagramname",
+              "TypeName": "String"
+            },
+            {
+              "Name": "owner_id",
+              "TypeName": "Int32"
+            }
+          ],
+          "ResultTypeName": "NorthwindModel.sp_helpdiagramdefinition_Result"
+        },
+        {
+          "Name": "sp_helpdiagrams",
+          "Parameters": [
+            {
+              "Name": "diagramname",
+              "TypeName": "String"
+            },
+            {
+              "Name": "owner_id",
+              "TypeName": "Int32"
+            }
+          ],
+          "ResultTypeName": "NorthwindModel.sp_helpdiagrams_Result"
+        },
+        {
+          "Name": "Ten Most Expensive Products",
+          "NewName": "TenMostExpensiveProducts",
+          "Parameters": [],
+          "ResultTypeName": "NorthwindModel.TenMostExpensiveProductsResult"
         }
       ]
     }

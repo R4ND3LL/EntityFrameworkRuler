@@ -214,7 +214,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         if (projectDir.IsNullOrWhiteSpace()) return;
 
         List<(string src, FileInfo tgt)> templates = new() {
-            ("EntityFrameworkRuler.Design.Resources.Routine.t4", RuledTemplatedModelGenerator.GetRoutineFile(projectDir))
+            ("EntityFrameworkRuler.Design.Resources.Functions.t4", RuledTemplatedModelGenerator.GetFunctionFile(projectDir))
         };
         foreach (var (src, template) in templates) {
             if (template?.Directory == null) return;

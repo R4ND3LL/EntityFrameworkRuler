@@ -41,31 +41,31 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
 
     /// <summary> The underlying table for this entity.  May or may not have been omitted yet. </summary>
-    public DatabaseTableNode DatabaseTable { get; private set; }
+    public ScaffoldedTableTrackerItem ScaffoldedTable { get; private set; }
 
     /// <summary> The entity type builder used to scaffold this table.  Presence of this value implies the entity was not omitted. </summary>
     public EntityTypeBuilder Builder { get; private set; }
 
     /// <summary> True if this entity has been scaffolded with an entity builder.
     /// Note, will be false if table was identified but entity omitted. </summary>
-    public bool IsAlreadyScaffolded => !IsOmitted && Builder != null && DatabaseTable != null;
+    public bool IsAlreadyScaffolded => !IsOmitted && Builder != null && ScaffoldedTable != null;
 
     /// <summary> True if this entity has been mapped to a database table (or view).  May or may not have been omitted. </summary>
-    public bool IsMappedToTable => DatabaseTable != null;
+    public bool IsMappedToTable => ScaffoldedTable != null;
 
     /// <inheritdoc />
     public override string GetFinalName() => Builder?.Metadata.Name ?? base.GetFinalName();
 
     /// <summary> Link this entity rule to the scaffolded entity type builder. </summary>
-    public void MapTo(EntityTypeBuilder builder, DatabaseTableNode databaseTable) {
+    public void MapTo(EntityTypeBuilder builder, ScaffoldedTableTrackerItem scaffoldedTable) {
         Debug.Assert(Builder == null, "Builder was previously set");
         Debug.Assert(Rule.ShouldMap(), "Entity should not be scaffolded");
-        if (DatabaseTable == null) {
-            if (databaseTable != null) MapTo(databaseTable);
-            if (DatabaseTable == null) throw new("Cannot set entity builder without DatabaseTable");
+        if (ScaffoldedTable == null) {
+            if (scaffoldedTable != null) MapTo(scaffoldedTable);
+            if (ScaffoldedTable == null) throw new("Cannot set entity builder without ScaffoldedTable");
         } else {
-            if (databaseTable != null && !ReferenceEquals(DatabaseTable, databaseTable))
-                throw new("DatabaseTable instance mismatch");
+            if (scaffoldedTable != null && !ReferenceEquals(ScaffoldedTable, scaffoldedTable))
+                throw new("ScaffoldedTable instance mismatch");
         }
 
         Builder = builder;
@@ -74,21 +74,21 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
     }
 
     /// <summary> Link this entity rule to the underlying database table.  This will be linked whether the entity is omitted or not. </summary>
-    public void MapTo(DatabaseTableNode table) {
-        Debug.Assert(DatabaseTable == null);
-        DatabaseTable = table;
+    public void MapTo(ScaffoldedTableTrackerItem table) {
+        Debug.Assert(ScaffoldedTable == null);
+        ScaffoldedTable = table;
         table.MapTo(this);
         UpdateRuleMetadata();
     }
 
     private void UpdateRuleMetadata() {
-        if (DatabaseTable == null) return;
-        Rule.Name = DatabaseTable.Name;
+        if (ScaffoldedTable == null) return;
+        Rule.Name = ScaffoldedTable.Name;
         if (Builder == null) return;
 
         // can only update expected name if it wasn't already influenced by dynamic naming or NewName
         if (Rule.NewName.IsNullOrWhiteSpace() && !Parent.IsDynamicNamingTables &&
-            (Rule.EntityName.HasNonWhiteSpace() || Builder.Metadata.Name != (DatabaseTable?.Name ?? Rule.Name)))
+            (Rule.EntityName.HasNonWhiteSpace() || Builder.Metadata.Name != (ScaffoldedTable?.Name ?? Rule.Name)))
             Rule.EntityName = Builder.Metadata.Name;
     }
 

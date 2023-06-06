@@ -4,7 +4,10 @@
 <#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Relational" #>
 <#@ assembly name="Microsoft.Extensions.DependencyInjection.Abstractions" #>
-<#@ parameter name="Routine" type="EntityFrameworkRuler.Design.Metadata.Routine" #>
+
+
+
+<#@ parameter name="Model" type="EntityFrameworkRuler.Design.Metadata.ModelEx" #>
 <#@ parameter name="Options" type="Microsoft.EntityFrameworkCore.Scaffolding.ModelCodeGenerationOptions" #>
 <#@ parameter name="NamespaceHint" type="System.String" #>
 <#@ parameter name="ProjectDefaultNamespace" type="System.String" #>
@@ -20,6 +23,7 @@
 <#@ import namespace="EntityFrameworkRuler.Design.Metadata" #>
 <#
     System.Diagnostics.Debugger.Launch();
+    System.Diagnostics.Debugger.Break();
     
     if (!ProductInfo.GetVersion().StartsWith("7.0"))
     {
@@ -53,32 +57,45 @@ namespace <#= NamespaceHint #>;
 <#
     }
 #>
-public partial class <#= Routine.Name #>Configuration : IEntityTypeConfiguration<<#= Routine.Name #>>
+public partial class <#= Options.ContextName #>Functions : I{Options.ContextName}Functions
 {
-    public void Configure(EntityTypeBuilder<<#= Routine.Name #>> entity)
+    private readonly <#= Options.ContextName #> _context; 
+   
+    public {Options.ContextName}Functions({Options.ContextName} context)
     {
+        _context = context;
+    }
+
+
+   
 <#
     var anyConfiguration = false;
-
     StringBuilder mainEnvironment;
-    if (Routine?.Name!=null)
-    {
-        // Save all previously generated code, and start generating into a new temporary environment
-        mainEnvironment = GenerationEnvironment;
-        GenerationEnvironment = new StringBuilder();
-
-        bool anyEntityTypeConfiguration = true;
-
-        // If any significant code was generated, append it to the main environment
-        if (anyEntityTypeConfiguration)
-        {
-            mainEnvironment.Append(GenerationEnvironment);
+    foreach (var function in Model.GetFunctions()) {
+        #><#= function.CommandText #><#
+  
+        if (function?.Name!=null) {
             anyConfiguration = true;
-        }
+            // Save all previously generated code, and start generating into a new temporary environment
+            mainEnvironment = GenerationEnvironment;
+            GenerationEnvironment = new StringBuilder();
 
-        // Resume generating code into the main environment
-        GenerationEnvironment = mainEnvironment;
-    }
+            bool anyFunctionConfiguration = true;
+
+            // If any significant code was generated, append it to the main environment
+            if (anyFunctionConfiguration)
+            {
+                mainEnvironment.Append(GenerationEnvironment);
+                anyConfiguration = true;
+            }
+
+            // Resume generating code into the main environment
+            GenerationEnvironment = mainEnvironment;
+        }
+    } 
+    
+
+
 
     if (anyConfiguration)
     {
@@ -88,7 +105,7 @@ public partial class <#= Routine.Name #>Configuration : IEntityTypeConfiguration
         OnConfigurePartial(entity);
     }
 
-    partial void OnConfigurePartial(EntityTypeBuilder<<#= Routine.Name #>> modelBuilder);
+    
 }
 <#
     mainEnvironment = GenerationEnvironment;
@@ -104,4 +121,6 @@ using <#= ns #>;
     WriteLine("");
 
     GenerationEnvironment.Append(mainEnvironment);
+    
+    
 #>

@@ -15,6 +15,7 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
     /// <summary> Creates a schema rule </summary>
     public SchemaRule() {
         entities = Observable ? new ObservableCollection<EntityRule>() : new List<EntityRule>();
+        functions = Observable ? new ObservableCollection<FunctionRule>() : new List<FunctionRule>();
     }
 
     /// <summary> The schema name this rule applies to.  Required. </summary>
@@ -75,8 +76,18 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
     [DisplayName("Column Pattern Replace With"), Category("Naming"), Description("Column pattern replace with.")]
     public string ColumnPatternReplaceWith { get; set; }
 
+    /// <summary> Function regex pattern </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 11)]
+    [DisplayName("Function Regex Pattern"), Category("Naming"), Description("Function regex pattern.")]
+    public string FunctionRegexPattern { get; set; }
+
+    /// <summary> Function pattern replace with </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 12)]
+    [DisplayName("Function Pattern Replace With"), Category("Naming"), Description("Function pattern replace with.")]
+    public string FunctionPatternReplaceWith { get; set; }
+    
     /// <summary> Optional namespace used when identifying classes.  Setting this will help to positively identify ambiguously named classes. </summary>
-    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 11)]
+    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 13)]
     [DisplayName("Namespace"), Category("Mapping"),
      Description(
          "Optional namespace used when identifying classes.  Setting this will help to positively identify ambiguously named classes.")]
@@ -85,7 +96,7 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
     private IList<EntityRule> entities;
 
     /// <summary> The table rules to apply to this schema. </summary>
-    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 12)]
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 14)]
     [DisplayName("Entities"), Category("Entities|Entities"), Description("The entity rules to apply to this schema.")]
     public IList<EntityRule> Entities {
         get => entities;
@@ -94,7 +105,18 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
 
     /// <summary> Serialization backward compatibility for Tables -> Entities. </summary>
     [Obsolete("Use Entities instead"), Browsable(false)]
+    // ReSharper disable once UnusedMember.Global
     public IList<EntityRule> Tables { get => Entities; set => Entities = value; }
+    
+    private IList<FunctionRule> functions;
+
+    /// <summary> The function rules to apply to this schema. </summary>
+    [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 15)]
+    [DisplayName("Functions"), Category("Functions|Functions"), Description("The function rules to apply to this schema.")]
+    public IList<FunctionRule> Functions {
+        get => functions;
+        set => UpdateCollection(ref functions, value);
+    }
 
     /// <inheritdoc />
     protected override string GetDbName() => SchemaName.EmptyIfNullOrWhitespace();

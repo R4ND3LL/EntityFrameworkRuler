@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using EntityFrameworkRuler.Design.Metadata;
+using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using EntityFrameworkRuler.Design.Services.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Design.Internal;
@@ -66,7 +67,7 @@ AND (
 """;
 
         RoutineFactory procedureFactory = null;
-        SqlServerFunctionFactory functionFactory = null;
+        RoutineFactory functionFactory = null;
         {
             using var reader = command.ExecuteReader();
 
@@ -82,55 +83,51 @@ AND (
                 var isScalar = reader.GetBoolean(2);
                 var type = reader.GetString(3);
                 var isProcedure = string.Equals(type, "PROCEDURE", StringComparison.OrdinalIgnoreCase);
-                var routineFactory = isProcedure
+                var factory = isProcedure
                     ? procedureFactory ??= (RoutineFactory)serviceProvider.GetConcrete<SqlServerProcedureFactory>()
                     : functionFactory ??= serviceProvider.GetConcrete<SqlServerFunctionFactory>();
-                var routine = routineFactory.Create(isScalar);
+                var function = factory.Create(isScalar);
 
-                routine.Schema = schema;
-                routine.Name = name;
-                routine.HasValidResultSet = true;
+                function.Schema = schema;
+                function.Name = name;
+                function.HasValidResultSet = true;
 
-                // var existing = model.Routines.Any(o => o.Schema == routine.Schema && o.Name == routine.Name);
-                // if (existing != null) routine.MappedType = existing;
+                // var existing = model.Functions.Any(o => o.Schema == dbFunction.Schema && o.Name == dbFunction.Name);
+                // if (existing != null) dbFunction.MappedType = existing;
 
-                if (allParameters.TryGetValue(key, out var moduleParameters)) routine.Parameters = moduleParameters;
+                if (allParameters.TryGetValue(key, out var moduleParameters)) function.Parameters = moduleParameters;
 
-                if (isProcedure) routine.Parameters.Add(GetReturnParameter());
-                
-                model.Routines.Add(routine);
+                if (isProcedure) function.Parameters.Add(GetReturnParameter());
+
+                model.Functions.Add(function);
             }
         }
-        foreach (var routine in model.Routines.ToArray()) {
-            var function = routine as Function;
-            var procedure = routine as Procedure;
-            var isProcedure = procedure != null;
-            var routineFactory = isProcedure ? procedureFactory : functionFactory;
-            var isScalar = function != null && function.IsScalar;
+        foreach (var function in model.Functions.ToArray()) {
+            var isProcedure = function.FunctionType == DatabaseFunctionType.StoredProcedure;
+           var factory = isProcedure ? procedureFactory : functionFactory;
 
-            if (!isScalar)
+            if (!function.IsScalar)
                 try {
-                    routine.Results.AddRange(routineFactory.GetResultElementLists(connection, routine, true));
+                    function.Results.AddRange(factory.GetResultElementLists(connection, function, true));
                 } catch (Exception ex) {
-                    routine.HasValidResultSet = false;
-                    routine.Results = new() {
-                        new(),
-                    };
+                    function.HasValidResultSet = false;
+                    function.Results.Clear();
+                    function.Results.Add(new());
                     reporter.WriteError(
-                        $"Unable to get result set shape for {routine.GetType().Name.ToLower(CultureInfo.InvariantCulture)} '{routine.Schema}.{routine.Name}'. {ex.Message}.");
+                        $"Unable to get result set shape for {function.GetType().Name.ToLower(CultureInfo.InvariantCulture)} '{function.Schema}.{function.Name}'. {ex.Message}.");
                 }
 
             var failure = false;
-            if (routine is Function func
-                && func.IsScalar
-                && func.Parameters.Count > 0
-                && func.Parameters.Any(p => p.StoreType == "table type")) {
-                reporter.WriteError($"Unable to scaffold {routine.GetType().Name} '{routine.Schema}.{routine.Name}' as it has TVP parameters.");
+            if (function.FunctionType == DatabaseFunctionType.Function
+                && function.IsScalar
+                && function.Parameters.Count > 0
+                && function.Parameters.Any(p => p.StoreType == "table type")) {
+                reporter.WriteError($"Unable to scaffold {function.GetType().Name} '{function.Schema}.{function.Name}' as it has TVP parameters.");
                 failure = true;
             }
 
             if (!failure)
-                foreach (var resultElement in routine.Results) {
+                foreach (var resultElement in function.Results) {
                     var duplicates = resultElement.GroupBy(x => x.Name)
                         .Where(g => g.Count() > 1)
                         .Select(y => y.Key)
@@ -138,17 +135,17 @@ AND (
 
                     if (duplicates.Any()) {
                         reporter.WriteError(
-                            $"Unable to scaffold {routine.GetType().Name} '{routine.Schema}.{routine.Name}' as it has duplicate result column names: '{duplicates[0]}'.");
+                            $"Unable to scaffold {function.GetType().Name} '{function.Schema}.{function.Name}' as it has duplicate result column names: '{duplicates[0]}'.");
                         failure = true;
                     }
                 }
 
-            if (!failure && routine.UnnamedColumnCount > 0) {
-                reporter.WriteError($"{routine.GetType().Name} '{routine.Schema}.{routine.Name}' has {routine.UnnamedColumnCount} un-named columns.");
+            if (!failure && function.UnnamedColumnCount > 0) {
+                reporter.WriteError($"{function.GetType().Name} '{function.Schema}.{function.Name}' has {function.UnnamedColumnCount} un-named columns.");
                 failure = true;
             }
 
-            if (failure) model.Routines.Remove(routine);
+            if (failure) model.Functions.Remove(function);
         }
 
         foreach (var table in tablesToSelect.Except(selectedTables, StringComparer.OrdinalIgnoreCase)) reporter.WriteInformation($"Procedure not found: {table}");
@@ -165,9 +162,9 @@ AND (
         return false;
     }
 
-    private static Dictionary<string, List<ModuleParameter>> GetParameters(DbConnection connection) {
+    private static Dictionary<string, List<DatabaseFunctionParameter>> GetParameters(DbConnection connection) {
         using var dtResult = new DataTable();
-        var result = new List<ModuleParameter>();
+        var result = new List<DatabaseFunctionParameter>();
 
         // Validate this - based on https://stackoverflow.com/questions/20115881/how-to-get-stored-procedure-parameters-details/41330791
         using var command = connection.CreateCommand();
@@ -186,8 +183,8 @@ AND (
                     'TypeName' = QUOTENAME(SCHEMA_NAME(t.schema_id)) + '.' + QUOTENAME(TYPE_NAME(p.user_type_id)),
                 	'TypeSchema' = t.schema_id,
                 	'TypeId' = p.user_type_id,
-                    'RoutineName' = OBJECT_NAME(p.object_id),
-                    'RoutineSchema' = OBJECT_SCHEMA_NAME(p.object_id),
+                    'FunctionName' = OBJECT_NAME(p.object_id),
+                    'FunctionSchema' = OBJECT_SCHEMA_NAME(p.object_id),
                     'Collation'   = convert(sysname, case when p.system_type_id in (35, 99, 167, 175, 231, 239) then ServerProperty('collation') end)
                     from sys.parameters p
                 	LEFT JOIN sys.table_types t ON t.user_type_id = p.user_type_id
@@ -195,45 +192,45 @@ AND (
                 """;
 
         using var reader = command.ExecuteReader();
-        Dictionary<string, List<ModuleParameter>> allParameters = null;
+        Dictionary<string, List<DatabaseFunctionParameter>> allParameters = null;
         while (reader.Read()) {
             var parameterName = reader.GetString(0);
             if (parameterName.IsNullOrWhiteSpace()) continue;
             if (parameterName!.StartsWith("@", StringComparison.Ordinal)) parameterName = parameterName[1..];
 
-            var parameter = new ModuleParameter() {
+            var parameter = new DatabaseFunctionParameter() {
                 Name = parameterName,
                 StoreType = reader.GetString(1),
                 Length = GetNullableInt32(2),
                 Precision = GetNullableInt32(3),
                 Scale = GetNullableInt32(4),
-                Output = reader.GetBoolean(6),
+                IsOutput = reader.GetBoolean(6),
                 TypeName = reader.IsDBNull(7) ? null : reader.GetString(7),
                 TypeSchema = GetNullableInt32(8),
                 TypeId = GetNullableInt32(9),
-                RoutineName = reader.GetString(10),
-                RoutineSchema = reader.GetString(11),
-                Nullable = true,
+                FunctionName = reader.GetString(10),
+                FunctionSchema = reader.GetString(11),
+                IsNullable = true,
             };
 
             result.Add(parameter);
         }
 
 
-        return result.GroupBy(x => $"{x.RoutineSchema}.{x.RoutineName}").ToDictionary(g => g.Key, g => g.ToList(), StringComparer.InvariantCulture);
+        return result.GroupBy(x => $"{x.FunctionSchema}.{x.FunctionName}").ToDictionary(g => g.Key, g => g.ToList(), StringComparer.InvariantCulture);
 
         int? GetNullableInt32(int i) {
             return reader.IsDBNull(i) ? null : reader.GetInt32(i);
         }
     }
 
-    private static ModuleParameter GetReturnParameter() {
+    private static DatabaseFunctionParameter GetReturnParameter() {
         // Add parameter to hold the standard return value
         return new() {
             Name = "returnValue",
             StoreType = "int",
-            Output = true,
-            Nullable = false,
+            IsOutput = true,
+            IsNullable = false,
             IsReturnValue = true,
         };
     }
@@ -246,14 +243,14 @@ internal class SqlServerFunctionFactory : RoutineFactory {
         this.reporter = reporter;
     }
 
-    public override Routine Create(bool isScalar) {
-        return new Function { IsScalar = isScalar };
+    public override DatabaseFunction Create(bool isScalar) {
+        return new DatabaseFunction { IsScalar = isScalar, FunctionType = DatabaseFunctionType.Function };
     }
 
-    public override List<List<ModuleResultElement>> GetResultElementLists(DbConnection connection, Routine routine, bool multipleResults) {
-        if (routine is null) throw new ArgumentNullException(nameof(routine));
+    public override List<List<DatabaseFunctionResultElement>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
+        if (dbFunction is null) throw new ArgumentNullException(nameof(dbFunction));
 
-        var list = new List<ModuleResultElement>();
+        var list = new List<DatabaseFunctionResultElement>();
 
         using var command = connection.CreateCommand();
         command.CommandText = $@"
@@ -263,12 +260,12 @@ SELECT
     c.column_id AS column_ordinal,
     c.is_nullable
 FROM sys.columns c
-WHERE object_id = OBJECT_ID('{routine.Schema}.{routine.Name}');";
+WHERE object_id = OBJECT_ID('{dbFunction.Schema}.{dbFunction.Name}');";
 
         using var reader = command.ExecuteReader();
 
         while (reader.Read()) {
-            var parameter = new ModuleResultElement() {
+            var parameter = new DatabaseFunctionResultElement() {
                 Name = reader.GetString(0) is { } s && !string.IsNullOrEmpty(s) ? s : $"Col{list.Count + 1}",
                 StoreType = reader.GetString(1),
                 Ordinal = reader.GetInt32(2),
@@ -278,7 +275,7 @@ WHERE object_id = OBJECT_ID('{routine.Schema}.{routine.Name}');";
             list.Add(parameter);
         }
 
-        var result = new List<List<ModuleResultElement>> {
+        var result = new List<List<DatabaseFunctionResultElement>> {
             list,
         };
 
@@ -293,28 +290,28 @@ internal class SqlServerProcedureFactory : RoutineFactory {
         this.reporter = reporter;
     }
 
-    public override Routine Create(bool isScalar) {
-        return (Routine)new Procedure();
+    public override DatabaseFunction Create(bool isScalar) {
+        return new() { FunctionType = DatabaseFunctionType.StoredProcedure };
     }
 
-    public override List<List<ModuleResultElement>> GetResultElementLists(DbConnection connection, Routine routine, bool multipleResults) {
+    public override List<List<DatabaseFunctionResultElement>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
         if (connection is null) throw new ArgumentNullException(nameof(connection));
 
-        if (routine is null) throw new ArgumentNullException(nameof(routine));
+        if (dbFunction is null) throw new ArgumentNullException(nameof(dbFunction));
 
-        return GetAllResultSets(connection, routine, !multipleResults);
+        return GetAllResultSets(connection, dbFunction, !multipleResults);
     }
 
-    private static List<List<ModuleResultElement>> GetAllResultSets(DbConnection connection, Routine routine, bool singleResult) {
-        var result = new List<List<ModuleResultElement>>();
+    private static List<List<DatabaseFunctionResultElement>> GetAllResultSets(DbConnection connection, DatabaseFunction dbFunction, bool singleResult) {
+        var result = new List<List<DatabaseFunctionResultElement>>();
         using var sqlCommand = connection.CreateCommand();
 
 #pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        sqlCommand.CommandText = $"[{routine.Schema}].[{routine.Name}]";
+        sqlCommand.CommandText = $"[{dbFunction.Schema}].[{dbFunction.Name}]";
 #pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
         sqlCommand.CommandType = CommandType.StoredProcedure;
 
-        var parameters = routine.Parameters.Take(routine.Parameters.Count - 1);
+        var parameters = dbFunction.Parameters.Take(dbFunction.Parameters.Count - 1);
 
         foreach (var parameter in parameters) {
             var param = new SqlParameter("@" + parameter.Name, DBNull.Value);
@@ -333,7 +330,7 @@ internal class SqlServerProcedureFactory : RoutineFactory {
         do {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.datatablereader.getschematable
             var schemaTable = schemaReader.GetSchemaTable();
-            var list = new List<ModuleResultElement>();
+            var list = new List<DatabaseFunctionResultElement>();
 
             if (schemaTable == null) break;
 
@@ -341,7 +338,7 @@ internal class SqlServerProcedureFactory : RoutineFactory {
 
             foreach (DataRow row in schemaTable.Rows)
                 if (row != null) {
-                    var name = row["ColumnName"].ToString();
+                    var name = row[0].ToString();
                     if (string.IsNullOrWhiteSpace(name)) {
                         unnamedColumnCount++;
                         continue;
@@ -371,7 +368,7 @@ internal class SqlServerProcedureFactory : RoutineFactory {
             // If the result set only contains un-named columns
             if (schemaTable.Rows.Count > 0 && schemaTable.Rows.Count == unnamedColumnCount) throw new InvalidOperationException($"Only un-named result columns in procedure");
 
-            if (unnamedColumnCount > 0) routine.UnnamedColumnCount += unnamedColumnCount;
+            if (unnamedColumnCount > 0) dbFunction.UnnamedColumnCount += unnamedColumnCount;
 
             result.Add(list);
         } while (schemaReader.NextResult() && !singleResult);
@@ -379,7 +376,7 @@ internal class SqlServerProcedureFactory : RoutineFactory {
         return result;
     }
 
-    private static DataTable GetDataTableFromSchema(ModuleParameter parameter, DbConnection connection) {
+    private static DataTable GetDataTableFromSchema(DatabaseFunctionParameter parameter, DbConnection connection) {
         var userType = new SqlParameter {
             Value = parameter.TypeId,
             ParameterName = "@userTypeId",
@@ -413,6 +410,6 @@ internal class SqlServerProcedureFactory : RoutineFactory {
 }
 
 internal abstract class RoutineFactory {
-    public abstract Routine Create(bool isScalar);
-    public abstract List<List<ModuleResultElement>> GetResultElementLists(DbConnection connection, Routine routine, bool multipleResults);
+    public abstract DatabaseFunction Create(bool isScalar);
+    public abstract List<List<DatabaseFunctionResultElement>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults);
 }

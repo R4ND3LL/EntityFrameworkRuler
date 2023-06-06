@@ -62,7 +62,7 @@ public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
         designTimeRuleLoader.SetCodeGenerationOptions(codeOptions).SetReverseEngineerOptions(modelOptions);
 
         // IDatabaseModelFactory.Create() is called within, which is the actual Reverse Engineer process that builds the
-        // DatabaseTable objects from the database.  The DatabaseModel is then converted to an IModel by
+        // ScaffoldedTable objects from the database.  The DatabaseModel is then converted to an IModel by
         // IScaffoldingModelFactory.Create(), and then code generated.
         var m = base.ScaffoldModel(connectionString, databaseOptions, modelOptions, codeOptions);
         return m;

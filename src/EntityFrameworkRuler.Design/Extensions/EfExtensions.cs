@@ -115,7 +115,7 @@ internal static class EfExtensions {
         if (tableIdentifier == default || string.IsNullOrEmpty(tableIdentifier.Name)) return null;
         var tableColumnName = propertyType.GetColumnName(tableIdentifier);
         if (tableColumnName.IsNullOrEmpty()) {
-            tableColumnName = propertyType.FindAnnotation("Relational:ColumnName")?.Value as string;
+            tableColumnName = propertyType.FindAnnotation("Relational:Name")?.Value as string;
         }
 
         return tableColumnName;
@@ -128,7 +128,7 @@ internal static class EfExtensions {
         if (tableIdentifier == default || string.IsNullOrEmpty(tableIdentifier.Name)) return null;
         var tableColumnName = propertyType.GetColumnName(tableIdentifier);
         if (tableColumnName.IsNullOrEmpty()) {
-            tableColumnName = propertyType.FindAnnotation("Relational:ColumnName")?.Value as string;
+            tableColumnName = propertyType.FindAnnotation("Relational:Name")?.Value as string;
         }
 
         return tableColumnName;
@@ -340,10 +340,10 @@ internal static class EfExtensions {
     }
 
     /// <summary>
-    ///     Check whether an DatabaseTable could be considered a simple many-to-many join table, often suppressed dy EF.
+    ///     Check whether an ScaffoldedTable could be considered a simple many-to-many join table, often suppressed dy EF.
     /// </summary>
-    /// <param name="table">The DatabaseTable to check.</param>
-    /// <returns><see langword="true" /> if the DatabaseTable could be considered a join table.</returns>
+    /// <param name="table">The ScaffoldedTable to check.</param>
+    /// <returns><see langword="true" /> if the ScaffoldedTable could be considered a join table.</returns>
     public static bool IsSimpleManyToManyJoinEntityType(this DatabaseTable table) {
         //if (entityType.GetNavigations().Any() || entityType.GetSkipNavigations().Any()) return false;
         var primaryKey = table.PrimaryKey;
@@ -483,7 +483,7 @@ internal static class EfExtensions {
 
     public static IList<DatabaseColumn> GetTableColumns(this DatabaseTable databaseTable, string[] props, StringComparer comparer) {
         if (databaseTable == null || props.IsNullOrEmpty()) return ArraySegment<DatabaseColumn>.Empty;
-        //if (OmittedTables.Contains(databaseTable.GetFullName())) return ArraySegment<DatabaseColumn>.Empty;
+        //if (OmittedTables.Contains(scaffoldedTable.GetFullName())) return ArraySegment<DatabaseColumn>.Empty;
         var cols = props.Select(o => databaseTable.Columns.FirstOrDefault(c => comparer.Compare(c.Name, o) == 0)).ToArray();
         if (cols.Length == 0 || cols.Any(o => o == null)) return ArraySegment<DatabaseColumn>.Empty;
         return cols;

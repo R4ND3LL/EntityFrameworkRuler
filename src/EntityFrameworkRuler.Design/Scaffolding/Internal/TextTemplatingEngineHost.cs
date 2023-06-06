@@ -99,6 +99,8 @@ public class TextTemplatingEngineHost : ITextTemplatingSessionHost, ITextTemplat
         }
 
         try {
+            const string projectdirOutputpath = "$(ProjectDir)$(OutputPath)";
+            if (assemblyReference.StartsWith(projectdirOutputpath)) assemblyReference = assemblyReference.Substring(projectdirOutputpath.Length);
             return System.Reflection.Assembly.Load(assemblyReference).Location;
         } catch { }
 

@@ -18,6 +18,9 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using IInterceptor = Castle.DynamicProxy.IInterceptor;
 using EntityFrameworkRuler.Common.Annotations;
 using EntityFrameworkRuler.Design.Metadata;
+using EntityFrameworkRuler.Design.Metadata.Builders;
+using EntityFrameworkRuler.Design.Scaffolding.Internal;
+using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using Humanizer;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -45,6 +48,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     private readonly ICandidateNamingService candidateNamingService;
     private readonly IPluralizer pluralizer;
     private readonly ICSharpUtilities cSharpUtilities;
+    private readonly IScaffoldingTypeMapper scaffoldingTypeMapper;
     private readonly IEnumerable<IRuledModelCodeGenerator> ruledModelCodeGenerators;
     private DbContextRuleNode dbContextRule;
     private readonly RelationalScaffoldingModelFactory proxy;
@@ -58,6 +62,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected readonly ScaffoldedTableTracker ScaffoldTracker;
 
+    private Dictionary<IFunction, CSharpUniqueNamer<DatabaseFunctionParameter>> parameterNamers = null!;
+    private RuledCSharpUniqueNamer<DatabaseFunction, FunctionRule> functionNamer;
     private RuledCSharpUniqueNamer<DatabaseTable, EntityRule> tableNamer;
     private RuledCSharpUniqueNamer<DatabaseTable, EntityRule> dbSetNamer;
     private ModelReverseEngineerOptions options;
@@ -95,6 +101,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         ICandidateNamingService candidateNamingService,
         IPluralizer pluralizer,
         ICSharpUtilities cSharpUtilities,
+        IScaffoldingTypeMapper scaffoldingTypeMapper,
         IEnumerable<IRuledModelCodeGenerator> ruledModelCodeGenerators) {
         this.reporter = reporter;
         this.designTimeRuleLoader = designTimeRuleLoader;
@@ -102,6 +109,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         this.candidateNamingService = candidateNamingService;
         this.pluralizer = pluralizer;
         this.cSharpUtilities = cSharpUtilities;
+        this.scaffoldingTypeMapper = scaffoldingTypeMapper;
         this.ruledModelCodeGenerators = ruledModelCodeGenerators;
         ScaffoldTracker = new(reporter);
         // avoid runtime binding errors against EF6 by using reflection and a proxy to access the resources we need.
@@ -121,10 +129,10 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         // protected virtual void AddNavigationProperties(IMutableForeignKey foreignKey)
         addNavigationPropertiesMethod = GetMethodOrLog("AddNavigationProperties", o => t.GetMethod<IMutableForeignKey>(o));
 
-        // protected virtual string GetEntityTypeName(DatabaseTable table)
+        // protected virtual string GetEntityTypeName(ScaffoldedTable table)
         getEntityTypeNameMethod = GetMethodOrLog("GetEntityTypeName", o => t.GetMethod<DatabaseTable>(o));
 
-        // protected virtual EntityTypeBuilder? VisitTable(ModelBuilder modelBuilder, DatabaseTable table)
+        // protected virtual EntityTypeBuilder? VisitTable(ModelBuilder modelBuilder, ScaffoldedTable table)
         visitTableMethod = GetMethodOrLog("VisitTable", o => t.GetMethod<ModelBuilder, DatabaseTable>(o));
 
         // private static void AssignOnDeleteAction(DatabaseForeignKey databaseForeignKey, IMutableForeignKey foreignKey)
@@ -150,6 +158,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         Func<DatabaseModel, ModelReverseEngineerOptions, IModel> baseCall) {
         options = ops;
         generatingDatabaseModel = databaseModel;
+        Func<DatabaseFunction, NamedElementState<DatabaseFunction, FunctionRule>> functionNameAction;
         Func<DatabaseTable, NamedElementState<DatabaseTable, EntityRule>> tableNameAction;
         Func<DatabaseTable, NamedElementState<DatabaseTable, EntityRule>> dbSetNameAction;
 
@@ -165,26 +174,33 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         // However it is less likely there will be any need for this measure to protect nav names.
 
         if (ops.UseDatabaseNames) {
+            functionNameAction = t => new(t.Name, t);
             tableNameAction = t => new(t.Name, t);
             dbSetNameAction = t => new(t.Name, t);
         } else {
             if (candidateNamingService is RuledCandidateNamingService ruledNamer) {
+                functionNameAction = t => ruledNamer.GenerateCandidateNameState(t);
                 tableNameAction = t => ruledNamer.GenerateCandidateNameState(t);
                 dbSetNameAction = t => ruledNamer.GenerateCandidateNameState(t, true);
-            } else
+            } else {
+                functionNameAction = t => new(candidateNamingService.GenerateCandidateIdentifier(new DatabaseTable() { Name = t.Name }), t);
                 dbSetNameAction = tableNameAction = t => new(candidateNamingService.GenerateCandidateIdentifier(t), t);
+            }
         }
 
+        functionNameAction = functionNameAction.Cached();
         tableNameAction = tableNameAction.Cached();
         dbSetNameAction = dbSetNameAction.Cached();
 
+        functionNamer = new(functionNameAction, cSharpUtilities, ops.NoPluralize ? null : pluralizer.Singularize);
         tableNamer = new(tableNameAction, cSharpUtilities, ops.NoPluralize ? null : pluralizer.Singularize);
         dbSetNamer = new(dbSetNameAction, cSharpUtilities, ops.NoPluralize ? null : pluralizer.Pluralize);
+        parameterNamers = new();
 
         var model = baseCall(databaseModel, ops);
         ruleModelUpdater?.OnModelCreated(model);
 
-        var resultingFiles = GenerateCode(model, databaseModel as DatabaseModelEx, designTimeRuleLoader.CodeGenOptions);
+        var resultingFiles = GenerateCode(model, designTimeRuleLoader.CodeGenOptions);
         var savedFiles = SaveFiles(resultingFiles, outputDir, overwriteFiles);
         if (savedFiles?.Count > 0) reporter.WriteInformation($"RULER: Saved {savedFiles} generated files.");
         return model;
@@ -209,19 +225,20 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     private (DatabaseTable table, EntityRuleNode entityRule) explicitEntityRuleMapping;
     private (EntityRuleNode Dependent, EntityRuleNode Principal, ForeignKeyRuleNode FkRule) explicitFkEntityMapping;
+    private ModelBuilderEx modelBuilderEx;
 
     /// <summary> Get the entity rule for this table </summary>
     protected virtual ICollection<EntityRuleNode> TryResolveRuleFor(DatabaseTable table) {
         if (table != null) {
             if (explicitEntityRuleMapping.table == table) return new[] { explicitEntityRuleMapping.entityRule };
 
-            if (explicitFkEntityMapping.Dependent?.DatabaseTable?.Table == table) {
+            if (explicitFkEntityMapping.Dependent?.ScaffoldedTable?.Table == table) {
                 if (explicitFkEntityMapping.Dependent != null) return new[] { explicitFkEntityMapping.Dependent };
                 if (explicitFkEntityMapping.Dependent.Rule.NewName.HasNonWhiteSpace())
                     return new[] { explicitFkEntityMapping.Dependent };
             }
 
-            if (explicitFkEntityMapping.Principal?.DatabaseTable?.Table == table) {
+            if (explicitFkEntityMapping.Principal?.ScaffoldedTable?.Table == table) {
                 if (explicitFkEntityMapping.Principal != null) return new[] { explicitFkEntityMapping.Principal };
                 if (explicitFkEntityMapping.Principal.Rule.NewName.HasNonWhiteSpace())
                     return new[] { explicitFkEntityMapping.Principal };
@@ -231,6 +248,13 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         dbContextRule ??= GetDbContextRules();
         var tableNodes = dbContextRule.TryResolveRuleFor(table);
         return tableNodes ?? Array.Empty<EntityRuleNode>();
+    }
+
+    /// <summary> Get the entity rule for this function </summary>
+    protected virtual FunctionRuleNode TryResolveRuleFor(DatabaseFunction function) {
+        dbContextRule ??= GetDbContextRules();
+        var tableNodes = dbContextRule.TryResolveRuleFor(function);
+        return tableNodes;
     }
 
     private DbContextRuleNode GetDbContextRules() {
@@ -247,6 +271,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     // ReSharper disable once RedundantAssignment
     protected virtual ModelBuilder VisitDatabaseModel(ModelBuilder modelBuilder, DatabaseModel databaseModel, Func<ModelBuilder> baseCall) {
         modelBuilder = baseCall();
+
+        if (databaseModel is DatabaseModelEx databaseModelEx) {
+            modelBuilder = VisitFunctions(modelBuilder, databaseModelEx.Functions);
+        }
+
         foreach (var action in PostCreationActions) action(modelBuilder);
         // Model post processing.
 #if DEBUG2
@@ -320,7 +349,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                     continue;
                 }
                 // else {
-                //     var baseTable = entityRule.GetBaseTypes().Select(o => o.DatabaseTable).FirstOrDefault(o => o != null);
+                //     var baseTable = entityRule.GetBaseTypes().Select(o => o.ScaffoldedTable).FirstOrDefault(o => o != null);
                 // }
             }
 
@@ -359,7 +388,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             foreach (var table in kvp.Tables) {
                 if (table.EntityRules.Count > 0 || table.Builders.Any()) continue; // it's already been mapped
-                var entityRules = schemaRule.TryResolveRuleFor(table.Name);
+                var entityRules = schemaRule.TryResolveRuleForTable(table.Name);
                 var canGenerateEntity = CanGenerateEntity(schemaRule, entityRules, table);
                 if (!canGenerateEntity) continue;
 
@@ -371,7 +400,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         return modelBuilder;
 
-        void DoInvokeVisitTable(DatabaseTableNode table, EntityRuleNode entityRule) {
+        void DoInvokeVisitTable(ScaffoldedTableTrackerItem table, EntityRuleNode entityRule) {
             if (entityRule == null) throw new ArgumentNullException(nameof(entityRule));
             explicitEntityRuleMapping = (table, entityRule);
             try {
@@ -386,7 +415,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
         }
 
-        bool CanGenerateEntity(SchemaRuleNode schemaRule, ICollection<EntityRuleNode> entityRule, DatabaseTableNode table) {
+        bool CanGenerateEntity(SchemaRuleNode schemaRule, ICollection<EntityRuleNode> entityRule, ScaffoldedTableTrackerItem table) {
             // used only for generating entities NOT known to the rules file.  If a rule exists, exclude it (it was handled elsewhere).
             if (entityRule?.Any(o => o != null) == true) return false;
             if (schemaRule == null) return true;
@@ -584,7 +613,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         return entityTypeBuilder;
 
         bool BaseHasColumn(string checkColumn) {
-            // return true if the column is in the base type
+            // return true if the parameter is in the base type
             if (entityRuleNode?.BaseEntityRuleNode?.Builder != null) {
                 var baseEntity = entityRuleNode.BaseEntityRuleNode.Builder;
                 var baseProperty = baseEntity.Metadata.GetProperties().FirstOrDefault(o => {
@@ -678,7 +707,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var column = table.Columns.FirstOrDefault(o => o.Name == discriminatorColumn);
         if (column == null) {
             reporter.WriteWarning(
-                $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator column '{discriminatorColumn}' not found.");
+                $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator parameter '{discriminatorColumn}' not found.");
             return;
         }
 
@@ -686,7 +715,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             .FirstOrDefault(o => o.GetColumnNameNoDefault().EqualsIgnoreCase(discriminatorColumn));
         if (property == null) {
             reporter.WriteWarning(
-                $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator property for column '{column.Name}' not found.");
+                $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator property for parameter '{column.Name}' not found.");
             return;
         }
 
@@ -988,7 +1017,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             // use the base type's table since shared properties are removed from derived tables
             foreach (var entityRuleNode in scaffolded) {
                 foreach (var baseType in entityRuleNode.GetBaseTypes()) {
-                    var result = GetCorrectEntityOrNull(baseType?.Builder?.Metadata, baseType?.DatabaseTable, key);
+                    var result = GetCorrectEntityOrNull(baseType?.Builder?.Metadata, baseType?.ScaffoldedTable, key);
                     if (result != null) return entityRuleNode; // the derived type will work, but table names may differ here.
                 }
             }
@@ -1212,8 +1241,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             // note, we must generate both navigations due to expectations of the T4s when generating navigation code.
             var pEntity = dbContextRule.TryResolveRuleForEntityName(unknownFk.Rule.PrincipalEntity);
             var dEntity = dbContextRule.TryResolveRuleForEntityName(unknownFk.Rule.DependentEntity);
-            var pTable = pEntity?.DatabaseTable;
-            var dTable = dEntity?.DatabaseTable;
+            var pTable = pEntity?.ScaffoldedTable;
+            var dTable = dEntity?.ScaffoldedTable;
             if (pTable == null || dTable == null)
                 continue; // for now at least, the entity must be mapped to a table
 
@@ -1337,7 +1366,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     private bool TryAddEntityKey(IMutableEntityType e, EntityRuleNode entityRuleNode) {
         if (entityRuleNode == null) return false;
-        var table = entityRuleNode.DatabaseTable?.Table;
+        var table = entityRuleNode.ScaffoldedTable?.Table;
         if (table is not DatabaseView view || !(table?.PrimaryKey?.Columns.Count > 0)) return false;
 
         // Even though we applied a key to the view, EF does not apply it to the entity. Attempt to do so now.
@@ -1495,6 +1524,162 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual ModelBuilder VisitFunctions(ModelBuilder modelBuilder, IList<DatabaseFunction> functions) {
+        modelBuilderEx = new ModelBuilderEx(modelBuilder);
+
+        foreach (var function in functions) {
+            VisitFunction(modelBuilderEx, function);
+        }
+
+        return modelBuilder;
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual ModelBuilderEx VisitFunction(ModelBuilderEx modelBuilder, DatabaseFunction dbFunction) {
+        var functionName = GetFunctionName(dbFunction);
+        var functionBuilder = modelBuilder.CreateFunction(functionName);
+
+        var functionRuleNode = this.TryResolveRuleFor(dbFunction);
+        VisitParameters(functionBuilder, functionRuleNode, dbFunction.Parameters);
+
+        var allOutParams = dbFunction.Parameters.Where(p => p.IsOutput).ToList();
+
+        var retValueName = allOutParams.Last().Name;
+
+        functionBuilder
+            .HasReturnType(retValueName)
+            .SupportsMultipleResultSet(dbFunction.SupportsMultipleResultSet)
+            .HasCommandText(dbFunction.GenerateProcedureStatement(retValueName, true))
+            ;
+
+        return modelBuilder;
+    }
+
+    private ModelBuilderEx VisitParameters(FunctionBuilder functionBuilder, FunctionRuleNode functionRuleNode,
+        IList<DatabaseFunctionParameter> databaseFunctionParameters) {
+        foreach (var column in databaseFunctionParameters.SkipLast(1)) {
+            var parameter = VisitParameter(functionBuilder, functionRuleNode, column);
+            if (parameter != null) parameter.Metadata.Order = databaseFunctionParameters.IndexOf(column);
+        }
+
+        return functionBuilder.ModelBuilder;
+    }
+
+    private ParameterBuilder VisitParameter(FunctionBuilder functionBuilder, FunctionRuleNode functionRuleNode, DatabaseFunctionParameter dbParameter) {
+        var typeScaffoldingInfo = GetTypeScaffoldingInfo(dbParameter);
+        if (typeScaffoldingInfo == null) {
+            //_unmappedColumns.Add(column);
+            reporter.WriteWarning(
+                $"Could not find type mapping for function '{functionBuilder.Metadata.Name}' parameter '{dbParameter.Name}' with data type '{dbParameter.StoreType}'. Skipping column.");
+            return null;
+        }
+
+        var parameterRuleNode = functionRuleNode.TryResolveRuleFor(dbParameter.Name);
+
+        var clrType = typeScaffoldingInfo.ClrType;
+        if (dbParameter.IsNullable && !clrType.IsNullableTypeOfAnyKind()) clrType = clrType.MakeNullable();
+
+        if (clrType == typeof(bool) && dbParameter.DefaultValueSql != null) {
+            reporter.WriteWarning(
+                $"The column '{dbParameter.Name}' would normally be mapped to a non-nullable bool property, but it has a default constraint. Such a column is mapped to a nullable bool property to allow a difference between setting the property to false and invoking the default constraint. See https://go.microsoft.com/fwlink/?linkid=851278 for details.");
+            clrType = clrType.MakeNullable();
+        }
+
+        var paramName = GetFunctionParameterName(functionBuilder.Metadata, dbParameter, parameterRuleNode?.Rule?.NewName);
+        var parameter = functionBuilder.CreateParameter(paramName);
+        Debug.Assert(parameter.Metadata.Name == paramName);
+
+        parameter.HasClrType(clrType ?? typeof(object));
+
+        if (!typeScaffoldingInfo.IsInferred
+            && !string.IsNullOrWhiteSpace(dbParameter.StoreType)) {
+            parameter.HasStoreType(dbParameter.StoreType);
+        } //else parameter.HasStoreType(clrType.FullName);
+
+        if (dbParameter.IsOutput) parameter.HasOutput();
+
+        parameter.Metadata.Length = dbParameter.Length;
+        parameter.Metadata.Scale = dbParameter.Scale;
+        parameter.Metadata.Precision = dbParameter.Precision;
+        parameter.Metadata.SqlDbType = dbParameter.GetDbType();
+
+        // if (typeScaffoldingInfo.ScaffoldUnicode.HasValue) {
+        //     parameter.IsUnicode(typeScaffoldingInfo.ScaffoldUnicode.Value);
+        // }
+        //
+        // if (typeScaffoldingInfo.ScaffoldFixedLength == true) {
+        //     parameter.IsFixedLength();
+        // }
+        //
+        // if (typeScaffoldingInfo.ScaffoldMaxLength.HasValue) {
+        //     parameter.HasMaxLength(typeScaffoldingInfo.ScaffoldMaxLength.Value);
+        // }
+        //
+        // if (typeScaffoldingInfo.ScaffoldPrecision.HasValue) {
+        //     if (typeScaffoldingInfo.ScaffoldScale.HasValue) {
+        //         parameter.HasPrecision(
+        //             typeScaffoldingInfo.ScaffoldPrecision.Value,
+        //             typeScaffoldingInfo.ScaffoldScale.Value);
+        //     } else {
+        //         parameter.HasPrecision(typeScaffoldingInfo.ScaffoldPrecision.Value);
+        //     }
+        // }
+        //
+        // if (dbParameter.ValueGenerated == ValueGenerated.OnAdd) {
+        //     parameter.ValueGeneratedOnAdd();
+        // }
+        //
+        // if (dbParameter.ValueGenerated == ValueGenerated.OnUpdate) {
+        //     parameter.ValueGeneratedOnUpdate();
+        // }
+        //
+        // if (dbParameter.ValueGenerated == ValueGenerated.OnAddOrUpdate) {
+        //     parameter.ValueGeneratedOnAddOrUpdate();
+        // }
+        //
+        // if (dbParameter.DefaultValueSql != null) {
+        //     parameter.HasDefaultValueSql(dbParameter.DefaultValueSql);
+        // }
+        //
+        // if (dbParameter.ComputedColumnSql != null) {
+        //     parameter.HasComputedColumnSql(dbParameter.ComputedColumnSql, dbParameter.IsStored);
+        // }
+        //
+        // if (dbParameter.Comment != null) {
+        //     parameter.HasComment(dbParameter.Comment);
+        // }
+        //
+        // if (dbParameter.Collation != null) {
+        //     parameter.UseCollation(dbParameter.Collation);
+        // }
+        //
+        // if (!(dbParameter.Table.PrimaryKey?.Columns.Contains(dbParameter) ?? false)) {
+        //     parameter.IsRequired(!dbParameter.IsNullable);
+        // }
+        //
+        // if ((bool?)dbParameter[ScaffoldingAnnotationNames.ConcurrencyToken] == true) {
+        //     parameter.IsConcurrencyToken();
+        // }
+
+
+        // parameter.Metadata.AddAnnotations(
+        //     dbParameter.GetAnnotations().Where(
+        //         a => a.Name != ScaffoldingAnnotationNames.ConcurrencyToken
+        //              && a.Name != ScaffoldingAnnotationNames.ClrType));
+
+
+        return parameter;
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseFunctionParameter parameter) {
+        if (parameter.StoreType == null) return null;
+
+        var type = (Type)parameter[EfScaffoldingAnnotationNames.ClrType];
+        // add type param for next EFC release
+        return scaffoldingTypeMapper.FindMapping(parameter.StoreType, false, false);
+    }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual string GetEntityTypeName(DatabaseTable table) {
@@ -1505,13 +1690,13 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 return explicitEntityRuleMapping.entityRule.Rule.NewName;
 
             // this is the mechanism by which EF Core locates the correct entity endpoint for a FK. Use context to eliminate guess work:
-            if (explicitFkEntityMapping.Dependent?.DatabaseTable?.Table == table) {
+            if (explicitFkEntityMapping.Dependent?.ScaffoldedTable?.Table == table) {
                 if (explicitFkEntityMapping.Dependent.Builder != null) return explicitFkEntityMapping.Dependent.Builder.Metadata.Name;
                 if (explicitFkEntityMapping.Dependent.Rule.NewName.HasNonWhiteSpace())
                     return explicitFkEntityMapping.Dependent.Rule.NewName;
             }
 
-            if (explicitFkEntityMapping.Principal?.DatabaseTable?.Table == table) {
+            if (explicitFkEntityMapping.Principal?.ScaffoldedTable?.Table == table) {
                 if (explicitFkEntityMapping.Principal.Builder != null) return explicitFkEntityMapping.Principal.Builder.Metadata.Name;
                 if (explicitFkEntityMapping.Principal.Rule.NewName.HasNonWhiteSpace())
                     return explicitFkEntityMapping.Principal.Rule.NewName;
@@ -1519,6 +1704,39 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
 
         return tableNamer.GetName(table);
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual string GetFunctionName(DatabaseFunction dbFunction) {
+        return functionNamer.GetName(dbFunction);
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual string GetFunctionParameterName(IFunction dbFunction, DatabaseFunctionParameter dbParameter, string ruleNewName) {
+        var usedNames = new List<string>();
+        usedNames.Add(dbFunction.Name);
+
+        if (!parameterNamers.ContainsKey(dbFunction)) {
+            if (options.UseDatabaseNames) {
+                parameterNamers.Add(
+                    dbFunction,
+                    new(
+                        c => c.Name,
+                        usedNames,
+                        cSharpUtilities,
+                        singularizePluralizer: null));
+            } else {
+                parameterNamers.Add(
+                    dbFunction,
+                    new(
+                        c => ruleNewName.HasNonWhiteSpace() ? ruleNewName : candidateNamingService.GenerateCandidateIdentifier(new DatabaseTable() { Name = c.Name }),
+                        usedNames,
+                        cSharpUtilities,
+                        singularizePluralizer: null));
+            }
+        }
+
+        return parameterNamers[dbFunction].GetName(dbParameter);
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -1532,11 +1750,17 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         return dbSetNamer.GetName(table);
     }
 
-    private IList<ScaffoldedFile> GenerateCode(IModel model, DatabaseModelEx databaseModelEx, ModelCodeGenerationOptions codeGenerationOptions) {
+    private IList<ScaffoldedFile> GenerateCode(IModel model, ModelCodeGenerationOptions codeGenerationOptions) {
         var resultingFiles = new List<ScaffoldedFile>();
+        var modelEx = modelBuilderEx?.ModelEx;
+        if (modelEx == null) {
+            reporter.WriteInformation("ModelEx not found");
+            return Array.Empty<ScaffoldedFile>();
+        }
+
         foreach (var ruledModelCodeGenerator in ruledModelCodeGenerators)
             try {
-                resultingFiles.AddRange(ruledModelCodeGenerator.GenerateModel(model, databaseModelEx, codeGenerationOptions));
+                resultingFiles.AddRange(ruledModelCodeGenerator.GenerateModel(modelEx, codeGenerationOptions));
             } catch (Exception ex) {
                 reporter.WriteError($"RULED: Code gen failed: " + ex.Message);
             }
@@ -1551,7 +1775,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <param name="outputDir"> from arg outputDir </param>
     /// <param name="overwriteFiles"> from arg overwriteFiles </param>
     private IList<string> SaveFiles(IList<ScaffoldedFile> resultingFiles, string outputDir, bool overwriteFiles) {
-        var projectDir = this.designTimeRuleLoader.GetProjectDir();
+        var projectDir = designTimeRuleLoader.GetProjectDir();
         outputDir = outputDir != null ? Path.GetFullPath(Path.Combine(projectDir, outputDir)) : projectDir;
         var files = new List<string>();
         foreach (var file in resultingFiles) {
@@ -1588,7 +1812,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
             case "VisitTables" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is ModelBuilder mb &&
                                     invocation.Arguments[1] is ICollection<DatabaseTable> dt: {
-                // ModelBuilder BaseCall(ModelBuilder modelBuilder, ICollection<DatabaseTable> databaseTables) {
+                // ModelBuilder BaseCall(ModelBuilder modelBuilder, ICollection<ScaffoldedTable> databaseTables) {
                 //     invocation.Proceed();
                 //     return (ModelBuilder)invocation.ReturnValue;
                 // }

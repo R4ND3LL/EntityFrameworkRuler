@@ -316,6 +316,30 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
             DetermineInheritanceStrategy(hierarchicalRoot);
         }
 
+        foreach (var storageFunction in edmxModel.Runtime.StorageModels.Schema.Functions) {
+            var f = new Function(storageFunction);
+            Functions.Add(f);
+        }
+
+        foreach (var functionImportMapping in edmxModel.Runtime.Mappings.Mapping.EntityContainerMapping.FunctionImportMappings) {
+            var nameParts = functionImportMapping.FunctionName?.Split('.');
+            var fnNam = nameParts.LastOrDefault();
+            var functions = Functions.Where(o => o.StorageFunction.Name == fnNam && o.ImportMapping == null).ToArray();
+            if (functions.Length > 1) {
+                var possibleSchema = nameParts.Reverse().Skip(1).FirstOrDefault();
+                if (functions.Any(o => o.StorageFunction.Schema == possibleSchema)) functions.FirstOrDefault(o => o.StorageFunction.Schema == possibleSchema);
+            }
+
+            var f = functions.FirstOrDefault();
+            if (f == null) continue;
+            f.ImportMapping = functionImportMapping;
+        }
+
+        foreach (var functionImport in edmxModel.Runtime.ConceptualModels.Schema.EntityContainer.FunctionImport) {
+            var f = Functions.FirstOrDefault(o => o.ImportMapping?.FunctionImportName == functionImport.Name);
+            if (f != null) f.Import = functionImport;
+        }
+
 #if DEBUGPARSER
         // ensure associations are properly linked.
         var navsWithNoAssociation = Entities.SelectMany(o => o.NavigationProperties).Where(o => o.Association == null)
@@ -705,6 +729,7 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
     private Dictionary<string, EnumType> EnumsByExternalTypeName => State.EnumsByExternalTypeName;
     private ObservableCollection<Schema> Schemas => State.Schemas;
     private ObservableCollection<EntityType> Entities => State.Entities;
+    private ObservableCollection<Function> Functions => State.Functions;
 
     private ObservableCollection<NavigationProperty> NavProps => State.NavProps;
     //private ObservableCollection<EntityProperty> Props => State.Props;

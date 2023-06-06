@@ -542,8 +542,8 @@ public static class RoslynExtensions {
     /// <summary> If the given node is not currently on the given root, get the updated version based on the node's identifier. </summary>
     public static string GetFullName(this ITypeSymbol symbol) {
         return $"{symbol.ContainingNamespace.ToDisplayString()}.{symbol.Name}";
-    }
-
+    } /// <summary> If the given node is not currently on the given root, get the updated version based on the node's identifier. </summary>
+    
     /// <summary> If the given node is not currently on the given root, get the updated version based on the node's identifier. </summary>
     public static async Task<INamedTypeSymbol> CurrentFrom(this ITypeSymbol symbol, Project project) {
         var type = await FindClassByName(project, symbol.GetFullName());

@@ -46,7 +46,7 @@ public sealed class PropertyRule : RuleBase, IPropertyRule {
 
     /// <summary> If true, omit this column during the scaffolding process. </summary>
     [DataMember(EmitDefaultValue = false, IsRequired = false, Order = 6)]
-    [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this table during the scaffolding process.")]
+    [DisplayName("Not Mapped"), Category("Mapping"), Description("If true, omit this property during the scaffolding process.")]
     public bool NotMapped { get; set; }
 
     /// <inheritdoc />

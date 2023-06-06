@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 namespace EntityFrameworkRuler.Design.Services.Models;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-public sealed class DatabaseTableNode {
+public sealed class ScaffoldedTableTrackerItem {
     private readonly ScaffoldedTableTracker tracker;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public DatabaseTableNode(ScaffoldedTableTracker tracker, DatabaseTable table) {
+    public ScaffoldedTableTrackerItem(ScaffoldedTableTracker tracker, DatabaseTable table) {
         this.tracker = tracker;
         Table = table;
     }
@@ -38,5 +38,5 @@ public sealed class DatabaseTableNode {
     }
 
     /// <summary> implicit conversion </summary>
-    public static implicit operator DatabaseTable(DatabaseTableNode o) => o?.Table;
+    public static implicit operator DatabaseTable(ScaffoldedTableTrackerItem o) => o?.Table;
 }

@@ -29,6 +29,12 @@ public interface IEntityRule : IRuleItem {
     IEnumerable<IPropertyRule> GetProperties();
 }
 
+/// <summary> Rule for an database function (function or stored procedure) </summary>
+public interface IFunctionRule : IRuleItem {
+    /// <summary> Get parameter rules </summary>
+    IEnumerable<IFunctionParameterRule> GetParameters();
+}
+
 /// <summary> Rule for a property or navigation </summary>
 public interface IPropertyRule : IRuleItem {
     /// <summary> Get name(s) to look for when making changes.  Assume Roslyn stage, after EF model generation. </summary>
@@ -39,6 +45,12 @@ public interface IPropertyRule : IRuleItem {
 
     /// <summary> Get extra metadata about this navigation, if in fact it is a navigation. </summary>
     NavigationMetadata GetNavigationMetadata();
+}
+
+/// <summary> Rule for a function parameter </summary>
+public interface IFunctionParameterRule : IRuleItem {
+    /// <summary> Get new type in event of type change.  Can return null if not changing.  Assume Roslyn stage, after EF model generation. </summary>
+    string GetNewTypeName();
 }
 
 /// <summary> Base interface for rule model items </summary>

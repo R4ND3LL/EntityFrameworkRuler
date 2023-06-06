@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Common.Annotations;
+using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using EntityFrameworkRuler.Design.Services;
 using Humanizer;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -121,4 +122,7 @@ public static class RuleExtensions {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     private static bool IsValidAnnotation(string annotationKey) =>
         AnnotationHelper.GetAnnotationIndex(annotationKey)?.Contains(annotationKey) == true;
+
+    /// <summary> Get schema name dot name </summary>
+    public static string GetFullName(this DatabaseObject dbo) => $"{dbo.Schema}.{dbo.Name}";
 }

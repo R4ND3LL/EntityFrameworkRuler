@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Extensions;
+using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using EntityFrameworkRuler.Design.Services.Models;
 using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore;
@@ -51,7 +52,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
         if (table == null) throw new ArgumentException("Argument is empty", nameof(table));
 
 #if DEBUG
-        if (Debugger.IsAttached) Debugger.Break();
+        //if (Debugger.IsAttached) Debugger.Break();
         // Components should be overriden to avoid this method in favor of the state creation method below.
 #endif
 
@@ -127,6 +128,74 @@ public class RuledCandidateNamingService : CandidateNamingService {
             logger?.WriteVerbose($"RULED: Table {table.GetFullName()} not found in rule file. Auto-named {state.Name}");
             return state;
         }
+    }
+
+    /// <summary> Name that function, also return indicator whether the name is frozen (explicitly set by user, cannot be altered) </summary>
+    public virtual NamedElementState<DatabaseFunction, FunctionRule> GenerateCandidateNameState(DatabaseFunction dbFunction) {
+        if (dbFunction == null) throw new ArgumentException("Argument is empty", nameof(dbFunction));
+        dbContextRule ??= ResolveDbContextRule();
+
+        FunctionRuleNode functionRuleNode = null;
+        functionRuleNode = dbContextRule.TryResolveRuleFor(dbFunction);
+        if (functionRuleNode == null || !functionRuleNode.ShouldMap()) return InvokeBaseCall();
+
+        if (functionRuleNode?.Rule.NewName.HasNonWhiteSpace() == true) {
+            // Name explicitly set by user. if not naming the DbSet then this cannot be altered by pluralizer so set FROZEN
+            var state = NameToState(functionRuleNode.Rule.NewName, true);
+            logger?.WriteVerbose($"RULED: Function {dbFunction.GetFullName()} mapped to name {state.Name}");
+            return state;
+        }
+
+        var schema = functionRuleNode.Parent.Rule;
+        var candidateStringBuilder = new StringBuilder();
+        if (schema?.UseSchemaName == true && schema.SchemaName.IsNullOrWhiteSpace()) schema.UseSchemaName = false;
+        if (schema?.UseSchemaName == true) candidateStringBuilder.Append(GenerateIdentifier(dbFunction.Schema));
+        bool usedRegex;
+        string newFunctionName;
+        if (!string.IsNullOrEmpty(schema.FunctionRegexPattern) && schema.FunctionPatternReplaceWith != null) {
+            if (dbContextRule.Rule.PreserveCasingUsingRegex)
+                newFunctionName = RegexNameReplace(schema.FunctionRegexPattern, dbFunction.Name,
+                    schema.FunctionPatternReplaceWith);
+            else
+                newFunctionName = GenerateIdentifier(RegexNameReplace(schema.FunctionRegexPattern, dbFunction.Name,
+                    schema.FunctionPatternReplaceWith));
+            usedRegex = true;
+        } else {
+            usedRegex = false;
+            newFunctionName = DoGenerateCandidateIdentifier(dbFunction.Name);
+        }
+
+        if (string.IsNullOrWhiteSpace(newFunctionName)) {
+            candidateStringBuilder.Append(GenerateIdentifier(dbFunction.Name));
+            return NameToState(candidateStringBuilder.ToString());
+        }
+
+        candidateStringBuilder.Append(newFunctionName);
+
+        var state2 = NameToState(candidateStringBuilder.ToString());
+        logger?.WriteVerbose(
+            $"RULED: Function {dbFunction.GetFullName()} auto-named {state2.Name}{(usedRegex ? " using regex" : "")}");
+        return state2;
+
+        NamedElementState<DatabaseFunction, FunctionRule> NameToState(string newName, bool isFrozen = false) {
+            var state = new NamedElementState<DatabaseFunction, FunctionRule>(newName, dbFunction, functionRuleNode, isFrozen);
+            return state;
+        }
+
+        NamedElementState<DatabaseFunction, FunctionRule> InvokeBaseCall() {
+            var state = NameToState(DoGenerateCandidateIdentifier(dbFunction.Name));
+            logger?.WriteVerbose($"RULED: Table {dbFunction.GetFullName()} not found in rule file. Auto-named {state.Name}");
+            return state;
+        }
+    }
+
+    private string DoGenerateCandidateIdentifier(string name) {
+#if NET6
+        var x = base.GenerateCandidateIdentifier(new DatabaseTable() { Name = name });
+#else
+        var x = base.GenerateCandidateIdentifier(name);
+#endif
+        return x;
     }
 
     private DbContextRuleNode ResolveDbContextRule() {

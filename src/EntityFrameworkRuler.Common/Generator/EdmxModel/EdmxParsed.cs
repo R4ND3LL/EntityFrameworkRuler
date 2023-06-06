@@ -35,6 +35,9 @@ public sealed class EdmxParsed {
     public ObservableCollection<EntityType> Entities { get; } = new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public ObservableCollection<Function> Functions { get; } = new();
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ObservableCollection<NavigationProperty> NavProps { get; } = new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>

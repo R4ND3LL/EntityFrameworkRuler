@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Data;
 using EntityFrameworkRuler.Design.Metadata;
+using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using EntityFrameworkRuler.Design.Services.Models;
 
 namespace EntityFrameworkRuler.Design.Services;
@@ -22,13 +23,13 @@ public static class SqlServerTypeExtensions {
     public static bool UseDateOnlyTimeOnly { get; set; }
 
     
-    public static Type ClrType(this ModuleParameter storedProcedureParameter, bool asMethodParameter = false) {
+    public static Type ClrType(this DatabaseFunctionParameter storedProcedureParameter, bool asMethodParameter = false) {
         if (storedProcedureParameter is null) throw new ArgumentNullException(nameof(storedProcedureParameter));
 
-        return GetClrType(storedProcedureParameter.StoreType, storedProcedureParameter.Nullable, asMethodParameter);
+        return GetClrType(storedProcedureParameter.StoreType, storedProcedureParameter.IsNullable, asMethodParameter);
     }
 
-    public static Type ClrType(this ModuleResultElement moduleResultElement) {
+    public static Type ClrType(this DatabaseFunctionResultElement moduleResultElement) {
         if (moduleResultElement is null) throw new ArgumentNullException(nameof(moduleResultElement));
 
         return GetClrType(moduleResultElement.StoreType, moduleResultElement.Nullable);
@@ -177,5 +178,15 @@ public static class SqlServerTypeExtensions {
             }
 
         return string.Join(string.Empty, stack.Reverse());
+    }
+    
+    public static SqlDbType GetDbType(this DatabaseFunctionParameter storedProcedureParameter)
+    {
+        if (storedProcedureParameter is null)
+        {
+            throw new ArgumentNullException(nameof(storedProcedureParameter));
+        }
+
+        return GetSqlDbType(storedProcedureParameter.StoreType);
     }
 }

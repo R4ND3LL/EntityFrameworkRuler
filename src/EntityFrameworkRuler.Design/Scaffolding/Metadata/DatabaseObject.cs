@@ -1,7 +1,9 @@
-﻿namespace EntityFrameworkRuler.Design.Metadata;
+﻿using Microsoft.EntityFrameworkCore.Infrastructure;
+
+namespace EntityFrameworkRuler.Design.Scaffolding.Metadata;
 
 #pragma warning disable CS1591
-public abstract class SqlObjectBase {
+public abstract class DatabaseObject : Annotatable {
     public string Name { get; set; }
     public string Schema { get; set; }
 

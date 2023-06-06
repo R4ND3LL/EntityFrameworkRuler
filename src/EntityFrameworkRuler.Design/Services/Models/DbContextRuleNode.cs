@@ -1,4 +1,5 @@
-﻿using EntityFrameworkRuler.Rules;
+﻿using EntityFrameworkRuler.Design.Scaffolding.Metadata;
+using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 
@@ -57,7 +58,7 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
     internal void Map(EntityTypeBuilder entityTypeBuilder, EntityRuleNode entityRule) {
         if (entityTypeBuilder == null) throw new ArgumentNullException(nameof(entityTypeBuilder));
         entityRulesByFinalName.Add(entityTypeBuilder.Metadata.Name, entityRule);
-        Debug.Assert(entityRule?.DatabaseTable != null && entityRule.DatabaseTable.EntityRules.Contains(entityRule));
+        Debug.Assert(entityRule?.ScaffoldedTable != null && entityRule.ScaffoldedTable.EntityRules.Contains(entityRule));
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -90,13 +91,20 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
         return schemaRule;
     }
 
-    /// <summary> Get the table rule for the given target table. Used during scaffolding phase. </summary>
+    /// <summary> Get the function rule for the given target function. Used during scaffolding phase. </summary>
     public ICollection<EntityRuleNode> TryResolveRuleFor(DatabaseTable table) =>
         TryResolveRuleFor(table.Schema, table.Name);
 
-    /// <summary> Get the table rule for the given target table. Used during scaffolding phase. </summary>
+    /// <summary> Get the function rule for the given target function. Used during scaffolding phase. </summary>
     public ICollection<EntityRuleNode> TryResolveRuleFor(string schema, string table) =>
-        TryResolveRuleFor(schema)?.TryResolveRuleFor(table) ?? Array.Empty<EntityRuleNode>();
+        TryResolveRuleFor(schema)?.TryResolveRuleForTable(table) ?? Array.Empty<EntityRuleNode>();
+
+    /// <summary> Get the function rule for the given target function. Used during scaffolding phase. </summary>
+    public FunctionRuleNode TryResolveRuleForFunction(string schema, string function) =>
+        TryResolveRuleFor(schema)?.TryResolveRuleForFunction(function);
+
+    public FunctionRuleNode TryResolveRuleFor(DatabaseFunction dbFunction) =>
+        TryResolveRuleForFunction(dbFunction.Schema, dbFunction.Name);
 
     /// <summary> Return true if the given scheme can be mapped. </summary>
     public bool ShouldMapSchema(string schema) {

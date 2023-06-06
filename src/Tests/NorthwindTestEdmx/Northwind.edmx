@@ -557,6 +557,37 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Function Name="CustOrderHist" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="CustomerID" Type="nchar" Mode="In" />
+        </Function>
+        <Function Name="CustOrdersDetail" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="OrderID" Type="int" Mode="In" />
+        </Function>
+        <Function Name="CustOrdersOrders" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="CustomerID" Type="nchar" Mode="In" />
+        </Function>
+        <Function Name="Employee_Sales_by_Country" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" StoreFunctionName="Employee Sales by Country">
+          <Parameter Name="Beginning_Date" Type="datetime" Mode="In" />
+          <Parameter Name="Ending_Date" Type="datetime" Mode="In" />
+        </Function>
+        <Function Name="fn_diagramobjects" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="int" />
+        <Function Name="Sales_by_Year" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" StoreFunctionName="Sales by Year">
+          <Parameter Name="Beginning_Date" Type="datetime" Mode="In" />
+          <Parameter Name="Ending_Date" Type="datetime" Mode="In" />
+        </Function>
+        <Function Name="SalesByCategory" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="CategoryName" Type="nvarchar" Mode="In" />
+          <Parameter Name="OrdYear" Type="nvarchar" Mode="In" />
+        </Function>
+        <Function Name="sp_helpdiagramdefinition" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="diagramname" Type="nvarchar" Mode="In" />
+          <Parameter Name="owner_id" Type="int" Mode="In" />
+        </Function>
+        <Function Name="sp_helpdiagrams" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="diagramname" Type="nvarchar" Mode="In" />
+          <Parameter Name="owner_id" Type="int" Mode="In" />
+        </Function>
+        <Function Name="Ten_Most_Expensive_Products" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" StoreFunctionName="Ten Most Expensive Products" />
         <EntityContainer Name="NorthwindModelStoreContainer">
           <EntitySet Name="Animals" EntityType="Self.Animals" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Categories" EntityType="Self.Categories" Schema="dbo" store:Type="Tables" />
@@ -1156,6 +1187,36 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
             <End Role="Employee" EntitySet="Employees" />
             <End Role="EmployeeBrief" EntitySet="EmployeeBriefs" />
           </AssociationSet>
+          <FunctionImport Name="CustOrderHist" ReturnType="Collection(NorthwindModel.CustOrderHist_Result)">
+            <Parameter Name="CustomerID" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="CustOrdersDetail" ReturnType="Collection(NorthwindModel.CustOrdersDetail_Result)">
+            <Parameter Name="OrderID" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="CustOrdersOrders" ReturnType="Collection(NorthwindModel.CustOrdersOrders_Result)">
+            <Parameter Name="CustomerID" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="Employee_Sales_by_Country" ReturnType="Collection(NorthwindModel.Employee_Sales_by_Country_Result)">
+            <Parameter Name="Beginning_Date" Mode="In" Type="DateTime" />
+            <Parameter Name="Ending_Date" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="Sales_by_Year" ReturnType="Collection(NorthwindModel.Sales_by_Year_Result)">
+            <Parameter Name="Beginning_Date" Mode="In" Type="DateTime" />
+            <Parameter Name="Ending_Date" Mode="In" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="SalesByCategory" ReturnType="Collection(NorthwindModel.SalesByCategory_Result)">
+            <Parameter Name="CategoryName" Mode="In" Type="String" />
+            <Parameter Name="OrdYear" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="sp_helpdiagramdefinition" ReturnType="Collection(NorthwindModel.sp_helpdiagramdefinition_Result)">
+            <Parameter Name="diagramname" Mode="In" Type="String" />
+            <Parameter Name="owner_id" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="sp_helpdiagrams" ReturnType="Collection(NorthwindModel.sp_helpdiagrams_Result)">
+            <Parameter Name="diagramname" Mode="In" Type="String" />
+            <Parameter Name="owner_id" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="TenMostExpensiveProducts" ReturnType="Collection(NorthwindModel.TenMostExpensiveProductsResult)" />
         </EntityContainer>
         <EntityType Name="Alphabetical_list_of_product">
           <Key>
@@ -1413,6 +1474,56 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <ComplexType Name="CustOrderHist_Result">
+          <Property Type="String" Name="ProductName" Nullable="false" MaxLength="40" />
+          <Property Type="Int32" Name="Total" Nullable="true" />
+        </ComplexType>
+        <ComplexType Name="CustOrdersDetail_Result">
+          <Property Type="String" Name="ProductName" Nullable="false" MaxLength="40" />
+          <Property Type="Decimal" Name="UnitPrice" Nullable="false" Precision="19" />
+          <Property Type="Int16" Name="Quantity" Nullable="false" />
+          <Property Type="Int32" Name="Discount" Nullable="true" />
+          <Property Type="Decimal" Name="ExtendedPrice" Nullable="true" Precision="19" />
+        </ComplexType>
+        <ComplexType Name="CustOrdersOrders_Result">
+          <Property Type="Int32" Name="OrderID" Nullable="false" />
+          <Property Type="DateTime" Name="OrderDate" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="RequiredDate" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="ShippedDate" Nullable="true" Precision="23" />
+        </ComplexType>
+        <ComplexType Name="Employee_Sales_by_Country_Result">
+          <Property Type="String" Name="Country" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="LastName" Nullable="false" MaxLength="20" />
+          <Property Type="String" Name="FirstName" Nullable="false" MaxLength="10" />
+          <Property Type="DateTime" Name="ShippedDate" Nullable="true" Precision="23" />
+          <Property Type="Int32" Name="OrderID" Nullable="false" />
+          <Property Type="Decimal" Name="SaleAmount" Nullable="true" Precision="19" />
+        </ComplexType>
+        <ComplexType Name="Sales_by_Year_Result">
+          <Property Type="DateTime" Name="ShippedDate" Nullable="true" Precision="23" />
+          <Property Type="Int32" Name="OrderID" Nullable="false" />
+          <Property Type="Decimal" Name="Subtotal" Nullable="true" Precision="19" />
+          <Property Type="String" Name="Year" Nullable="true" MaxLength="30" />
+        </ComplexType>
+        <ComplexType Name="SalesByCategory_Result">
+          <Property Type="String" Name="ProductName" Nullable="false" MaxLength="40" />
+          <Property Type="Decimal" Name="TotalPurchase" Nullable="true" Precision="38" Scale="2" />
+        </ComplexType>
+        <ComplexType Name="sp_helpdiagramdefinition_Result">
+          <Property Type="Int32" Name="version" Nullable="true" />
+          <Property Type="Binary" Name="definition" Nullable="true" />
+        </ComplexType>
+        <ComplexType Name="sp_helpdiagrams_Result">
+          <Property Type="String" Name="Database" Nullable="true" MaxLength="128" />
+          <Property Type="String" Name="Name" Nullable="false" MaxLength="128" />
+          <Property Type="Int32" Name="ID" Nullable="false" />
+          <Property Type="String" Name="Owner" Nullable="true" MaxLength="128" />
+          <Property Type="Int32" Name="OwnerID" Nullable="false" />
+        </ComplexType>
+        <ComplexType Name="TenMostExpensiveProductsResult">
+          <Property Type="String" Name="TenMostExpProductsCustom" Nullable="false" MaxLength="40" />
+          <Property Type="Decimal" Name="UnitPrice" Nullable="true" Precision="19" />
+        </ComplexType>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -1819,6 +1930,92 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <FunctionImportMapping FunctionImportName="CustOrderHist" FunctionName="NorthwindModel.Store.CustOrderHist">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.CustOrderHist_Result">
+                <ScalarProperty Name="ProductName" ColumnName="ProductName" />
+                <ScalarProperty Name="Total" ColumnName="Total" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="CustOrdersDetail" FunctionName="NorthwindModel.Store.CustOrdersDetail">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.CustOrdersDetail_Result">
+                <ScalarProperty Name="ProductName" ColumnName="ProductName" />
+                <ScalarProperty Name="UnitPrice" ColumnName="UnitPrice" />
+                <ScalarProperty Name="Quantity" ColumnName="Quantity" />
+                <ScalarProperty Name="Discount" ColumnName="Discount" />
+                <ScalarProperty Name="ExtendedPrice" ColumnName="ExtendedPrice" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="CustOrdersOrders" FunctionName="NorthwindModel.Store.CustOrdersOrders">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.CustOrdersOrders_Result">
+                <ScalarProperty Name="OrderID" ColumnName="OrderID" />
+                <ScalarProperty Name="OrderDate" ColumnName="OrderDate" />
+                <ScalarProperty Name="RequiredDate" ColumnName="RequiredDate" />
+                <ScalarProperty Name="ShippedDate" ColumnName="ShippedDate" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="Employee_Sales_by_Country" FunctionName="NorthwindModel.Store.Employee_Sales_by_Country">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.Employee_Sales_by_Country_Result">
+                <ScalarProperty Name="Country" ColumnName="Country" />
+                <ScalarProperty Name="LastName" ColumnName="LastName" />
+                <ScalarProperty Name="FirstName" ColumnName="FirstName" />
+                <ScalarProperty Name="ShippedDate" ColumnName="ShippedDate" />
+                <ScalarProperty Name="OrderID" ColumnName="OrderID" />
+                <ScalarProperty Name="SaleAmount" ColumnName="SaleAmount" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="Sales_by_Year" FunctionName="NorthwindModel.Store.Sales_by_Year">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.Sales_by_Year_Result">
+                <ScalarProperty Name="ShippedDate" ColumnName="ShippedDate" />
+                <ScalarProperty Name="OrderID" ColumnName="OrderID" />
+                <ScalarProperty Name="Subtotal" ColumnName="Subtotal" />
+                <ScalarProperty Name="Year" ColumnName="Year" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="SalesByCategory" FunctionName="NorthwindModel.Store.SalesByCategory">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.SalesByCategory_Result">
+                <ScalarProperty Name="ProductName" ColumnName="ProductName" />
+                <ScalarProperty Name="TotalPurchase" ColumnName="TotalPurchase" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_helpdiagramdefinition" FunctionName="NorthwindModel.Store.sp_helpdiagramdefinition">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.sp_helpdiagramdefinition_Result">
+                <ScalarProperty Name="version" ColumnName="version" />
+                <ScalarProperty Name="definition" ColumnName="definition" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="sp_helpdiagrams" FunctionName="NorthwindModel.Store.sp_helpdiagrams">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.sp_helpdiagrams_Result">
+                <ScalarProperty Name="Database" ColumnName="Database" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="Owner" ColumnName="Owner" />
+                <ScalarProperty Name="OwnerID" ColumnName="OwnerID" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="TenMostExpensiveProducts" FunctionName="NorthwindModel.Store.Ten_Most_Expensive_Products">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.TenMostExpensiveProductsResult">
+                <ScalarProperty Name="TenMostExpProductsCustom" ColumnName="TenMostExpensiveProducts" />
+                <ScalarProperty Name="UnitPrice" ColumnName="UnitPrice" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

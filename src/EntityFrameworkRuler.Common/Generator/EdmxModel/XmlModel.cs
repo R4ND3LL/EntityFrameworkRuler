@@ -283,6 +283,9 @@ public class StorageFunction {
 
     [XmlAttribute(AttributeName = "Schema")]
     public string Schema { get; set; }
+    
+    [XmlAttribute(AttributeName="StoreFunctionName")]
+    public string StoreFunctionName { get; set; }
 }
 
 [DebuggerDisplay("StorageEntitySet {Name}")]

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection.Metadata;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Generator.EdmxModel;
 using EntityFrameworkRuler.Generator.Services;
@@ -286,6 +287,39 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
 
                 schemaRule.Entities.Add(entityRule);
             }
+        }
+
+        foreach (var function in edmx.Functions.OrderBy(o => o.Name)) {
+            var schemaRule = root.Schemas.FirstOrDefault(o => string.Equals(o.SchemaName, function.Schema, StringComparison.OrdinalIgnoreCase));
+            if (schemaRule == null) {
+                schemaRule = new();
+                schemaRule.SchemaName = function.Schema;
+                schemaRule.UseSchemaName = false; // will append schema name to entity name
+                root.Schemas.Add(schemaRule);
+                schemaRule.IncludeUnknownTables = request.IncludeUnknowns;
+                schemaRule.IncludeUnknownViews = request.IncludeUnknowns;
+            }
+
+            var functionRule = new FunctionRule() {
+                Name = function.DbName,
+                NewName = function.DbName != function.Name ? function.Name : null,
+                NotMapped = !function.IsMapped
+            };
+            if (function.ImportMapping?.ResultMapping?.ComplexTypeMapping != null) {
+                functionRule.ResultTypeName = function.ImportMapping?.ResultMapping.ComplexTypeMapping?.TypeName;
+            }
+
+            if (function.Import?.Parameters?.Count > 0) {
+                foreach (var importParameter in function.Import.Parameters) {
+                    var p = new FunctionParameterRule() {
+                        Name = importParameter.Name,
+                        TypeName = importParameter.Type
+                    };
+                    functionRule.Parameters.Add(p);
+                }
+            }
+
+            schemaRule.Functions.Add(functionRule);
         }
 
         return root;

@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using EntityFrameworkRuler.Design.Metadata;
+using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -19,23 +20,22 @@ public interface IRuledModelCodeGenerator {
     /// <summary>
     ///     Generates code for a model.
     /// </summary>
-    /// <param name="model">The model.</param>
     /// <param name="databaseModelEx"></param>
     /// <param name="options">The options to use during generation.</param>
     /// <returns>The generated model.</returns>
-    IList<ScaffoldedFile> GenerateModel(IModel model, DatabaseModelEx databaseModelEx,
+    IList<ScaffoldedFile> GenerateModel(ModelEx databaseModelEx,
         ModelCodeGenerationOptions options);
 }
 
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
-public class RoutineModelGenerator : IRuledModelCodeGenerator {
+public class FunctionModelGenerator : IRuledModelCodeGenerator {
     private readonly ModelCodeGeneratorDependencies dependencies;
     private readonly IOperationReporter reporter;
     private readonly IServiceProvider serviceProvider;
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public RoutineModelGenerator(
+    public FunctionModelGenerator(
         ModelCodeGeneratorDependencies dependencies,
         IOperationReporter reporter,
         IServiceProvider serviceProvider,
@@ -55,7 +55,7 @@ public class RoutineModelGenerator : IRuledModelCodeGenerator {
     protected virtual TemplatingEngine Engine => engine ??= new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public IList<ScaffoldedFile> GenerateModel(IModel model, DatabaseModelEx databaseModelEx, ModelCodeGenerationOptions options) {
+    public IList<ScaffoldedFile> GenerateModel(ModelEx modelEx, ModelCodeGenerationOptions options) {
         if (options.ContextName == null)
             throw new ArgumentException(
                 CoreStrings.ArgumentPropertyNull(nameof(options.ContextName), nameof(options)), nameof(options));
@@ -66,33 +66,49 @@ public class RoutineModelGenerator : IRuledModelCodeGenerator {
 
 
         var projectDir = designTimeRuleLoader.GetProjectDir();
-        var contextTemplate = RuledTemplatedModelGenerator.GetRoutineFile(projectDir);
+        var contextTemplate = RuledTemplatedModelGenerator.GetFunctionFile(projectDir);
         string generatedCode;
         var resultingFiles = new List<ScaffoldedFile>();
         if (contextTemplate.Exists) {
-            if (!(databaseModelEx?.Routines?.Count > 0)) return resultingFiles;
+            if (modelEx?.GetFunctions() == null) return resultingFiles;
 
-            reporter.WriteInformation($"RULED: Running Routine.t4 template...");
+            reporter.WriteInformation($"RULED: Running Functions.t4 template...");
             var host = new TextTemplatingEngineHost(serviceProvider) {
                 TemplateFile = contextTemplate.FullName
             };
-            foreach (var routine in databaseModelEx.Routines) {
-                host.Initialize();
-                host.Session.Add("Routine", routine);
-                host.Session.Add("Options", options);
-                host.Session.Add("NamespaceHint", options.ContextNamespace ?? options.ModelNamespace);
-                host.Session.Add("ProjectDefaultNamespace", options.RootNamespace);
+            host.Initialize();
+            host.Session.Add("Model", modelEx);
+            host.Session.Add("Options", options);
+            host.Session.Add("NamespaceHint", options.ContextNamespace ?? options.ModelNamespace);
+            host.Session.Add("ProjectDefaultNamespace", options.RootNamespace);
 
-                generatedCode = Engine.ProcessTemplate(File.ReadAllText(contextTemplate.FullName), host);
-                CheckEncoding(host.OutputEncoding);
-                HandleErrors(host);
+            generatedCode = Engine.ProcessTemplate(File.ReadAllText(contextTemplate.FullName), host);
+            CheckEncoding(host.OutputEncoding);
+            HandleErrors(host);
 
-                if (string.IsNullOrWhiteSpace(generatedCode)) continue;
+            if (string.IsNullOrWhiteSpace(generatedCode)) return resultingFiles;
 
-                var routineFileName = routine.Name + host.Extension;
-                resultingFiles.Add(new() { Path = routineFileName, Code = generatedCode });
-            }
-        } else reporter.WriteWarning("Routines.t4 missing");
+            var functionFileName = options.ContextName + "Functions" + host.Extension;
+            resultingFiles.Add(new() { Path = functionFileName, Code = generatedCode });
+            //
+            // foreach (var function in databaseModelEx.Functions) {
+            //     host.Initialize();
+            //     host.Session.Add("Model", function);
+            //     host.Session.Add("Options", options);
+            //     host.Session.Add("NamespaceHint", options.ContextNamespace ?? options.ModelNamespace);
+            //     host.Session.Add("ProjectDefaultNamespace", options.RootNamespace);
+            //
+            //     generatedCode = Engine.ProcessTemplate(File.ReadAllText(contextTemplate.FullName), host);
+            //     CheckEncoding(host.OutputEncoding);
+            //     HandleErrors(host);
+            //
+            //     if (string.IsNullOrWhiteSpace(generatedCode)) continue;
+            //
+            //     var functionFileName = function.Name + host.Extension;
+            //     resultingFiles.Add(new() { Path = functionFileName, Code = generatedCode });
+            //     break;
+            // }
+        } else reporter.WriteWarning("Functions.t4 missing");
 
         return resultingFiles;
     }

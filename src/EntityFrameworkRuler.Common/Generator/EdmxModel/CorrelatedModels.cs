@@ -203,6 +203,21 @@ public sealed class EntityType : NotifyPropertyChanged {
     public override string ToString() { return BaseType != null ? $"Entity: {Name}: {BaseType.Name}" : $"Entity: {Name}"; }
 }
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+public sealed class Function : NotifyPropertyChanged {
+    public Function(StorageFunction storageFunction) {
+        this.StorageFunction = storageFunction;
+    }
+
+    public StorageFunction StorageFunction { get; }
+    public FunctionImportMapping ImportMapping { get; set; }
+    public ConceptualFunctionImport Import { get; set; }
+    public string Name => ImportMapping?.FunctionImportName ?? StorageFunction.Name;
+    public string DbName => StorageFunction.StoreFunctionName.CoalesceWhiteSpace(StorageFunction.Name);
+    public bool IsMapped => ImportMapping != null && Import != null;
+    public string Schema => StorageFunction.Schema;
+}
+
 [DebuggerDisplay("{value}")]
 internal readonly struct NamingCache<T> {
     public NamingCache(IRulerNamingService owner, T value) {
@@ -364,8 +379,7 @@ public sealed class NavigationProperty : EntityPropertyBase {
 public sealed class DesignAssociation : AssociationBase {
     public DesignAssociation(ConceptualAssociation conceptualAssociation, IList<EndRole> roles,
         NavigationProperty fromNavigation, NavigationProperty toNavigation) : base(
-        conceptualAssociation, roles, fromNavigation, toNavigation) {
-    }
+        conceptualAssociation, roles, fromNavigation, toNavigation) { }
 
 
     // public NavigationProperty FromNavigation { get; }

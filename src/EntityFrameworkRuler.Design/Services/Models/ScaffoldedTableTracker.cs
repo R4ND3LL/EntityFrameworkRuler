@@ -24,11 +24,11 @@ public sealed class ScaffoldedTableTracker {
     /// <summary> An omitted foreign key implies the mapping of any navigation based on this FK is forbidden. </summary>
     private readonly Dictionary<IMutableForeignKey, ForeignKeyUsage> foreignKeyUsage = new();
 
-    private Dictionary<string, Dictionary<string, DatabaseTableNode>> tablesBySchema;
+    private Dictionary<string, Dictionary<string, ScaffoldedTableTrackerItem>> tablesBySchema;
     private DbContextRuleNode dbContextRule;
 
     /// <summary> Enumerate schemas and tables </summary>
-    public IEnumerable<(string Schema, IEnumerable<DatabaseTableNode> Tables)> Tables =>
+    public IEnumerable<(string Schema, IEnumerable<ScaffoldedTableTrackerItem> Tables)> Tables =>
         tablesBySchema.Select(o => (o.Key, o.Value.Values.Select(n => n)));
 
     /// <summary> True if there are schema or table omissions so far </summary>
@@ -37,7 +37,7 @@ public sealed class ScaffoldedTableTracker {
     /// <summary> Initialize data for tracking </summary>
     public void InitializeScope(IEnumerable<DatabaseTable> tables, DbContextRuleNode dbContextRuleNode) {
         tablesBySchema = tables.GroupBy(o => o.Schema.EmptyIfNullOrWhitespace())
-            .ToDictionary(o => o.Key, o => o.ToDictionary(t => t.Name, t => new DatabaseTableNode(this, t)));
+            .ToDictionary(o => o.Key, o => o.ToDictionary(t => t.Name, t => new ScaffoldedTableTrackerItem(this, t)));
         dbContextRule = dbContextRuleNode ?? throw new ArgumentNullException(nameof(dbContextRuleNode));
     }
 
@@ -92,7 +92,7 @@ public sealed class ScaffoldedTableTracker {
 
     private void OnEntityOmitted(EntityRuleNode entityRule) {
         if (entityRule == null) return;
-        var schemaName = entityRule.DatabaseTable?.Schema ?? entityRule.Parent?.Rule?.SchemaName;
+        var schemaName = entityRule.ScaffoldedTable?.Schema ?? entityRule.Parent?.Rule?.SchemaName;
         entityRule.SetOmitted();
         if (!IsSchemaOmitted(schemaName))
             reporter.WriteInformation($"RULED: Entity {entityRule.GetFinalName()} omitted.");
@@ -107,17 +107,17 @@ public sealed class ScaffoldedTableTracker {
     // }
 
     // /// <summary> Get the table nodes by schema name </summary>
-    // private Dictionary<string, DatabaseTableNode> FindSchemaTables(string schemaName) {
+    // private Dictionary<string, ScaffoldedTableTrackerItem> FindSchemaTables(string schemaName) {
     //     return tablesBySchema.TryGetValue(schemaName.EmptyIfNullOrWhitespace());
     // }
 
     /// <summary> Get the table node </summary>
-    public DatabaseTableNode FindTableNode(string schemaName, string tableName) {
+    public ScaffoldedTableTrackerItem FindTableNode(string schemaName, string tableName) {
         return tablesBySchema.TryGetValue(schemaName.EmptyIfNullOrWhitespace())?.TryGetValue(tableName);
     }
 
     /// <summary> Get the table node </summary>
-    public DatabaseTableNode FindTableNode(DatabaseTable table) {
+    public ScaffoldedTableTrackerItem FindTableNode(DatabaseTable table) {
         if (table == null) return null;
         var node = tablesBySchema.TryGetValue(table.Schema.EmptyIfNullOrWhitespace())?.TryGetValue(table.Name);
         Debug.Assert(node != null, "This tracker should have been initialized with the entire table set");

@@ -7,10 +7,14 @@ public sealed class SchemaRuleNode : RuleNode<SchemaRule, DbContextRuleNode> {
     /// <inheritdoc />
     public SchemaRuleNode(SchemaRule r, DbContextRuleNode parent) : base(r, parent) {
         Entities = new(() => r.Entities.Select(o => new EntityRuleNode(o, this)), parent.Rule.CaseSensitive);
+        Functions = new(() => r.Functions.Select(o => new FunctionRuleNode(o, this)), parent.Rule.CaseSensitive);
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public RuleIndex<EntityRuleNode> Entities { get; }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public RuleIndex<FunctionRuleNode> Functions { get; }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public bool IsDynamicNamingTables =>
@@ -25,7 +29,7 @@ public sealed class SchemaRuleNode : RuleNode<SchemaRule, DbContextRuleNode> {
         (Rule.ColumnRegexPattern.HasNonWhiteSpace() && Rule.ColumnPatternReplaceWith != null);
 
     /// <summary> Get the table rule for the given target table. Used during scaffolding phase. </summary>
-    public ICollection<EntityRuleNode> TryResolveRuleFor(string table) {
+    public ICollection<EntityRuleNode> TryResolveRuleForTable(string table) {
         if (Entities == null || Entities.Count == 0 || table.IsNullOrWhiteSpace()) return null;
 
         var entityRule = Entities?.GetByDbName(table);
@@ -45,6 +49,19 @@ public sealed class SchemaRuleNode : RuleNode<SchemaRule, DbContextRuleNode> {
         if (entityRule?.DbName.HasNonWhiteSpace() == true) entityRule = null;
 
         return entityRule != null ? new[] { entityRule } : Array.Empty<EntityRuleNode>();
+    }
+
+    /// <summary> Get the dbFunction rule for the given target dbFunction name. Used during scaffolding phase. </summary>
+    public FunctionRuleNode TryResolveRuleForFunction(string function) {
+        if (Functions == null || Functions.Count == 0 || function.IsNullOrWhiteSpace()) return null;
+
+        var functionRule = Functions?.GetByDbName(function);
+        if (functionRule != null) return functionRule;
+
+        functionRule = Functions?.GetByFinalName(function);
+        if (functionRule?.DbName.HasNonWhiteSpace() == true) functionRule = null;
+
+        return functionRule;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
