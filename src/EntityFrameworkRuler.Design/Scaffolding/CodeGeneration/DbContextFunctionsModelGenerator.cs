@@ -54,9 +54,7 @@ public class DbContextFunctionsModelGenerator : RuledModelGeneratorBase, IRuledM
             host.Session.Add("NamespaceHint", options.ContextNamespace ?? options.ModelNamespace);
             host.Session.Add("ProjectDefaultNamespace", options.RootNamespace);
 
-            var generatedCode = Engine.ProcessTemplate(File.ReadAllText(contextTemplate.FullName), host);
-            CheckEncoding(host.OutputEncoding);
-            HandleErrors(host);
+            var generatedCode = GeneratedCode(contextTemplate, host);
 
             if (string.IsNullOrWhiteSpace(generatedCode)) return resultingFiles;
 

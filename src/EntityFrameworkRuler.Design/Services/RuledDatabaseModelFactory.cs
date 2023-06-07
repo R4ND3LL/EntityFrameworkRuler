@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Castle.DynamicProxy;
 using EntityFrameworkRuler.Design.Metadata;
@@ -13,7 +14,8 @@ using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 namespace EntityFrameworkRuler.Design.Services;
 
 /// <summary> Proxy for the actual IDatabaseModelFactory </summary>
-internal sealed class RuledDatabaseModelFactory : IDatabaseModelFactory {
+[SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
+internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
     private readonly IServiceProvider serviceProvider;
     private readonly IDatabaseModelFactory actualFactory;
     private readonly IOperationReporter reporter;
@@ -64,6 +66,42 @@ internal sealed class RuledDatabaseModelFactory : IDatabaseModelFactory {
         }
     }
 
+    protected virtual void OnModelAppended(DatabaseModelEx model) {
+        VisitFunctions(model, model.Functions);
+    }
+
+    protected virtual void VisitFunctions(DatabaseModelEx model, IList<DatabaseFunction> functions) {
+        foreach (var function in functions) {
+            VisitFunction(model, function);
+        }
+    }
+
+    protected virtual void VisitFunction(DatabaseModelEx model, DatabaseFunction function) {
+        var hasComplexType = string.IsNullOrEmpty(function.MappedType) && (function.FunctionType == FunctionType.StoredProcedure || !function.IsScalar);
+        if (hasComplexType) {
+            var i = 1;
+
+            foreach (var resultTable in function.Results) {
+                if (function.NoResultSet) continue;
+
+                var separator = function.Name.Contains(" ") ? " " : (function.Name.Contains("_") ? "_" : "");
+                var tableName = function.Name + separator + "Result";
+                tableName = tableName.GetUniqueString(s => model.Tables.Any(o => string.Equals(o.Name, s, StringComparison.OrdinalIgnoreCase)));
+                resultTable.Name = tableName;
+                resultTable.Schema = function.Schema;
+                resultTable.Comment = $"Result for function {function.Name}";
+                resultTable.Ordinal = i;
+                resultTable.Function = function;
+                resultTable.ResultColumns.ForAll(o => o.Table = resultTable);
+                model.Tables.Add(resultTable);
+                i++;
+            }
+        } else {
+            Debug.Assert(!function.Results.Any() || function.Results[0].Columns.Count == 0);
+        }
+    }
+
+
     private void AppendToModel(DbConnection connection, DatabaseModelEx model) {
         IDatabaseModelFactoryEx databaseModelFactoryEx = null;
         var connectionName = connection?.GetType()?.Name;
@@ -79,6 +117,6 @@ internal sealed class RuledDatabaseModelFactory : IDatabaseModelFactory {
         }
 
         databaseModelFactoryEx.AppendToModel(connection, model);
+        OnModelAppended(model);
     }
-
 }

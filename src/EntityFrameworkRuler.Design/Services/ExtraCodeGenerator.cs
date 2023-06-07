@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using EntityFrameworkRuler.Design.Metadata;
 using EntityFrameworkRuler.Design.Scaffolding.CodeGeneration;
 using Microsoft.EntityFrameworkCore.Design.Internal;
@@ -6,17 +7,21 @@ using Microsoft.EntityFrameworkCore.Scaffolding;
 
 namespace EntityFrameworkRuler.Design.Services;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+[SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class ExtraCodeGenerator: IExtraCodeGenerator {
     private IOperationReporter reporter;
     private readonly IEnumerable<IRuledModelCodeGenerator> ruledModelCodeGenerators;
     private IDesignTimeRuleLoader designTimeRuleLoader;
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ExtraCodeGenerator(IOperationReporter reporter, IEnumerable<IRuledModelCodeGenerator> ruledModelCodeGenerators, IDesignTimeRuleLoader designTimeRuleLoader) {
         this.reporter = reporter;
         this.ruledModelCodeGenerators = ruledModelCodeGenerators;
         this.designTimeRuleLoader = designTimeRuleLoader;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public IList<ScaffoldedFile> GenerateCode(ModelEx modelEx, ModelCodeGenerationOptions codeGenerationOptions) {
         var resultingFiles = new List<ScaffoldedFile>(); 
         if (modelEx == null) {
@@ -54,7 +59,11 @@ public class ExtraCodeGenerator: IExtraCodeGenerator {
     }
 
 }
+
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public interface IExtraCodeGenerator {
+    
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     IList<ScaffoldedFile> GenerateCode(ModelEx modelEx, ModelCodeGenerationOptions codeGenerationOptions);
 
     /// <summary>

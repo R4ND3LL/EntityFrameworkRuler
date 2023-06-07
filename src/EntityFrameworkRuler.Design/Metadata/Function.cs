@@ -4,6 +4,7 @@ using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 #pragma warning disable CS1591
 
@@ -43,8 +44,9 @@ public class Function : ConventionAnnotatable, IFunction {
     public virtual bool IsScalar { get; set; }
 
     public virtual FunctionType FunctionType { get; set; }
-    public IList<List<DatabaseFunctionResultElement>> Results { get; set; }
+    public IList<DatabaseFunctionResultTable> Results { get; set; }
     public virtual bool NoResultSet => Results != null && Results.Count == 1 && Results[0].Count == 0 && HasValidResultSet;
+    public  IList<IMutableEntityType> ResultEntities { get; } = new List<IMutableEntityType>();
 
     public ParameterBuilder CreateParameter(string name) {
         if (parameters.ContainsKey(name)) throw new Exception($"Parameter {name} already exists");

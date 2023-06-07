@@ -190,26 +190,19 @@ public partial class <#= Options.ContextName #>
                     {
                         if (f.FunctionType == FunctionType.Function) {
                             if (f.IsScalar) continue;
+                            var result = f.ResultEntities.FirstOrDefault();
+                            if (result is null) continue;
 #>
-        modelBuilder.Entity<<#= f.Name+"Result" #>>().HasNoKey();
+        modelBuilder.Entity<<#= result.Name #>>().HasNoKey();
 <#
                         }
                         else {
                             if (f.NoResultSet) continue;
                             
                             int i = 1;
-                            foreach (var _ in f.Results)
-                            {
-                                var suffix = $"{i++}";
-
-                                if (!f.SupportsMultipleResultSet)
-                                {
-                                    suffix = string.Empty;
-                                }
-
-                                var typeName = f.Name + "Result" + suffix;
+                            foreach (var result in f.ResultEntities) {
 #>
-        modelBuilder.Entity<<#= typeName #>>().HasNoKey().ToView(null);
+        modelBuilder.Entity<<#= result.Name #>>().HasNoKey().ToView(null);
 <#
                             }                            
 

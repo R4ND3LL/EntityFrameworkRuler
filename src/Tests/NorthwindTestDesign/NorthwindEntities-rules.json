@@ -1367,6 +1367,39 @@
           "Parameters": []
         },
         {
+          "Name": "MultiResultSetExample",
+          "NewName": "MultiResultExample",
+          "Parameters": [],
+          "ResultTypeName": "NorthwindModel.MultiResultSetExample_Result"
+        },
+        {
+          "Name": "OutputParamExample",
+          "NewName": "OutputParamExpl",
+          "Parameters": [
+            {
+              "Name": "price",
+              "TypeName": "Decimal"
+            },
+            {
+              "Name": "count",
+              "TypeName": "Int32"
+            },
+            {
+              "Name": "count2",
+              "TypeName": "Int32"
+            },
+            {
+              "Name": "date",
+              "TypeName": "DateTime"
+            }
+          ],
+          "ResultTypeName": "NorthwindModel.OutputParamExample_Result"
+        },
+        {
+          "Name": "ReturnNumberOne",
+          "Parameters": []
+        },
+        {
           "Name": "Sales by Year",
           "NewName": "Sales_by_Year",
           "Parameters": [

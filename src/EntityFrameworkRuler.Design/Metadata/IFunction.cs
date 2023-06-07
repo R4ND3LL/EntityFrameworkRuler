@@ -12,7 +12,7 @@ public interface IFunction : IReadOnlyFunction { }
 /// <summary> Represents a Function in a model. </summary>
 public interface IReadOnlyFunction : IReadOnlyAnnotatable {
     /// <summary> Gets the model that this type belongs to. </summary>
-    new IModel Model { get; }
+    IModel Model { get; }
 
     /// <summary> Gets the name of this dbFunction. </summary>
     string Name { [DebuggerStepThrough] get; }

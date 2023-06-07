@@ -13,6 +13,11 @@ namespace EntityFrameworkRuler.Design.Metadata.Builders;
 public class FunctionBuilder : AnnotatableBuilder<Function, ModelBuilderEx> {
     public FunctionBuilder(Function metadata, ModelBuilderEx modelBuilder) : base(metadata, modelBuilder) { }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public IMutableModel Model => ModelBuilder.Model;
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public ModelEx ModelEx => ModelBuilder.ModelEx;
+    
     /// <summary>
     ///     Adds or updates an annotation on the function. If an annotation with the key specified in
     ///     <paramref name="annotation" /> already exists its value will be updated.
@@ -60,7 +65,7 @@ public class FunctionBuilder : AnnotatableBuilder<Function, ModelBuilderEx> {
         return this;
     }
 
-    public FunctionBuilder HasResult(IList<List<DatabaseFunctionResultElement>> results) {
+    public FunctionBuilder HasResult(IList<DatabaseFunctionResultTable> results) {
         Metadata.Results = results;
         return this;
     }
@@ -80,5 +85,9 @@ public class FunctionBuilder : AnnotatableBuilder<Function, ModelBuilderEx> {
 
     public FunctionBuilder If(Func<bool> condition, Func<FunctionBuilder, FunctionBuilder> then) {
         return condition() ? then(this) : this;
+    }
+
+    public void AddResultEntity(IMutableEntityType resultEntity) {
+        Metadata.ResultEntities.Add(resultEntity);
     }
 }

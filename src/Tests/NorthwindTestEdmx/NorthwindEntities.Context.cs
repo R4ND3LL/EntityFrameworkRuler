@@ -152,5 +152,24 @@ namespace NorthwindTestProject
         {
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<TenMostExpensiveProductsResult>("TenMostExpensiveProducts");
         }
+    
+        public virtual ObjectResult<MultiResultSetExample_Result> MultiResultExample()
+        {
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<MultiResultSetExample_Result>("MultiResultExample");
+        }
+    
+        public virtual ObjectResult<Nullable<int>> ReturnNumberOne()
+        {
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<Nullable<int>>("ReturnNumberOne");
+        }
+    
+        public virtual ObjectResult<OutputParamExample_Result> OutputParamExpl(Nullable<decimal> price, ObjectParameter count, ObjectParameter count2, ObjectParameter date)
+        {
+            var priceParameter = price.HasValue ?
+                new ObjectParameter("price", price) :
+                new ObjectParameter("price", typeof(decimal));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<OutputParamExample_Result>("OutputParamExpl", priceParameter, count, count2, date);
+        }
     }
 }

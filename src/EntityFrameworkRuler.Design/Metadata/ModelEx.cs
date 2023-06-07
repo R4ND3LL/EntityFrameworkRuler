@@ -5,18 +5,26 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace EntityFrameworkRuler.Design.Metadata;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public class ModelEx {
     private SortedDictionary<string, Function> functions = new(StringComparer.Ordinal);
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelEx(ModelBuilderEx builder) {
         BuilderEx = builder;
         //builder.Builder.HasAnnotation(RulerAnnotations.ModelExtension, this);
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public IMutableModel Model => Builder.Model;
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelBuilderEx BuilderEx { get; }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelBuilder Builder => BuilderEx.Builder;
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public IEnumerable<Function> GetFunctions() => functions.Values;
 
     /// <summary>

@@ -7,25 +7,25 @@ namespace EntityFrameworkRuler.Design.Scaffolding.Internal;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public class TextTemplatingEngineHost : ITextTemplatingSessionHost, ITextTemplatingEngineHost, IServiceProvider {
-    private static readonly List<string> _noWarn = new() { "CS1701", "CS1702" };
+    private static readonly List<string> noWarn = new() { "CS1701", "CS1702" };
 
-    private readonly IServiceProvider? _serviceProvider;
-    private ITextTemplatingSession? _session;
-    private CompilerErrorCollection? _errors;
-    private string? _extension;
-    private Encoding? _outputEncoding;
-    private bool _fromOutputDirective;
+    private readonly IServiceProvider serviceProvider;
+    private ITextTemplatingSession session;
+    private CompilerErrorCollection errors;
+    private string extension;
+    private Encoding outputEncoding;
+    private bool fromOutputDirective;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public TextTemplatingEngineHost(IServiceProvider? serviceProvider = null) {
-        _serviceProvider = serviceProvider;
+    public TextTemplatingEngineHost(IServiceProvider serviceProvider = null) {
+        this.serviceProvider = serviceProvider;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [AllowNull]
     public virtual ITextTemplatingSession Session {
-        get => _session ??= CreateSession();
-        set => _session = value;
+        get => session ??= CreateSession();
+        set => session = value;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -37,27 +37,27 @@ public class TextTemplatingEngineHost : ITextTemplatingSessionHost, ITextTemplat
     public virtual IList<string> StandardImports { get; } = new[] { "System" };
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public virtual string? TemplateFile { get; set; }
+    public virtual string TemplateFile { get; set; }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual string Extension
-        => _extension ?? ".cs";
+        => extension ?? ".cs";
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual CompilerErrorCollection Errors
-        => _errors ??= new CompilerErrorCollection();
+        => errors ??= new CompilerErrorCollection();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual Encoding OutputEncoding
-        => _outputEncoding ?? Encoding.UTF8;
+        => outputEncoding ?? Encoding.UTF8;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual void Initialize() {
-        _session?.Clear();
-        _errors = null;
-        _extension = null;
-        _outputEncoding = null;
-        _fromOutputDirective = false;
+        session?.Clear();
+        errors = null;
+        extension = null;
+        outputEncoding = null;
+        fromOutputDirective = false;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -65,7 +65,7 @@ public class TextTemplatingEngineHost : ITextTemplatingSessionHost, ITextTemplat
         => new TextTemplatingSession();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public virtual object? GetHostOption(string optionName)
+    public virtual object GetHostOption(string optionName)
         => null;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -82,7 +82,7 @@ public class TextTemplatingEngineHost : ITextTemplatingSessionHost, ITextTemplat
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual void LogErrors(CompilerErrorCollection errors)
-        => Errors.AddRange(errors.Cast<CompilerError>().Where(e => !_noWarn.Contains(e.ErrorNumber)).ToArray());
+        => Errors.AddRange(errors.Cast<CompilerError>().Where(e => !noWarn.Contains(e.ErrorNumber)).ToArray());
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual AppDomain ProvideTemplatingAppDomain(string content)
@@ -124,19 +124,19 @@ public class TextTemplatingEngineHost : ITextTemplatingSessionHost, ITextTemplat
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual void SetFileExtension(string extension)
-        => _extension = extension;
+        => this.extension = extension;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual void SetOutputEncoding(Encoding encoding, bool fromOutputDirective) {
-        if (_fromOutputDirective) {
+        if (this.fromOutputDirective) {
             return;
         }
 
-        _outputEncoding = encoding;
-        _fromOutputDirective = fromOutputDirective;
+        outputEncoding = encoding;
+        this.fromOutputDirective = fromOutputDirective;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public virtual object? GetService(Type serviceType)
-        => _serviceProvider?.GetService(serviceType);
+    public virtual object GetService(Type serviceType)
+        => serviceProvider?.GetService(serviceType);
 }

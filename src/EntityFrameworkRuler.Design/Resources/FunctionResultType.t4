@@ -4,9 +4,8 @@
 <#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Relational" #>
 <#@ assembly name="Microsoft.Extensions.DependencyInjection.Abstractions" #>
-
-
-
+<#@ parameter name="Function" type="EntityFrameworkRuler.Design.Metadata.Function" #>
+<#@ parameter name="ResultSet" type="List<EntityFrameworkRuler.Design.Metadata.DatabaseFunctionResultColumn>" #>
 <#@ parameter name="Model" type="EntityFrameworkRuler.Design.Metadata.ModelEx" #>
 <#@ parameter name="Options" type="Microsoft.EntityFrameworkCore.Scaffolding.ModelCodeGenerationOptions" #>
 <#@ parameter name="NamespaceHint" type="System.String" #>
@@ -328,11 +327,16 @@ using <#= ns #>;
             }
             string GenerateMultiResultStatement(EntityFrameworkRuler.Design.Metadata.Function function)
             {
-                if (function.ResultEntities.Count == 0) return null;
+                if (function.Results.Count == 1) return null;
 
                 var ids = new List<string>();
-                foreach (var entity in function.ResultEntities)
-                    ids.Add($"(await reader.ReadAsync<{entity.Name}>()).ToList()");
+                int i = 1;
+                foreach (var _ in function.Results)
+                {
+                    var suffix = $"{i++}";
+                    var typeName = function.Name + "Result" + suffix;
+                    ids.Add($"(await reader.ReadAsync<{typeName}>()).ToList()");
+                }
 
                 return $"({string.Join(", ", ids)})";
             }

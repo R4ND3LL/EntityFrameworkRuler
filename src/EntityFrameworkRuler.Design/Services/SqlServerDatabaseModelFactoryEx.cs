@@ -33,10 +33,10 @@ public class SqlServerDatabaseModelFactoryEx : IDatabaseModelFactoryEx {
         SqlServerTypeExtensions.UseDateOnlyTimeOnly = false;
 #endif
 
-        GetProcedures(connection, model, null);
+        GetDbFunctions(connection, model, null);
     }
 
-    private void GetProcedures(DbConnection connection, DatabaseModelEx model, IEnumerable<string> sprocNamesToSelect) {
+    private void GetDbFunctions(DbConnection connection, DatabaseModelEx model, IEnumerable<string> sprocNamesToSelect) {
         var tablesToSelect = new HashSet<string>(sprocNamesToSelect?.ToList() ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
         var selectedTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -78,7 +78,7 @@ AND (
 
                 if (!AllowsProcedure(tablesToSelect, selectedTables, name)) continue;
 
-                reporter!.WriteInformation($"Found procedure: {name}");
+                reporter!.WriteInformation($"RULED: Found procedure: {name}");
 
                 var isScalar = reader.GetBoolean(2);
                 var type = reader.GetString(3);
@@ -104,7 +104,7 @@ AND (
         }
         foreach (var function in model.Functions.ToArray()) {
             var isProcedure = function.FunctionType == FunctionType.StoredProcedure;
-           var factory = isProcedure ? procedureFactory : functionFactory;
+            var factory = isProcedure ? procedureFactory : functionFactory;
 
             if (!function.IsScalar)
                 try {
@@ -112,7 +112,7 @@ AND (
                 } catch (Exception ex) {
                     function.HasValidResultSet = false;
                     function.Results.Clear();
-                    function.Results.Add(new());
+                    function.Results.Add(new() { Function = function, Schema = function.Schema });
                     reporter.WriteError(
                         $"Unable to get result set shape for {function.GetType().Name.ToLower(CultureInfo.InvariantCulture)} '{function.Schema}.{function.Name}'. {ex.Message}.");
                 }
@@ -128,7 +128,7 @@ AND (
 
             if (!failure)
                 foreach (var resultElement in function.Results) {
-                    var duplicates = resultElement.GroupBy(x => x.Name)
+                    var duplicates = resultElement.Columns.GroupBy(x => x.Name)
                         .Where(g => g.Count() > 1)
                         .Select(y => y.Key)
                         .ToList();
@@ -236,6 +236,7 @@ AND (
     }
 }
 
+[SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 internal class SqlServerFunctionFactory : RoutineFactory {
     private readonly IOperationReporter reporter;
 
@@ -247,10 +248,10 @@ internal class SqlServerFunctionFactory : RoutineFactory {
         return new DatabaseFunction { IsScalar = isScalar, FunctionType = FunctionType.Function };
     }
 
-    public override List<List<DatabaseFunctionResultElement>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
+    public override List<DatabaseFunctionResultTable> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
         if (dbFunction is null) throw new ArgumentNullException(nameof(dbFunction));
 
-        var list = new List<DatabaseFunctionResultElement>();
+        var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema};
 
         using var command = connection.CreateCommand();
         command.CommandText = $@"
@@ -265,24 +266,23 @@ WHERE object_id = OBJECT_ID('{dbFunction.Schema}.{dbFunction.Name}');";
         using var reader = command.ExecuteReader();
 
         while (reader.Read()) {
-            var parameter = new DatabaseFunctionResultElement() {
-                Name = reader.GetString(0) is { } s && !string.IsNullOrEmpty(s) ? s : $"Col{list.Count + 1}",
+            var parameter = new DatabaseFunctionResultColumn() {
+                Name = reader.GetString(0) is { } s && !string.IsNullOrEmpty(s) ? s : $"Col{table.Columns.Count + 1}",
                 StoreType = reader.GetString(1),
                 Ordinal = reader.GetInt32(2),
                 Nullable = reader.GetBoolean(3),
+                Table = table
             };
 
-            list.Add(parameter);
+            table.Columns.Add(parameter);
+            parameter.Table = table;
         }
 
-        var result = new List<List<DatabaseFunctionResultElement>> {
-            list,
-        };
-
-        return result;
+        return new() { table };
     }
 }
 
+[SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 internal class SqlServerProcedureFactory : RoutineFactory {
     private readonly IOperationReporter reporter;
 
@@ -294,7 +294,7 @@ internal class SqlServerProcedureFactory : RoutineFactory {
         return new() { FunctionType = FunctionType.StoredProcedure };
     }
 
-    public override List<List<DatabaseFunctionResultElement>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
+    public override List<DatabaseFunctionResultTable> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
         if (connection is null) throw new ArgumentNullException(nameof(connection));
 
         if (dbFunction is null) throw new ArgumentNullException(nameof(dbFunction));
@@ -302,8 +302,8 @@ internal class SqlServerProcedureFactory : RoutineFactory {
         return GetAllResultSets(connection, dbFunction, !multipleResults);
     }
 
-    private static List<List<DatabaseFunctionResultElement>> GetAllResultSets(DbConnection connection, DatabaseFunction dbFunction, bool singleResult) {
-        var result = new List<List<DatabaseFunctionResultElement>>();
+    private static List<DatabaseFunctionResultTable> GetAllResultSets(DbConnection connection, DatabaseFunction dbFunction, bool singleResult) {
+        var result = new List<DatabaseFunctionResultTable>();
         using var sqlCommand = connection.CreateCommand();
 
 #pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
@@ -330,7 +330,7 @@ internal class SqlServerProcedureFactory : RoutineFactory {
         do {
             // https://docs.microsoft.com/en-us/dotnet/api/system.data.datatablereader.getschematable
             var schemaTable = schemaReader.GetSchemaTable();
-            var list = new List<DatabaseFunctionResultElement>();
+            var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema };
 
             if (schemaTable == null) break;
 
@@ -355,13 +355,14 @@ internal class SqlServerProcedureFactory : RoutineFactory {
                         // Normalize strings to uppercase
                     }
 
-                    list.Add(new() {
+                    table.Columns.Add(new DatabaseFunctionResultColumn() {
                         Name = name,
                         Nullable = (bool?)row["AllowDBNull"] ?? true,
                         Ordinal = (int)row["ColumnOrdinal"],
                         StoreType = storeType,
                         Precision = (short?)row["NumericPrecision"],
                         Scale = (short?)row["NumericScale"],
+                        Table = table
                     });
                 }
 
@@ -370,7 +371,7 @@ internal class SqlServerProcedureFactory : RoutineFactory {
 
             if (unnamedColumnCount > 0) dbFunction.UnnamedColumnCount += unnamedColumnCount;
 
-            result.Add(list);
+            result.Add(table);
         } while (schemaReader.NextResult() && !singleResult);
 
         return result;
@@ -411,5 +412,5 @@ internal class SqlServerProcedureFactory : RoutineFactory {
 
 internal abstract class RoutineFactory {
     public abstract DatabaseFunction Create(bool isScalar);
-    public abstract List<List<DatabaseFunctionResultElement>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults);
+    public abstract List<DatabaseFunctionResultTable> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults);
 }

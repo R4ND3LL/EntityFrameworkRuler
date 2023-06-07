@@ -377,12 +377,20 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             foreach (var table in kvp.Tables) {
                 if (table.EntityRules.Count > 0 || table.Builders.Any()) continue; // it's already been mapped
+
+                var resultTable = table.AsFunctionResultTable;
+                if (resultTable != null) {
+                    // there will be no rule for this one.  its a function result table only. not a real table-based entity
+                    DoInvokeVisitResultTable(resultTable);
+                    continue;
+                }
+
                 var entityRules = schemaRule.TryResolveRuleForTable(table.Name);
                 var canGenerateEntity = CanGenerateEntity(schemaRule, entityRules, table);
                 if (!canGenerateEntity) continue;
 
                 // Note, we ONLY generate entities at this point when NO rule exists. Therefore, we always add on the fly now
-                var entityRule = schemaRule.AddEntity(table.Name);
+                var entityRule = !table.IsFunctionResultTable ? schemaRule.AddEntity(table.Name) : null;
                 DoInvokeVisitTable(table, entityRule);
             }
         }
@@ -399,6 +407,18 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 if (builder != null && !ReferenceEquals(entityRule.Builder, builder))
                     throw new("Builder not linked to entity rule properly");
                 table.MapTo(entityRule);
+            } finally {
+                explicitEntityRuleMapping = default;
+            }
+        }
+
+        void DoInvokeVisitResultTable(DatabaseFunctionResultTable table) {
+            explicitEntityRuleMapping = (table, null);
+            try {
+                // We have to call the base VisitTable in order to perform the basic wiring.
+                // The call will be captured, and the result of the wiring will be customized based on the rules.
+                var builder = InvokeVisitTable(modelBuilder, table);
+                Debug.Assert(builder != null);
             } finally {
                 explicitEntityRuleMapping = default;
             }
@@ -446,14 +466,24 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-    protected virtual EntityTypeBuilder ApplyEntityRules(ModelBuilder modelBuilder,
-        EntityTypeBuilder entityTypeBuilder,
-        DatabaseTable table, EntityRuleNode entityRuleNode) {
+    protected virtual EntityTypeBuilder ApplyEntityRules(ModelBuilder modelBuilder, EntityTypeBuilder entityTypeBuilder, DatabaseTable table, EntityRuleNode entityRuleNode) {
+        if (table is DatabaseFunctionResultTable resultTable) {
+            Debug.Assert(entityRuleNode == null);
+            entityTypeBuilder.ToTable((string)null).ToView(null);
+            entityTypeBuilder.Metadata.RemoveAnnotation(EfScaffoldingAnnotationNames.DbSetName);
+            entityTypeBuilder.Metadata.RemoveAnnotation(EfRelationalAnnotationNames.Schema);
+            entityTypeBuilder.Metadata.RemoveAnnotation(EfRelationalAnnotationNames.TableName);
+            entityTypeBuilder.Metadata.SetAnnotation(RulerAnnotations.Function, true);
+            this.ScaffoldTracker.MapFunction(resultTable, entityTypeBuilder);
+            return entityTypeBuilder;
+        }
+
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
         var entityRule = entityRuleNode?.Rule;
         if (entityRule == null) return entityTypeBuilder;
         Debug.Assert(entityRule.ShouldMap());
         if (entityTypeBuilder == null) return null;
+
 
         var tableNode = ScaffoldTracker.FindTableNode(table);
         Debug.Assert(table == null || tableNode != null);
@@ -1530,6 +1560,16 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var functionBuilder = modelBuilder.CreateFunction(functionName);
         var function = functionBuilder.Metadata;
         var functionRuleNode = this.TryResolveRuleFor(dbFunction);
+        
+        foreach (var resultTable in dbFunction.Results) {
+            var node = ScaffoldTracker.FindTableNode(resultTable);
+            var resultEntity = node?.FunctionEntityType;
+            Debug.Assert(resultEntity != null);
+            resultEntity = modelBuilder.Model.FindEntityType(resultEntity.Name) ?? resultEntity;
+            if (resultEntity == null) continue;
+            functionBuilder.AddResultEntity(resultEntity);
+        }
+        
         VisitParameters(functionBuilder, functionRuleNode, dbFunction.Parameters);
 
         var allOutParams = dbFunction.Parameters.Where(p => p.IsOutput).ToList();
@@ -1542,6 +1582,31 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (multiResultSyntax.HasNonWhiteSpace()) functionBuilder.HasMultiResultSyntax(multiResultSyntax);
         if (dbFunction.MappedType.HasNonWhiteSpace()) functionBuilder.HasMappedType(dbFunction.MappedType);
 
+        
+
+        var hasComplexType = string.IsNullOrEmpty(dbFunction.MappedType) && (dbFunction.FunctionType == FunctionType.StoredProcedure || !dbFunction.IsScalar);
+        if (hasComplexType) {
+            int i = 1;
+
+            foreach (var resultSet in dbFunction.Results) {
+                if (dbFunction.NoResultSet) continue;
+
+                var suffix = string.Empty;
+                if (dbFunction.Results.Count > 1) suffix = (i++).ToString();
+
+                var typeName = function.Name + "Result" + suffix;
+
+                var classContent = CreateFunctionResultType(functionBuilder, dbFunction, resultSet, typeName);
+
+                // result.AdditionalFiles.Add(new ScaffoldedFile {
+                //     Code = classContent,
+                //     Path = scaffolderOptions.UseSchemaFolders
+                //         ? Path.Combine(routine.Schema, $"{typeName}.cs")
+                //         : $"{typeName}.cs",
+                // });
+            }
+        }
+
         functionBuilder
             .HasFunctionType(dbFunction.FunctionType)
             .HasSchema(dbFunction.Schema)
@@ -1553,7 +1618,37 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             .HasCommandText(dbFunction.GenerateProcedureStatement(retValueName, true))
             ;
 
+
         return modelBuilder;
+    }
+
+    private string CreateFunctionResultType(FunctionBuilder functionBuilder, DatabaseFunction dbFunction, DatabaseFunctionResultTable resultSet, string typeName) {
+        var entityType = new EntityType(typeName, (Model)functionBuilder.Model, false, ConfigurationSource.Explicit);
+        var entityTypeBuilder = new EntityTypeBuilder(entityType);
+        entityTypeBuilder.ToTable((string)null).ToView((string)null);
+        // var databaseTable = new DatabaseTable() {
+        //     Name = typeName,
+        // };
+        // var properties = resultSet.OrderBy(e => e.Ordinal).ToArray();
+        // foreach (var property in properties) {
+        //     var databaseColumn = new DatabaseColumn() {
+        //         Name = property.Name,
+        //         IsNullable = property.Nullable,
+        //         StoreType = property.StoreType,
+        //     };
+        //     databaseTable.Columns.Add(databaseColumn);
+        //     databaseColumn.Table = databaseTable;
+        // }
+        //
+        // for (var i = 0; i < properties.Length; i++) {
+        //     var property = properties[i];
+        //     var databaseColumn = databaseTable.Columns[i];
+        //
+        //     var propertyName = candidateNamingService.GenerateCandidateIdentifier(databaseColumn);
+        //     
+        //     //this.tableNamer.GetName()GetEntityTypeName() property.Name
+        // }
+        return null;
     }
 
 

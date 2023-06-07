@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Extensions;
+using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 
 namespace EntityFrameworkRuler.Design.Services.Models;
@@ -166,6 +168,11 @@ public sealed class ScaffoldedTableTracker {
         }
     }
 
+    public void MapFunction(DatabaseFunctionResultTable resultTable, EntityTypeBuilder entityTypeBuilder) {
+        var node=FindTableNode(resultTable);
+        node?.MapFunctionTo(entityTypeBuilder.Metadata);
+    }
+    
     private sealed class ForeignKeyUsage {
         public ForeignKeyUsage(IMutableForeignKey foreignKey) {
             ForeignKey = foreignKey;
@@ -174,4 +181,5 @@ public sealed class ScaffoldedTableTracker {
         public IMutableForeignKey ForeignKey { get; }
         public int Usage { get; set; }
     }
+
 }

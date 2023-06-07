@@ -8,8 +8,15 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace EntityFrameworkRuler.Design.Metadata.Builders;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public class ParameterBuilder : AnnotatableBuilder<Parameter, ModelBuilderEx> {
     public ParameterBuilder(Parameter metadata, ModelBuilderEx modelBuilder) : base(metadata, modelBuilder) { }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public IMutableModel Model => ModelBuilder.Model;
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public ModelEx ModelEx => ModelBuilder.ModelEx;
 
     /// <summary>
     ///     Adds or updates an annotation on the parameter. If an annotation with the key specified in

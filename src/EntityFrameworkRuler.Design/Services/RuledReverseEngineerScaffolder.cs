@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using EntityFrameworkRuler.Design.Scaffolding.CodeGeneration;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Scaffolding;
@@ -22,7 +21,6 @@ namespace EntityFrameworkRuler.Design.Services;
 public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
     private readonly IDesignTimeRuleLoader designTimeRuleLoader;
     private readonly IExtraCodeGenerator extraCodeGenerator;
-    private readonly IEnumerable<IRuledModelCodeGenerator> ruledModelCodeGenerators;
     private readonly IScaffoldingModelFactory scaffoldingModelFactory;
     private readonly IOperationReporter reporter;
 

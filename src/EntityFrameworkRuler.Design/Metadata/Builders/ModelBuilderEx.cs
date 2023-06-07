@@ -6,9 +6,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EntityFrameworkRuler.Design.Metadata.Builders;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public class ModelBuilderEx : IConventionModelBuilder {
     private IConventionModelBuilder conventionModelBuilder;
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelBuilderEx(ModelBuilder builder) {
         Builder = builder;
         conventionModelBuilder = ((IInfrastructure<IConventionModelBuilder>)builder).Instance;
@@ -16,8 +18,13 @@ public class ModelBuilderEx : IConventionModelBuilder {
         ModelEx = new(this);
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelEx ModelEx { get; }
+    
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public IMutableModel Model => Builder.Model;
+    
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelBuilder Builder { get; }
 
 

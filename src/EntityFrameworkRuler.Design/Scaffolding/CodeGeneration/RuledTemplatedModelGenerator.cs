@@ -15,6 +15,7 @@ internal class RuledTemplatedModelGenerator {
     private const string EntityTypeTemplate = "EntityType.t4";
     private const string EntityTypeConfigurationTemplate = "EntityTypeConfiguration.t4";
     private const string FunctionTemplate = "Functions.t4";
+    private const string FunctionResultTypeTemplate = "FunctionResultType.t4";
     private const string FunctionsInterfaceTemplate = "FunctionsInterface.t4";
     private const string DbContextFunctionsTemplate = "DbContextFunctions.t4";
 
@@ -29,6 +30,7 @@ internal class RuledTemplatedModelGenerator {
     internal static FileInfo GetFunctionFile(string projectDir) => GetFile(projectDir, FunctionTemplate);
     internal static FileInfo GetDbContextFunctionsFile(string projectDir) => GetFile(projectDir, DbContextFunctionsTemplate);
     internal static FileInfo GetFunctionsInterfaceFile(string projectDir) => GetFile(projectDir, FunctionsInterfaceTemplate);
+    internal static FileInfo GetFunctionResultTypeFile(string projectDir) => GetFile(projectDir,FunctionResultTypeTemplate);
 
     /// <summary> Gets the subdirectory under the project to look for templates in. </summary>
     /// <value>The subdirectory.</value>

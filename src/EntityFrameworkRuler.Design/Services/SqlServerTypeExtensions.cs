@@ -6,11 +6,11 @@ using EntityFrameworkRuler.Design.Services.Models;
 
 namespace EntityFrameworkRuler.Design.Services;
 
+/// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public static class SqlServerTypeExtensions {
     private static readonly ReadOnlyDictionary<string, string> SqlTypeAliases
         = new ReadOnlyDictionary<string, string>(
-            new Dictionary<string, string>()
-            {
+            new Dictionary<string, string>() {
                 { "numeric", "decimal" },
                 { "rowversion", "timestamp" },
                 { "table type", "structured" },
@@ -20,21 +20,26 @@ public static class SqlServerTypeExtensions {
                 { "hierarchyid", "udt" },
                 { "sysname", "nvarchar" },
             });
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static bool UseDateOnlyTimeOnly { get; set; }
 
-    
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static Type ClrType(this DatabaseFunctionParameter storedProcedureParameter, bool asMethodParameter = false) {
         if (storedProcedureParameter is null) throw new ArgumentNullException(nameof(storedProcedureParameter));
 
         return GetClrType(storedProcedureParameter.StoreType, storedProcedureParameter.IsNullable, asMethodParameter);
     }
 
-    public static Type ClrType(this DatabaseFunctionResultElement moduleResultElement) {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static Type ClrType(this DatabaseFunctionResultColumn moduleResultElement) {
         if (moduleResultElement is null) throw new ArgumentNullException(nameof(moduleResultElement));
 
         return GetClrType(moduleResultElement.StoreType, moduleResultElement.Nullable);
     }
-  
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static Type GetClrType(string storeType, bool isNullable, bool asParameter = false) {
         var sqlType = GetSqlDbType(storeType);
 
@@ -179,13 +184,10 @@ public static class SqlServerTypeExtensions {
 
         return string.Join(string.Empty, stack.Reverse());
     }
-    
-    public static SqlDbType GetDbType(this DatabaseFunctionParameter storedProcedureParameter)
-    {
-        if (storedProcedureParameter is null)
-        {
-            throw new ArgumentNullException(nameof(storedProcedureParameter));
-        }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static SqlDbType GetDbType(this DatabaseFunctionParameter storedProcedureParameter) {
+        if (storedProcedureParameter is null) throw new ArgumentNullException(nameof(storedProcedureParameter));
 
         return GetSqlDbType(storedProcedureParameter.StoreType);
     }

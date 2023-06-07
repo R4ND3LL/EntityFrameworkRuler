@@ -571,6 +571,14 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <Parameter Name="Ending_Date" Type="datetime" Mode="In" />
         </Function>
         <Function Name="fn_diagramobjects" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="int" />
+        <Function Name="MultiResultSetExample" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
+        <Function Name="OutputParamExample" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="price" Type="money" Mode="In" />
+          <Parameter Name="count" Type="int" Mode="InOut" />
+          <Parameter Name="count2" Type="int" Mode="InOut" />
+          <Parameter Name="date" Type="date" Mode="InOut" />
+        </Function>
+        <Function Name="ReturnNumberOne" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
         <Function Name="Sales_by_Year" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" StoreFunctionName="Sales by Year">
           <Parameter Name="Beginning_Date" Type="datetime" Mode="In" />
           <Parameter Name="Ending_Date" Type="datetime" Mode="In" />
@@ -1188,13 +1196,13 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
             <End Role="EmployeeBrief" EntitySet="EmployeeBriefs" />
           </AssociationSet>
           <FunctionImport Name="CustOrderHist" ReturnType="Collection(NorthwindModel.CustOrderHist_Result)">
-            <Parameter Name="CustomerID" Mode="In" Type="String" />
+          <Parameter Name="CustomerID" Mode="In" Type="String" />
           </FunctionImport>
           <FunctionImport Name="CustOrdersDetail" ReturnType="Collection(NorthwindModel.CustOrdersDetail_Result)">
-            <Parameter Name="OrderID" Mode="In" Type="Int32" />
+          <Parameter Name="OrderID" Mode="In" Type="Int32" />
           </FunctionImport>
           <FunctionImport Name="CustOrdersOrders" ReturnType="Collection(NorthwindModel.CustOrdersOrders_Result)">
-            <Parameter Name="CustomerID" Mode="In" Type="String" />
+          <Parameter Name="CustomerID" Mode="In" Type="String" />
           </FunctionImport>
           <FunctionImport Name="Employee_Sales_by_Country" ReturnType="Collection(NorthwindModel.Employee_Sales_by_Country_Result)">
             <Parameter Name="Beginning_Date" Mode="In" Type="DateTime" />
@@ -1217,6 +1225,14 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
             <Parameter Name="owner_id" Mode="In" Type="Int32" />
           </FunctionImport>
           <FunctionImport Name="TenMostExpensiveProducts" ReturnType="Collection(NorthwindModel.TenMostExpensiveProductsResult)" />
+          <FunctionImport Name="MultiResultExample" ReturnType="Collection(NorthwindModel.MultiResultSetExample_Result)" />
+          <FunctionImport Name="ReturnNumberOne" ReturnType="Collection(Int32)" />
+          <FunctionImport Name="OutputParamExpl" ReturnType="Collection(NorthwindModel.OutputParamExample_Result)">
+            <Parameter Name="price" Mode="In" Type="Decimal" />
+            <Parameter Name="count" Mode="InOut" Type="Int32" />
+            <Parameter Name="count2" Mode="InOut" Type="Int32" />
+            <Parameter Name="date" Mode="InOut" Type="DateTime" />
+          </FunctionImport>
         </EntityContainer>
         <EntityType Name="Alphabetical_list_of_product">
           <Key>
@@ -1522,6 +1538,30 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
         </ComplexType>
         <ComplexType Name="TenMostExpensiveProductsResult">
           <Property Type="String" Name="TenMostExpProductsCustom" Nullable="false" MaxLength="40" />
+          <Property Type="Decimal" Name="UnitPrice" Nullable="true" Precision="19" />
+        </ComplexType>
+        <ComplexType Name="MultiResultSetExample_Result">
+          <Property Type="Int32" Name="EmployeeID" Nullable="false" />
+          <Property Type="String" Name="LastName" Nullable="false" MaxLength="20" />
+          <Property Type="String" Name="FirstName" Nullable="false" MaxLength="10" />
+          <Property Type="String" Name="Title" Nullable="true" MaxLength="30" />
+          <Property Type="String" Name="TitleOfCourtesy" Nullable="true" MaxLength="25" />
+          <Property Type="DateTime" Name="BirthDate" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="HireDate" Nullable="true" Precision="23" />
+          <Property Type="String" Name="Address" Nullable="true" MaxLength="60" />
+          <Property Type="String" Name="City" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="Region" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="PostalCode" Nullable="true" MaxLength="10" />
+          <Property Type="String" Name="Country" Nullable="true" MaxLength="15" />
+          <Property Type="String" Name="HomePhone" Nullable="true" MaxLength="24" />
+          <Property Type="String" Name="Extension" Nullable="true" MaxLength="4" />
+          <Property Type="Binary" Name="Photo" Nullable="true" MaxLength="Max" />
+          <Property Type="String" Name="Notes" Nullable="true" MaxLength="Max" />
+          <Property Type="Int32" Name="ReportsTo" Nullable="true" />
+          <Property Type="String" Name="PhotoPath" Nullable="true" MaxLength="255" />
+        </ComplexType>
+        <ComplexType Name="OutputParamExample_Result">
+          <Property Type="String" Name="ProductName" Nullable="false" MaxLength="40" />
           <Property Type="Decimal" Name="UnitPrice" Nullable="true" Precision="19" />
         </ComplexType>
       </Schema>
@@ -2012,6 +2052,39 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
             <ResultMapping>
               <ComplexTypeMapping TypeName="NorthwindModel.TenMostExpensiveProductsResult">
                 <ScalarProperty Name="TenMostExpProductsCustom" ColumnName="TenMostExpensiveProducts" />
+                <ScalarProperty Name="UnitPrice" ColumnName="UnitPrice" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="MultiResultExample" FunctionName="NorthwindModel.Store.MultiResultSetExample">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.MultiResultSetExample_Result">
+                <ScalarProperty Name="EmployeeID" ColumnName="EmployeeID" />
+                <ScalarProperty Name="LastName" ColumnName="LastName" />
+                <ScalarProperty Name="FirstName" ColumnName="FirstName" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="TitleOfCourtesy" ColumnName="TitleOfCourtesy" />
+                <ScalarProperty Name="BirthDate" ColumnName="BirthDate" />
+                <ScalarProperty Name="HireDate" ColumnName="HireDate" />
+                <ScalarProperty Name="Address" ColumnName="Address" />
+                <ScalarProperty Name="City" ColumnName="City" />
+                <ScalarProperty Name="Region" ColumnName="Region" />
+                <ScalarProperty Name="PostalCode" ColumnName="PostalCode" />
+                <ScalarProperty Name="Country" ColumnName="Country" />
+                <ScalarProperty Name="HomePhone" ColumnName="HomePhone" />
+                <ScalarProperty Name="Extension" ColumnName="Extension" />
+                <ScalarProperty Name="Photo" ColumnName="Photo" />
+                <ScalarProperty Name="Notes" ColumnName="Notes" />
+                <ScalarProperty Name="ReportsTo" ColumnName="ReportsTo" />
+                <ScalarProperty Name="PhotoPath" ColumnName="PhotoPath" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="ReturnNumberOne" FunctionName="NorthwindModel.Store.ReturnNumberOne" />
+          <FunctionImportMapping FunctionImportName="OutputParamExpl" FunctionName="NorthwindModel.Store.OutputParamExample">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="NorthwindModel.OutputParamExample_Result">
+                <ScalarProperty Name="ProductName" ColumnName="ProductName" />
                 <ScalarProperty Name="UnitPrice" ColumnName="UnitPrice" />
               </ComplexTypeMapping>
             </ResultMapping>

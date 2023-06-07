@@ -22,7 +22,7 @@ namespace EntityFrameworkRuler.Design {
             var entryName = entryAssembly?.GetName();
             if (entryName?.Name.In("ef", "dotnet-ef") == true) {
                 EfConsoleMessageLogger.DebugLog($"EF Ruler detected EF Tools v{entryName.Version}");
-               // Debugger.Launch();
+                //Debugger.Launch();
             }
 #endif
         }
@@ -41,9 +41,10 @@ namespace EntityFrameworkRuler.Design {
                 .AddSingleton<IRuleModelUpdater, RuleModelUpdater>()
                 .AddSingleton<IAnnotationCodeGenerator, RuledAnnotationCodeGenerator>()
                 .AddSingleton<IExtraCodeGenerator, ExtraCodeGenerator>()
-                .TryAddSingletonEnumerable<IRuledModelCodeGenerator,FunctionsModelGenerator>()
-                .TryAddSingletonEnumerable<IRuledModelCodeGenerator,FunctionsInterfaceModelGenerator>()
-                .TryAddSingletonEnumerable<IRuledModelCodeGenerator,DbContextFunctionsModelGenerator>()
+                .TryAddSingletonEnumerable<IRuledModelCodeGenerator, FunctionsModelGenerator>()
+                .TryAddSingletonEnumerable<IRuledModelCodeGenerator, FunctionsInterfaceModelGenerator>()
+                .TryAddSingletonEnumerable<IRuledModelCodeGenerator, DbContextFunctionsModelGenerator>()
+                .TryAddSingletonEnumerable<IRuledModelCodeGenerator, FunctionResultTypeModelGenerator>()
                 //.TryAddSingletonEnumerable<IModelCodeGenerator, RuledTemplatedModelGenerator>()
                 .AddRuler()
                 .AddSingleton<IMessageLogger, EfConsoleMessageLogger>();
