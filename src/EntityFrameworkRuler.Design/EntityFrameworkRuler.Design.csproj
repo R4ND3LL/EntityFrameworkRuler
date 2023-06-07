@@ -71,7 +71,9 @@
 
     <ItemGroup>
         <EmbeddedResource Remove="nupkg\**" />
+        <EmbeddedResource Include="Resources\DbContextFunctions.t4" />
         <EmbeddedResource Include="Resources\Functions.t4" />
+        <EmbeddedResource Include="Resources\FunctionsInterface.t4" />
         <None Remove="Resources\EntityTypeConfiguration.t4" />
         <EmbeddedResource Include="Resources\EntityTypeConfiguration.t4" />
     </ItemGroup>

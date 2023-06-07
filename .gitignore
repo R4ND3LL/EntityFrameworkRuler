@@ -379,6 +379,8 @@ MigrationBackup/
 /src/Tests/OtherRules/
 /src/Tests/NorthwindTestDesign/Models
 /src/Tests/NorthwindTestDesign/Context
+/src/Tests/NorthwindTestDesign/CodeTemplates/EFCore/DbContextFunctions.t4
+/src/Tests/NorthwindTestDesign/CodeTemplates/EFCore/FunctionsInterface.t4
 /src/Tests/NorthwindTestDesign/CodeTemplates/EFCore/Functions.t4
 /src/Tests/NorthwindTestDesign/CodeTemplates/EFCore/Function.t4
 /src/Tests/NorthwindTestDesign/ModelsScaffold/Alphabetical_list_of_product.cs
@@ -414,3 +416,5 @@ MigrationBackup/
 /src/Tests/NorthwindTestDesign/ModelsScaffold/Supplier.cs
 /src/Tests/NorthwindTestDesign/ModelsScaffold/Territory.cs
 /src/Tests/NorthwindTestDesign/ModelsScaffold/NorthwindEntitiesFunctions.cs
+/src/Tests/NorthwindTestDesign/ModelsScaffold/INorthwindEntitiesFunctions.cs
+/src/Tests/NorthwindTestDesign/ModelsScaffold/NorthwindEntities.Functions.cs

@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Text;
 using EntityFrameworkRuler.Common;
+using EntityFrameworkRuler.Design.Scaffolding.CodeGeneration;
 using EntityFrameworkRuler.Design.Services.Models;
 using EntityFrameworkRuler.Loader;
 using EntityFrameworkRuler.Rules;
@@ -214,7 +215,9 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         if (projectDir.IsNullOrWhiteSpace()) return;
 
         List<(string src, FileInfo tgt)> templates = new() {
-            ("EntityFrameworkRuler.Design.Resources.Functions.t4", RuledTemplatedModelGenerator.GetFunctionFile(projectDir))
+            ("EntityFrameworkRuler.Design.Resources.Functions.t4", RuledTemplatedModelGenerator.GetFunctionFile(projectDir)),
+            ("EntityFrameworkRuler.Design.Resources.DbContextFunctions.t4", RuledTemplatedModelGenerator.GetDbContextFunctionsFile(projectDir)),
+            ("EntityFrameworkRuler.Design.Resources.FunctionsInterface.t4", RuledTemplatedModelGenerator.GetFunctionsInterfaceFile(projectDir)),
         };
         foreach (var (src, template) in templates) {
             if (template?.Directory == null) return;
