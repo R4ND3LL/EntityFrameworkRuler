@@ -1543,6 +1543,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (dbFunction.MappedType.HasNonWhiteSpace()) functionBuilder.HasMappedType(dbFunction.MappedType);
 
         functionBuilder
+            .HasFunctionType(dbFunction.FunctionType)
             .HasSchema(dbFunction.Schema)
             .HasReturnType(returnType)
             .HasScalar(dbFunction.IsScalar)

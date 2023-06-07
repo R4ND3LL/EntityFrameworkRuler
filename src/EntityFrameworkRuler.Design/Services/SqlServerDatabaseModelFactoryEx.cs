@@ -103,7 +103,7 @@ AND (
             }
         }
         foreach (var function in model.Functions.ToArray()) {
-            var isProcedure = function.FunctionType == DatabaseFunctionType.StoredProcedure;
+            var isProcedure = function.FunctionType == FunctionType.StoredProcedure;
            var factory = isProcedure ? procedureFactory : functionFactory;
 
             if (!function.IsScalar)
@@ -118,7 +118,7 @@ AND (
                 }
 
             var failure = false;
-            if (function.FunctionType == DatabaseFunctionType.Function
+            if (function.FunctionType == FunctionType.Function
                 && function.IsScalar
                 && function.Parameters.Count > 0
                 && function.Parameters.Any(p => p.StoreType == "table type")) {
@@ -244,7 +244,7 @@ internal class SqlServerFunctionFactory : RoutineFactory {
     }
 
     public override DatabaseFunction Create(bool isScalar) {
-        return new DatabaseFunction { IsScalar = isScalar, FunctionType = DatabaseFunctionType.Function };
+        return new DatabaseFunction { IsScalar = isScalar, FunctionType = FunctionType.Function };
     }
 
     public override List<List<DatabaseFunctionResultElement>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
@@ -291,7 +291,7 @@ internal class SqlServerProcedureFactory : RoutineFactory {
     }
 
     public override DatabaseFunction Create(bool isScalar) {
-        return new() { FunctionType = DatabaseFunctionType.StoredProcedure };
+        return new() { FunctionType = FunctionType.StoredProcedure };
     }
 
     public override List<List<DatabaseFunctionResultElement>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {

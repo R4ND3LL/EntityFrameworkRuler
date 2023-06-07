@@ -73,6 +73,10 @@ public class FunctionBuilder : AnnotatableBuilder<Function, ModelBuilderEx> {
         Metadata.IsScalar = isScalar;
         return this;
     }
+    public FunctionBuilder HasFunctionType(FunctionType functionType) {
+        Metadata.FunctionType= functionType;
+        return this;
+    }
 
     public FunctionBuilder If(Func<bool> condition, Func<FunctionBuilder, FunctionBuilder> then) {
         return condition() ? then(this) : this;

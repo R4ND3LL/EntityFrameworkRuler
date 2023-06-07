@@ -41,7 +41,10 @@ public class Function : ConventionAnnotatable, IFunction {
     public virtual bool HasValidResultSet { get; set; }
     public virtual string ReturnType { get; set; }
     public virtual bool IsScalar { get; set; }
+
+    public virtual FunctionType FunctionType { get; set; }
     public IList<List<DatabaseFunctionResultElement>> Results { get; set; }
+    public virtual bool NoResultSet => Results != null && Results.Count == 1 && Results[0].Count == 0 && HasValidResultSet;
 
     public ParameterBuilder CreateParameter(string name) {
         if (parameters.ContainsKey(name)) throw new Exception($"Parameter {name} already exists");
@@ -51,4 +54,9 @@ public class Function : ConventionAnnotatable, IFunction {
     }
 
     public IEnumerable<Parameter> GetParameters() { return parameters.Values; }
+}
+
+public enum FunctionType {
+    StoredProcedure,
+    Function
 }

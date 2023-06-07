@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Infrastructure;
+﻿using EntityFrameworkRuler.Design.Metadata;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 #pragma warning disable CS1591
 namespace EntityFrameworkRuler.Design.Scaffolding.Metadata;
@@ -9,18 +10,13 @@ public class DatabaseFunction : DatabaseObject {
     public virtual int UnnamedColumnCount { get; set; }
     public virtual bool IsScalar { get; set; }
     public virtual bool SupportsMultipleResultSet => Results.Count > 1;
-    public virtual bool NoResultSet => Results.Count == 1 && Results[0].Count == 0 && HasValidResultSet;
-
+    public virtual bool NoResultSet => Results != null && Results.Count == 1 && Results[0].Count == 0 && HasValidResultSet;
     public virtual string MappedType { get; set; }
-    public virtual DatabaseFunctionType FunctionType { get; set; }
+    public virtual FunctionType FunctionType { get; set; }
     public virtual IList<DatabaseFunctionParameter> Parameters { get; set; } = new List<DatabaseFunctionParameter>();
     public virtual IList<List<DatabaseFunctionResultElement>> Results { get; } = new List<List<DatabaseFunctionResultElement>>();
 }
 
-public enum DatabaseFunctionType {
-    StoredProcedure,
-    Function
-}
 // public class DatabaseProcedure : DatabaseFunction { }
 //
 // public class DatabaseFunction : DatabaseProcedure { }

@@ -335,9 +335,12 @@ public partial class <#= Options.ContextName #> : DbContext
         WriteLine("");
     }
 #>
+        
+        OnModelCreatingGeneratedFunctions(modelBuilder);
         OnModelCreatingPartial(modelBuilder);
     }
 
+    partial void OnModelCreatingGeneratedFunctions(ModelBuilder modelBuilder);
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
 <#
