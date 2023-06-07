@@ -29,8 +29,13 @@ public class FunctionBuilder : AnnotatableBuilder<Function, ModelBuilderEx> {
         return Metadata.CreateParameter(paramName);
     }
 
-    public FunctionBuilder HasReturnType(string returnType) {
-        Metadata.ReturnType = returnType;
+    public FunctionBuilder HasMappedType(string returnType) {
+        Metadata.MappedType = returnType;
+        return this;
+    }
+
+    public FunctionBuilder HasSchema(string schema) {
+        Metadata.Schema = schema;
         return this;
     }
 
@@ -42,5 +47,21 @@ public class FunctionBuilder : AnnotatableBuilder<Function, ModelBuilderEx> {
     public FunctionBuilder SupportsMultipleResultSet(bool supportsMultipleResultSet) {
         Metadata.SupportsMultipleResultSet = supportsMultipleResultSet;
         return this;
+    }
+
+    public FunctionBuilder HasMultiResultSyntax(string multiResultSyntax) {
+        Metadata.MultiResultSyntax = multiResultSyntax;
+        return this;
+    }
+
+    public FunctionBuilder HasValidResultSet(bool hasValidResultSet) {
+        Metadata.HasValidResultSet = hasValidResultSet;
+        return this;
+    }
+
+    public FunctionBuilder HasReturnType(string returnType) {
+        Metadata.ReturnType = returnType;
+        return this;
+
     }
 }

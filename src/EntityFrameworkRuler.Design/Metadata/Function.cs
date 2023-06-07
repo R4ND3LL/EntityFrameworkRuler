@@ -31,10 +31,13 @@ public class Function : ConventionAnnotatable, IFunction {
     public virtual string Name { [DebuggerStepThrough] get; }
 
     /// <summary> Gets the SQL command text to execute this function. </summary>
-    public virtual string CommandText {  get; set; }
-
-    public string ReturnType { get; set; }
-    public bool SupportsMultipleResultSet { get; set; }
+    public virtual string CommandText { get; set; }
+    public virtual string MappedType { get; set; }
+    public virtual string Schema { get; set; }
+    public virtual bool SupportsMultipleResultSet { get; set; }
+    public virtual string MultiResultSyntax { get; set; }
+    public virtual bool HasValidResultSet { get; set; }
+    public virtual string ReturnType { get; set; }
 
     public ParameterBuilder CreateParameter(string name) {
         if (parameters.ContainsKey(name)) throw new Exception($"Parameter {name} already exists");

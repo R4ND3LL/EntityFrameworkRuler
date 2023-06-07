@@ -79,4 +79,9 @@
     <ItemGroup>
         <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj" />
     </ItemGroup>
+
+    <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+<!--        <T4ReferencePath Include="$(ProjectDir)$(OutputPath)" />-->
+        <T4ReferencePath Include="$(TargetDir)" />
+    </ItemGroup>
 </Project>

@@ -1528,7 +1528,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     protected virtual ModelBuilderEx VisitFunction(ModelBuilderEx modelBuilder, DatabaseFunction dbFunction) {
         var functionName = GetFunctionName(dbFunction);
         var functionBuilder = modelBuilder.CreateFunction(functionName);
-
+        var function = functionBuilder.Metadata;
         var functionRuleNode = this.TryResolveRuleFor(dbFunction);
         VisitParameters(functionBuilder, functionRuleNode, dbFunction.Parameters);
 
@@ -1536,8 +1536,17 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         var retValueName = allOutParams.Last().Name;
 
+
+        var multiResultSyntax = dbFunction.GenerateMultiResultSyntax(functionBuilder.Metadata);
+        var returnType = dbFunction.GetReturnType(functionBuilder.Metadata, multiResultSyntax);
+
+        if (multiResultSyntax.HasNonWhiteSpace()) functionBuilder.HasMultiResultSyntax(multiResultSyntax);
+        if (dbFunction.MappedType.HasNonWhiteSpace()) functionBuilder.HasMappedType(dbFunction.MappedType);
+
         functionBuilder
-            .HasReturnType(retValueName)
+            .HasSchema(dbFunction.Schema)
+            .HasReturnType(returnType)
+            .HasValidResultSet(dbFunction.HasValidResultSet)
             .SupportsMultipleResultSet(dbFunction.SupportsMultipleResultSet)
             .HasCommandText(dbFunction.GenerateProcedureStatement(retValueName, true))
             ;
@@ -1545,9 +1554,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         return modelBuilder;
     }
 
+
     private ModelBuilderEx VisitParameters(FunctionBuilder functionBuilder, FunctionRuleNode functionRuleNode,
         IList<DatabaseFunctionParameter> databaseFunctionParameters) {
-        foreach (var column in databaseFunctionParameters.SkipLast(1)) {
+        foreach (var column in databaseFunctionParameters) {
+            //.SkipLast(1)
             var parameter = VisitParameter(functionBuilder, functionRuleNode, column);
             if (parameter != null) parameter.Metadata.Order = databaseFunctionParameters.IndexOf(column);
         }
@@ -1584,9 +1595,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (!typeScaffoldingInfo.IsInferred
             && !string.IsNullOrWhiteSpace(dbParameter.StoreType)) {
             parameter.HasStoreType(dbParameter.StoreType);
-        } //else parameter.HasStoreType(clrType.FullName);
+        }
 
-        if (dbParameter.IsOutput) parameter.HasOutput();
+        parameter.HasOutput(dbParameter.IsOutput).HasNullable(dbParameter.IsNullable);
 
         parameter.Metadata.Length = dbParameter.Length;
         parameter.Metadata.Scale = dbParameter.Scale;

@@ -24,10 +24,10 @@
 <#
     System.Diagnostics.Debugger.Launch();
     System.Diagnostics.Debugger.Break();
-    
-    if (!ProductInfo.GetVersion().StartsWith("7.0"))
-    {
-        Warning("Your templates were created using an older version of Entity Framework. Additional features and bug fixes may be available. See https://aka.ms/efcore-docs-updating-templates for more information.");
+
+    if (!ProductInfo.GetVersion().StartsWith("7.0")) {
+        Warning(
+            "Your templates were created using an older version of Entity Framework. Additional features and bug fixes may be available. See https://aka.ms/efcore-docs-updating-templates for more information.");
     }
 
     var services = (IServiceProvider)Host;
@@ -35,33 +35,30 @@
     var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
     var code = services.GetRequiredService<ICSharpHelper>();
 
-    var usings = new List<string>
-    {
+    var usings = new List<string> {
         "System",
         "System.Collections.Generic",
         "Microsoft.EntityFrameworkCore"
     };
 
     if (NamespaceHint != Options.ModelNamespace
-        && !string.IsNullOrEmpty(Options.ModelNamespace))
-    {
+        && !string.IsNullOrEmpty(Options.ModelNamespace)) {
         usings.Add(Options.ModelNamespace);
     }
     usings.Add(typeof(EntityTypeBuilder<>).Namespace);
 
-    if (!string.IsNullOrEmpty(NamespaceHint))
-    {
+    if (!string.IsNullOrEmpty(NamespaceHint)) {
 #>
 namespace <#= NamespaceHint #>;
 
 <#
     }
 #>
-public partial class <#= Options.ContextName #>Functions : I{Options.ContextName}Functions
+public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextName #>Functions
 {
     private readonly <#= Options.ContextName #> _context; 
    
-    public {Options.ContextName}Functions({Options.ContextName} context)
+    public <#= Options.ContextName #>Functions(<#= Options.ContextName #> context)
     {
         _context = context;
     }
@@ -72,19 +69,64 @@ public partial class <#= Options.ContextName #>Functions : I{Options.ContextName
     var anyConfiguration = false;
     StringBuilder mainEnvironment;
     foreach (var function in Model.GetFunctions()) {
-        #><#= function.CommandText #><#
-  
-        if (function?.Name!=null) {
+        if (function?.Name != null && function.CommandText != null) {
             anyConfiguration = true;
             // Save all previously generated code, and start generating into a new temporary environment
             mainEnvironment = GenerationEnvironment;
             GenerationEnvironment = new StringBuilder();
 
-            bool anyFunctionConfiguration = true;
+            bool anyFunctionConfiguration = false;
 
+            var paramStrings = function.GetParameters().Where(p => !p.IsOutput)
+                .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name)}")
+                .ToList();
+            var paramStringFull = string.Join(", ", paramStrings);
+            var allOutParams = function.GetParameters().Where(p => p.IsOutput).ToList();
+            var outParams = allOutParams.SkipLast(1).ToList();
+            var retValueName = allOutParams.Last().Name;
+            var outParamStrings = outParams
+                .Select(p => $"OutputParameter<{code.Reference(p.ClrType ?? typeof(object))}> {code.Identifier(p.Name)}")
+                .ToList();
+
+            // GenerateProcedureStatement:
+            var paramList = function.GetParameters()
+                .Select(p => p.IsOutput ? $"@{p.Name} OUTPUT" : $"@{p.Name}").Take(function.GetParameters().Count() - 1)
+                .ToList();
+
+            //paramList.RemoveAt(paramList.Count - 1);
+            var paramListJoined = string.Join(", ", paramList);
+            var fullExec =
+                code.Literal($"EXEC @{retValueName} = [{function.Schema}].[{function.Name}] {paramListJoined}");
+            //, sqlParameters, cancellationToken".Replace(" \"", "\"", StringComparison.OrdinalIgnoreCase);
+            var multiResultSyntax = function.MultiResultSyntax;
+
+            if (outParams.Any()) {
+                if (paramStrings.Any()) {
+                    paramStringFull += ", ";
+                }
+
+                paramStringFull += $"{string.Join(", ", outParamStrings)}";
+            }
+
+            if (paramStrings.Any() || outParams.Count > 0) {
+                paramStringFull += ", ";
+            }
+            paramStringFull += $"OutputParameter<int> {retValueName} = null";
+#>
+        public virtual async Task<<#= function.ReturnType #>> <#= function.Name #>(<#= paramStringFull #>, CancellationToken cancellationToken = default)
+        {
+            <#
+            foreach (var parameter in function.GetParameters()) {
+                anyFunctionConfiguration = true;
+#>
+            var p<#= parameter.Name #> = new SqlParameter 
+<#
+            }
+            // <#= function.CommandText #>
+        }
+<#
             // If any significant code was generated, append it to the main environment
-            if (anyFunctionConfiguration)
-            {
+            if (anyFunctionConfiguration) {
                 mainEnvironment.Append(GenerationEnvironment);
                 anyConfiguration = true;
             }
@@ -92,13 +134,10 @@ public partial class <#= Options.ContextName #>Functions : I{Options.ContextName
             // Resume generating code into the main environment
             GenerationEnvironment = mainEnvironment;
         }
-    } 
-    
+    }
 
 
-
-    if (anyConfiguration)
-    {
+    if (anyConfiguration) {
         WriteLine("");
     }
 #>
@@ -111,8 +150,7 @@ public partial class <#= Options.ContextName #>Functions : I{Options.ContextName
     mainEnvironment = GenerationEnvironment;
     GenerationEnvironment = new StringBuilder();
 
-    foreach (var ns in usings.Distinct().OrderBy(x => x, new NamespaceComparer()))
-    {
+    foreach (var ns in usings.Distinct().OrderBy(x => x, new NamespaceComparer())) {
 #>
 using <#= ns #>;
 <#
@@ -121,6 +159,17 @@ using <#= ns #>;
     WriteLine("");
 
     GenerationEnvironment.Append(mainEnvironment);
-    
-    
+
+    string AppendValue(Parameter parameter) {
+        var value = parameter.IsNullable
+            ? $"{code.Identifier(parameter.Name)} ?? Convert.DBNull"
+            : $"{code.Identifier(parameter.Name)}";
+        if (parameter.IsOutput) {
+            value = parameter.IsNullable
+                ? $"{code.Identifier(parameter.Name)}?._value ?? Convert.DBNull"
+                : $"{code.Identifier(parameter.Name)}?._value";
+        }
+
+        return ($"Value = {value},");
+    }
 #>

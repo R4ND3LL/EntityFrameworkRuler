@@ -10,8 +10,8 @@
 //         return Metadata.CreateParameter(paramName);
 //     }
 //
-//     public void HasReturnType(string returnType) {
-//         Metadata.ReturnType = returnType;
+//     public void HasMappedType(string returnType) {
+//         Metadata.MappedType = returnType;
 //     }
 //     public void HasCommandText(string commandText) {
 //         Metadata.CommandText= commandText;

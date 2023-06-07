@@ -1,4 +1,5 @@
 ﻿using EntityFrameworkRuler.Design.Metadata;
+using EntityFrameworkRuler.Design.Metadata.Builders;
 using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore;
 
@@ -115,18 +116,34 @@ public static class FunctionHelper {
     //         Sb.AppendLine("}");
     //     }
     // }
-
-    internal static string GenerateMultiResultSyntax(this DatabaseFunction dbFunction, Function procedure, DatabaseModelEx model) {
-        if (dbFunction.Results.Count == 1) {
-            return null;
+    public static string GetReturnType(this DatabaseFunction dbFunction,
+        Function function,
+        string multiResultSyntax) {
+        string returnType;
+        if (dbFunction.HasValidResultSet && (dbFunction.Results.Count == 0 || dbFunction.Results[0].Count == 0)) {
+            returnType = "int";
+        } else {
+            if (dbFunction.SupportsMultipleResultSet) {
+                returnType = multiResultSyntax;
+            } else {
+                var returnClass = function.Name + "Result";
+                if (!string.IsNullOrEmpty(function.MappedType)) returnClass = function.MappedType;
+                returnType = $"List<{returnClass}>";
+            }
         }
 
+        return returnType;
+    }
+
+    internal static string GenerateMultiResultSyntax(this DatabaseFunction dbFunction, Function function) {
+        if (dbFunction.Results.Count == 1) return null;
+
         var ids = new List<string>();
-        int i = 1;
-        foreach (var resultSet in dbFunction.Results) {
+        var i = 1;
+        foreach (var _ in dbFunction.Results) {
             var suffix = $"{i++}";
 
-            var resultTypeName = procedure.Name + "Result" + suffix;
+            var resultTypeName = function.Name + "Result" + suffix;
             ids.Add($"List<{resultTypeName}> Result{suffix}");
         }
 

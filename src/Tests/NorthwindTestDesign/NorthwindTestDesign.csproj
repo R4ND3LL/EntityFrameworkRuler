@@ -43,6 +43,7 @@
 
     <ItemGroup>
       <Compile Remove="ModelsScaffold\*" />
+      <Compile Remove="Context\*" />
       <Compile Remove="Context\CustomerCustomerDemoConfiguration.cs" />
       <Compile Remove="Context\CustomerGreenConfiguration.cs" />
       <Compile Remove="Context\CustomerRedConfiguration.cs" />
@@ -56,5 +57,9 @@
       <Compile Remove="CustOrdersDetail.cs" />
       <Compile Remove="CustOrderHist.cs" />
     </ItemGroup>
-
+    
+    <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+                <T4ReferencePath Include="$(ProjectDir)$(OutputPath)" />
+<!--        <T4ReferencePath Include="$(TargetDir)" />-->
+    </ItemGroup>
 </Project>

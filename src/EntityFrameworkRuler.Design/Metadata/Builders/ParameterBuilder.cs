@@ -31,6 +31,9 @@ public class ParameterBuilder : AnnotatableBuilder<Parameter, ModelBuilderEx> {
     public ParameterBuilder HasOutput(bool isOutput = true) {
         Metadata.IsOutput = isOutput;
         return this;
+    } public ParameterBuilder HasNullable(bool isNullable = true) {
+        Metadata.IsNullable = isNullable;
+        return this;
     }
 
     public ParameterBuilder HasClrType(Type clrType) {

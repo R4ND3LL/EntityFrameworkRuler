@@ -10,7 +10,7 @@ namespace EntityFrameworkRuler.Design.Metadata;
 #pragma warning disable CS1591
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class Parameter : ConventionAnnotatable, IParameter {
-    private readonly  ParameterBuilder builder;
+    private readonly ParameterBuilder builder;
 
     public Parameter(Function function, string name) {
         builder = new(this, function.Model.BuilderEx);
@@ -25,12 +25,14 @@ public class Parameter : ConventionAnnotatable, IParameter {
 
     /// <summary> Gets the name of this parameter. </summary>
     public virtual string Name { [DebuggerStepThrough] get; }
-    public string StoreType { get; set; }
-    public SqlDbType SqlDbType { get; set; }
-    public bool IsOutput { get; set; }
-    public Type ClrType { get; set; }
-    public int? Length { get; set; }
-    public int? Precision { get; set; }
-    public int? Scale { get; set; }
-    public int? Order { get; set; }
+    public virtual string StoreType { get; set; }
+    public virtual SqlDbType SqlDbType { get; set; }
+    public virtual bool IsOutput { get; set; }
+
+    public virtual bool IsNullable { get; set; }
+    public virtual Type ClrType { get; set; }
+    public virtual int? Length { get; set; }
+    public virtual int? Precision { get; set; }
+    public virtual int? Scale { get; set; }
+    public virtual int? Order { get; set; }
 }
