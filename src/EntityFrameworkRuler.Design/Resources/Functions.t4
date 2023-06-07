@@ -298,9 +298,6 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
                 WriteLine("");
             }
 #>
-        OnConfigurePartial(entity);
-    }
-
     
 }
 <#

@@ -1545,6 +1545,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         functionBuilder
             .HasSchema(dbFunction.Schema)
             .HasReturnType(returnType)
+            .HasScalar(dbFunction.IsScalar)
             .HasValidResultSet(dbFunction.HasValidResultSet)
             .HasResult(dbFunction.Results)
             .SupportsMultipleResultSet(dbFunction.SupportsMultipleResultSet)

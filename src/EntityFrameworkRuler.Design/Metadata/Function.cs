@@ -33,12 +33,14 @@ public class Function : ConventionAnnotatable, IFunction {
 
     /// <summary> Gets the SQL command text to execute this function. </summary>
     public virtual string CommandText { get; set; }
+
     public virtual string MappedType { get; set; }
     public virtual string Schema { get; set; }
     public virtual bool SupportsMultipleResultSet { get; set; }
     public virtual string MultiResultSyntax { get; set; }
     public virtual bool HasValidResultSet { get; set; }
     public virtual string ReturnType { get; set; }
+    public virtual bool IsScalar { get; set; }
     public IList<List<DatabaseFunctionResultElement>> Results { get; set; }
 
     public ParameterBuilder CreateParameter(string name) {

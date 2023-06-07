@@ -74,14 +74,8 @@ namespace <#= NamespaceHint #>;
 <#
             }
 #>
-public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextName #>Functions
+public interface I<#= Options.ContextName #>Functions
 {
-    private readonly <#= Options.ContextName #> _context; 
-   
-    public <#= Options.ContextName #>Functions(<#= Options.ContextName #> context)
-    {
-        _context = context;
-    }   
 <#
             var anyConfiguration = false;
             StringBuilder mainEnvironment;
@@ -132,155 +126,9 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
                     }
                     paramStringFull += $"OutputParameter<int> {retValueName} = null";
 #>
-
-    public virtual async Task<<#= function.ReturnType #>> <#= function.Name #>(<#= paramStringFull #>, CancellationToken cancellationToken = default)
-    {
+    Task<<#= function.ReturnType #>> <#= function.Name #>(<#= paramStringFull #>, CancellationToken cancellationToken = default);     
 <#
-                    foreach (var parameter in allOutParams) {
-#>
-        SqlParameter p<#= parameter.Name #>;
-<#
-                    }
-#>
-        var sqlParameters = new []
-        {
-<#
-                    foreach (var parameter in function.GetParameters()) {
-                        // Start SQL param
-                        anyFunctionConfiguration = true;
-#>
-            <#=
-                                parameter.IsOutput ? "p" + parameter.Name + " = " : string.Empty #>new SqlParameter
-            {
-                ParameterName = <#= code.Literal(parameter.Name) #>
-<#
-                        if (IsScaleType(parameter.SqlDbType)) {
-                            if (parameter.Precision > 0) {
-#>
-                Precision = <#= parameter.Precision #>,
-<#
-                            }
-
-                            if (parameter.Scale > 0) {
-#>
-                Scale = <#= parameter.Scale #>,
-<#
-                            }
-                        }
-
-                        if (IsVarTimeType(parameter.SqlDbType) && parameter.Scale > 0) {
-#>
-                Scale = <#= parameter.Scale #>,
-<#
-                        }
-
-                        if (IsLengthRequiredType(parameter.SqlDbType)) {
-#>
-                Size = <#= parameter.Length #>,
-<#
-                        }
-
-                        if (!parameter.IsReturnValue) {
-                            if (parameter.IsOutput) {
-#>
-                Direction = System.Data.ParameterDirection.InputOutput,<#=
-                                        AppendValue(parameter) #>
-<#
-                            }
-                            else {
-#>
-                <#=
-                                        AppendValue(parameter) #>
-<#
-                            }
-                        }
-                        else {
-                            if (function.SupportsMultipleResultSet) {
-#>
-                Direction = System.Data.ParameterDirection.ReturnValue,
-<#
-                            }
-                            else {
-#>
-                Direction = System.Data.ParameterDirection.Output,
-<#
-                            }
-                        }
-#>
-                SqlDbType = System.Data.SqlDbType.<#= parameter.SqlDbType #>,
-<#
-                        if (parameter.SqlDbType == SqlDbType.Structured) {
-#>
-                TypeName = <#=
-                                    code.Literal(parameter.TypeName) #>,
-<#
-                        }
-
-                        if (parameter.SqlDbType == SqlDbType.Udt) {
-#>
-                UdtTypeName = <#=
-                                    code.Literal(parameter.TypeName) #>,
-<#
-                        }
-#>
-            }, 
-
-<#
-                        // End of parameter output
-                    }
-#>
-        }; 
-
-<#            
-                    // End of parameter list output
-                    
-                    if (function.HasValidResultSet && (function.Results.Count == 0 || function.Results[0].Count == 0))
-                    {
-#>
-        var response = await _context.Database.ExecuteSqlRawAsync(<#= code.Literal(fullExec) #>);
-<#                          
-                    }
-                    else {
-                        if (function.SupportsMultipleResultSet) {
-#>
-        var dynamic = CreateDynamic(sqlParameters);
-        <#= multiResultSyntax #> _;
-        using (var reader = await GetMultiReaderAsync(_context, dynamic, \"[<#= function.Schema #>].[<#= function.Name #>]\"))");
-        {
-            response = <#= GenerateMultiResultStatement(function) #>;
-        }
-<#
-                        }
-                        else {
-#>
-        var response = await _context.SqlQueryAsync<<#= function.ReturnType #>>(<#= code.Literal(fullExec) #>);
-<#                                  
-                        }
-                    }
-                    foreach (var parameter in outParams)
-                    {
-#>
-        <#= code.Identifier(parameter.Name) #>.SetValue(p<#= parameter.Name #>.Value);
-<#
-                    }
-                    if (function.SupportsMultipleResultSet)
-                    {
-#>
-        <#= retValueName #>.SetValue(dynamic.Get<int>(<#= code.Literal(retValueName) #>));
-<#
-                    }
-                    else
-                    {
-#>
-        <#= retValueName #>.SetValue(p<#= retValueName #>.Value);
-<#
-                    }
-#>
-        return response;
-<#
-#>
-    } 
-<#
+                    anyFunctionConfiguration = true;
                     // End of function output
                     // If any significant code was generated, append it to the main environment
                     if (anyFunctionConfiguration) {
@@ -298,9 +146,6 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
                 WriteLine("");
             }
 #>
-        OnConfigurePartial(entity);
-    }
-
     
 }
 <#
