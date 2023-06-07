@@ -138,7 +138,7 @@ public partial class <#= Options.ContextName #>
 #>
     public static <#= returnType #><#= function.Name #>(<#= parameters #>)
     {
-        throw new NotSupportedException("This method can only be called from Entity Framework Core");
+        throw new NotSupportedException("This method can only be called from Entity Framework Core queries");
     }
 <#  
                     }

@@ -213,12 +213,18 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual void InitializeOtherTemplates(string projectDir) {
         if (projectDir.IsNullOrWhiteSpace()) return;
+        if (!(EfVersion?.Major >= 7)) return;
 
         List<(string src, FileInfo tgt)> templates = new() {
             ("EntityFrameworkRuler.Design.Resources.Functions.t4", RuledTemplatedModelGenerator.GetFunctionFile(projectDir)),
             ("EntityFrameworkRuler.Design.Resources.DbContextFunctions.t4", RuledTemplatedModelGenerator.GetDbContextFunctionsFile(projectDir)),
             ("EntityFrameworkRuler.Design.Resources.FunctionsInterface.t4", RuledTemplatedModelGenerator.GetFunctionsInterfaceFile(projectDir)),
         };
+        if (EfVersion?.Major >= 7) {
+            templates.Add(("EntityFrameworkRuler.Design.Resources.DbContext.t4", RuledTemplatedModelGenerator.GetDbContextFile(projectDir)));
+            templates.Add(("EntityFrameworkRuler.Design.Resources.EntityType.t4", RuledTemplatedModelGenerator.GetEntityTypeFile(projectDir)));
+        }
+
         foreach (var (src, template) in templates) {
             if (template?.Directory == null) return;
 #if !DEBUG

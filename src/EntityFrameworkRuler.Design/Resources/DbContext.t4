@@ -1,4 +1,4 @@
-﻿<#@ template hostSpecific="true" debug="false" #>
+<#@ template hostSpecific="true" debug="false" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Relational" #>

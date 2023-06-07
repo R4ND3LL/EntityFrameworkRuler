@@ -76,6 +76,10 @@
         <EmbeddedResource Include="Resources\FunctionsInterface.t4" />
         <None Remove="Resources\EntityTypeConfiguration.t4" />
         <EmbeddedResource Include="Resources\EntityTypeConfiguration.t4" />
+        <None Remove="Resources\DbContext.t4" />
+        <EmbeddedResource Include="Resources\DbContext.t4" />
+        <None Remove="Resources\EntityType.t4" />
+        <EmbeddedResource Include="Resources\EntityType.t4" />
     </ItemGroup>
 
     <ItemGroup>
