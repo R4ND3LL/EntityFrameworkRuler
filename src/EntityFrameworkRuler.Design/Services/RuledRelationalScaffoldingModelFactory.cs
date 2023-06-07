@@ -1536,7 +1536,6 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         var retValueName = allOutParams.Last().Name;
 
-
         var multiResultSyntax = dbFunction.GenerateMultiResultSyntax(functionBuilder.Metadata);
         var returnType = dbFunction.GetReturnType(functionBuilder.Metadata, multiResultSyntax);
 
@@ -1547,6 +1546,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             .HasSchema(dbFunction.Schema)
             .HasReturnType(returnType)
             .HasValidResultSet(dbFunction.HasValidResultSet)
+            .HasResult(dbFunction.Results)
             .SupportsMultipleResultSet(dbFunction.SupportsMultipleResultSet)
             .HasCommandText(dbFunction.GenerateProcedureStatement(retValueName, true))
             ;
@@ -1597,12 +1597,15 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             parameter.HasStoreType(dbParameter.StoreType);
         }
 
-        parameter.HasOutput(dbParameter.IsOutput).HasNullable(dbParameter.IsNullable);
+        parameter.HasOutput(dbParameter.IsOutput)
+            .HasNullable(dbParameter.IsNullable)
+            .HasReturnValue(dbParameter.IsReturnValue)
+            .HasLength(dbParameter.Length)
+            .HasScale(dbParameter.Scale)
+            .HasPrecision(dbParameter.Precision)
+            .HasSqlDbType(dbParameter.GetDbType())
+            .If(() => dbParameter.TypeName.HasNonWhiteSpace(), b => b.HasTypeName(dbParameter.TypeName));
 
-        parameter.Metadata.Length = dbParameter.Length;
-        parameter.Metadata.Scale = dbParameter.Scale;
-        parameter.Metadata.Precision = dbParameter.Precision;
-        parameter.Metadata.SqlDbType = dbParameter.GetDbType();
 
         // if (typeScaffoldingInfo.ScaffoldUnicode.HasValue) {
         //     parameter.IsUnicode(typeScaffoldingInfo.ScaffoldUnicode.Value);

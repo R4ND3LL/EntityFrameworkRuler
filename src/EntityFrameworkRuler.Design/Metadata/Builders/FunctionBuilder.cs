@@ -1,4 +1,5 @@
 ﻿using System.Collections.Immutable;
+using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -59,9 +60,17 @@ public class FunctionBuilder : AnnotatableBuilder<Function, ModelBuilderEx> {
         return this;
     }
 
+    public FunctionBuilder HasResult(IList<List<DatabaseFunctionResultElement>> results) {
+        Metadata.Results = results;
+        return this;
+    }
+
     public FunctionBuilder HasReturnType(string returnType) {
         Metadata.ReturnType = returnType;
         return this;
+    }
 
+    public FunctionBuilder If(Func<bool> condition, Func<FunctionBuilder, FunctionBuilder> then) {
+        return condition() ? then(this) : this;
     }
 }

@@ -1,4 +1,5 @@
-﻿using EntityFrameworkRuler.Design.Extensions;
+﻿using System.Data;
+using EntityFrameworkRuler.Design.Extensions;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -31,13 +32,49 @@ public class ParameterBuilder : AnnotatableBuilder<Parameter, ModelBuilderEx> {
     public ParameterBuilder HasOutput(bool isOutput = true) {
         Metadata.IsOutput = isOutput;
         return this;
-    } public ParameterBuilder HasNullable(bool isNullable = true) {
+    }
+
+    public ParameterBuilder HasNullable(bool isNullable = true) {
         Metadata.IsNullable = isNullable;
+        return this;
+    }
+
+    public ParameterBuilder HasLength(int? length) {
+        Metadata.Length = length;
+        return this;
+    }
+
+    public ParameterBuilder HasScale(int? scale) {
+        Metadata.Scale = scale;
+        return this;
+    }
+
+    public ParameterBuilder HasPrecision(int? precision) {
+        Metadata.Precision = precision;
+        return this;
+    }
+
+    public ParameterBuilder HasSqlDbType(SqlDbType sqlDbType) {
+        Metadata.SqlDbType = sqlDbType;
+        return this;
+    }
+
+    public ParameterBuilder HasReturnValue(bool isReturnValue = true) {
+        Metadata.IsReturnValue = isReturnValue;
+        return this;
+    }
+
+    public ParameterBuilder HasTypeName(string typeName) {
+        Metadata.TypeName = typeName;
         return this;
     }
 
     public ParameterBuilder HasClrType(Type clrType) {
         Metadata.ClrType = clrType;
         return this;
+    }
+
+    public ParameterBuilder If(Func<bool> condition, Func<ParameterBuilder, ParameterBuilder> then) {
+        return condition() ? then(this) : this;
     }
 }

@@ -27,7 +27,7 @@ public static class FunctionHelper {
     //
     //     var identifier = GenerateIdentifierName(dbFunction, model);
     //
-    //     var returnClass = identifier + "Result";
+    //     var returnClass = identifier + "Results";
     //
     //     if (!string.IsNullOrEmpty(dbFunction.MappedType)) {
     //         returnClass = dbFunction.MappedType;
@@ -126,7 +126,7 @@ public static class FunctionHelper {
             if (dbFunction.SupportsMultipleResultSet) {
                 returnType = multiResultSyntax;
             } else {
-                var returnClass = function.Name + "Result";
+                var returnClass = function.Name + "Results";
                 if (!string.IsNullOrEmpty(function.MappedType)) returnClass = function.MappedType;
                 returnType = $"List<{returnClass}>";
             }
@@ -143,8 +143,8 @@ public static class FunctionHelper {
         foreach (var _ in dbFunction.Results) {
             var suffix = $"{i++}";
 
-            var resultTypeName = function.Name + "Result" + suffix;
-            ids.Add($"List<{resultTypeName}> Result{suffix}");
+            var resultTypeName = function.Name + "Results" + suffix;
+            ids.Add($"List<{resultTypeName}> Results{suffix}");
         }
 
         return $"({string.Join(", ", ids)})";

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Design.Metadata.Builders;
+using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -38,6 +39,7 @@ public class Function : ConventionAnnotatable, IFunction {
     public virtual string MultiResultSyntax { get; set; }
     public virtual bool HasValidResultSet { get; set; }
     public virtual string ReturnType { get; set; }
+    public IList<List<DatabaseFunctionResultElement>> Results { get; set; }
 
     public ParameterBuilder CreateParameter(string name) {
         if (parameters.ContainsKey(name)) throw new Exception($"Parameter {name} already exists");

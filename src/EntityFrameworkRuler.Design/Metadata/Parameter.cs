@@ -27,9 +27,11 @@ public class Parameter : ConventionAnnotatable, IParameter {
     public virtual string Name { [DebuggerStepThrough] get; }
     public virtual string StoreType { get; set; }
     public virtual SqlDbType SqlDbType { get; set; }
+    public virtual string TypeName { get; set; }
     public virtual bool IsOutput { get; set; }
 
     public virtual bool IsNullable { get; set; }
+    public virtual bool IsReturnValue { get; set; }
     public virtual Type ClrType { get; set; }
     public virtual int? Length { get; set; }
     public virtual int? Precision { get; set; }
