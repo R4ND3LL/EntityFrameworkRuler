@@ -49,6 +49,10 @@ public class FunctionBuilder : AnnotatableBuilder<Function, ModelBuilderEx> {
         Metadata.CommandText = commandText;
         return this;
     }
+    public FunctionBuilder HasDatabaseName(string databaseName) {
+        Metadata.DatabaseName = databaseName;
+        return this;
+    }
 
     public FunctionBuilder SupportsMultipleResultSet(bool supportsMultipleResultSet) {
         Metadata.SupportsMultipleResultSet = supportsMultipleResultSet;

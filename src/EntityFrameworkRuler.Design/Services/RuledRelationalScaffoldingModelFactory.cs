@@ -1578,10 +1578,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         VisitParameters(functionBuilder, functionRuleNode, dbFunction.Parameters);
 
-        var allOutParams = dbFunction.Parameters.Where(p => p.IsOutput).ToList();
-
+        var allOutParams = function.GetParameters().Where(p => p.IsOutput && !string.IsNullOrWhiteSpace(p.Name)).ToList();
         var retValueName = allOutParams.LastOrDefault()?.Name;
-
         var multiResultTupleSyntax = dbFunction.GenerateMultiResultTupleSyntax(functionBuilder.Metadata);
         var returnType = GetFunctionReturnType(dbFunction, functionBuilder.Metadata, multiResultTupleSyntax, functionRuleNode);
 
@@ -1612,11 +1610,13 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 //     Path = scaffolderOptions.UseSchemaFolders
                 //         ? Path.Combine(routine.Schema, $"{typeName}.cs")
                 //         : $"{typeName}.cs",
+                //         : $"{typeName}.cs",
                 // });
             }
         }
 
         functionBuilder
+            .HasDatabaseName(dbFunction.Name)
             .HasFunctionType(dbFunction.FunctionType)
             .HasSchema(dbFunction.Schema)
             .HasReturnType(returnType)

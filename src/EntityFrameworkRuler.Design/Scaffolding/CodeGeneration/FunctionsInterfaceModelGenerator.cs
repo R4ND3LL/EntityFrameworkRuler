@@ -59,6 +59,8 @@ public class FunctionsInterfaceModelGenerator : RuledModelGeneratorBase, IRuledM
             if (string.IsNullOrWhiteSpace(generatedCode)) return resultingFiles;
 
             var functionFileName = "I" + options.ContextName + "Functions" + host.Extension;
+            if (designTimeRuleLoader.CodeGenOptions?.ContextDir != null)
+                functionFileName = Path.Combine(designTimeRuleLoader.CodeGenOptions.ContextDir, functionFileName);
             resultingFiles.Add(new() { Path = functionFileName, Code = generatedCode });
         } else reporter.WriteWarning($"{contextTemplate.Name} missing");
 

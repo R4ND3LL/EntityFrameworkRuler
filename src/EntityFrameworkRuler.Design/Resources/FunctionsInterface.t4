@@ -94,10 +94,10 @@ public interface I<#= Options.ContextName #>Functions
                         .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name)}")
                         .ToList();
                     var paramStringFull = string.Join(", ", paramStrings);
-                    var allOutParams = function.GetParameters().Where(p => p.IsOutput).ToList();
+                    var allOutParams = function.GetParameters().Where(p => p.IsOutput && !string.IsNullOrWhiteSpace(p.Name)).ToList();
                     var outParams = allOutParams.SkipLast(1).ToList();
                     var retValueName = allOutParams.LastOrDefault()?.Name;
-                    var outParamStrings = outParams
+                    var outParamStrings = outParams 
                         .Select(
                             p =>
                                 $"OutputParameter<{code.Reference(p.ClrType ?? typeof(object))}> {code.Identifier(p.Name)}")
@@ -111,12 +111,13 @@ public interface I<#= Options.ContextName #>Functions
                         paramStringFull += $"{string.Join(", ", outParamStrings)}";
                     }
 
-                    if (paramStrings.Any() || outParams.Count > 0) {
+                    if ((paramStrings.Any() || outParams.Count > 0) && !string.IsNullOrWhiteSpace(retValueName)) {
                         paramStringFull += ", ";
+                        paramStringFull += $"OutputParameter<int> {retValueName} = null";
                     }
-                    paramStringFull += $"OutputParameter<int> {retValueName} = null";
+                    if (!string.IsNullOrWhiteSpace(paramStringFull)) paramStringFull += ", ";
 #>
-    Task<<#= function.ReturnType #>> <#= function.Name #>(<#= paramStringFull #>, CancellationToken cancellationToken = default);     
+    Task<<#= function.ReturnType #>> <#= function.Name #>(<#= paramStringFull #>CancellationToken cancellationToken = default);     
 <#
                     anyFunctionConfiguration = true;
                     // End of function output

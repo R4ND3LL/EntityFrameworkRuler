@@ -35,6 +35,7 @@
 
             var usings = new List<string> {
                 "System",
+                "System.Linq",
                 "System.Collections.Generic",
                 "Microsoft.EntityFrameworkCore",
                 "System.Threading",
@@ -46,25 +47,7 @@
                 usings.Add(Options.ModelNamespace);
             }
             usings.Add(typeof(EntityTypeBuilder<>).Namespace);
-
-            ISet<SqlDbType> ScaleTypes = new HashSet<SqlDbType> {
-                SqlDbType.Decimal,
-                SqlDbType.Money,
-                SqlDbType.SmallMoney,
-            };
-            ISet<SqlDbType> VarTimeTypes = new HashSet<SqlDbType> {
-                SqlDbType.DateTimeOffset,
-                SqlDbType.DateTime2,
-                SqlDbType.Time,
-            };
-            ISet<SqlDbType> LengthRequiredTypes = new HashSet<SqlDbType> {
-                SqlDbType.Binary,
-                SqlDbType.VarBinary,
-                SqlDbType.Char,
-                SqlDbType.VarChar,
-                SqlDbType.NChar,
-                SqlDbType.NVarChar,
-            };
+ 
 
             if (!string.IsNullOrEmpty(NamespaceHint)) {
 #>
@@ -92,7 +75,7 @@ public partial class <#= Options.ContextName #>
                         .ToList(); 
 #>
 
-    [DbFunction(<#= code.Literal(function.Name) #>, <#= code.Literal(function.Schema) #>)]
+    [DbFunction(<#= code.Literal(function.DatabaseName) #>, <#= code.Literal(function.Schema) #>)]
 <#
                     if (function.IsScalar)
                     {

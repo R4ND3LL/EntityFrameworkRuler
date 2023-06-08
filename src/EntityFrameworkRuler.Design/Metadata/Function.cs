@@ -29,8 +29,11 @@ public class Function : ConventionAnnotatable, IFunction {
         [DebuggerStepThrough] get => builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
     }
 
-    /// <summary> Gets the name of this type. </summary>
+    /// <summary> Gets the name of this function. </summary>
     public virtual string Name { [DebuggerStepThrough] get; }
+
+    /// <summary> Gets the database name of this function. </summary>
+    public virtual string DatabaseName { [DebuggerStepThrough] get; set; }
 
     /// <summary> Gets the SQL command text to execute this function. </summary>
     public virtual string CommandText { get; set; }

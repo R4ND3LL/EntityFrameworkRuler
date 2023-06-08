@@ -38,6 +38,7 @@
 
     var usings = new List<string> {
         "System",
+        "Microsoft.Data.SqlClient",
         "System.Collections.Generic",
         "Microsoft.EntityFrameworkCore",
         "System.Threading",
@@ -100,7 +101,7 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
                 .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name)}")
                 .ToList();
             var paramStringFull = string.Join(", ", paramStrings);
-            var allOutParams = function.GetParameters().Where(p => p.IsOutput).ToList();
+            var allOutParams = function.GetParameters().Where(p => p.IsOutput && !string.IsNullOrWhiteSpace(p.Name)).ToList();
             var outParams = allOutParams.SkipLast(1).ToList();
             var retValueName = allOutParams.LastOrDefault()?.Name;
             var outParamStrings = outParams
@@ -119,13 +120,14 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
                 paramStringFull += $"{string.Join(", ", outParamStrings)}";
             }
 
-            if (paramStrings.Any() || outParams.Count > 0) {
+            if ((paramStrings.Any() || outParams.Count > 0) && !string.IsNullOrWhiteSpace(retValueName)) {
                 paramStringFull += ", ";
+                paramStringFull += $"OutputParameter<int> {retValueName} = null";
             }
-            paramStringFull += $"OutputParameter<int> {retValueName} = null";
+            if (!string.IsNullOrWhiteSpace(paramStringFull)) paramStringFull += ", ";
 #>
 
-    public virtual async Task<<#= function.ReturnType #>> <#= function.Name #>(<#= paramStringFull #>, CancellationToken cancellationToken = default)
+    public virtual async Task<<#= function.ReturnType #>> <#= function.Name #>(<#= paramStringFull #>CancellationToken cancellationToken = default)
     {
 <#
             foreach (var parameter in allOutParams) {
@@ -144,7 +146,7 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
             <#=
                     parameter.IsOutput ? "p" + parameter.Name + " = " : string.Empty #>new SqlParameter
             {
-                ParameterName = <#= code.Literal(parameter.Name) #>
+                ParameterName = <#= code.Literal(parameter.Name) #>,
 <#
                 if (IsScaleType(parameter.SqlDbType)) {
                     if (parameter.Precision > 0) {

@@ -36,6 +36,7 @@
             var usings = new List<string> {
                 "System",
                 "System.Collections.Generic",
+                "System.Linq",
                 "Microsoft.EntityFrameworkCore",
                 "System.Threading",
                 "System.Threading.Tasks",
@@ -45,26 +46,7 @@
                 && !string.IsNullOrEmpty(Options.ModelNamespace)) {
                 usings.Add(Options.ModelNamespace);
             }
-            usings.Add(typeof(EntityTypeBuilder<>).Namespace);
-
-            ISet<SqlDbType> ScaleTypes = new HashSet<SqlDbType> {
-                SqlDbType.Decimal,
-                SqlDbType.Money,
-                SqlDbType.SmallMoney,
-            };
-            ISet<SqlDbType> VarTimeTypes = new HashSet<SqlDbType> {
-                SqlDbType.DateTimeOffset,
-                SqlDbType.DateTime2,
-                SqlDbType.Time,
-            };
-            ISet<SqlDbType> LengthRequiredTypes = new HashSet<SqlDbType> {
-                SqlDbType.Binary,
-                SqlDbType.VarBinary,
-                SqlDbType.Char,
-                SqlDbType.VarChar,
-                SqlDbType.NChar,
-                SqlDbType.NVarChar,
-            };
+            usings.Add(typeof(EntityTypeBuilder<>).Namespace); 
 
             if (!string.IsNullOrEmpty(NamespaceHint)) {
 #>
@@ -75,7 +57,7 @@ namespace <#= NamespaceHint #>;
 #>
 public static class DbContextExtensions
 {
-    public static List<T> SqlQuery<T>(this DbContext db, string sql, object[] parameters = null) where T : class
+    public static async Task<List<T>> SqlQueryAsync<T>(this DbContext db, string sql, object[] parameters = null, CancellationToken cancellationToken = default) where T : class
     {
         if (parameters is null)
         {
@@ -84,11 +66,11 @@ public static class DbContextExtensions
 
         if (typeof(T).GetProperties().Any())
         {
-            return db.Set<T>().FromSqlRaw(sql, parameters).ToList();
+            return await db.Set<T>().FromSqlRaw(sql, parameters).ToListAsync(cancellationToken);
         }
         else
         {
-            db.Database.ExecuteSqlRaw(sql, parameters);
+            await db.Database.ExecuteSqlRawAsync(sql, parameters, cancellationToken);
             return default;
         }
     }
@@ -127,47 +109,8 @@ public class OutputParameter<TValue>
 using <#= ns #>;
 <#
             }
-
+            
             WriteLine("");
 
             GenerationEnvironment.Append(mainEnvironment);
-
-            string AppendValue(Parameter parameter) {
-                var value = parameter.IsNullable
-                    ? $"{code.Identifier(parameter.Name)} ?? Convert.DBNull"
-                    : $"{code.Identifier(parameter.Name)}";
-                if (parameter.IsOutput) {
-                    value = parameter.IsNullable
-                        ? $"{code.Identifier(parameter.Name)}?._value ?? Convert.DBNull"
-                        : $"{code.Identifier(parameter.Name)}?._value";
-                }
-
-                return ($"Value = {value},");
-            }
-            string GenerateMultiResultStatement(EntityFrameworkRuler.Design.Metadata.Function function)
-            {
-                if (function.Results.Count == 1) return null;
-
-                var ids = new List<string>();
-                int i = 1;
-                foreach (var _ in function.Results)
-                {
-                    var suffix = $"{i++}";
-                    var typeName = function.Name + "Result" + suffix;
-                    ids.Add($"(await reader.ReadAsync<{typeName}>()).ToList()");
-                }
-
-                return $"({string.Join(", ", ids)})";
-            }
-            bool IsScaleType(SqlDbType sqlDbType) {
-                return ScaleTypes.Contains(sqlDbType);
-            }
-
-            bool IsVarTimeType(SqlDbType sqlDbType) {
-                return VarTimeTypes.Contains(sqlDbType);
-            }
-
-            bool IsLengthRequiredType(SqlDbType sqlDbType) {
-                return LengthRequiredTypes.Contains(sqlDbType);
-            }
 #>
