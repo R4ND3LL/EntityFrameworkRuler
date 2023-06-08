@@ -378,10 +378,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             foreach (var table in kvp.Tables) {
                 if (table.EntityRules.Count > 0 || table.Builders.Any()) continue; // it's already been mapped
 
-                var resultTable = table.AsFunctionResultTable;
-                if (resultTable != null) {
+                var fakeTable = table.AsFakeTable;
+                if (fakeTable != null) {
                     // there will be no rule for this one.  its a function result table only. not a real table-based entity
-                    DoInvokeVisitResultTable(resultTable);
+                    //if (fakeTable.Function.UnnamedColumnCount == 0)
+                    DoInvokeVisitFakeTable(fakeTable);
                     continue;
                 }
 
@@ -390,7 +391,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 if (!canGenerateEntity) continue;
 
                 // Note, we ONLY generate entities at this point when NO rule exists. Therefore, we always add on the fly now
-                var entityRule = !table.IsFunctionResultTable ? schemaRule.AddEntity(table.Name) : null;
+                var entityRule = !table.IsFakeTable ? schemaRule.AddEntity(table.Name) : null;
                 DoInvokeVisitTable(table, entityRule);
             }
         }
@@ -412,7 +413,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
         }
 
-        void DoInvokeVisitResultTable(DatabaseFunctionResultTable table) {
+        void DoInvokeVisitFakeTable(FakeDatabaseTable table) {
             explicitEntityRuleMapping = (table, null);
             try {
                 // We have to call the base VisitTable in order to perform the basic wiring.
@@ -467,14 +468,18 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     protected virtual EntityTypeBuilder ApplyEntityRules(ModelBuilder modelBuilder, EntityTypeBuilder entityTypeBuilder, DatabaseTable table, EntityRuleNode entityRuleNode) {
-        if (table is DatabaseFunctionResultTable resultTable) {
+        if (table is FakeDatabaseTable fakeDatabaseTable) {
             Debug.Assert(entityRuleNode == null);
             entityTypeBuilder.ToTable((string)null).ToView(null);
             entityTypeBuilder.Metadata.RemoveAnnotation(EfScaffoldingAnnotationNames.DbSetName);
             entityTypeBuilder.Metadata.RemoveAnnotation(EfRelationalAnnotationNames.Schema);
             entityTypeBuilder.Metadata.RemoveAnnotation(EfRelationalAnnotationNames.TableName);
             entityTypeBuilder.Metadata.SetAnnotation(RulerAnnotations.Function, true);
-            this.ScaffoldTracker.MapFunction(resultTable, entityTypeBuilder);
+
+            if (fakeDatabaseTable.ShouldScaffoldEntityFromTable) {
+                this.ScaffoldTracker.MapFunction(fakeDatabaseTable, entityTypeBuilder);
+            }
+
             return entityTypeBuilder;
         }
 
@@ -632,7 +637,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         return entityTypeBuilder;
 
         bool BaseHasColumn(string checkColumn) {
-            // return true if the parameter is in the base type
+            // return true if the column is in the base type
             if (entityRuleNode?.BaseEntityRuleNode?.Builder != null) {
                 var baseEntity = entityRuleNode.BaseEntityRuleNode.Builder;
                 var baseProperty = baseEntity.Metadata.GetProperties().FirstOrDefault(o => {
@@ -726,7 +731,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var column = table.Columns.FirstOrDefault(o => o.Name == discriminatorColumn);
         if (column == null) {
             reporter.WriteWarning(
-                $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator parameter '{discriminatorColumn}' not found.");
+                $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator column '{discriminatorColumn}' not found.");
             return;
         }
 
@@ -734,7 +739,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             .FirstOrDefault(o => o.GetColumnNameNoDefault().EqualsIgnoreCase(discriminatorColumn));
         if (property == null) {
             reporter.WriteWarning(
-                $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator property for parameter '{column.Name}' not found.");
+                $"RULED: Entity {entityTypeBuilder.Metadata.Name} discriminator property for column '{column.Name}' not found.");
             return;
         }
 
@@ -1560,29 +1565,33 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var functionBuilder = modelBuilder.CreateFunction(functionName);
         var function = functionBuilder.Metadata;
         var functionRuleNode = this.TryResolveRuleFor(dbFunction);
-        
+
         foreach (var resultTable in dbFunction.Results) {
             var node = ScaffoldTracker.FindTableNode(resultTable);
             var resultEntity = node?.FunctionEntityType;
-            Debug.Assert(resultEntity != null);
+            Debug.Assert(resultEntity != null || !resultTable.ShouldScaffoldEntityFromTable);
+            if (resultEntity == null) continue;
             resultEntity = modelBuilder.Model.FindEntityType(resultEntity.Name) ?? resultEntity;
             if (resultEntity == null) continue;
             functionBuilder.AddResultEntity(resultEntity);
         }
-        
+
         VisitParameters(functionBuilder, functionRuleNode, dbFunction.Parameters);
 
         var allOutParams = dbFunction.Parameters.Where(p => p.IsOutput).ToList();
 
-        var retValueName = allOutParams.Last().Name;
+        var retValueName = allOutParams.LastOrDefault()?.Name;
 
-        var multiResultSyntax = dbFunction.GenerateMultiResultSyntax(functionBuilder.Metadata);
-        var returnType = dbFunction.GetReturnType(functionBuilder.Metadata, multiResultSyntax);
+        var multiResultTupleSyntax = dbFunction.GenerateMultiResultTupleSyntax(functionBuilder.Metadata);
+        var returnType = GetFunctionReturnType(dbFunction, functionBuilder.Metadata, multiResultTupleSyntax, functionRuleNode);
 
-        if (multiResultSyntax.HasNonWhiteSpace()) functionBuilder.HasMultiResultSyntax(multiResultSyntax);
+        if (returnType.IsNullOrWhiteSpace()) {
+            reporter.WriteWarning($"Could not find return type for function '{functionBuilder.Metadata.Name}'.");
+            return modelBuilderEx;
+        }
+
+        if (multiResultTupleSyntax.HasNonWhiteSpace()) functionBuilder.HasMultiResultTupleSyntax(multiResultTupleSyntax);
         if (dbFunction.MappedType.HasNonWhiteSpace()) functionBuilder.HasMappedType(dbFunction.MappedType);
-
-        
 
         var hasComplexType = string.IsNullOrEmpty(dbFunction.MappedType) && (dbFunction.FunctionType == FunctionType.StoredProcedure || !dbFunction.IsScalar);
         if (hasComplexType) {
@@ -1596,7 +1605,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
                 var typeName = function.Name + "Result" + suffix;
 
-                var classContent = CreateFunctionResultType(functionBuilder, dbFunction, resultSet, typeName);
+                var classContent = CreateDbContextExtensions(functionBuilder, dbFunction, resultSet, typeName);
 
                 // result.AdditionalFiles.Add(new ScaffoldedFile {
                 //     Code = classContent,
@@ -1615,14 +1624,39 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             .HasValidResultSet(dbFunction.HasValidResultSet)
             .HasResult(dbFunction.Results)
             .SupportsMultipleResultSet(dbFunction.SupportsMultipleResultSet)
-            .HasCommandText(dbFunction.GenerateProcedureStatement(retValueName, true))
+            .HasCommandText(dbFunction.GenerateExecutionStatement(retValueName))
             ;
 
 
         return modelBuilder;
     }
 
-    private string CreateFunctionResultType(FunctionBuilder functionBuilder, DatabaseFunction dbFunction, DatabaseFunctionResultTable resultSet, string typeName) {
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual string GetFunctionReturnType(DatabaseFunction dbFunction, Function function, string multiResultTupleSyntax, FunctionRuleNode functionRuleNode) {
+        if (function.ResultEntities.Count > 0) {
+            if (multiResultTupleSyntax.HasNonWhiteSpace()) return multiResultTupleSyntax;
+
+            Debug.Assert(function.ResultEntities.Count == 1);
+            var entityName = function.ResultEntities.FirstOrDefault()?.Name;
+            return $"List<{entityName}>";
+        }
+
+        if (dbFunction.HasValidResultSet && (dbFunction.Results.Count == 0 || dbFunction.Results[0].Count == 0))
+            return "int";
+        Debug.Assert(dbFunction.Results.Count <= 1);
+        var resultTable = dbFunction.Results.FirstOrDefault();
+        var resultColumn = resultTable?.ResultColumns.FirstOrDefault();
+
+        var typeScaffoldingInfo = GetTypeScaffoldingInfo(resultColumn);
+        if (typeScaffoldingInfo == null) return null;
+
+        var clrType = typeScaffoldingInfo.ClrType;
+        if (resultColumn!.IsNullable && !clrType.IsNullableTypeOfAnyKind()) clrType = clrType.MakeNullable();
+        if (clrType.IsPrimitive) return clrType.Name;
+        return clrType.FullName;
+    }
+
+    private string CreateDbContextExtensions(FunctionBuilder functionBuilder, DatabaseFunction dbFunction, DatabaseFunctionResultTable resultSet, string typeName) {
         var entityType = new EntityType(typeName, (Model)functionBuilder.Model, false, ConfigurationSource.Explicit);
         var entityTypeBuilder = new EntityTypeBuilder(entityType);
         entityTypeBuilder.ToTable((string)null).ToView((string)null);
@@ -1668,20 +1702,14 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (typeScaffoldingInfo == null) {
             //_unmappedColumns.Add(column);
             reporter.WriteWarning(
-                $"Could not find type mapping for function '{functionBuilder.Metadata.Name}' parameter '{dbParameter.Name}' with data type '{dbParameter.StoreType}'. Skipping column.");
+                $"Could not find type mapping for function '{functionBuilder.Metadata.Name}' column '{dbParameter.Name}' with data type '{dbParameter.StoreType}'. Skipping column.");
             return null;
         }
 
-        var parameterRuleNode = functionRuleNode.TryResolveRuleFor(dbParameter.Name);
+        var parameterRuleNode = functionRuleNode?.TryResolveRuleFor(dbParameter.Name);
 
         var clrType = typeScaffoldingInfo.ClrType;
         if (dbParameter.IsNullable && !clrType.IsNullableTypeOfAnyKind()) clrType = clrType.MakeNullable();
-
-        if (clrType == typeof(bool) && dbParameter.DefaultValueSql != null) {
-            reporter.WriteWarning(
-                $"The column '{dbParameter.Name}' would normally be mapped to a non-nullable bool property, but it has a default constraint. Such a column is mapped to a nullable bool property to allow a difference between setting the property to false and invoking the default constraint. See https://go.microsoft.com/fwlink/?linkid=851278 for details.");
-            clrType = clrType.MakeNullable();
-        }
 
         var paramName = GetFunctionParameterName(functionBuilder.Metadata, dbParameter, parameterRuleNode?.Rule?.NewName);
         var parameter = functionBuilder.CreateParameter(paramName);
@@ -1705,65 +1733,65 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
 
         // if (typeScaffoldingInfo.ScaffoldUnicode.HasValue) {
-        //     parameter.IsUnicode(typeScaffoldingInfo.ScaffoldUnicode.Value);
+        //     column.IsUnicode(typeScaffoldingInfo.ScaffoldUnicode.Value);
         // }
         //
         // if (typeScaffoldingInfo.ScaffoldFixedLength == true) {
-        //     parameter.IsFixedLength();
+        //     column.IsFixedLength();
         // }
         //
         // if (typeScaffoldingInfo.ScaffoldMaxLength.HasValue) {
-        //     parameter.HasMaxLength(typeScaffoldingInfo.ScaffoldMaxLength.Value);
+        //     column.HasMaxLength(typeScaffoldingInfo.ScaffoldMaxLength.Value);
         // }
         //
         // if (typeScaffoldingInfo.ScaffoldPrecision.HasValue) {
         //     if (typeScaffoldingInfo.ScaffoldScale.HasValue) {
-        //         parameter.HasPrecision(
+        //         column.HasPrecision(
         //             typeScaffoldingInfo.ScaffoldPrecision.Value,
         //             typeScaffoldingInfo.ScaffoldScale.Value);
         //     } else {
-        //         parameter.HasPrecision(typeScaffoldingInfo.ScaffoldPrecision.Value);
+        //         column.HasPrecision(typeScaffoldingInfo.ScaffoldPrecision.Value);
         //     }
         // }
         //
         // if (dbParameter.ValueGenerated == ValueGenerated.OnAdd) {
-        //     parameter.ValueGeneratedOnAdd();
+        //     column.ValueGeneratedOnAdd();
         // }
         //
         // if (dbParameter.ValueGenerated == ValueGenerated.OnUpdate) {
-        //     parameter.ValueGeneratedOnUpdate();
+        //     column.ValueGeneratedOnUpdate();
         // }
         //
         // if (dbParameter.ValueGenerated == ValueGenerated.OnAddOrUpdate) {
-        //     parameter.ValueGeneratedOnAddOrUpdate();
+        //     column.ValueGeneratedOnAddOrUpdate();
         // }
         //
         // if (dbParameter.DefaultValueSql != null) {
-        //     parameter.HasDefaultValueSql(dbParameter.DefaultValueSql);
+        //     column.HasDefaultValueSql(dbParameter.DefaultValueSql);
         // }
         //
         // if (dbParameter.ComputedColumnSql != null) {
-        //     parameter.HasComputedColumnSql(dbParameter.ComputedColumnSql, dbParameter.IsStored);
+        //     column.HasComputedColumnSql(dbParameter.ComputedColumnSql, dbParameter.IsStored);
         // }
         //
         // if (dbParameter.Comment != null) {
-        //     parameter.HasComment(dbParameter.Comment);
+        //     column.HasComment(dbParameter.Comment);
         // }
         //
         // if (dbParameter.Collation != null) {
-        //     parameter.UseCollation(dbParameter.Collation);
+        //     column.UseCollation(dbParameter.Collation);
         // }
         //
         // if (!(dbParameter.Table.PrimaryKey?.Columns.Contains(dbParameter) ?? false)) {
-        //     parameter.IsRequired(!dbParameter.IsNullable);
+        //     column.IsRequired(!dbParameter.IsNullable);
         // }
         //
         // if ((bool?)dbParameter[ScaffoldingAnnotationNames.ConcurrencyToken] == true) {
-        //     parameter.IsConcurrencyToken();
+        //     column.IsConcurrencyToken();
         // }
 
 
-        // parameter.Metadata.AddAnnotations(
+        // column.Metadata.AddAnnotations(
         //     dbParameter.GetAnnotations().Where(
         //         a => a.Name != ScaffoldingAnnotationNames.ConcurrencyToken
         //              && a.Name != ScaffoldingAnnotationNames.ClrType));
@@ -1774,11 +1802,20 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseFunctionParameter parameter) {
-        if (parameter.StoreType == null) return null;
+        if (parameter?.StoreType == null) return null;
 
         var type = (Type)parameter[EfScaffoldingAnnotationNames.ClrType];
         // add type param for next EFC release
         return scaffoldingTypeMapper.FindMapping(parameter.StoreType, false, false);
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected virtual TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseFunctionResultColumn column) {
+        if (column?.StoreType == null) return null;
+
+        var type = (Type)column[EfScaffoldingAnnotationNames.ClrType];
+        // add type param for next EFC release
+        return scaffoldingTypeMapper.FindMapping(column.StoreType, false, false);
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>

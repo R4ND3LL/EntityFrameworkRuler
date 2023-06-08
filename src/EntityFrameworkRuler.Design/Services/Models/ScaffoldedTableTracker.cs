@@ -120,9 +120,9 @@ public sealed class ScaffoldedTableTracker {
 
     /// <summary> Get the table node </summary>
     public ScaffoldedTableTrackerItem FindTableNode(DatabaseTable table) {
-        if (table == null) return null;
+        if (table?.Name == null) return null;
         var node = tablesBySchema.TryGetValue(table.Schema.EmptyIfNullOrWhitespace())?.TryGetValue(table.Name);
-        Debug.Assert(node != null, "This tracker should have been initialized with the entire table set");
+        Debug.Assert(node != null || table is FakeDatabaseTable, "This tracker should have been initialized with the entire table set");
         return node;
     }
 
@@ -168,7 +168,7 @@ public sealed class ScaffoldedTableTracker {
         }
     }
 
-    public void MapFunction(DatabaseFunctionResultTable resultTable, EntityTypeBuilder entityTypeBuilder) {
+    public void MapFunction(FakeDatabaseTable resultTable, EntityTypeBuilder entityTypeBuilder) {
         var node=FindTableNode(resultTable);
         node?.MapFunctionTo(entityTypeBuilder.Metadata);
     }

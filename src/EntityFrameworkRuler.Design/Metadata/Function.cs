@@ -38,15 +38,17 @@ public class Function : ConventionAnnotatable, IFunction {
     public virtual string MappedType { get; set; }
     public virtual string Schema { get; set; }
     public virtual bool SupportsMultipleResultSet { get; set; }
-    public virtual string MultiResultSyntax { get; set; }
+    public virtual string MultiResultTupleSyntax { get; set; }
     public virtual bool HasValidResultSet { get; set; }
     public virtual string ReturnType { get; set; }
+
+    /// <summary> Query always returns only one value as opposed to a complex return type </summary>
     public virtual bool IsScalar { get; set; }
 
     public virtual FunctionType FunctionType { get; set; }
     public IList<DatabaseFunctionResultTable> Results { get; set; }
     public virtual bool NoResultSet => Results != null && Results.Count == 1 && Results[0].Count == 0 && HasValidResultSet;
-    public  IList<IMutableEntityType> ResultEntities { get; } = new List<IMutableEntityType>();
+    public IList<IMutableEntityType> ResultEntities { get; } = new List<IMutableEntityType>();
 
     public ParameterBuilder CreateParameter(string name) {
         if (parameters.ContainsKey(name)) throw new Exception($"Parameter {name} already exists");

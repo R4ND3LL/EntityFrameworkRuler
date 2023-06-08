@@ -79,4 +79,8 @@ public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
 
         return m;
     }
+
+    public override SavedModelFiles Save(ScaffoldedModel scaffoldedModel, string outputDir, bool overwriteFiles) {
+        return base.Save(scaffoldedModel, outputDir, overwriteFiles);
+    }
 }

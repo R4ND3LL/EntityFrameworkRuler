@@ -40,11 +40,11 @@ public class DatabaseFunctionParameter : Annotatable {
     public override string ToString() => $"{StoreType} {Name ?? "<UNKNOWN>"}";
 }
 
-public class DatabaseFunctionResultTable : DatabaseTable {
+public class DatabaseFunctionResultTable : FakeDatabaseTable {
     public DatabaseFunctionResultTable() { }
 
-    public new IEnumerable<DatabaseFunctionResultColumn> ResultColumns =>
-        base.Columns.Cast<DatabaseFunctionResultColumn>(); // { get; set; } = new List<DatabaseFunctionResultColumn>();
+    public IEnumerable<DatabaseFunctionResultColumn> ResultColumns =>
+        base.Columns.Cast<DatabaseFunctionResultColumn>();
 
     public int Count => Columns?.Count ?? 0;
     public DatabaseFunctionResultColumn this[int i] { get => (DatabaseFunctionResultColumn)Columns[i]; set => Columns[i] = value; }
@@ -55,14 +55,13 @@ public class DatabaseFunctionResultTable : DatabaseTable {
     }
 
     public DatabaseFunction Function { get; set; }
-    // {
-    //     get => (DatabaseFunction?)base.GetAnnotation(RulerAnnotations.Function).Value  ;
-    //     set => base.SetAnnotation(RulerAnnotations.Ordinal, value);
-    // }
+    public override bool ShouldScaffoldEntityFromTable => Count > 0 && Function?.UnnamedColumnCount == 0;
 }
 
 public class DatabaseFunctionResultColumn : DatabaseColumn {
     public DatabaseFunctionResultColumn() { }
+
+    public virtual bool HasName => Name.HasNonWhiteSpace();
 
     // public virtual string Name { get; set; }
     // public virtual string StoreType { get; set; }

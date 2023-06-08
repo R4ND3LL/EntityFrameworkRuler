@@ -219,7 +219,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             ("EntityFrameworkRuler.Design.Resources.Functions.t4", RuledTemplatedModelGenerator.GetFunctionFile(projectDir)),
             ("EntityFrameworkRuler.Design.Resources.DbContextFunctions.t4", RuledTemplatedModelGenerator.GetDbContextFunctionsFile(projectDir)),
             ("EntityFrameworkRuler.Design.Resources.FunctionsInterface.t4", RuledTemplatedModelGenerator.GetFunctionsInterfaceFile(projectDir)),
-            ("EntityFrameworkRuler.Design.Resources.FunctionResultType.t4", RuledTemplatedModelGenerator.GetFunctionResultTypeFile(projectDir)),
+            ("EntityFrameworkRuler.Design.Resources.DbContextExtensions.t4", RuledTemplatedModelGenerator.GetDbContextExtensionsFile(projectDir)),
         };
         if (EfVersion?.Major >= 7) {
             templates.Add(("EntityFrameworkRuler.Design.Resources.DbContext.t4", RuledTemplatedModelGenerator.GetDbContextFile(projectDir)));

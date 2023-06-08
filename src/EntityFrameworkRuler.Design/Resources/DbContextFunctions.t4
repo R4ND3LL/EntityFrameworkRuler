@@ -36,7 +36,9 @@
             var usings = new List<string> {
                 "System",
                 "System.Collections.Generic",
-                "Microsoft.EntityFrameworkCore"
+                "Microsoft.EntityFrameworkCore",
+                "System.Threading",
+                "System.Threading.Tasks",
             };
 
             if (NamespaceHint != Options.ModelNamespace
@@ -77,7 +79,7 @@ public partial class <#= Options.ContextName #>
             var anyConfiguration = false;
             StringBuilder mainEnvironment;
             foreach (var function in Model.GetFunctions()) {
-                if (function?.Name != null && function.CommandText != null) {
+                if (function?.Name != null && function.CommandText != null && function.ReturnType != null) {
                     anyConfiguration = true;
                     // Save all previously generated code, and start generating into a new temporary environment
                     mainEnvironment = GenerationEnvironment;
@@ -87,41 +89,7 @@ public partial class <#= Options.ContextName #>
 
                     var paramStrings = function.GetParameters().Where(p => !p.IsOutput)
                         .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name)}")
-                        .ToList();
-                    var paramStringFull = string.Join(", ", paramStrings);
-                    var allOutParams = function.GetParameters().Where(p => p.IsOutput).ToList();
-                    var outParams = allOutParams.SkipLast(1).ToList();
-                    var retValueName = allOutParams.Last().Name;
-                    var outParamStrings = outParams
-                        .Select(
-                            p =>
-                                $"OutputParameter<{code.Reference(p.ClrType ?? typeof(object))}> {code.Identifier(p.Name)}")
-                        .ToList();
-
-                    // GenerateProcedureStatement:
-                    var paramList = function.GetParameters()
-                        .Select(p => p.IsOutput ? $"@{p.Name} OUTPUT" : $"@{p.Name}").Take(
-                            function.GetParameters().Count() - 1)
-                        .ToList();
-
-                    //paramList.RemoveAt(paramList.Count - 1);
-                    var paramListJoined = string.Join(", ", paramList);
-                    var fullExec = $"EXEC @{retValueName} = [{function.Schema}].[{function.Name}] {paramListJoined}";
-                    //, sqlParameters, cancellationToken".Replace(" \"", "\"", StringComparison.OrdinalIgnoreCase);
-                    var multiResultSyntax = function.MultiResultSyntax;
-
-                    if (outParams.Any()) {
-                        if (paramStrings.Any()) {
-                            paramStringFull += ", ";
-                        }
-
-                        paramStringFull += $"{string.Join(", ", outParamStrings)}";
-                    }
-
-                    if (paramStrings.Any() || outParams.Count > 0) {
-                        paramStringFull += ", ";
-                    }
-                    paramStringFull += $"OutputParameter<int> {retValueName} = null";
+                        .ToList(); 
 #>
 
     [DbFunction(<#= code.Literal(function.Name) #>, <#= code.Literal(function.Schema) #>)]
@@ -204,8 +172,7 @@ public partial class <#= Options.ContextName #>
 #>
         modelBuilder.Entity<<#= result.Name #>>().HasNoKey().ToView(null);
 <#
-                            }                            
-
+                            }
                         }
                     }
                     #>               
@@ -214,8 +181,7 @@ public partial class <#= Options.ContextName #>
                 
                 WriteLine("");
             }
-#>
-    
+#>    
 }
 <#
             mainEnvironment = GenerationEnvironment;
@@ -230,43 +196,4 @@ using <#= ns #>;
             WriteLine("");
 
             GenerationEnvironment.Append(mainEnvironment);
-
-            string AppendValue(Parameter parameter) {
-                var value = parameter.IsNullable
-                    ? $"{code.Identifier(parameter.Name)} ?? Convert.DBNull"
-                    : $"{code.Identifier(parameter.Name)}";
-                if (parameter.IsOutput) {
-                    value = parameter.IsNullable
-                        ? $"{code.Identifier(parameter.Name)}?._value ?? Convert.DBNull"
-                        : $"{code.Identifier(parameter.Name)}?._value";
-                }
-
-                return ($"Value = {value},");
-            }
-            string GenerateMultiResultStatement(EntityFrameworkRuler.Design.Metadata.Function function)
-            {
-                if (function.Results.Count == 1) return null;
-
-                var ids = new List<string>();
-                int i = 1;
-                foreach (var _ in function.Results)
-                {
-                    var suffix = $"{i++}";
-                    var typeName = function.Name + "Result" + suffix;
-                    ids.Add($"(await reader.ReadAsync<{typeName}>()).ToList()");
-                }
-
-                return $"({string.Join(", ", ids)})";
-            }
-            bool IsScaleType(SqlDbType sqlDbType) {
-                return ScaleTypes.Contains(sqlDbType);
-            }
-
-            bool IsVarTimeType(SqlDbType sqlDbType) {
-                return VarTimeTypes.Contains(sqlDbType);
-            }
-
-            bool IsLengthRequiredType(SqlDbType sqlDbType) {
-                return LengthRequiredTypes.Contains(sqlDbType);
-            }
 #>

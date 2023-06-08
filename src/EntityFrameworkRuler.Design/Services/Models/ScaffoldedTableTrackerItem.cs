@@ -31,15 +31,15 @@ public sealed class ScaffoldedTableTrackerItem {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string Name => Table.Name;
 
-    public bool IsFunctionResultTable => Table is DatabaseFunctionResultTable;
-    public DatabaseFunctionResultTable AsFunctionResultTable => Table as DatabaseFunctionResultTable;
+    public bool IsFakeTable => Table is FakeDatabaseTable;
+    public FakeDatabaseTable AsFakeTable => Table as FakeDatabaseTable;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public string FullName => Table.GetFullName();
 
     /// <summary> Associate this table to the entity rule, and thus the scaffolded entity type </summary>
     public void MapTo(EntityRuleNode entityRule) {
-        Debug.Assert(!IsFunctionResultTable);
+        Debug.Assert(!IsFakeTable);
         EntityRules.Add(entityRule);
     }
 

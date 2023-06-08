@@ -82,19 +82,24 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
             var i = 1;
 
             foreach (var resultTable in function.Results) {
+                resultTable.Schema = function.Schema;
+                resultTable.Comment = $"Result for function {function.Name}";
+                resultTable.Ordinal = i++;
+                resultTable.Function = function;
+                resultTable.ResultColumns.ForAll(o => o.Table = resultTable);
+
                 if (function.NoResultSet) continue;
 
+                // make a name for the table 
                 var separator = function.Name.Contains(" ") ? " " : (function.Name.Contains("_") ? "_" : "");
                 var tableName = function.Name + separator + "Result";
                 tableName = tableName.GetUniqueString(s => model.Tables.Any(o => string.Equals(o.Name, s, StringComparison.OrdinalIgnoreCase)));
                 resultTable.Name = tableName;
-                resultTable.Schema = function.Schema;
-                resultTable.Comment = $"Result for function {function.Name}";
-                resultTable.Ordinal = i;
-                resultTable.Function = function;
-                resultTable.ResultColumns.ForAll(o => o.Table = resultTable);
-                model.Tables.Add(resultTable);
-                i++;
+
+                if (resultTable.ShouldScaffoldEntityFromTable) {
+                    // add table for entity creation.  all columns must be named
+                    model.Tables.Add(resultTable);
+                }
             }
         } else {
             Debug.Assert(!function.Results.Any() || function.Results[0].Columns.Count == 0);

@@ -113,8 +113,7 @@ AND (
                     function.HasValidResultSet = false;
                     function.Results.Clear();
                     function.Results.Add(new() { Function = function, Schema = function.Schema });
-                    reporter.WriteError(
-                        $"Unable to get result set shape for {function.GetType().Name.ToLower(CultureInfo.InvariantCulture)} '{function.Schema}.{function.Name}'. {ex.Message}.");
+                    reporter.WriteError($"RULED: Unable to get result set shape for {function.FunctionType} '{function.Schema}.{function.Name}'. {ex.Message}.");
                 }
 
             var failure = false;
@@ -122,7 +121,7 @@ AND (
                 && function.IsScalar
                 && function.Parameters.Count > 0
                 && function.Parameters.Any(p => p.StoreType == "table type")) {
-                reporter.WriteError($"Unable to scaffold {function.GetType().Name} '{function.Schema}.{function.Name}' as it has TVP parameters.");
+                reporter.WriteError($"RULED: Unable to scaffold {function.FunctionType} '{function.Schema}.{function.Name}' as it has TVP parameters.");
                 failure = true;
             }
 
@@ -135,20 +134,20 @@ AND (
 
                     if (duplicates.Any()) {
                         reporter.WriteError(
-                            $"Unable to scaffold {function.GetType().Name} '{function.Schema}.{function.Name}' as it has duplicate result column names: '{duplicates[0]}'.");
+                            $"RULED: Unable to scaffold {function.FunctionType} '{function.Schema}.{function.Name}' as it has duplicate result column names: '{duplicates[0]}'.");
                         failure = true;
                     }
                 }
 
-            if (!failure && function.UnnamedColumnCount > 0) {
-                reporter.WriteError($"{function.GetType().Name} '{function.Schema}.{function.Name}' has {function.UnnamedColumnCount} un-named columns.");
+            if (!failure && (function.UnnamedColumnCount > 1 || (function.UnnamedColumnCount > 0 && function.Results.Sum(o => o.Columns.Count) > 1))) {
+                reporter.WriteError($"RULED: {function.FunctionType} '{function.Schema}.{function.Name}' has {function.UnnamedColumnCount} un-named columns.");
                 failure = true;
             }
 
             if (failure) model.Functions.Remove(function);
         }
 
-        foreach (var table in tablesToSelect.Except(selectedTables, StringComparer.OrdinalIgnoreCase)) reporter.WriteInformation($"Procedure not found: {table}");
+        foreach (var table in tablesToSelect.Except(selectedTables, StringComparer.OrdinalIgnoreCase)) reporter.WriteInformation($"RULED: Procedure not found: {table}");
     }
 
     private static bool AllowsProcedure(HashSet<string> tables, HashSet<string> selectedTables, string name) {
@@ -251,7 +250,7 @@ internal class SqlServerFunctionFactory : RoutineFactory {
     public override List<DatabaseFunctionResultTable> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
         if (dbFunction is null) throw new ArgumentNullException(nameof(dbFunction));
 
-        var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema};
+        var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema };
 
         using var command = connection.CreateCommand();
         command.CommandText = $@"
@@ -338,10 +337,10 @@ internal class SqlServerProcedureFactory : RoutineFactory {
 
             foreach (DataRow row in schemaTable.Rows)
                 if (row != null) {
-                    var name = row[0].ToString();
-                    if (string.IsNullOrWhiteSpace(name)) {
+                    var name = (row[0]?.ToString()).EmptyIfNullOrWhitespace();
+                    if (name.IsNullOrWhiteSpace()) {
                         unnamedColumnCount++;
-                        continue;
+                        //continue;
                     }
 
                     var storeType = row["DataTypeName"].ToString();
@@ -366,8 +365,8 @@ internal class SqlServerProcedureFactory : RoutineFactory {
                     });
                 }
 
-            // If the result set only contains un-named columns
-            if (schemaTable.Rows.Count > 0 && schemaTable.Rows.Count == unnamedColumnCount) throw new InvalidOperationException($"Only un-named result columns in procedure");
+            // Fail if the result set contains multiple un-named columns
+            if (schemaTable.Rows.Count > 1 && schemaTable.Rows.Count == unnamedColumnCount) throw new InvalidOperationException($"Only un-named result columns in procedure");
 
             if (unnamedColumnCount > 0) dbFunction.UnnamedColumnCount += unnamedColumnCount;
 

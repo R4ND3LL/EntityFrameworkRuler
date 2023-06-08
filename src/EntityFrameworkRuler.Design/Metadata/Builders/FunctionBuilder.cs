@@ -55,8 +55,8 @@ public class FunctionBuilder : AnnotatableBuilder<Function, ModelBuilderEx> {
         return this;
     }
 
-    public FunctionBuilder HasMultiResultSyntax(string multiResultSyntax) {
-        Metadata.MultiResultSyntax = multiResultSyntax;
+    public FunctionBuilder HasMultiResultTupleSyntax(string multiResultTupleSyntax) {
+        Metadata.MultiResultTupleSyntax = multiResultTupleSyntax;
         return this;
     }
 

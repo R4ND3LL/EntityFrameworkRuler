@@ -171,5 +171,14 @@ namespace NorthwindTestProject
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<OutputParamExample_Result>("OutputParamExpl", priceParameter, count, count2, date);
         }
+    
+        public virtual ObjectResult<Nullable<int>> ReturnNumberOneNamed(Nullable<int> price)
+        {
+            var priceParameter = price.HasValue ?
+                new ObjectParameter("price", price) :
+                new ObjectParameter("price", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<Nullable<int>>("ReturnNumberOneNamed", priceParameter);
+        }
     }
 }

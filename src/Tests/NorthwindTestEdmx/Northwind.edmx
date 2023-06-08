@@ -570,7 +570,17 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <Parameter Name="Beginning_Date" Type="datetime" Mode="In" />
           <Parameter Name="Ending_Date" Type="datetime" Mode="In" />
         </Function>
+        <Function Name="fJoinValues" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="varchar">
+          <Parameter Name="v1" Type="varchar" Mode="In" />
+          <Parameter Name="v2" Type="varchar" Mode="In" />
+          <Parameter Name="v3" Type="varchar" Mode="In" />
+          <Parameter Name="v4" Type="varchar" Mode="In" />
+          <Parameter Name="v5" Type="varchar" Mode="In" />
+        </Function>
         <Function Name="fn_diagramobjects" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="int" />
+        <Function Name="FormatNumber" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="varchar">
+          <Parameter Name="num" Type="int" Mode="In" />
+        </Function>
         <Function Name="MultiResultSetExample" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
         <Function Name="OutputParamExample" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="price" Type="money" Mode="In" />
@@ -579,6 +589,9 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <Parameter Name="date" Type="date" Mode="InOut" />
         </Function>
         <Function Name="ReturnNumberOne" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" />
+        <Function Name="ReturnNumberOneNamed" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="price" Type="int" Mode="In" />
+        </Function>
         <Function Name="Sales_by_Year" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" StoreFunctionName="Sales by Year">
           <Parameter Name="Beginning_Date" Type="datetime" Mode="In" />
           <Parameter Name="Ending_Date" Type="datetime" Mode="In" />
@@ -1232,6 +1245,9 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
             <Parameter Name="count" Mode="InOut" Type="Int32" />
             <Parameter Name="count2" Mode="InOut" Type="Int32" />
             <Parameter Name="date" Mode="InOut" Type="DateTime" />
+          </FunctionImport>
+          <FunctionImport Name="ReturnNumberOneNamed" ReturnType="Collection(Int32)">
+          <Parameter Name="price" Mode="In" Type="Int32" />
           </FunctionImport>
         </EntityContainer>
         <EntityType Name="Alphabetical_list_of_product">
@@ -2089,6 +2105,7 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="ReturnNumberOneNamed" FunctionName="NorthwindModel.Store.ReturnNumberOneNamed" />
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

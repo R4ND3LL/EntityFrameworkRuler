@@ -23,56 +23,58 @@
 <#@ import namespace="EntityFrameworkRuler.Design.Metadata" #>
 <#@ import namespace="System.Data" #>
 <#
-    //System.Diagnostics.Debugger.Launch();
-            //System.Diagnostics.Debugger.Break();
+    // System.Diagnostics.Debugger.Launch();
+    // System.Diagnostics.Debugger.Break();
 
-            if (!ProductInfo.GetVersion().StartsWith("7.0")) {
-                Warning(
-                    "Your templates were created using an older version of Entity Framework. Additional features and bug fixes may be available. See https://aka.ms/efcore-docs-updating-templates for more information.");
-            }
+    if (!ProductInfo.GetVersion().StartsWith("7.0")) {
+        Warning(
+            "Your templates were created using an older version of Entity Framework. Additional features and bug fixes may be available. See https://aka.ms/efcore-docs-updating-templates for more information.");
+    }
 
-            var services = (IServiceProvider)Host;
-            var providerCode = services.GetRequiredService<IProviderConfigurationCodeGenerator>();
-            var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
-            var code = services.GetRequiredService<ICSharpHelper>();
+    var services = (IServiceProvider)Host;
+    var providerCode = services.GetRequiredService<IProviderConfigurationCodeGenerator>();
+    var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
+    var code = services.GetRequiredService<ICSharpHelper>();
 
-            var usings = new List<string> {
-                "System",
-                "System.Collections.Generic",
-                "Microsoft.EntityFrameworkCore"
-            };
+    var usings = new List<string> {
+        "System",
+        "System.Collections.Generic",
+        "Microsoft.EntityFrameworkCore",
+        "System.Threading",
+        "System.Threading.Tasks",
+    };
 
-            if (NamespaceHint != Options.ModelNamespace
-                && !string.IsNullOrEmpty(Options.ModelNamespace)) {
-                usings.Add(Options.ModelNamespace);
-            }
-            usings.Add(typeof(EntityTypeBuilder<>).Namespace);
+    if (NamespaceHint != Options.ModelNamespace
+        && !string.IsNullOrEmpty(Options.ModelNamespace)) {
+        usings.Add(Options.ModelNamespace);
+    }
+    usings.Add(typeof(EntityTypeBuilder<>).Namespace);
 
-            ISet<SqlDbType> ScaleTypes = new HashSet<SqlDbType> {
-                SqlDbType.Decimal,
-                SqlDbType.Money,
-                SqlDbType.SmallMoney,
-            };
-            ISet<SqlDbType> VarTimeTypes = new HashSet<SqlDbType> {
-                SqlDbType.DateTimeOffset,
-                SqlDbType.DateTime2,
-                SqlDbType.Time,
-            };
-            ISet<SqlDbType> LengthRequiredTypes = new HashSet<SqlDbType> {
-                SqlDbType.Binary,
-                SqlDbType.VarBinary,
-                SqlDbType.Char,
-                SqlDbType.VarChar,
-                SqlDbType.NChar,
-                SqlDbType.NVarChar,
-            };
+    ISet<SqlDbType> ScaleTypes = new HashSet<SqlDbType> {
+        SqlDbType.Decimal,
+        SqlDbType.Money,
+        SqlDbType.SmallMoney,
+    };
+    ISet<SqlDbType> VarTimeTypes = new HashSet<SqlDbType> {
+        SqlDbType.DateTimeOffset,
+        SqlDbType.DateTime2,
+        SqlDbType.Time,
+    };
+    ISet<SqlDbType> LengthRequiredTypes = new HashSet<SqlDbType> {
+        SqlDbType.Binary,
+        SqlDbType.VarBinary,
+        SqlDbType.Char,
+        SqlDbType.VarChar,
+        SqlDbType.NChar,
+        SqlDbType.NVarChar,
+    };
 
-            if (!string.IsNullOrEmpty(NamespaceHint)) {
+    if (!string.IsNullOrEmpty(NamespaceHint)) {
 #>
 namespace <#= NamespaceHint #>;
 
 <#
-            }
+    }
 #>
 public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextName #>Functions
 {
@@ -83,268 +85,257 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
         _context = context;
     }   
 <#
-            var anyConfiguration = false;
-            StringBuilder mainEnvironment;
-            foreach (var function in Model.GetFunctions()) {
-                if (function?.Name != null && function.CommandText != null) {
-                    anyConfiguration = true;
-                    // Save all previously generated code, and start generating into a new temporary environment
-                    mainEnvironment = GenerationEnvironment;
-                    GenerationEnvironment = new StringBuilder();
+    var anyConfiguration = false;
+    StringBuilder mainEnvironment;
+    foreach (var function in Model.GetFunctions()) {
+        if (function?.Name != null && function.CommandText != null && function.ReturnType != null) {
+            anyConfiguration = true;
+            // Save all previously generated code, and start generating into a new temporary environment
+            mainEnvironment = GenerationEnvironment;
+            GenerationEnvironment = new StringBuilder();
 
-                    bool anyFunctionConfiguration = false;
+            bool anyFunctionConfiguration = false;
 
-                    var paramStrings = function.GetParameters().Where(p => !p.IsOutput)
-                        .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name)}")
-                        .ToList();
-                    var paramStringFull = string.Join(", ", paramStrings);
-                    var allOutParams = function.GetParameters().Where(p => p.IsOutput).ToList();
-                    var outParams = allOutParams.SkipLast(1).ToList();
-                    var retValueName = allOutParams.Last().Name;
-                    var outParamStrings = outParams
-                        .Select(
-                            p =>
-                                $"OutputParameter<{code.Reference(p.ClrType ?? typeof(object))}> {code.Identifier(p.Name)}")
-                        .ToList();
+            var paramStrings = function.GetParameters().Where(p => !p.IsOutput)
+                .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name)}")
+                .ToList();
+            var paramStringFull = string.Join(", ", paramStrings);
+            var allOutParams = function.GetParameters().Where(p => p.IsOutput).ToList();
+            var outParams = allOutParams.SkipLast(1).ToList();
+            var retValueName = allOutParams.LastOrDefault()?.Name;
+            var outParamStrings = outParams
+                .Select(
+                    p =>
+                        $"OutputParameter<{code.Reference(p.ClrType ?? typeof(object))}> {code.Identifier(p.Name)}")
+                .ToList();
 
-                    // GenerateProcedureStatement:
-                    var paramList = function.GetParameters()
-                        .Select(p => p.IsOutput ? $"@{p.Name} OUTPUT" : $"@{p.Name}").Take(
-                            function.GetParameters().Count() - 1)
-                        .ToList();
+            var multiResultSyntax = function.MultiResultTupleSyntax;
 
-                    //paramList.RemoveAt(paramList.Count - 1);
-                    var paramListJoined = string.Join(", ", paramList);
-                    var fullExec = $"EXEC @{retValueName} = [{function.Schema}].[{function.Name}] {paramListJoined}";
-                    //, sqlParameters, cancellationToken".Replace(" \"", "\"", StringComparison.OrdinalIgnoreCase);
-                    var multiResultSyntax = function.MultiResultSyntax;
+            if (outParams.Any()) {
+                if (paramStrings.Any()) {
+                    paramStringFull += ", ";
+                }
 
-                    if (outParams.Any()) {
-                        if (paramStrings.Any()) {
-                            paramStringFull += ", ";
-                        }
+                paramStringFull += $"{string.Join(", ", outParamStrings)}";
+            }
 
-                        paramStringFull += $"{string.Join(", ", outParamStrings)}";
-                    }
-
-                    if (paramStrings.Any() || outParams.Count > 0) {
-                        paramStringFull += ", ";
-                    }
-                    paramStringFull += $"OutputParameter<int> {retValueName} = null";
+            if (paramStrings.Any() || outParams.Count > 0) {
+                paramStringFull += ", ";
+            }
+            paramStringFull += $"OutputParameter<int> {retValueName} = null";
 #>
 
     public virtual async Task<<#= function.ReturnType #>> <#= function.Name #>(<#= paramStringFull #>, CancellationToken cancellationToken = default)
     {
 <#
-                    foreach (var parameter in allOutParams) {
+            foreach (var parameter in allOutParams) {
 #>
         SqlParameter p<#= parameter.Name #>;
 <#
-                    }
+            }
 #>
         var sqlParameters = new []
         {
 <#
-                    foreach (var parameter in function.GetParameters()) {
-                        // Start SQL param
-                        anyFunctionConfiguration = true;
+            foreach (var parameter in function.GetParameters()) {
+                // Start SQL param
+                anyFunctionConfiguration = true;
 #>
             <#=
-                                parameter.IsOutput ? "p" + parameter.Name + " = " : string.Empty #>new SqlParameter
+                    parameter.IsOutput ? "p" + parameter.Name + " = " : string.Empty #>new SqlParameter
             {
                 ParameterName = <#= code.Literal(parameter.Name) #>
 <#
-                        if (IsScaleType(parameter.SqlDbType)) {
-                            if (parameter.Precision > 0) {
+                if (IsScaleType(parameter.SqlDbType)) {
+                    if (parameter.Precision > 0) {
 #>
                 Precision = <#= parameter.Precision #>,
 <#
-                            }
+                    }
 
-                            if (parameter.Scale > 0) {
+                    if (parameter.Scale > 0) {
 #>
                 Scale = <#= parameter.Scale #>,
 <#
-                            }
-                        }
+                    }
+                }
 
-                        if (IsVarTimeType(parameter.SqlDbType) && parameter.Scale > 0) {
+                if (IsVarTimeType(parameter.SqlDbType) && parameter.Scale > 0) {
 #>
                 Scale = <#= parameter.Scale #>,
 <#
-                        }
+                }
 
-                        if (IsLengthRequiredType(parameter.SqlDbType)) {
+                if (IsLengthRequiredType(parameter.SqlDbType)) {
 #>
                 Size = <#= parameter.Length #>,
 <#
-                        }
+                }
 
-                        if (!parameter.IsReturnValue) {
-                            if (parameter.IsOutput) {
+                if (!parameter.IsReturnValue) {
+                    if (parameter.IsOutput) {
 #>
                 Direction = System.Data.ParameterDirection.InputOutput,<#=
-                                        AppendValue(parameter) #>
+                            AppendValue(parameter) #>
 <#
-                            }
-                            else {
+                    }
+                    else {
 #>
                 <#=
-                                        AppendValue(parameter) #>
+                            AppendValue(parameter) #>
 <#
-                            }
-                        }
-                        else {
-                            if (function.SupportsMultipleResultSet) {
+                    }
+                }
+                else {
+                    if (function.SupportsMultipleResultSet) {
 #>
                 Direction = System.Data.ParameterDirection.ReturnValue,
 <#
-                            }
-                            else {
+                    }
+                    else {
 #>
                 Direction = System.Data.ParameterDirection.Output,
 <#
-                            }
-                        }
+                    }
+                }
 #>
                 SqlDbType = System.Data.SqlDbType.<#= parameter.SqlDbType #>,
 <#
-                        if (parameter.SqlDbType == SqlDbType.Structured) {
+                if (parameter.SqlDbType == SqlDbType.Structured) {
 #>
                 TypeName = <#=
-                                    code.Literal(parameter.TypeName) #>,
+                        code.Literal(parameter.TypeName) #>,
 <#
-                        }
+                }
 
-                        if (parameter.SqlDbType == SqlDbType.Udt) {
+                if (parameter.SqlDbType == SqlDbType.Udt) {
 #>
                 UdtTypeName = <#=
-                                    code.Literal(parameter.TypeName) #>,
+                        code.Literal(parameter.TypeName) #>,
 <#
-                        }
+                }
 #>
             }, 
 
 <#
-                        // End of parameter output
-                    }
+                // End of parameter output
+            }
 #>
         }; 
 
-<#            
-                    // End of parameter list output
-                    
-                    if (function.HasValidResultSet && (function.Results.Count == 0 || function.Results[0].Count == 0))
-                    {
+<#
+            // End of parameter list output
+
+            if (function.HasValidResultSet && (function.Results.Count == 0 || function.Results[0].Count == 0)) {
 #>
-        var response = await _context.Database.ExecuteSqlRawAsync(<#= code.Literal(fullExec) #>);
-<#                          
-                    }
-                    else {
-                        if (function.SupportsMultipleResultSet) {
+        var response = await _context.Database.ExecuteSqlRawAsync(<#= code.Literal(function.CommandText) #>);
+<#
+            }
+            else {
+                if (function.SupportsMultipleResultSet) {
 #>
         var dynamic = CreateDynamic(sqlParameters);
         <#= multiResultSyntax #> _;
         using (var reader = await GetMultiReaderAsync(_context, dynamic, \"[<#= function.Schema #>].[<#= function.Name #>]\"))");
         {
-            response = <#= GenerateMultiResultStatement(function) #>;
+            response = <#=
+                        GenerateMultiResultStatement(function) #>;
         }
 <#
-                        }
-                        else {
+                }
+                else {
 #>
-        var response = await _context.SqlQueryAsync<<#= function.ReturnType #>>(<#= code.Literal(fullExec) #>);
-<#                                  
-                        }
-                    }
-                    foreach (var parameter in outParams)
-                    {
-#>
-        <#= code.Identifier(parameter.Name) #>.SetValue(p<#= parameter.Name #>.Value);
+        var response = await _context.SqlQueryAsync<<#= function.ReturnType #>>(<#= code.Literal(function.CommandText) #>);
 <#
-                    }
-                    if (function.SupportsMultipleResultSet)
-                    {
+                }
+            }
+            foreach (var parameter in outParams) {
+#>
+        <#=
+                    code.Identifier(parameter.Name) #>.SetValue(p<#= parameter.Name #>.Value);
+<#
+            }
+            if (function.SupportsMultipleResultSet) {
 #>
         <#= retValueName #>.SetValue(dynamic.Get<int>(<#= code.Literal(retValueName) #>));
 <#
-                    }
-                    else
-                    {
+            }
+            else if (retValueName != null) {
 #>
         <#= retValueName #>.SetValue(p<#= retValueName #>.Value);
 <#
-                    }
+            }
 #>
         return response;
 <#
 #>
     } 
 <#
-                    // End of function output
-                    // If any significant code was generated, append it to the main environment
-                    if (anyFunctionConfiguration) {
-                        mainEnvironment.Append(GenerationEnvironment);
-                        anyConfiguration = true;
-                    }
-
-                    // Resume generating code into the main environment
-                    GenerationEnvironment = mainEnvironment;
-                }
+            // End of function output
+            // If any significant code was generated, append it to the main environment
+            if (anyFunctionConfiguration) {
+                mainEnvironment.Append(GenerationEnvironment);
+                anyConfiguration = true;
             }
 
+            // Resume generating code into the main environment
+            GenerationEnvironment = mainEnvironment;
+        }
+    }
 
-            if (anyConfiguration) {
-                WriteLine("");
-            }
+
+    if (anyConfiguration) {
+        WriteLine("");
+    }
 #>
     
 }
 <#
-            mainEnvironment = GenerationEnvironment;
-            GenerationEnvironment = new StringBuilder();
+    mainEnvironment = GenerationEnvironment;
+    GenerationEnvironment = new StringBuilder();
 
-            foreach (var ns in usings.Distinct().OrderBy(x => x, new NamespaceComparer())) {
+    foreach (var ns in usings.Distinct().OrderBy(x => x, new NamespaceComparer())) {
 #>
 using <#= ns #>;
 <#
-            }
+    }
 
-            WriteLine("");
+    WriteLine("");
 
-            GenerationEnvironment.Append(mainEnvironment);
+    GenerationEnvironment.Append(mainEnvironment);
 
-            string AppendValue(Parameter parameter) {
-                var value = parameter.IsNullable
-                    ? $"{code.Identifier(parameter.Name)} ?? Convert.DBNull"
-                    : $"{code.Identifier(parameter.Name)}";
-                if (parameter.IsOutput) {
-                    value = parameter.IsNullable
-                        ? $"{code.Identifier(parameter.Name)}?._value ?? Convert.DBNull"
-                        : $"{code.Identifier(parameter.Name)}?._value";
-                }
+    string AppendValue(Parameter parameter) {
+        var value = parameter.IsNullable
+            ? $"{code.Identifier(parameter.Name)} ?? Convert.DBNull"
+            : $"{code.Identifier(parameter.Name)}";
+        if (parameter.IsOutput) {
+            value = parameter.IsNullable
+                ? $"{code.Identifier(parameter.Name)}?._value ?? Convert.DBNull"
+                : $"{code.Identifier(parameter.Name)}?._value";
+        }
 
-                return ($"Value = {value},");
-            }
-            string GenerateMultiResultStatement(EntityFrameworkRuler.Design.Metadata.Function function)
-            {
-                if (function.ResultEntities.Count == 0) return null;
+        return ($"Value = {value},");
+    }
 
-                var ids = new List<string>();
-                foreach (var entity in function.ResultEntities)
-                    ids.Add($"(await reader.ReadAsync<{entity.Name}>()).ToList()");
+    string GenerateMultiResultStatement(EntityFrameworkRuler.Design.Metadata.Function function) {
+        if (function.ResultEntities.Count == 0) return null;
 
-                return $"({string.Join(", ", ids)})";
-            }
-            bool IsScaleType(SqlDbType sqlDbType) {
-                return ScaleTypes.Contains(sqlDbType);
-            }
+        var ids = new List<string>();
+        foreach (var entity in function.ResultEntities)
+            ids.Add($"(await reader.ReadAsync<{entity.Name}>()).ToList()");
 
-            bool IsVarTimeType(SqlDbType sqlDbType) {
-                return VarTimeTypes.Contains(sqlDbType);
-            }
+        return $"({string.Join(", ", ids)})";
+    }
 
-            bool IsLengthRequiredType(SqlDbType sqlDbType) {
-                return LengthRequiredTypes.Contains(sqlDbType);
-            }
+    bool IsScaleType(SqlDbType sqlDbType) {
+        return ScaleTypes.Contains(sqlDbType);
+    }
+
+    bool IsVarTimeType(SqlDbType sqlDbType) {
+        return VarTimeTypes.Contains(sqlDbType);
+    }
+
+    bool IsLengthRequiredType(SqlDbType sqlDbType) {
+        return LengthRequiredTypes.Contains(sqlDbType);
+    }
 #>

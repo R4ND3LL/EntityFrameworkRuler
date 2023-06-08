@@ -4,9 +4,6 @@
 <#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Relational" #>
 <#@ assembly name="Microsoft.Extensions.DependencyInjection.Abstractions" #>
-
-
-
 <#@ parameter name="Model" type="EntityFrameworkRuler.Design.Metadata.ModelEx" #>
 <#@ parameter name="Options" type="Microsoft.EntityFrameworkCore.Scaffolding.ModelCodeGenerationOptions" #>
 <#@ parameter name="NamespaceHint" type="System.String" #>
@@ -76,69 +73,53 @@ namespace <#= NamespaceHint #>;
 <#
             }
 #>
-public interface I<#= Options.ContextName #>Functions
+public static class DbContextExtensions
 {
-<#
-            var anyConfiguration = false;
-            StringBuilder mainEnvironment;
-            foreach (var function in Model.GetFunctions()) {
-                if (function?.Name != null && function.CommandText != null && function.ReturnType != null) {
-                    anyConfiguration = true;
-                    // Save all previously generated code, and start generating into a new temporary environment
-                    mainEnvironment = GenerationEnvironment;
-                    GenerationEnvironment = new StringBuilder();
+    public static List<T> SqlQuery<T>(this DbContext db, string sql, object[] parameters = null) where T : class
+    {
+        if (parameters is null)
+        {
+            parameters = new object[] { };
+        }
 
-                    bool anyFunctionConfiguration = false;
+        if (typeof(T).GetProperties().Any())
+        {
+            return db.Set<T>().FromSqlRaw(sql, parameters).ToList();
+        }
+        else
+        {
+            db.Database.ExecuteSqlRaw(sql, parameters);
+            return default;
+        }
+    }
+}
 
-                    var paramStrings = function.GetParameters().Where(p => !p.IsOutput)
-                        .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name)}")
-                        .ToList();
-                    var paramStringFull = string.Join(", ", paramStrings);
-                    var allOutParams = function.GetParameters().Where(p => p.IsOutput).ToList();
-                    var outParams = allOutParams.SkipLast(1).ToList();
-                    var retValueName = allOutParams.LastOrDefault()?.Name;
-                    var outParamStrings = outParams
-                        .Select(
-                            p =>
-                                $"OutputParameter<{code.Reference(p.ClrType ?? typeof(object))}> {code.Identifier(p.Name)}")
-                        .ToList();
-                    
-                    if (outParams.Any()) {
-                        if (paramStrings.Any()) {
-                            paramStringFull += ", ";
-                        }
+public class OutputParameter<TValue>
+{
+    private bool _valueSet = false;
 
-                        paramStringFull += $"{string.Join(", ", outParamStrings)}";
-                    }
+    public TValue _value;
 
-                    if (paramStrings.Any() || outParams.Count > 0) {
-                        paramStringFull += ", ";
-                    }
-                    paramStringFull += $"OutputParameter<int> {retValueName} = null";
-#>
-    Task<<#= function.ReturnType #>> <#= function.Name #>(<#= paramStringFull #>, CancellationToken cancellationToken = default);     
-<#
-                    anyFunctionConfiguration = true;
-                    // End of function output
-                    // If any significant code was generated, append it to the main environment
-                    if (anyFunctionConfiguration) {
-                        mainEnvironment.Append(GenerationEnvironment);
-                        anyConfiguration = true;
-                    }
+    public TValue Value
+    {
+        get
+        {
+            if (!_valueSet)
+                throw new InvalidOperationException("Value not set.");
 
-                    // Resume generating code into the main environment
-                    GenerationEnvironment = mainEnvironment;
-                }
-            }
+            return _value;
+        }
+    }
 
+    internal void SetValue(object value)
+    {
+        _valueSet = true;
 
-            if (anyConfiguration) {
-                WriteLine("");
-            }
-#>    
+        _value = null == value || Convert.IsDBNull(value) ? default(TValue) : (TValue)value;
+    }
 }
 <#
-            mainEnvironment = GenerationEnvironment;
+            var mainEnvironment = GenerationEnvironment;
             GenerationEnvironment = new StringBuilder();
 
             foreach (var ns in usings.Distinct().OrderBy(x => x, new NamespaceComparer())) {
@@ -150,4 +131,43 @@ using <#= ns #>;
             WriteLine("");
 
             GenerationEnvironment.Append(mainEnvironment);
+
+            string AppendValue(Parameter parameter) {
+                var value = parameter.IsNullable
+                    ? $"{code.Identifier(parameter.Name)} ?? Convert.DBNull"
+                    : $"{code.Identifier(parameter.Name)}";
+                if (parameter.IsOutput) {
+                    value = parameter.IsNullable
+                        ? $"{code.Identifier(parameter.Name)}?._value ?? Convert.DBNull"
+                        : $"{code.Identifier(parameter.Name)}?._value";
+                }
+
+                return ($"Value = {value},");
+            }
+            string GenerateMultiResultStatement(EntityFrameworkRuler.Design.Metadata.Function function)
+            {
+                if (function.Results.Count == 1) return null;
+
+                var ids = new List<string>();
+                int i = 1;
+                foreach (var _ in function.Results)
+                {
+                    var suffix = $"{i++}";
+                    var typeName = function.Name + "Result" + suffix;
+                    ids.Add($"(await reader.ReadAsync<{typeName}>()).ToList()");
+                }
+
+                return $"({string.Join(", ", ids)})";
+            }
+            bool IsScaleType(SqlDbType sqlDbType) {
+                return ScaleTypes.Contains(sqlDbType);
+            }
+
+            bool IsVarTimeType(SqlDbType sqlDbType) {
+                return VarTimeTypes.Contains(sqlDbType);
+            }
+
+            bool IsLengthRequiredType(SqlDbType sqlDbType) {
+                return LengthRequiredTypes.Contains(sqlDbType);
+            }
 #>
