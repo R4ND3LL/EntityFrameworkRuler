@@ -23,8 +23,8 @@
 <#@ import namespace="EntityFrameworkRuler.Design.Metadata" #>
 <#@ import namespace="System.Data" #>
 <#
-    // System.Diagnostics.Debugger.Launch();
-    // System.Diagnostics.Debugger.Break();
+     System.Diagnostics.Debugger.Launch();
+     System.Diagnostics.Debugger.Break();
 
     if (!ProductInfo.GetVersion().StartsWith("7.0")) {
         Warning(
@@ -37,10 +37,11 @@
     var code = services.GetRequiredService<ICSharpHelper>();
 
     var usings = new List<string> {
-        "System",
         "Microsoft.Data.SqlClient",
-        "System.Collections.Generic",
         "Microsoft.EntityFrameworkCore",
+        "System",
+        "System.Collections.Generic",
+        "System.Data",
         "System.Threading",
         "System.Threading.Tasks",
     };
@@ -48,6 +49,12 @@
     if (NamespaceHint != Options.ModelNamespace
         && !string.IsNullOrEmpty(Options.ModelNamespace)) {
         usings.Add(Options.ModelNamespace);
+    }
+    var useDapper = Model.GetFunctions().Any(f => f.SupportsMultipleResultSet);
+    if (useDapper) {
+        usings.Add("Dapper");
+        usings.Add("Microsoft.EntityFrameworkCore.Storage");
+        usings.Add("System.Linq");
     }
     usings.Add(typeof(EntityTypeBuilder<>).Namespace);
 
@@ -98,30 +105,29 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
             bool anyFunctionConfiguration = false;
 
             var paramStrings = function.GetParameters().Where(p => !p.IsOutput)
-                .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name)}")
+                .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name, capitalize:false)}")
                 .ToList();
             var paramStringFull = string.Join(", ", paramStrings);
             var allOutParams = function.GetParameters().Where(p => p.IsOutput && !string.IsNullOrWhiteSpace(p.Name)).ToList();
             var outParams = allOutParams.SkipLast(1).ToList();
-            var retValueName = allOutParams.LastOrDefault()?.Name;
+            var retValueParam = allOutParams.LastOrDefault();
+            var retValueName = retValueParam?.Name;
+            if (retValueName != null) retValueName = code.Identifier(allOutParams.LastOrDefault()?.Name, capitalize:false);
             var outParamStrings = outParams
                 .Select(
                     p =>
-                        $"OutputParameter<{code.Reference(p.ClrType ?? typeof(object))}> {code.Identifier(p.Name)}")
+                        $"OutputParameter<{code.Reference(p.ClrType ?? typeof(object))}> {code.Identifier(p.Name, capitalize:false)}")
                 .ToList();
 
             var multiResultSyntax = function.MultiResultTupleSyntax;
 
             if (outParams.Any()) {
-                if (paramStrings.Any()) {
-                    paramStringFull += ", ";
-                }
-
-                paramStringFull += $"{string.Join(", ", outParamStrings)}";
+                if (!string.IsNullOrWhiteSpace(paramStringFull)) paramStringFull += ", ";
+                paramStringFull += string.Join(", ", outParamStrings);
             }
 
-            if ((paramStrings.Any() || outParams.Count > 0) && !string.IsNullOrWhiteSpace(retValueName)) {
-                paramStringFull += ", ";
+            if (!string.IsNullOrWhiteSpace(retValueName)) { 
+                if (!string.IsNullOrWhiteSpace(paramStringFull)) paramStringFull += ", ";
                 paramStringFull += $"OutputParameter<int> {retValueName} = null";
             }
             if (!string.IsNullOrWhiteSpace(paramStringFull)) paramStringFull += ", ";
@@ -136,7 +142,7 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
 <#
             }
 #>
-        var sqlParameters = new []
+        var sqlParameters = new object[]
         {
 <#
             foreach (var parameter in function.GetParameters()) {
@@ -230,7 +236,7 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
 
             if (function.HasValidResultSet && (function.Results.Count == 0 || function.Results[0].Count == 0)) {
 #>
-        var response = await _context.Database.ExecuteSqlRawAsync(<#= code.Literal(function.CommandText) #>);
+        var response = await _context.Database.ExecuteSqlRawAsync(<#= code.Literal(function.CommandText) #>, sqlParameters, cancellationToken);
 <#
             }
             else {
@@ -238,33 +244,35 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
 #>
         var dynamic = CreateDynamic(sqlParameters);
         <#= multiResultSyntax #> _;
-        using (var reader = await GetMultiReaderAsync(_context, dynamic, \"[<#= function.Schema #>].[<#= function.Name #>]\"))");
-        {
-            response = <#=
-                        GenerateMultiResultStatement(function) #>;
-        }
+        using var reader = await GetMultiReaderAsync(_context, dynamic, <#= code.Literal($"[{function.Schema}].[{function.Name}]") #>);
+        var response = <#=
+                        GenerateMultiResultStatement(function) #>;        
 <#
                 }
                 else {
+                    var returnType = function.ReturnType;
+                    if (returnType?.StartsWith("List<") == true) {
+                        returnType = returnType.Substring(5, returnType.Length-6);
+                    }
 #>
-        var response = await _context.SqlQueryAsync<<#= function.ReturnType #>>(<#= code.Literal(function.CommandText) #>);
+        var response = await _context.<#= function.ResultEntities.Count>0? "SqlQueryAsync" : "SqlQueryRawAsync" #><<#= returnType #>>(<#= code.Literal(function.CommandText) #>, sqlParameters, cancellationToken);
 <#
                 }
             }
             foreach (var parameter in outParams) {
 #>
         <#=
-                    code.Identifier(parameter.Name) #>.SetValue(p<#= parameter.Name #>.Value);
+                    code.Identifier(parameter.Name, capitalize:false) #>?.SetValue(p<#= parameter.Name #>.Value);//a
 <#
             }
-            if (function.SupportsMultipleResultSet) {
+            if (function.SupportsMultipleResultSet && retValueParam != null && retValueName != null) {
 #>
-        <#= retValueName #>.SetValue(dynamic.Get<int>(<#= code.Literal(retValueName) #>));
+        <#= retValueName #>?.SetValue(dynamic.Get<int>(p<#= retValueParam.Name #>.ParameterName));//b
 <#
             }
-            else if (retValueName != null) {
+            else if (retValueParam != null && retValueName != null) {
 #>
-        <#= retValueName #>.SetValue(p<#= retValueName #>.Value);
+        <#= retValueName #>?.SetValue(p<#= retValueParam.Name #>.Value);//c
 <#
             }
 #>
@@ -285,6 +293,33 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
         }
     }
 
+    if (useDapper) {
+#>
+
+    private static DynamicParameters CreateDynamic(object[] sqlParameters)
+    {
+        var dynamic = new DynamicParameters();
+        foreach (var sqlParameter in sqlParameters.Cast<SqlParameter>())
+        {
+            dynamic.Add(sqlParameter.ParameterName, sqlParameter.Value, sqlParameter.DbType, sqlParameter.Direction, sqlParameter.Size, sqlParameter.Precision, sqlParameter.Scale);
+        }
+
+        return dynamic;
+    }
+
+    private async Task<SqlMapper.GridReader> GetMultiReaderAsync(DbContext db, DynamicParameters dynamic, string sql)
+    {
+        IDbTransaction tran = null;
+        if (db.Database.CurrentTransaction is IDbContextTransaction ctxTran)
+        {
+            tran = ctxTran.GetDbTransaction();
+        }
+
+        return await ((IDbConnection)db.Database.GetDbConnection())
+            .QueryMultipleAsync(sql, dynamic, tran, db.Database.GetCommandTimeout(), CommandType.StoredProcedure);
+    }
+<#        
+    }
 
     if (anyConfiguration) {
         WriteLine("");
@@ -308,12 +343,12 @@ using <#= ns #>;
 
     string AppendValue(Parameter parameter) {
         var value = parameter.IsNullable
-            ? $"{code.Identifier(parameter.Name)} ?? Convert.DBNull"
-            : $"{code.Identifier(parameter.Name)}";
+            ? $"{code.Identifier(parameter.Name, capitalize:false)} ?? Convert.DBNull"
+            : $"{code.Identifier(parameter.Name, capitalize:false)}";
         if (parameter.IsOutput) {
             value = parameter.IsNullable
-                ? $"{code.Identifier(parameter.Name)}?._value ?? Convert.DBNull"
-                : $"{code.Identifier(parameter.Name)}?._value";
+                ? $"{code.Identifier(parameter.Name, capitalize:false)}?._value ?? Convert.DBNull"
+                : $"{code.Identifier(parameter.Name, capitalize:false)}?._value";
         }
 
         return ($"Value = {value},");

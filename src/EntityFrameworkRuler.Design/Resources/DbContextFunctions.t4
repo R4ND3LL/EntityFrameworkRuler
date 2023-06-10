@@ -56,7 +56,7 @@ namespace <#= NamespaceHint #>;
 <#
             }
 #>
-public partial class <#= Options.ContextName #>
+public partial class <#= Options.ContextName #> : DbContext
 {    
 <#
             var anyConfiguration = false;
@@ -70,8 +70,9 @@ public partial class <#= Options.ContextName #>
 
                     bool anyFunctionConfiguration = false;
 
-                    var paramStrings = function.GetParameters().Where(p => !p.IsOutput)
-                        .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name)}")
+                    var paramStrings = function.GetParameters()
+                        .Where(p=> !p.IsReturnValue)
+                        .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name, capitalize:false)}")
                         .ToList(); 
 #>
 
@@ -79,7 +80,6 @@ public partial class <#= Options.ContextName #>
 <#
                     if (function.IsScalar)
                     {
-                        var returnType = paramStrings.First();
                         var parameters = string.Empty;
 
                         if (function.GetParameters().Count() > 1)
@@ -87,7 +87,7 @@ public partial class <#= Options.ContextName #>
                             parameters = string.Join(", ", paramStrings.Skip(1));
                         }
 #>
-    public static <#= returnType #><#= function.Name #>(<#= parameters #>)
+    public static <#= function.ReturnType #><#= function.Name #>(<#= parameters #>)
     {
         throw new NotSupportedException("This method can only be called from Entity Framework Core queries");
     }
@@ -95,7 +95,7 @@ public partial class <#= Options.ContextName #>
                     }
                     else
                     {
-                        var typeName = $"{function.Name}Result";
+                        var typeName = function.ResultEntities.FirstOrDefault()?.Name ?? function.ReturnType;
                         var returnType = $"IQueryable<{typeName}>";
 
                         var parameters = string.Empty;
@@ -105,7 +105,8 @@ public partial class <#= Options.ContextName #>
                             parameters = string.Join(", ", paramStrings);
                         }
                         var argumentStrings = function.GetParameters()
-                            .Select(p => p.Name);
+                            .Where(p => !p.IsReturnValue)
+                            .Select(p => code.Identifier(p.Name, capitalize:false));
                         var arguments = string.Join(", ", argumentStrings);
 #>
     public <#= returnType #> <#= function.Name #>(<#= parameters #>)

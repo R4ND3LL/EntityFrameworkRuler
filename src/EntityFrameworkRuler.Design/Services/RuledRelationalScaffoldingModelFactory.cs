@@ -80,7 +80,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     });
 
     private KeyBuilder randomKeyBuilder;
-    private CSharpHelper code;
+    private ICSharpHelper code;
 
     /// <summary>
     /// As of v7, mixing TPT with TPH results in the following error:
@@ -96,6 +96,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         ICandidateNamingService candidateNamingService,
         IPluralizer pluralizer,
         ICSharpUtilities cSharpUtilities,
+        ICSharpHelper code,
         IScaffoldingTypeMapper scaffoldingTypeMapper) {
         this.reporter = reporter;
         this.designTimeRuleLoader = designTimeRuleLoader;
@@ -104,6 +105,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         this.pluralizer = pluralizer;
         this.cSharpUtilities = cSharpUtilities;
         this.scaffoldingTypeMapper = scaffoldingTypeMapper;
+        this.code = code ?? new CSharpHelper(new MockTypeMappingSource());
+
         ScaffoldTracker = new(reporter);
         // avoid runtime binding errors against EF6 by using reflection and a proxy to access the resources we need.
         // this allows more fluid compatibility with EF versions without retargeting this project.
@@ -791,7 +794,6 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         IAnnotation discriminatorValueAnnotation = null;
         IAnnotation discriminatorMappingCompleteAnnotation = null;
         stringBuilder ??= new();
-        code ??= new(new MockTypeMappingSource());
         foreach (var annotation in entityType.GetAnnotations()) {
             switch (annotation.Name) {
                 case EfCoreAnnotationNames.DiscriminatorProperty:
@@ -1592,28 +1594,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (dbFunction.MappedType.HasNonWhiteSpace()) functionBuilder.HasMappedType(dbFunction.MappedType);
 
         var hasComplexType = string.IsNullOrEmpty(dbFunction.MappedType) && (dbFunction.FunctionType == FunctionType.StoredProcedure || !dbFunction.IsScalar);
-        if (hasComplexType) {
-            int i = 1;
-
-            foreach (var resultSet in dbFunction.Results) {
-                if (dbFunction.NoResultSet) continue;
-
-                var suffix = string.Empty;
-                if (dbFunction.Results.Count > 1) suffix = (i++).ToString();
-
-                var typeName = function.Name + "Result" + suffix;
-
-                var classContent = CreateDbContextExtensions(functionBuilder, dbFunction, resultSet, typeName);
-
-                // result.AdditionalFiles.Add(new ScaffoldedFile {
-                //     Code = classContent,
-                //     Path = scaffolderOptions.UseSchemaFolders
-                //         ? Path.Combine(routine.Schema, $"{typeName}.cs")
-                //         : $"{typeName}.cs",
-                //         : $"{typeName}.cs",
-                // });
-            }
-        }
+        if (hasComplexType) { }
 
         functionBuilder
             .HasDatabaseName(dbFunction.Name)
@@ -1651,9 +1632,14 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         if (typeScaffoldingInfo == null) return null;
 
         var clrType = typeScaffoldingInfo.ClrType;
+        var typeName = code.Reference(clrType, !clrType.IsPrimitive && clrType != typeof(string));
+
         if (resultColumn!.IsNullable && !clrType.IsNullableTypeOfAnyKind()) clrType = clrType.MakeNullable();
-        if (clrType.IsPrimitive) return clrType.Name;
-        return clrType.FullName;
+        if (clrType.IsPrimitive) {
+            return $"List<{typeName}>";
+        }
+
+        return $"List<{typeName}>";
     }
 
     private string CreateDbContextExtensions(FunctionBuilder functionBuilder, DatabaseFunction dbFunction, DatabaseFunctionResultTable resultSet, string typeName) {
@@ -1804,7 +1790,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     protected virtual TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseFunctionParameter parameter) {
         if (parameter?.StoreType == null) return null;
 
-        var type = (Type)parameter[EfScaffoldingAnnotationNames.ClrType];
+        //var type = (Type)parameter[EfScaffoldingAnnotationNames.ClrType];
         // add type param for next EFC release
         return scaffoldingTypeMapper.FindMapping(parameter.StoreType, false, false);
     }
@@ -1813,7 +1799,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     protected virtual TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseFunctionResultColumn column) {
         if (column?.StoreType == null) return null;
 
-        var type = (Type)column[EfScaffoldingAnnotationNames.ClrType];
+        //var type = (Type)column[EfScaffoldingAnnotationNames.ClrType];
         // add type param for next EFC release
         return scaffoldingTypeMapper.FindMapping(column.StoreType, false, false);
     }

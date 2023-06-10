@@ -104,15 +104,12 @@ public interface I<#= Options.ContextName #>Functions
                         .ToList();
                     
                     if (outParams.Any()) {
-                        if (paramStrings.Any()) {
-                            paramStringFull += ", ";
-                        }
-
-                        paramStringFull += $"{string.Join(", ", outParamStrings)}";
+                        if (!string.IsNullOrWhiteSpace(paramStringFull)) paramStringFull += ", ";
+                        paramStringFull += string.Join(", ", outParamStrings);
                     }
 
-                    if ((paramStrings.Any() || outParams.Count > 0) && !string.IsNullOrWhiteSpace(retValueName)) {
-                        paramStringFull += ", ";
+                    if (!string.IsNullOrWhiteSpace(retValueName)) { 
+                        if (!string.IsNullOrWhiteSpace(paramStringFull)) paramStringFull += ", ";
                         paramStringFull += $"OutputParameter<int> {retValueName} = null";
                     }
                     if (!string.IsNullOrWhiteSpace(paramStringFull)) paramStringFull += ", ";

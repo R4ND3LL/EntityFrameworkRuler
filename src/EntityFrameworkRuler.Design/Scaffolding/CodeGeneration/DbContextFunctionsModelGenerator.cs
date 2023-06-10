@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Design.Metadata;
 using EntityFrameworkRuler.Design.Services;
+using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Scaffolding;
@@ -55,7 +56,7 @@ public class DbContextFunctionsModelGenerator : RuledModelGeneratorBase, IRuledM
             host.Session.Add("ProjectDefaultNamespace", options.RootNamespace);
 
             var generatedCode = GeneratedCode(contextTemplate, host);
-
+            
             if (string.IsNullOrWhiteSpace(generatedCode)) return resultingFiles;
 
             var functionFileName = options.ContextName + "." + "Functions" + host.Extension;

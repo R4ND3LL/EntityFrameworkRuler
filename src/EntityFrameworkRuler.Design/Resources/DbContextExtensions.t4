@@ -59,20 +59,60 @@ public static class DbContextExtensions
 {
     public static async Task<List<T>> SqlQueryAsync<T>(this DbContext db, string sql, object[] parameters = null, CancellationToken cancellationToken = default) where T : class
     {
-        if (parameters is null)
-        {
-            parameters = new object[] { };
-        }
+        if (parameters is null) 
+            parameters = Array.Empty<object>();
 
         if (typeof(T).GetProperties().Any())
-        {
             return await db.Set<T>().FromSqlRaw(sql, parameters).ToListAsync(cancellationToken);
-        }
         else
         {
             await db.Database.ExecuteSqlRawAsync(sql, parameters, cancellationToken);
             return default;
         }
+    }
+
+    /// <summary>
+    ///     Creates a LINQ query based on a raw SQL query, which returns a result set of a scalar type natively supported by the database
+    ///     provider.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         To use this method with a return type that isn't natively supported by the database provider, use the
+    ///         <see cref="ModelConfigurationBuilder.DefaultTypeMapping{TScalar}(Action{TypeMappingConfigurationBuilder{TScalar}})" />
+    ///         method.
+    ///     </para>
+    ///     <para>
+    ///         The returned <see cref="IQueryable{TResult}" /> can be composed over using LINQ to build more complex queries.
+    ///     </para>
+    ///     <para>
+    ///         Note that this method does not start a transaction. To use this method with a transaction, first call
+    ///         <see cref="BeginTransaction" /> or <see cref="O:UseTransaction" />.
+    ///     </para>
+    ///     <para>
+    ///         As with any API that accepts SQL it is important to parameterize any user input to protect against a SQL injection
+    ///         attack. You can include parameter place holders in the SQL query string and then supply parameter values as additional
+    ///         arguments. Any parameter values you supply will automatically be converted to a DbParameter.
+    ///     </para>
+    ///     <para>
+    ///         However, <b>never</b> pass a concatenated or interpolated string (<c>$""</c>) with non-validated user-provided values
+    ///         into this method. Doing so may expose your application to SQL injection attacks. To use the interpolated string syntax,
+    ///         consider using <see cref="SqlQuery{TResult}(DatabaseFacade, FormattableString)" /> to create parameters.
+    ///     </para>
+    ///     <para>
+    ///         See <see href="https://aka.ms/efcore-docs-raw-sql">Executing raw SQL commands with EF Core</see>
+    ///         for more information and examples.
+    ///     </para>
+    /// </remarks>
+    /// <param name="db">The <see cref="DbContext" /> for the context.</param>
+    /// <param name="sql">The raw SQL query.</param>
+    /// <param name="parameters">The values to be assigned to parameters.</param>
+    /// <returns>An <see cref="IQueryable{T}" /> representing the raw SQL query.</returns>
+    public static async Task<List<T>> SqlQueryRawAsync<T>(this DbContext db, string sql, object[] parameters = null, CancellationToken cancellationToken = default) 
+    {
+        if (parameters is null)
+            parameters = Array.Empty<object>();
+
+        return await db.Database.SqlQueryRaw<T>(sql, parameters, cancellationToken).ToListAsync();
     }
 }
 
@@ -96,7 +136,6 @@ public class OutputParameter<TValue>
     internal void SetValue(object value)
     {
         _valueSet = true;
-
         _value = null == value || Convert.IsDBNull(value) ? default(TValue) : (TValue)value;
     }
 }
