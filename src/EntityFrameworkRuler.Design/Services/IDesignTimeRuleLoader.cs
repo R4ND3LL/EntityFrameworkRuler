@@ -1,4 +1,5 @@
 using System.Reflection;
+using EntityFrameworkRuler.Design.Scaffolding;
 using EntityFrameworkRuler.Design.Services.Models;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 
@@ -10,7 +11,7 @@ public interface IDesignTimeRuleLoader {
     DbContextRuleNode GetDbContextRules();
 
     /// <summary> Gets the ModelCodeGenerationOptions that describes the ef scaffolding context, such that rule info can be processed correctly. </summary>
-    ModelCodeGenerationOptions CodeGenOptions { get; }
+    ModelCodeGenerationOptionsEx CodeGenOptions { get; }
 
     /// <summary> Gets the ModelReverseEngineerOptions. </summary>
     ModelReverseEngineerOptions ReverseEngineerOptions { get; }
@@ -25,7 +26,7 @@ public interface IDesignTimeRuleLoader {
     string SolutionPath { get; }
 
     /// <summary> Sets the ModelCodeGenerationOptions that describes the ef scaffolding context, such that rule info can be processed correctly. </summary>
-    IDesignTimeRuleLoader SetCodeGenerationOptions(ModelCodeGenerationOptions options);
+    IDesignTimeRuleLoader SetCodeGenerationOptions(ref ModelCodeGenerationOptions options);
 
     /// <summary> Sets the ModelReverseEngineerOptions for the current scaffolding process.  This includes options for UseDatabaseNames, NoPluralize, etc. </summary>
     IDesignTimeRuleLoader SetReverseEngineerOptions(ModelReverseEngineerOptions options);

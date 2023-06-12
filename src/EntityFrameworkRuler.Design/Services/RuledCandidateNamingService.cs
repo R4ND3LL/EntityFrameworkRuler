@@ -184,7 +184,7 @@ public class RuledCandidateNamingService : CandidateNamingService {
 
         NamedElementState<DatabaseFunction, FunctionRule> InvokeBaseCall() {
             var state = NameToState(DoGenerateCandidateIdentifier(dbFunction.Name));
-            logger?.WriteVerbose($"RULED: Table {dbFunction.GetFullName()} not found in rule file. Auto-named {state.Name}");
+            logger?.WriteVerbose($"RULED: Function {dbFunction.GetFullName()} not found in rule file. Auto-named {state.Name}");
             return state;
         }
     }

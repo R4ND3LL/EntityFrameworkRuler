@@ -159,7 +159,7 @@ public partial class <#= EntityType.Name #>Configuration : IEntityTypeConfigurat
             if (foreignKey.DependentToPrincipal?.Name != null && foreignKey.PrincipalToDependent?.Name != null)
             {
 #>
-        entity.HasOne(d => d.<#= foreignKey.DependentToPrincipal.Name #>).<#= foreignKey.IsUnique ? "WithOne" : "WithMany" #>(p => p.<#= foreignKey.PrincipalToDependent.Name #>)<#= code.Fragment(foreignKeyFluentApiCalls, indent: 3) #>;
+        entity.HasOne(d => d.<#= foreignKey.DependentToPrincipal.Name #>).<#= foreignKey.IsUnique ? "WithOne" : "WithMany" #>(<#= foreignKey.PrincipalToDependent != null ? $"p => p.{foreignKey.PrincipalToDependent.Name}" : "" #>)<#= code.Fragment(foreignKeyFluentApiCalls, indent: 3) #>;
 <#
             }
             anyEntityTypeConfiguration = true;
@@ -226,8 +226,21 @@ public partial class <#= EntityType.Name #>Configuration : IEntityTypeConfigurat
                     j.HasIndex(<#= code.Literal(index.Properties.Select(e => e.Name).ToArray()) #>, <#= code.Literal(index.GetDatabaseName()) #>)<#= code.Fragment(indexFluentApiCalls, indent: 7) #>;
 <#
             }
+            foreach (var property in joinEntityType.GetProperties().Where(o => o.DeclaringEntityType == EntityType))
+            {
+                var propertyFluentApiCalls = property.GetFluentApiCalls(annotationCodeGenerator);
+                if (propertyFluentApiCalls == null)
+                {
+                    continue;
+                }
+
+                usings.AddRange(propertyFluentApiCalls.GetRequiredUsings());
 #>
-                    });
+                    j.IndexerProperty<<#= code.Reference(property.ClrType) #>>(<#= code.Literal(property.Name) #>)<#= code.Fragment(propertyFluentApiCalls, indent: 7) #>;
+<#
+            }            
+#>
+                });
 <#
             anyEntityTypeConfiguration = true;
         }

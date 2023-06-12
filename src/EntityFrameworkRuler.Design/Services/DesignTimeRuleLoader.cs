@@ -1,7 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
+using System.Text.Json.Serialization;
 using EntityFrameworkRuler.Common;
+using EntityFrameworkRuler.Design.Scaffolding;
 using EntityFrameworkRuler.Design.Scaffolding.CodeGeneration;
 using EntityFrameworkRuler.Design.Services.Models;
 using EntityFrameworkRuler.Loader;
@@ -51,7 +53,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     private List<DbContextRuleNode> loadedRules;
 
     /// <inheritdoc />
-    public ModelCodeGenerationOptions CodeGenOptions { get; private set; }
+    public ModelCodeGenerationOptionsEx CodeGenOptions { get; private set; }
 
     /// <inheritdoc />
     public ModelReverseEngineerOptions ReverseEngineerOptions { get; private set; }
@@ -89,8 +91,11 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
 
     /// <inheritdoc />
-    public IDesignTimeRuleLoader SetCodeGenerationOptions(ModelCodeGenerationOptions options) {
-        CodeGenOptions = options;
+    public IDesignTimeRuleLoader SetCodeGenerationOptions(ref ModelCodeGenerationOptions options) {
+        var nativeOptions = System.Text.Json.JsonSerializer.Serialize(options);
+        var optionsEx = System.Text.Json.JsonSerializer.Deserialize<ModelCodeGenerationOptionsEx>(nativeOptions);
+
+        options = CodeGenOptions = optionsEx;
         if (logger != null) {
             var contextName = CodeGenOptions?.ContextName;
             if (contextName != null)
@@ -122,8 +127,9 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
         var dir = new DirectoryInfo(projectDir!);
         if (!dir.Exists) return this;
         InitializeTargetAssemblies(options, projectDir);
-        InitializeConfigurationSplitting(projectDir);
+        CodeGenOptions.SplitEntityTypeConfigurations = InitializeConfigurationSplitting(projectDir);
         InitializeOtherTemplates(projectDir);
+
         return this;
     }
 
@@ -167,18 +173,18 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public virtual void InitializeConfigurationSplitting(string projectDir) {
-        if (projectDir.IsNullOrWhiteSpace()) return;
-        if (!(EfVersion?.Major >= 7)) return;
+    public virtual bool InitializeConfigurationSplitting(string projectDir) {
+        if (projectDir.IsNullOrWhiteSpace()) return false;
+        if (!(EfVersion?.Major >= 7)) return false;
         // EF v7 supports entity config templating.
         var rules = GetDbContextRules();
         var splitConfigs = rules?.Rule?.SplitEntityTypeConfigurations ?? false;
 
         var configurationTemplate = RuledTemplatedModelGenerator.GetEntityTypeConfigurationFile(projectDir);
-        if (configurationTemplate?.Directory == null) return;
+        if (configurationTemplate?.Directory == null) return false;
 
         if (splitConfigs) {
-            if (configurationTemplate.Exists) return;
+            if (configurationTemplate.Exists) return true;
             // we need to create the t4
             var assembly = GetType().Assembly;
             // var names = assembly.GetManifestResourceNames();
@@ -186,28 +192,32 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
             // if (entityTypeConfigurationName == null) return;
             try {
                 var text = assembly.GetResourceText("EntityFrameworkRuler.Design.Resources.EntityTypeConfiguration.t4");
-                if (text.IsNullOrWhiteSpace()) return;
-                if (!configurationTemplate.Directory.FullName.EnsurePathExists()) return; // could not create directory
+                if (text.IsNullOrWhiteSpace()) return false;
+                if (!configurationTemplate.Directory.FullName.EnsurePathExists()) return false; // could not create directory
                 File.WriteAllText(configurationTemplate.FullName, text, Encoding.UTF8);
+                return true;
             } catch (Exception ex) {
                 logger?.WriteError($"Error generating EntityTypeConfiguration.t4 file: {ex.Message}");
-            }
-        } else {
-            if (!configurationTemplate.Exists) return;
-            // we need to remove the t4
-            try {
-                var bakFile = configurationTemplate.FullName + ".bak";
-                if (File.Exists(bakFile)) {
-                    // just delete the t4
-                    File.Delete(configurationTemplate.FullName);
-                } else {
-                    // rename the t4 to bak
-                    File.Move(configurationTemplate.FullName, bakFile);
-                }
-            } catch (Exception ex) {
-                logger?.WriteError($"Error removing EntityTypeConfiguration.t4 file: {ex.Message}");
+                return false;
             }
         }
+
+        if (!configurationTemplate.Exists) return false;
+        // we need to remove the t4
+        try {
+            var bakFile = configurationTemplate.FullName + ".bak";
+            if (File.Exists(bakFile)) {
+                // just delete the t4
+                File.Delete(configurationTemplate.FullName);
+            } else {
+                // rename the t4 to bak
+                File.Move(configurationTemplate.FullName, bakFile);
+            }
+        } catch (Exception ex) {
+            logger?.WriteError($"Error removing EntityTypeConfiguration.t4 file: {ex.Message}");
+        }
+
+        return false;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
