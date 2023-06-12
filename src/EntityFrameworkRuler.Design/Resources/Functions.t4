@@ -23,8 +23,8 @@
 <#@ import namespace="EntityFrameworkRuler.Design.Metadata" #>
 <#@ import namespace="System.Data" #>
 <#
-     System.Diagnostics.Debugger.Launch();
-     System.Diagnostics.Debugger.Break();
+     // System.Diagnostics.Debugger.Launch();
+     // System.Diagnostics.Debugger.Break();
 
     if (!ProductInfo.GetVersion().StartsWith("7.0")) {
         Warning(
