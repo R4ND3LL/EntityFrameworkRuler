@@ -1,4 +1,4 @@
-<#@ template hostSpecific="true" debug="true" #>
+<#@ template hostSpecific="true" debug="false" #>
 <#@ assembly name="EntityFrameworkRuler.Design" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
@@ -19,9 +19,7 @@
 <#@ import namespace="Microsoft.EntityFrameworkCore.Metadata.Builders" #>
 <#@ import namespace="EntityFrameworkRuler.Design.Metadata" #>
 <#@ import namespace="System.Data" #>
-<#
-    //System.Diagnostics.Debugger.Launch();
-            //System.Diagnostics.Debugger.Break();
+<# 
 
             if (!ProductInfo.GetVersion().StartsWith("7.0")) {
                 Warning(
@@ -47,25 +45,6 @@
             }
             usings.Add(typeof(EntityTypeBuilder<>).Namespace);
 
-            ISet<SqlDbType> ScaleTypes = new HashSet<SqlDbType> {
-                SqlDbType.Decimal,
-                SqlDbType.Money,
-                SqlDbType.SmallMoney,
-            };
-            ISet<SqlDbType> VarTimeTypes = new HashSet<SqlDbType> {
-                SqlDbType.DateTimeOffset,
-                SqlDbType.DateTime2,
-                SqlDbType.Time,
-            };
-            ISet<SqlDbType> LengthRequiredTypes = new HashSet<SqlDbType> {
-                SqlDbType.Binary,
-                SqlDbType.VarBinary,
-                SqlDbType.Char,
-                SqlDbType.VarChar,
-                SqlDbType.NChar,
-                SqlDbType.NVarChar,
-            };
-
             if (!string.IsNullOrEmpty(NamespaceHint)) {
 #>
 namespace <#= NamespaceHint #>;
@@ -79,7 +58,7 @@ public interface I<#= Options.ContextName #>Functions
             var anyConfiguration = false;
             StringBuilder mainEnvironment;
             foreach (var function in Model.GetFunctions()) {
-                if (function?.Name != null && function.CommandText != null && function.ReturnType != null) {
+                if (function?.Name != null && function.CommandText != null) {
                     anyConfiguration = true;
                     // Save all previously generated code, and start generating into a new temporary environment
                     mainEnvironment = GenerationEnvironment;
@@ -111,7 +90,7 @@ public interface I<#= Options.ContextName #>Functions
                     }
                     if (!string.IsNullOrWhiteSpace(paramStringFull)) paramStringFull += ", ";
 #>
-    Task<<#= function.ReturnType #>> <#= function.Name #>(<#= paramStringFull #>CancellationToken cancellationToken = default);     
+    Task<<#= function.ReturnType ?? "int" #>> <#= function.Name #>(<#= paramStringFull #>CancellationToken cancellationToken = default);     
 <#
                     anyFunctionConfiguration = true;
                     // End of function output

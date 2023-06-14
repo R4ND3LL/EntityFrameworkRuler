@@ -3,6 +3,9 @@ using EntityFrameworkRuler.Design.Extensions;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+// ReSharper disable UnusedMethodReturnValue.Global
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
+// ReSharper disable UnusedMember.Global
 
 #pragma warning disable CS1591
 

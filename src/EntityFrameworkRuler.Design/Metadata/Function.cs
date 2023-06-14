@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
+
 #pragma warning disable CS1591
 
 namespace EntityFrameworkRuler.Design.Metadata;
@@ -13,7 +15,7 @@ namespace EntityFrameworkRuler.Design.Metadata;
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public class Function : ConventionAnnotatable, IFunction {
     private readonly FunctionBuilder builder;
-    private SortedDictionary<string, Parameter> parameters = new(StringComparer.Ordinal);
+    private readonly SortedDictionary<string, Parameter> parameters = new(StringComparer.Ordinal);
 
     public Function(ModelEx model, string name) {
         Model = model;
@@ -36,22 +38,20 @@ public class Function : ConventionAnnotatable, IFunction {
     public virtual string DatabaseName { [DebuggerStepThrough] get; set; }
 
     /// <summary> Gets the SQL command text to execute this function. </summary>
-    public virtual string CommandText { get; set; }
+    public virtual string CommandText { [DebuggerStepThrough] get; set; }
 
-    public virtual string MappedType { get; set; }
-    public virtual string Schema { get; set; }
-    public virtual bool SupportsMultipleResultSet { get; set; }
-    public virtual string MultiResultTupleSyntax { get; set; }
-    public virtual bool HasValidResultSet { get; set; }
-    public virtual string ReturnType { get; set; }
+    public virtual string Schema { [DebuggerStepThrough] get; set; }
+    public virtual bool SupportsMultipleResultSet { [DebuggerStepThrough] get; set; }
+    public virtual string MultiResultTupleSyntax { [DebuggerStepThrough] get; set; }
+    public virtual bool HasAcquiredResultSchema { [DebuggerStepThrough] get; set; }
+    public virtual string ReturnType { [DebuggerStepThrough] get; set; }
 
-    /// <summary> Query always returns only one value as opposed to a complex return type </summary>
-    public virtual bool IsScalar { get; set; }
+    /// <summary> Query always returns only one value as opposed to a list or complex return type </summary>
+    public virtual bool IsScalar { [DebuggerStepThrough] get; set; }
 
-    public virtual FunctionType FunctionType { get; set; }
-    public IList<DatabaseFunctionResultTable> Results { get; set; }
-    public virtual bool NoResultSet => Results != null && Results.Count == 1 && Results[0].Count == 0 && HasValidResultSet;
-    public IList<IMutableEntityType> ResultEntities { get; } = new List<IMutableEntityType>();
+    public virtual bool IsTableValuedFunction => FunctionType == FunctionType.Function && !IsScalar;
+    public virtual FunctionType FunctionType { [DebuggerStepThrough] get; set; }
+    public IList<IMutableEntityType> ResultEntities { [DebuggerStepThrough] get; } = new List<IMutableEntityType>();
 
     public ParameterBuilder CreateParameter(string name) {
         if (parameters.ContainsKey(name)) throw new Exception($"Parameter {name} already exists");

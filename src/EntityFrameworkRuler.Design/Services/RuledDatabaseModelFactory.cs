@@ -77,7 +77,7 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
     }
 
     protected virtual void VisitFunction(DatabaseModelEx model, DatabaseFunction function) {
-        var hasComplexType = string.IsNullOrEmpty(function.MappedType) && (function.FunctionType == FunctionType.StoredProcedure || !function.IsScalar);
+        var hasComplexType = function.FunctionType == FunctionType.StoredProcedure || function.IsTableValuedFunction;
         if (hasComplexType) {
             var i = 1;
 
@@ -97,12 +97,20 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
                 resultTable.Name = tableName;
 
                 if (resultTable.ShouldScaffoldEntityFromTable) {
-                    // add table for entity creation.  all columns must be named
+                    // add table for entity creation.  all columns must be named (allowance made for one unnamed column)
+
+                    if (function.UnnamedColumnCount > 0) {
+                        for (var j = 0; j < resultTable.Columns.Count; j++) {
+                            var column = resultTable.Columns[j];
+                            if (column.Name.IsNullOrWhiteSpace()) column.Name = $"Value{j}";
+                        }
+                    }
+
                     model.Tables.Add(resultTable);
                 }
             }
         } else {
-            Debug.Assert(!function.Results.Any() || function.Results[0].Columns.Count == 0);
+            Debug.Assert(function.IsScalar || !function.Results.Any() || function.Results[0].Columns.Count == 0);
         }
     }
 

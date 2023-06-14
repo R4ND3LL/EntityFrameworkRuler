@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Scaffolding;
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 namespace EntityFrameworkRuler.Design.Scaffolding;
 

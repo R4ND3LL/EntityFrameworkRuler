@@ -3,18 +3,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 namespace EntityFrameworkRuler.Design.Metadata.Builders;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public class ModelBuilderEx : IConventionModelBuilder {
-    private IConventionModelBuilder conventionModelBuilder;
+    private readonly IConventionModelBuilder conventionModelBuilder;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelBuilderEx(ModelBuilder builder) {
         Builder = builder;
         conventionModelBuilder = ((IInfrastructure<IConventionModelBuilder>)builder).Instance;
-        //builder.HasAnnotation(RulerAnnotations.ModelBuilderExtension, this);
         ModelEx = new(this);
     }
 

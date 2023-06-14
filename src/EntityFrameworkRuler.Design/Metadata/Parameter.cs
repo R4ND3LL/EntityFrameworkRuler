@@ -18,23 +18,23 @@ public class Parameter : ConventionAnnotatable, IParameter {
         Name = name;
     }
 
-    public Function Function { get; }
+    public Function Function { [DebuggerStepThrough] get; }
     public virtual ModelEx Model => Function.Model;
     IModel IReadOnlyParameter.Model => (IModel)Model.Model;
     public virtual ParameterBuilder Builder { [DebuggerStepThrough] get => builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel); }
 
     /// <summary> Gets the name of this parameter. </summary>
     public virtual string Name { [DebuggerStepThrough] get; }
-    public virtual string StoreType { get; set; }
-    public virtual SqlDbType SqlDbType { get; set; }
-    public virtual string TypeName { get; set; }
-    public virtual bool IsOutput { get; set; }
+    public virtual string StoreType { [DebuggerStepThrough] get; set; }
+    public virtual SqlDbType SqlDbType { [DebuggerStepThrough] get; set; }
+    public virtual string TypeName { [DebuggerStepThrough] get; set; }
+    public virtual bool IsOutput { [DebuggerStepThrough] get; set; }
 
-    public virtual bool IsNullable { get; set; }
-    public virtual bool IsReturnValue { get; set; }
-    public virtual Type ClrType { get; set; }
-    public virtual int? Length { get; set; }
-    public virtual int? Precision { get; set; }
-    public virtual int? Scale { get; set; }
-    public virtual int? Order { get; set; }
+    public virtual bool IsNullable { [DebuggerStepThrough] get; set; }
+    public virtual bool IsReturnValue { [DebuggerStepThrough] get; set; }
+    public virtual Type ClrType { [DebuggerStepThrough] get; set; }
+    public virtual int? Length { [DebuggerStepThrough] get; set; }
+    public virtual int? Precision { [DebuggerStepThrough] get; set; }
+    public virtual int? Scale { [DebuggerStepThrough] get; set; }
+    public virtual int? Order { [DebuggerStepThrough] get; set; }
 }

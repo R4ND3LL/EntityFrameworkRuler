@@ -19,6 +19,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>..\key.snk</AssemblyOriginatorKeyFile>
+    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

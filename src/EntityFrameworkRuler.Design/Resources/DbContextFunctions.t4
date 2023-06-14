@@ -1,4 +1,4 @@
-<#@ template hostSpecific="true" debug="true" #>
+<#@ template hostSpecific="true" debug="false" #>
 <#@ assembly name="EntityFrameworkRuler.Design" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore" #>
 <#@ assembly name="Microsoft.EntityFrameworkCore.Design" #>
@@ -19,9 +19,7 @@
 <#@ import namespace="Microsoft.EntityFrameworkCore.Metadata.Builders" #>
 <#@ import namespace="EntityFrameworkRuler.Design.Metadata" #>
 <#@ import namespace="System.Data" #>
-<#
-    //System.Diagnostics.Debugger.Launch();
-            //System.Diagnostics.Debugger.Break();
+<# 
 
             if (!ProductInfo.GetVersion().StartsWith("7.0")) {
                 Warning(
@@ -82,14 +80,14 @@ public partial class <#= Options.ContextName #> : DbContext
                     {
                         var parameters = string.Empty;
 
-                        if (function.GetParameters().Count() > 1)
+                        if (function.GetParameters().Count() > 0)
                         {
-                            parameters = string.Join(", ", paramStrings.Skip(1));
+                            parameters = string.Join(", ", paramStrings);
                         }
 #>
-    public static <#= function.ReturnType #><#= function.Name #>(<#= parameters #>)
+    public static <#= function.ReturnType #> <#= function.Name #>(<#= parameters #>)
     {
-        throw new NotSupportedException("This method can only be called from Entity Framework Core queries");
+        throw new NotSupportedException("Function <#= function.Name #> can only be called from Entity Framework Core queries");
     }
 <#  
                     }
@@ -149,9 +147,6 @@ public partial class <#= Options.ContextName #> : DbContext
 <#
                         }
                         else {
-                            if (f.NoResultSet) continue;
-                            
-                            int i = 1;
                             foreach (var result in f.ResultEntities) {
 #>
         modelBuilder.Entity<<#= result.Name #>>().HasNoKey().ToView(null);

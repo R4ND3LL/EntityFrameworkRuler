@@ -17,6 +17,7 @@
     <NeutralLanguage>en-US</NeutralLanguage>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>..\key.snk</AssemblyOriginatorKeyFile>
+    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <DefineConstants>NET6</DefineConstants>

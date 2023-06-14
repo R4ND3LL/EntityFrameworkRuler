@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Design.Metadata;
 using EntityFrameworkRuler.Design.Services;
-using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Scaffolding;

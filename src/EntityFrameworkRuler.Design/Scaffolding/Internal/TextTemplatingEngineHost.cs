@@ -3,6 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Microsoft.VisualStudio.TextTemplating;
 
+// ReSharper disable ClassWithVirtualMembersNeverInherited.Global
+
 namespace EntityFrameworkRuler.Design.Scaffolding.Internal;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -40,16 +42,13 @@ public class TextTemplatingEngineHost : ITextTemplatingSessionHost, ITextTemplat
     public virtual string TemplateFile { get; set; }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public virtual string Extension
-        => extension ?? ".cs";
+    public virtual string Extension => extension ?? ".cs";
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public virtual CompilerErrorCollection Errors
-        => errors ??= new CompilerErrorCollection();
+    public virtual CompilerErrorCollection Errors => errors ??= new CompilerErrorCollection();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public virtual Encoding OutputEncoding
-        => outputEncoding ?? Encoding.UTF8;
+    public virtual Encoding OutputEncoding => outputEncoding ?? Encoding.UTF8;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual void Initialize() {
@@ -61,12 +60,10 @@ public class TextTemplatingEngineHost : ITextTemplatingSessionHost, ITextTemplat
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public virtual ITextTemplatingSession CreateSession()
-        => new TextTemplatingSession();
+    public virtual ITextTemplatingSession CreateSession() => new TextTemplatingSession();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public virtual object GetHostOption(string optionName)
-        => null;
+    public virtual object GetHostOption(string optionName) => null;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public virtual bool LoadIncludeText(string requestFileName, out string content, out string location) {

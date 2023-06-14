@@ -37,46 +37,39 @@ public class SqlServerDatabaseModelFactoryEx : IDatabaseModelFactoryEx {
     }
 
     private void GetDbFunctions(DbConnection connection, DatabaseModelEx model, IEnumerable<string> sprocNamesToSelect) {
-        var tablesToSelect = new HashSet<string>(sprocNamesToSelect?.ToList() ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
-        var selectedTables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var functionsToSelect = new HashSet<string>(sprocNamesToSelect?.ToList() ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+        var selectedFunctions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        var allParameters = GetParameters(connection);
 
         using var command = connection.CreateCommand();
         command.CommandText =
             """
-SELECT
-    ROUTINE_SCHEMA,
-    ROUTINE_NAME,
-    CAST(0 AS bit) AS IS_SCALAR,
-    ROUTINE_TYPE
+SELECT ROUTINE_SCHEMA,
+       ROUTINE_NAME,
+       CAST(CASE WHEN (DATA_TYPE != 'TABLE') THEN 1 ELSE 0 END AS bit) AS IS_SCALAR,
+       ROUTINE_TYPE
 FROM INFORMATION_SCHEMA.ROUTINES
 WHERE NULLIF(ROUTINE_NAME, '') IS NOT NULL
-AND OBJECTPROPERTY(OBJECT_ID(QUOTENAME(ROUTINE_SCHEMA) + '.' + QUOTENAME(ROUTINE_NAME)), 'IsMSShipped') = 0
-AND (
-            select
-                major_id 
-            from 
-                sys.extended_properties 
-            where 
-                major_id = object_id(QUOTENAME(ROUTINE_SCHEMA) + '.' + QUOTENAME(ROUTINE_NAME)) and 
-                minor_id = 0 and 
-                class = 1 and 
-                name = N'microsoft_database_tools_support'
-        ) IS NULL 
+  AND OBJECTPROPERTY(OBJECT_ID(QUOTENAME(ROUTINE_SCHEMA) + '.' + QUOTENAME(ROUTINE_NAME)), 'IsMSShipped') = 0
+  AND (select major_id
+       from sys.extended_properties
+       where major_id = object_id(QUOTENAME(ROUTINE_SCHEMA) + '.' + QUOTENAME(ROUTINE_NAME))
+         and minor_id = 0
+         and class = 1
+         and name = N'microsoft_database_tools_support') IS NULL
+ORDER BY ROUTINE_NAME         
 """;
 
         RoutineFactory procedureFactory = null;
         RoutineFactory functionFactory = null;
-        {
-            using var reader = command.ExecuteReader();
 
+        using (var reader = command.ExecuteReader())
             while (reader.Read()) {
                 var schema = reader.GetString(0);
                 var name = reader.GetString(1);
-                var key = $"{schema}.{name}";
 
-                if (!AllowsProcedure(tablesToSelect, selectedTables, name)) continue;
+
+                if (!AllowsProcedure(functionsToSelect, selectedFunctions, name)) continue;
 
                 reporter!.WriteInformation($"RULED: Found procedure: {name}");
 
@@ -90,30 +83,50 @@ AND (
 
                 function.Schema = schema;
                 function.Name = name;
-                function.HasValidResultSet = true;
-
-                // var existing = model.Functions.Any(o => o.Schema == dbFunction.Schema && o.Name == dbFunction.Name);
-                // if (existing != null) dbFunction.MappedType = existing;
-
-                if (allParameters.TryGetValue(key, out var moduleParameters)) function.Parameters = moduleParameters;
-
-                if (isProcedure) function.Parameters.Add(GetReturnParameter());
 
                 model.Functions.Add(function);
             }
-        }
+
+        var allParameters = model.Functions.Count > 0 ? GetParameters(connection) : null;
+
         foreach (var function in model.Functions.ToArray()) {
             var isProcedure = function.FunctionType == FunctionType.StoredProcedure;
             var factory = isProcedure ? procedureFactory : functionFactory;
+            var key = $"{function.Schema}.{function.Name}";
+            if (allParameters.TryGetValue(key, out var moduleParameters)) function.Parameters = moduleParameters;
+
+            if (function.FunctionType == FunctionType.Function) {
+                if (function.Parameters.Count > 0 && function.Parameters[0].IsOutput && function.Parameters[0].Name.IsNullOrWhiteSpace()) {
+                    // this "parameter" actually represents the return value. it's not a parameter at all.
+                    var scalarReturnParam = function.Parameters[0];
+                    function.Parameters.RemoveAt(0);
+
+                    var table = new DatabaseFunctionResultTable() { Function = function, Schema = function.Schema, Comment = $"{function.Name} result set" };
+
+                    table.Columns.Add(new DatabaseFunctionResultColumn() {
+                        Name = scalarReturnParam.Name,
+                        Nullable = scalarReturnParam.IsNullable,
+                        Ordinal = 0,
+                        StoreType = scalarReturnParam.StoreType,
+                        Precision = scalarReturnParam.Precision,
+                        Scale = scalarReturnParam.Scale,
+                        Collation = scalarReturnParam.Collation,
+                        Comment = $"{function.Name} return value",
+                        Table = table
+                    });
+                    function.Results.Add(table);
+                }
+            } else if (isProcedure) function.Parameters.Add(GetReturnParameter());
 
             if (!function.IsScalar)
                 try {
                     function.Results.AddRange(factory.GetResultElementLists(connection, function, true));
+                    function.HasAcquiredResultSchema = true;
                 } catch (Exception ex) {
-                    function.HasValidResultSet = false;
+                    function.HasAcquiredResultSchema = false;
                     function.Results.Clear();
-                    function.Results.Add(new() { Function = function, Schema = function.Schema });
-                    reporter.WriteError($"RULED: Unable to get result set shape for {function.FunctionType} '{function.Schema}.{function.Name}'. {ex.Message}.");
+                    function.Results.Add(new() { Function = function, Schema = function.Schema, Comment = $"{function.Name} result set stub" });
+                    reporter.WriteError($"RULED: Unable to get result schema for {function.FunctionType} '{function.Schema}.{function.Name}'. {ex.Message}.");
                 }
 
             var failure = false;
@@ -147,7 +160,7 @@ AND (
             if (failure) model.Functions.Remove(function);
         }
 
-        foreach (var table in tablesToSelect.Except(selectedTables, StringComparer.OrdinalIgnoreCase)) reporter.WriteInformation($"RULED: Procedure not found: {table}");
+        foreach (var table in functionsToSelect.Except(selectedFunctions, StringComparer.OrdinalIgnoreCase)) reporter.WriteInformation($"RULED: Procedure not found: {table}");
     }
 
     private static bool AllowsProcedure(HashSet<string> tables, HashSet<string> selectedTables, string name) {
@@ -193,22 +206,24 @@ AND (
         using var reader = command.ExecuteReader();
         Dictionary<string, List<DatabaseFunctionParameter>> allParameters = null;
         while (reader.Read()) {
-            var parameterName = reader.GetString(0);
-            if (parameterName.IsNullOrWhiteSpace()) continue;
+            var parameterName = GetStringSafe(0);
+            //if (parameterName.IsNullOrWhiteSpace()) continue;
             if (parameterName!.StartsWith("@", StringComparison.Ordinal)) parameterName = parameterName[1..];
 
             var parameter = new DatabaseFunctionParameter() {
                 Name = parameterName,
-                StoreType = reader.GetString(1),
-                Length = GetNullableInt32(2),
-                Precision = GetNullableInt32(3),
-                Scale = GetNullableInt32(4),
+                StoreType = GetStringSafe(1),
+                Length = GetInt32Safe(2),
+                Precision = GetInt32Safe(3),
+                Scale = GetInt32Safe(4),
+                Ordinal = GetInt32Safe(5) ?? 0,
                 IsOutput = reader.GetBoolean(6),
-                TypeName = reader.IsDBNull(7) ? null : reader.GetString(7),
-                TypeSchema = GetNullableInt32(8),
-                TypeId = GetNullableInt32(9),
-                FunctionName = reader.GetString(10),
-                FunctionSchema = reader.GetString(11),
+                TypeName = GetStringSafe(7),
+                TypeSchema = GetInt32Safe(8),
+                TypeId = GetInt32Safe(9),
+                FunctionName = GetStringSafe(10),
+                FunctionSchema = GetStringSafe(11),
+                Collation = GetStringSafe(12),
                 IsNullable = true,
             };
 
@@ -218,15 +233,19 @@ AND (
 
         return result.GroupBy(x => $"{x.FunctionSchema}.{x.FunctionName}").ToDictionary(g => g.Key, g => g.ToList(), StringComparer.InvariantCulture);
 
-        int? GetNullableInt32(int i) {
+        int? GetInt32Safe(int i) {
             return reader.IsDBNull(i) ? null : reader.GetInt32(i);
+        }
+
+        string GetStringSafe(int i) {
+            return reader.IsDBNull(i) ? null : reader.GetString(i);
         }
     }
 
     private static DatabaseFunctionParameter GetReturnParameter() {
         // Add parameter to hold the standard return value
         return new() {
-            Name = "returnValue",
+            Name = "ReturnValue",
             StoreType = "int",
             IsOutput = true,
             IsNullable = false,

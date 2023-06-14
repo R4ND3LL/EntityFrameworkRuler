@@ -33,13 +33,6 @@ public static class SqlServerTypeExtensions {
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public static Type ClrType(this DatabaseFunctionResultColumn moduleResultElement) {
-        if (moduleResultElement is null) throw new ArgumentNullException(nameof(moduleResultElement));
-
-        return GetClrType(moduleResultElement.StoreType, moduleResultElement.Nullable);
-    }
-
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public static Type GetClrType(string storeType, bool isNullable, bool asParameter = false) {
         var sqlType = GetSqlDbType(storeType);
 

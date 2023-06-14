@@ -8,6 +8,8 @@
         <IsPackable>false</IsPackable>
         <!-- will copy package files to output folder -->
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup> 

@@ -10,8 +10,9 @@
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <RootNamespace>NorthwindModel</RootNamespace>
         <OutputType>Exe</OutputType>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
-
     <ItemGroup>
         <PackageReference Include="Dapper" Version="2.0.123" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.0" />
