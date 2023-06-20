@@ -6,7 +6,10 @@
 [![Editor](http://img.shields.io/nuget/v/EntityFrameworkRuler.Editor.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Editor/)
 [![Common](http://img.shields.io/nuget/v/EntityFrameworkRuler.Common.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Common/)
 
-Automate the customization of the EF Core Reverse Engineered model. Features include:
+Automate the customization of the EF Core Reverse Engineered model. 
+
+Features include:
+- Stored procedure and function support (**NEW AS OF JUNE 20, 2023 v1.2.28**)
 - Legacy EF6 (EDMX) migration support
 - Class renaming
 - Property renaming (including both primitives and navigations)
