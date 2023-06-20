@@ -75,6 +75,16 @@ public sealed class SchemaRuleNode : RuleNode<SchemaRule, DbContextRuleNode> {
         return entityRule;
     }
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public FunctionRuleNode AddFunction(string functionName) {
+        var functionRuleNode = new FunctionRuleNode(new FunctionRule {
+            Name = functionName
+        }, this);
+        Functions.Add(functionRuleNode);
+        Rule.Functions.Add(functionRuleNode);
+        return functionRuleNode;
+    }
+
     /// <summary> implicit conversion </summary>
     public static implicit operator SchemaRule(SchemaRuleNode o) => o?.Rule;
 }

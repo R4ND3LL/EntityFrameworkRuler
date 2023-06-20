@@ -22,7 +22,7 @@ namespace EntityFrameworkRuler.Design {
             var entryName = entryAssembly?.GetName();
             if (entryName?.Name.In("ef", "dotnet-ef") == true) {
                 EfConsoleMessageLogger.DebugLog($"EF Ruler detected EF Tools v{entryName.Version}");
-                //Debugger.Launch();
+                Debugger.Launch();
             }
 #endif
         }

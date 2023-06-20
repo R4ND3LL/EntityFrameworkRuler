@@ -19,11 +19,14 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
     private readonly IServiceProvider serviceProvider;
     private readonly IDatabaseModelFactory actualFactory;
     private readonly IOperationReporter reporter;
+    private readonly IDesignTimeRuleLoader designTimeRuleLoader;
 
-    public RuledDatabaseModelFactory(IServiceProvider serviceProvider, IDatabaseModelFactory actualFactory, IOperationReporter reporter) {
+    public RuledDatabaseModelFactory(IServiceProvider serviceProvider, IDatabaseModelFactory actualFactory, IOperationReporter reporter,
+        IDesignTimeRuleLoader designTimeRuleLoader) {
         this.serviceProvider = serviceProvider;
         this.actualFactory = actualFactory;
         this.reporter = reporter;
+        this.designTimeRuleLoader = designTimeRuleLoader;
     }
 
     public DatabaseModel Create(string connectionString, DatabaseModelFactoryOptions options) {
@@ -59,6 +62,7 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
             if (!connectionStartedOpen) connection.Open();
 
             var modelNew = new DatabaseModelEx(model);
+
             AppendToModel(connection, modelNew);
             return modelNew;
         } finally {
@@ -116,20 +120,26 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
 
 
     private void AppendToModel(DbConnection connection, DatabaseModelEx model) {
-        IDatabaseModelFactoryEx databaseModelFactoryEx = null;
-        var connectionName = connection?.GetType()?.Name;
-        switch (connectionName) {
-            case nameof(SqlConnection):
-                databaseModelFactoryEx = serviceProvider.GetConcrete<SqlServerDatabaseModelFactoryEx>();
-                break;
+        var dbContextRules = designTimeRuleLoader.GetDbContextRules();
+        var getFunctions = dbContextRules?.Rule?.Schemas?.Any(s => s.IncludeUnknownFunctions || s.Functions?.Any(f => f.ShouldMap()) == true) == true;
+
+        if (getFunctions) {
+            IDatabaseModelFactoryEx databaseModelFactoryEx = null;
+            var connectionName = connection?.GetType()?.Name;
+            switch (connectionName) {
+                case nameof(SqlConnection):
+                    databaseModelFactoryEx = serviceProvider.GetConcrete<SqlServerDatabaseModelFactoryEx>();
+                    break;
+            }
+
+            if (databaseModelFactoryEx == null) {
+                reporter?.WriteWarning("DBMS not supported for stored procedure scaffolding");
+                return;
+            }
+
+            databaseModelFactoryEx.AppendToModel(connection, model);
         }
 
-        if (databaseModelFactoryEx == null) {
-            reporter?.WriteWarning("DBMS not supported for stored procedure scaffolding");
-            return;
-        }
-
-        databaseModelFactoryEx.AppendToModel(connection, model);
         OnModelAppended(model);
     }
 }

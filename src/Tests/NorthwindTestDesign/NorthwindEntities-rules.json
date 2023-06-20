@@ -9,6 +9,7 @@
       "SchemaName": "dbo",
       "IncludeUnknownTables": false,
       "IncludeUnknownViews": false,
+      "IncludeUnknownFunctions": true,
       "Namespace": null,
       "Entities": [
         {
@@ -1461,6 +1462,19 @@
           "NewName": "TenMostExpensiveProducts",
           "Parameters": [],
           "ResultTypeName": "NorthwindModel.TenMostExpensiveProductsResult"
+        },
+        {
+          "Name": "fJoinValues",
+          "NotMapped": true,
+          "Parameters": []
+        },
+        {
+          "Name": "FormatNumber",
+          "Parameters": []
+        },
+        {
+          "Name": "ReturnNumberOneNamed",
+          "Parameters": []
         }
       ]
     }

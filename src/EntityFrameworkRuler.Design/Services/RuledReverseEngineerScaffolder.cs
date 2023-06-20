@@ -50,7 +50,7 @@ public class RuledReverseEngineerScaffolder : ReverseEngineerScaffolder {
 
     private static IDatabaseModelFactory MakeDatabaseModelFactoryProxy(IDatabaseModelFactory databaseModelFactory, IOperationReporter reporter, IServiceProvider serviceProvider) {
         try {
-            var proxy = new RuledDatabaseModelFactory(serviceProvider, databaseModelFactory, reporter);
+            var proxy = serviceProvider.GetConcrete<RuledDatabaseModelFactory>();
             return proxy;
         } catch (Exception ex) {
             reporter.WriteError($"Error creating proxy of IDatabaseModelFactory: {ex.Message}");

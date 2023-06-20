@@ -40,6 +40,12 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
     [DisplayName("Include Unknown Views"), Category("Mapping"),
      Description("If true, generate entities for views that are not identified in this schema rule.  Default is false.")]
     public bool IncludeUnknownViews { get; set; }
+    
+    /// <summary> If true, generate entities for functions that are not identified in this schema rule.  Default is false. </summary>
+    [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 4)]
+    [DisplayName("Include Unknown Functions"), Category("Mapping"),
+     Description("If true, generate entities for functions that are not identified in this schema rule.  Default is false.")]
+    public bool IncludeUnknownFunctions { get; set; }
 
 
     /// <summary> If true, omit this schema and all tables within it during the scaffolding process. Default is false. </summary>

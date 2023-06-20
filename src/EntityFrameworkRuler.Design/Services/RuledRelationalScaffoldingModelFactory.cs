@@ -1568,10 +1568,23 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             return modelBuilder;
         }
 
+        // check whether this function should be included in the output
+        var functionRuleNode = TryResolveRuleFor(dbFunction);
+        if (functionRuleNode == null) {
+            var schemaRuleNode = dbContextRule.TryResolveRuleFor(dbFunction.Schema);
+            if (schemaRuleNode == null || !schemaRuleNode.Rule.IncludeUnknownFunctions)
+                return modelBuilder;
+            // add on the fly
+            functionRuleNode = schemaRuleNode.AddFunction(dbFunction.Name);
+            Debug.Assert(functionRuleNode.ShouldMap());
+            Debug.Assert(functionRuleNode == TryResolveRuleFor(dbFunction));
+        } else if (!functionRuleNode.ShouldMap()) {
+            return modelBuilder;
+        }
+
         var functionName = GetFunctionName(dbFunction);
         var functionBuilder = modelBuilder.CreateFunction(functionName);
         var function = functionBuilder.Metadata;
-        var functionRuleNode = TryResolveRuleFor(dbFunction);
 
         if (!dbFunction.IsScalar && dbFunction.Results.Count > 0)
             foreach (var resultTable in dbFunction.Results) {
