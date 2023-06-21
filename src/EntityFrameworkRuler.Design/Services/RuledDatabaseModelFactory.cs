@@ -81,7 +81,7 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
     }
 
     protected virtual void VisitFunction(DatabaseModelEx model, DatabaseFunction function) {
-        var hasComplexType = function.FunctionType == FunctionType.StoredProcedure || function.IsTableValuedFunction;
+        var hasComplexType = function.FunctionType == FunctionType.StoredProcedure;
         if (hasComplexType) {
             var i = 1;
 
@@ -114,7 +114,7 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
                 }
             }
         } else {
-            Debug.Assert(function.IsScalar || !function.Results.Any() || function.Results[0].Columns.Count == 0);
+            Debug.Assert(function.IsScalar || function.IsTableValuedFunction || !function.Results.Any() || function.Results[0].Columns.Count == 0);
         }
     }
 

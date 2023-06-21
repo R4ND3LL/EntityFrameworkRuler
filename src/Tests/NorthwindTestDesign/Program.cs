@@ -45,6 +45,10 @@ internal class Program {
         Debug.Assert(res.Count == 1 && res[0].Num == 45);
         var res2 = await dbContext.Functions.ReturnNumberOne();
         Debug.Assert(res2.Count == 1 && res2[0].Value0 == 1);
+        
+        var FnTableValued = await dbContext.Functions.FnTableValued(7);
+        Debug.Assert(FnTableValued.Rows.Count==1);
+        
         var formattedNumber = await dbContext.Functions.FormatNumber(5);
         Debug.Assert(formattedNumber == "000-000-005");
 

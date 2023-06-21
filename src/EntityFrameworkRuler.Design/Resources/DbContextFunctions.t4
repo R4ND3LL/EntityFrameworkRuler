@@ -19,160 +19,155 @@
 <#@ import namespace="Microsoft.EntityFrameworkCore.Metadata.Builders" #>
 <#@ import namespace="EntityFrameworkRuler.Design.Metadata" #>
 <#@ import namespace="System.Data" #>
-<# 
+<#
+    if (!ProductInfo.GetVersion().StartsWith("7.0")) {
+        Warning(
+            "Your templates were created using an older version of Entity Framework. Additional features and bug fixes may be available. See https://aka.ms/efcore-docs-updating-templates for more information.");
+    }
 
-            if (!ProductInfo.GetVersion().StartsWith("7.0")) {
-                Warning(
-                    "Your templates were created using an older version of Entity Framework. Additional features and bug fixes may be available. See https://aka.ms/efcore-docs-updating-templates for more information.");
-            }
+    var services = (IServiceProvider)Host;
+    var providerCode = services.GetRequiredService<IProviderConfigurationCodeGenerator>();
+    var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
+    var code = services.GetRequiredService<ICSharpHelper>();
 
-            var services = (IServiceProvider)Host;
-            var providerCode = services.GetRequiredService<IProviderConfigurationCodeGenerator>();
-            var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
-            var code = services.GetRequiredService<ICSharpHelper>();
+    var usings = new List<string> {
+        "System",
+        "System.Linq",
+        "System.Collections.Generic",
+        "Microsoft.EntityFrameworkCore",
+        "System.Threading",
+        "System.Threading.Tasks",
+    };
 
-            var usings = new List<string> {
-                "System",
-                "System.Linq",
-                "System.Collections.Generic",
-                "Microsoft.EntityFrameworkCore",
-                "System.Threading",
-                "System.Threading.Tasks",
-            };
+    if (NamespaceHint != Options.ModelNamespace
+        && !string.IsNullOrEmpty(Options.ModelNamespace)) {
+        usings.Add(Options.ModelNamespace);
+    }
+    usings.Add(typeof(EntityTypeBuilder<>).Namespace);
 
-            if (NamespaceHint != Options.ModelNamespace
-                && !string.IsNullOrEmpty(Options.ModelNamespace)) {
-                usings.Add(Options.ModelNamespace);
-            }
-            usings.Add(typeof(EntityTypeBuilder<>).Namespace);
- 
 
-            if (!string.IsNullOrEmpty(NamespaceHint)) {
+    if (!string.IsNullOrEmpty(NamespaceHint)) {
 #>
 namespace <#= NamespaceHint #>;
 
 <#
-            }
+    }
 #>
 public partial class <#= Options.ContextName #> : DbContext
 {    
 <#
-            var anyConfiguration = false;
-            StringBuilder mainEnvironment;
-            foreach (var function in Model.GetFunctions()) {
-                if (function?.Name != null && function.CommandText != null && function.ReturnType != null) {
-                    anyConfiguration = true;
-                    // Save all previously generated code, and start generating into a new temporary environment
-                    mainEnvironment = GenerationEnvironment;
-                    GenerationEnvironment = new StringBuilder();
+    var anyConfiguration = false;
+    StringBuilder mainEnvironment;
+    foreach (var function in Model.GetFunctions()) {
+        if (function?.Name == null || function.CommandText == null || function.ReturnType == null ||
+            function.IsTableValuedFunction)
+            continue;
 
-                    bool anyFunctionConfiguration = false;
+        anyConfiguration = true;
+        // Save all previously generated code, and start generating into a new temporary environment
+        mainEnvironment = GenerationEnvironment;
+        GenerationEnvironment = new StringBuilder();
 
-                    var paramStrings = function.GetParameters()
-                        .Where(p=> !p.IsReturnValue)
-                        .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name, capitalize:false)}")
-                        .ToList(); 
+        bool anyFunctionConfiguration = false;
+
+        var paramStrings = function.GetParameters()
+            .Where(p => !p.IsReturnValue)
+            .Select(
+                p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name, capitalize: false)}")
+            .ToList();
 #>
 
     [DbFunction(<#= code.Literal(function.DatabaseName) #>, <#= code.Literal(function.Schema) #>)]
 <#
-                    if (function.IsScalar)
-                    {
-                        var parameters = string.Empty;
+        if (function.IsScalar) {
+            var parameters = string.Empty;
 
-                        if (function.GetParameters().Count() > 0)
-                        {
-                            parameters = string.Join(", ", paramStrings);
-                        }
+            if (function.GetParameters().Count() > 0) {
+                parameters = string.Join(", ", paramStrings);
+            }
 #>
     public static <#= function.ReturnType #> <#= function.Name #>(<#= parameters #>)
     {
         throw new NotSupportedException("Function <#= function.Name #> can only be called from Entity Framework Core queries");
     }
-<#  
-                    }
-                    else
-                    {
-                        var typeName = function.ResultEntities.FirstOrDefault()?.Name ?? function.ReturnType;
-                        var returnType = $"IQueryable<{typeName}>";
+<#
+        }
+        else {
+            var typeName = function.ResultEntities.FirstOrDefault()?.Name ?? function.ReturnType;
+            var returnType = $"IQueryable<{typeName}>";
 
-                        var parameters = string.Empty;
+            var parameters = string.Empty;
 
-                        if (function.GetParameters().Any())
-                        {
-                            parameters = string.Join(", ", paramStrings);
-                        }
-                        var argumentStrings = function.GetParameters()
-                            .Where(p => !p.IsReturnValue)
-                            .Select(p => code.Identifier(p.Name, capitalize:false));
-                        var arguments = string.Join(", ", argumentStrings);
+            if (function.GetParameters().Any()) {
+                parameters = string.Join(", ", paramStrings);
+            }
+            var argumentStrings = function.GetParameters()
+                .Where(p => !p.IsReturnValue)
+                .Select(p => code.Identifier(p.Name, capitalize: false));
+            var arguments = string.Join(", ", argumentStrings);
 #>
     public <#= returnType #> <#= function.Name #>(<#= parameters #>)
     {
         return FromExpression(() => <#= function.Name #>(<#= arguments #>));
     }
 <#
-                    }
-                    anyFunctionConfiguration = true;
+        }
+        anyFunctionConfiguration = true;
 #>      
 <#
-                    // End of function output
+        // End of function output
 #>
 <#
-                    
-                    // If any significant code was generated, append it to the main environment
-                    if (anyFunctionConfiguration) {
-                        mainEnvironment.Append(GenerationEnvironment);
-                        anyConfiguration = true;
-                    }
+        // If any significant code was generated, append it to the main environment
+        if (anyFunctionConfiguration) {
+            mainEnvironment.Append(GenerationEnvironment);
+            anyConfiguration = true;
+        }
 
-                    // Resume generating code into the main environment
-                    GenerationEnvironment = mainEnvironment;
-                }
-            }
+        // Resume generating code into the main environment
+        GenerationEnvironment = mainEnvironment;
+    }
 
-            if (anyConfiguration) {
+    if (anyConfiguration) {
 #>
     protected void OnModelCreatingGeneratedFunctions(ModelBuilder modelBuilder)
     {
 <#
-                    foreach (var f in Model.GetFunctions())
-                    {
-                        if (f.FunctionType == FunctionType.Function) {
-                            if (f.IsScalar) continue;
-                            var result = f.ResultEntities.FirstOrDefault();
-                            if (result is null) continue;
+        foreach (var f in Model.GetFunctions()) {
+            if (f.FunctionType == FunctionType.Function) {
+                if (f.IsScalar) continue;
+                var result = f.ResultEntities.FirstOrDefault();
+                if (result is null) continue;
 #>
         modelBuilder.Entity<<#= result.Name #>>().HasNoKey();
 <#
-                        }
-                        else {
-                            foreach (var result in f.ResultEntities) {
+            }
+            else {
+                foreach (var result in f.ResultEntities) {
 #>
         modelBuilder.Entity<<#= result.Name #>>().HasNoKey().ToView(null);
 <#
-                            }
-                        }
-                    }
-                    #>               
-    }
-<#                
-                
-                WriteLine("");
+                }
             }
+        }
+#>               
+    }
+<#
+        WriteLine("");
+    }
 #>    
 }
 <#
-            mainEnvironment = GenerationEnvironment;
-            GenerationEnvironment = new StringBuilder();
+    mainEnvironment = GenerationEnvironment;
+    GenerationEnvironment = new StringBuilder();
 
-            foreach (var ns in usings.Distinct().OrderBy(x => x, new NamespaceComparer())) {
+    foreach (var ns in usings.Distinct().OrderBy(x => x, new NamespaceComparer())) {
 #>
 using <#= ns #>;
 <#
-            }
+    }
 
-            WriteLine("");
+    WriteLine("");
 
-            GenerationEnvironment.Append(mainEnvironment);
+    GenerationEnvironment.Append(mainEnvironment);
 #>

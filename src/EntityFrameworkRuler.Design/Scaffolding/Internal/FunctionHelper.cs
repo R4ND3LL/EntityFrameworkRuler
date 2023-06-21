@@ -38,7 +38,8 @@ internal static class FunctionHelper {
             if (function.IsScalar) return $"SELECT [{function.Schema}].[{function.Name}] ({string.Join(", ", paramList)}) as returnValue";
 
             // table valued function
-            var selectList = function.Results[0].ResultColumns.Select(o => o.Name).Join();
+            Debug.Assert(function.IsTableValuedFunction);
+            var selectList = function.Results[0].ResultColumns.Select(o => $"[{o.Name}]").Join();
             return $"SELECT {selectList} FROM [{function.Schema}].[{function.Name}] ({string.Join(", ", paramList)})";
         }
     }

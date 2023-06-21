@@ -244,7 +244,7 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
 <#
                 }
                 else {
-                    var genericArg = function.ReturnType;
+                    var genericArg = function.IsTableValuedFunction ? "" : function.ReturnType;
                     if (genericArg?.StartsWith("List<") == true) {
                         genericArg = genericArg.Substring(5, genericArg.Length - 6);
                     }
@@ -254,6 +254,8 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
                         method = "SqlQueryAsync";
                     else if (function.IsScalar)
                         method = "SqlQueryRawScalarAsync";
+                    else if (function.IsTableValuedFunction)
+                        method = "SqlQueryRawTableAsync";
                     else
                         method = "SqlQueryRawAsync";
 #>

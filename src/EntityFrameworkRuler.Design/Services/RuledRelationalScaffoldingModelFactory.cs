@@ -1563,10 +1563,10 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual ModelBuilderEx VisitFunction(ModelBuilderEx modelBuilder, DatabaseFunction dbFunction) {
-        if (dbFunction.IsTableValuedFunction) {
-            reporter.WriteInformation($"Table-valued function {dbFunction.Name} is not supported at this time.");
-            return modelBuilder;
-        }
+        // if (dbFunction.IsTableValuedFunction) {
+        //     reporter.WriteInformation($"Table-valued function {dbFunction.Name} is not supported at this time.");
+        //     return modelBuilder;
+        // }
 
         // check whether this function should be included in the output
         var functionRuleNode = TryResolveRuleFor(dbFunction);
@@ -1586,7 +1586,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var functionBuilder = modelBuilder.CreateFunction(functionName);
         var function = functionBuilder.Metadata;
 
-        if (!dbFunction.IsScalar && dbFunction.Results.Count > 0)
+        if (!dbFunction.IsScalar && !dbFunction.IsTableValuedFunction && dbFunction.Results.Count > 0)
             foreach (var resultTable in dbFunction.Results) {
                 var node = ScaffoldTracker.FindTableNode(resultTable);
                 var resultEntity = node?.FunctionEntityType;
@@ -1608,10 +1608,10 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             .HasDatabaseName(dbFunction.Name)
             .HasFunctionType(dbFunction.FunctionType)
             .HasSchema(dbFunction.Schema)
-            .HasReturnType(GetFunctionReturnType(dbFunction, functionBuilder.Metadata, multiResultTupleSyntax, functionRuleNode))
             .HasScalar(dbFunction.IsScalar)
             .HasAcquiredResultSchema(dbFunction.HasAcquiredResultSchema)
             .SupportsMultipleResultSet(dbFunction.SupportsMultipleResultSet)
+            .HasReturnType(GetFunctionReturnType(dbFunction, functionBuilder.Metadata, multiResultTupleSyntax, functionRuleNode))
             .HasCommandText(dbFunction.GenerateExecutionStatement(retValueName))
             ;
 
@@ -1620,6 +1620,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual string GetFunctionReturnType(DatabaseFunction dbFunction, Function function, string multiResultTupleSyntax, FunctionRuleNode functionRuleNode) {
+        if (dbFunction.IsTableValuedFunction) return "System.Data.DataTable";
         if (function.ResultEntities.Count > 0) {
             if (multiResultTupleSyntax.HasNonWhiteSpace()) return multiResultTupleSyntax;
 

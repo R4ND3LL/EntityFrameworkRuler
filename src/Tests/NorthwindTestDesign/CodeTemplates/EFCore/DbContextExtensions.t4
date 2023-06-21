@@ -34,6 +34,8 @@
             var usings = new List<string> {
                 "System",
                 "System.Collections.Generic",
+                "System.Data",
+                "System.Data.Common",
                 "System.Linq",
                 "Microsoft.Data.SqlClient",
                 "Microsoft.EntityFrameworkCore",
@@ -119,7 +121,7 @@ public static class DbContextExtensions
     /// <summary>
     /// Executes a raw SQL query and returns the first result.
     /// </summary>
-   public static async Task<T> SqlQueryRawScalarAsync<T>(this DbContext db, string sql, object[] parameters = null, CancellationToken cancellationToken = default) {
+    public static async Task<T> SqlQueryRawScalarAsync<T>(this DbContext db, string sql, object[] parameters = null, CancellationToken cancellationToken = default) {
         var databaseFacade = db.Database;
         var conn = databaseFacade.GetDbConnection(); // not in using clause
         await conn.OpenAsync(cancellationToken);
@@ -127,9 +129,8 @@ public static class DbContextExtensions
         command.CommandText = sql;
 
         if (parameters != null)
-            foreach (SqlParameter param in parameters) {
+            foreach (SqlParameter param in parameters)
                 command.Parameters.Add(param);
-            }
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken); 
         if (reader.HasRows)
@@ -137,12 +138,52 @@ public static class DbContextExtensions
                 var dbValue = reader.GetValue(0);
                 if (AllowStringGuidConversion && typeof(T) == typeof(Guid) && dbValue is string dbStringValue) 
                     dbValue = new Guid(dbStringValue);                 
-
                 return (T)dbValue;
             }
 
         var result = default(T);
         return result;
+    }
+
+
+    /// <summary>
+    /// Executes a raw SQL query and returns the first result.
+    /// </summary>
+    public static async Task<DataTable> SqlQueryRawTableAsync(this DbContext db, string sql, object[] parameters = null, CancellationToken cancellationToken = default) 
+    {
+        var databaseFacade = db.Database;
+        var conn = databaseFacade.GetDbConnection(); // not in using clause
+        await conn.OpenAsync(cancellationToken);
+        await using var command = conn.CreateCommand();
+        command.CommandText = sql;
+
+        if (parameters != null)
+            foreach (SqlParameter param in parameters) 
+                command.Parameters.Add(param);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        return await ToDataTableAsync(reader);
+    }
+    
+    /// <summary> Read data table from DbDataReader </summary>
+    public static async Task<DataTable> ToDataTableAsync(this DbDataReader dr)
+    {
+        var dataTable = new DataTable();
+        for (var i = 0; i < dr.FieldCount; ++i)
+        {
+            dataTable.Columns.Add(dr.GetName(i), dr.GetFieldType(i));
+        }
+        if (dr.HasRows)
+        {
+            dataTable.BeginLoadData();
+            var values = new object[dr.FieldCount];
+            while (await dr.ReadAsync())
+            {
+                dr.GetValues(values);
+                dataTable.LoadDataRow(values, true);
+            }
+            dataTable.EndLoadData();
+        }
+        return dataTable;
     }
 }
 

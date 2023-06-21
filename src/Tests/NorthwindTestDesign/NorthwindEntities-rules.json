@@ -1475,6 +1475,14 @@
         {
           "Name": "ReturnNumberOneNamed",
           "Parameters": []
+        },
+        {
+          "Name": "fnTableValued",
+          "Parameters": []
+        },
+        {
+          "Name": "ufnGetContactInformation",
+          "Parameters": []
         }
       ]
     }
