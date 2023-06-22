@@ -67,7 +67,7 @@ public interface I<#= Options.ContextName #>Functions
                     bool anyFunctionConfiguration = false;
 
                     var paramStrings = function.GetParameters().Where(p => !p.IsOutput)
-                        .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name)}")
+                        .Select(p => $"{code.Reference(p.ClrType ?? typeof(object))} {code.Identifier(p.Name, capitalize: false)}")
                         .ToList();
                     var paramStringFull = string.Join(", ", paramStrings);
                     var allOutParams = function.GetParameters().Where(p => p.IsOutput && !string.IsNullOrWhiteSpace(p.Name)).ToList();
@@ -76,7 +76,7 @@ public interface I<#= Options.ContextName #>Functions
                     var outParamStrings = outParams 
                         .Select(
                             p =>
-                                $"OutputParameter<{code.Reference(p.ClrType ?? typeof(object))}> {code.Identifier(p.Name)}")
+                                $"OutputParameter<{code.Reference(p.ClrType ?? typeof(object))}> {code.Identifier(p.Name, capitalize: false)}")
                         .ToList();
                     
                     if (outParams.Any()) {
