@@ -53,7 +53,7 @@ public sealed class EdmxRulerTests {
         enumMappingRules.ForAll(o => (o.PropertyName == null || o.PropertyName.IsValidSymbolName()).ShouldBeTrue());
 
         dbContextRule.Schemas.Count.ShouldBe(1);
-        dbContextRule.Schemas[0].Entities.Count.ShouldBe(32);
+        dbContextRule.Schemas[0].Entities.Count.ShouldBe(35);
         var prod = dbContextRule.Schemas[0].Entities.FirstOrDefault(o => o.Name == "Products");
         prod.ShouldNotBeNull();
         prod.Properties.Count.ShouldBe(10);
@@ -97,7 +97,7 @@ public sealed class EdmxRulerTests {
         var renamed = response.Information.Where(o => o.StartsWith("Renamed")).ToArray();
         renamed.Length.ShouldBeGreaterThan(70);
         var couldNotFind = response.Information.Where(o => o.StartsWith("Could not find ") && !o.Contains("Sysdiagram")).ToArray();
-        couldNotFind.Length.ShouldBe(7);
+        couldNotFind.Length.ShouldBe(10);
 #if DEBUG
         output.WriteLine(
             $"FindClassesByNameTime: {RoslynExtensions.FindClassesByNameTime}ms.  RenameClassAsyncTime: {RoslynExtensions.RenameClassAsyncTime}ms.  RenamePropertyAsyncTime: {RoslynExtensions.RenamePropertyAsyncTime}ms.  ChangePropertyTypeAsyncTime: {RoslynExtensions.ChangePropertyTypeAsyncTime}ms");
