@@ -503,7 +503,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         if (entityRuleNode.BaseEntityRuleNode != null) {
             // get the base entity builder and reference the type directly.
-            Debug.Assert(entityRuleNode.IsAlreadyScaffolded);
+            Debug.Assert(entityRuleNode.BaseEntityRuleNode.IsAlreadyScaffolded);
 
             var baseName = entityRuleNode.BaseEntityRuleNode.Builder?.Metadata.Name ?? entityRuleNode.BaseEntityRuleNode.GetFinalName();
             var baseStrategy = entityRuleNode.GetBaseTypes().Select(o => o.Rule.GetMappingStrategy()?.ToUpper())
@@ -531,6 +531,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                         entityTypeBuilder.Metadata.RemoveAnnotation(EfRelationalAnnotationNames.TableName);
                         break;
                     case "TPT":
+                        ScaffoldTracker.AddTptEntity(entityRuleNode);
                         break;
                     case "TPC":
                         break;
@@ -914,10 +915,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             foreignKeys = AddMissingDatabaseForeignKeys(foreignKeys);
 
-            if (ScaffoldTracker.HasOmissions) {
+            if (ScaffoldTracker.HasOmissions || ScaffoldTracker.HasTptHierarchies) {
                 // check to see if the foreign key maps to an omitted table. if so, nuke it.
+                // also, must not allow scaffolding of FKs between TPT hierarchy tables. Will result in error.
                 var fksToBeRemoved = foreignKeys
-                    .Where(o => ScaffoldTracker.IsOmitted(o)).ToHashSetNew();
+                    .Where(o => ScaffoldTracker.IsOmitted(o, stringComparison)).ToHashSetNew();
 
                 if (fksToBeRemoved.Count > 0) {
                     if (foreignKeys.IsReadOnly) foreignKeys = new List<DatabaseForeignKey>(foreignKeys);
@@ -979,7 +981,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
         } catch (ArgumentException) {
             // may be error related to missing FK cols that were omitted by rules.
-            if (dbContextRule == null || (isValidFk && !ScaffoldTracker.IsOmitted(fk))) throw;
+            if (dbContextRule == null || (isValidFk && !ScaffoldTracker.IsOmitted(fk, stringComparison))) throw;
 
             reporter.WriteWarning($"EF Core failed to process FK {fk.Name} because table elements are omitted.");
             return null; // carrying on
@@ -1320,28 +1322,13 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         return foreignKeys;
 
-
-        bool AreColumnsEqual(DatabaseForeignKey a, DatabaseForeignKey b) {
-            if (a.Columns.Count != b.Columns.Count) return false;
-            for (var i = 0; i < a.Columns.Count; i++) {
-                if (!string.Equals(b.Columns[i].Name, a.Columns[i].Name, stringComparison)) return false;
-            }
-
-            if (a.PrincipalColumns.Count != b.PrincipalColumns.Count) return false;
-            for (var i = 0; i < a.PrincipalColumns.Count; i++) {
-                if (!string.Equals(b.PrincipalColumns[i].Name, a.PrincipalColumns[i].Name, stringComparison)) return false;
-            }
-
-            return true;
-        }
-
         bool IsUnique(DatabaseForeignKey dbForeignKey,
             Dictionary<DatabaseTable, List<DatabaseForeignKey>> knownFksByTable) {
             var fksByTbl = knownFksByTable.TryGetValue(dbForeignKey.Table);
             if (!(fksByTbl?.Count > 0)) return true;
             foreach (var foreignKey in fksByTbl) {
                 // check for matching columns
-                if (AreColumnsEqual(foreignKey, dbForeignKey)) return false;
+                if (foreignKey.ColumnsAreEqual(dbForeignKey, stringComparison)) return false;
             }
 
             return true;

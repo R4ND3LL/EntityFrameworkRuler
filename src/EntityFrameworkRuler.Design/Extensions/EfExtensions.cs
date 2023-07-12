@@ -533,4 +533,24 @@ internal static class EfExtensions {
             .FirstOrDefault(o => string.Equals(o.dbName, column, stringComparison));
         return prop.prop;
     }
+
+    /// <summary> return true if both column lists represent the same columns (schema details not checked) </summary>
+    public static bool ColumnsAreEqual(this IList<DatabaseColumn> a, IList<DatabaseColumn> b, bool compareTable = true,
+        StringComparison stringComparison = StringComparison.Ordinal) {
+        if (a.Count != b.Count) return false;
+        for (var i = 0; i < a.Count; i++) {
+            if (compareTable) {
+                if (!string.Equals(b[i].Table.Schema, a[i].Table.Schema, stringComparison)) return false;
+                if (!string.Equals(b[i].Table.Name, a[i].Table.Name, stringComparison)) return false;
+            }
+
+            if (!string.Equals(b[i].Name, a[i].Name, stringComparison)) return false;
+        }
+
+        return true;
+    }
+
+    public static bool ColumnsAreEqual(this DatabaseForeignKey a, DatabaseForeignKey b, StringComparison stringComparison = StringComparison.Ordinal) {
+        return a.Columns.ColumnsAreEqual(b.Columns, false, stringComparison) && a.PrincipalColumns.ColumnsAreEqual(b.PrincipalColumns, false, stringComparison);
+    }
 }

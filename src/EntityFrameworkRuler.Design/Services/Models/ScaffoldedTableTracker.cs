@@ -17,6 +17,8 @@ public sealed class ScaffoldedTableTracker {
         this.reporter = reporter;
     }
 
+    private readonly HashSet<EntityRuleNode> tptEntities = new();
+
     /// <summary> An omitted schema implies the mapping of any entity to this table is forbidden. </summary>
     private readonly HashSet<EntityRuleNode> omittedEntities = new();
 
@@ -36,6 +38,9 @@ public sealed class ScaffoldedTableTracker {
     /// <summary> True if there are schema or table omissions so far </summary>
     public bool HasOmissions => omittedSchemas.Count > 0 || omittedEntities.Count > 0;
 
+    /// <summary> True if there are TPT hierarchies in the entity configuration </summary>
+    public bool HasTptHierarchies => tptEntities.Count > 0;
+
     /// <summary> Initialize data for tracking </summary>
     public void InitializeScope(IEnumerable<DatabaseTable> tables, DbContextRuleNode dbContextRuleNode) {
         tablesBySchema = tables.GroupBy(o => o.Schema.EmptyIfNullOrWhitespace())
@@ -54,16 +59,10 @@ public sealed class ScaffoldedTableTracker {
             OnSchemaOmitted(schema);
     }
 
-
     /// <summary> Omit this item </summary>
     public void Omit(EntityRuleNode entityRule) {
         if (entityRule == null) throw new ArgumentNullException(nameof(entityRule));
         var omitted = omittedEntities.Add(entityRule);
-        //var entityName = entityRule.GetFinalName();
-        // if (omitted && entityName.HasNonWhiteSpace())
-        //     omittedEntitiesByFinalName.GetOrAddNew(entityName, AddFactory);
-        //
-        // EntityRuleNode AddFactory(string entityName2) => entityRule;
 
         if (omitted) OnEntityOmitted(entityRule);
     }
@@ -71,6 +70,13 @@ public sealed class ScaffoldedTableTracker {
     /// <summary> Omit this item </summary>
     public void Omit(PropertyRuleNode propertyRule) {
         propertyRule?.SetOmitted();
+    }
+
+
+    /// <summary> Track TPT root entity </summary>
+    public void AddTptEntity(EntityRuleNode entityRule) {
+        if (entityRule == null) throw new ArgumentNullException(nameof(entityRule));
+        tptEntities.Add(entityRule);
     }
 
     /// <summary> Track foreign key usage. Given that FK may be used on multiple entities (split tables), usage has to
@@ -143,12 +149,20 @@ public sealed class ScaffoldedTableTracker {
     }
 
     /// <summary> true if omitted.  To be evaluated only AFTER all entities and properties have been scaffolded. </summary>
-    public bool IsOmitted(DatabaseForeignKey fk) {
+    public bool IsOmitted(DatabaseForeignKey fk, StringComparison stringComparison) {
         if (fk?.Name == null) return false;
         if (IsOmitted(fk.Table) || IsOmitted(fk.PrincipalTable)) return true;
-        return IsOmittedCols(fk.Columns) || IsOmittedCols(fk.PrincipalColumns);
+        var dependantRule = dbContextRule.TryResolveRuleFor(fk.Table);
+        var principalRule = dbContextRule.TryResolveRuleFor(fk.PrincipalTable);
+        var principalIsTpt = principalRule?.Any(p => p.GetBaseTypes(true).Any(p2 => p2.IsTptMappingStrategy())) == true;
+        var tablesAreInHierarchy = principalRule != null && dependantRule?.Any(d => principalRule.Any(d.HasBaseType)) == true;
+        var fkIsOnTptPrimaryKey = principalIsTpt && tablesAreInHierarchy &&
+                                  fk.PrincipalTable.PrimaryKey?.Columns.ColumnsAreEqual(fk.PrincipalColumns, true, stringComparison) == true;
+        if (fkIsOnTptPrimaryKey)
+            return true; // must not allow scaffolding of FKs between TPT hierarchy tables. Will result in error.
+        return AreColsOmitted(fk.Columns) || AreColsOmitted(fk.PrincipalColumns);
 
-        bool IsOmittedCols(IList<DatabaseColumn> columns) {
+        bool AreColsOmitted(IList<DatabaseColumn> columns) {
             if (columns == null || columns.Count == 0) return false;
             var entityRules = dbContextRule.TryResolveRuleFor(columns[0].Table);
             Debug.Assert(entityRules.Any(o => o.ShouldMap()) == true, "Rule should exist since table/schema has not been omitted");
@@ -169,10 +183,10 @@ public sealed class ScaffoldedTableTracker {
     }
 
     public void MapFunction(FakeDatabaseTable resultTable, EntityTypeBuilder entityTypeBuilder) {
-        var node=FindTableNode(resultTable);
+        var node = FindTableNode(resultTable);
         node?.MapFunctionTo(entityTypeBuilder.Metadata);
     }
-    
+
     private sealed class ForeignKeyUsage {
         public ForeignKeyUsage(IMutableForeignKey foreignKey) {
             ForeignKey = foreignKey;
@@ -181,5 +195,4 @@ public sealed class ScaffoldedTableTracker {
         public IMutableForeignKey ForeignKey { get; }
         public int Usage { get; set; }
     }
-
 }

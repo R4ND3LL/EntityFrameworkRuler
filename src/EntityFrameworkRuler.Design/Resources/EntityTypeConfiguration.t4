@@ -159,7 +159,7 @@ public partial class <#= EntityType.Name #>Configuration : IEntityTypeConfigurat
             if (foreignKey.DependentToPrincipal?.Name != null && foreignKey.PrincipalToDependent?.Name != null)
             {
 #>
-        entity.HasOne(d => d.<#= foreignKey.DependentToPrincipal.Name #>).<#= foreignKey.IsUnique ? "WithOne" : "WithMany" #>(<#= foreignKey.PrincipalToDependent != null ? $"p => p.{foreignKey.PrincipalToDependent.Name}" : "" #>)<#= code.Fragment(foreignKeyFluentApiCalls, indent: 3) #>;
+        entity.HasOne(d => d.<#= foreignKey.DependentToPrincipal.Name #>).<#= foreignKey.IsUnique ? "WithOne" : "WithMany" #>(<#= foreignKey.PrincipalToDependent != null && foreignKey.PrincipalToDependent.TargetEntityType == EntityType ? $"p => p.{foreignKey.PrincipalToDependent.Name}" : "" #>)<#= code.Fragment(foreignKeyFluentApiCalls, indent: 3) #>;
 <#
             }
             anyEntityTypeConfiguration = true;

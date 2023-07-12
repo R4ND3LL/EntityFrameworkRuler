@@ -65,7 +65,6 @@ namespace <#= NamespaceHint #>;
         }
     }
     var abstractStr = EntityType["Ruler:Abstract"] != null ? " abstract" : "";
-    var isFunction = EntityType["Ruler:Function"] != null ;
 #>
 public<#= abstractStr #> partial class <#= EntityType.Name #> <# if (EntityType.BaseType?.Name!=null) { #>: <#= EntityType.BaseType.Name #><# } #> 
 {

@@ -53,6 +53,11 @@
         <InheritanceConnector EntityType="NorthwindModel.Cat" />
         <EntityTypeShape EntityType="NorthwindModel.EmployeeBrief" Width="1.5" PointX="3" PointY="10.25" />
         <AssociationConnector Association="NorthwindModel.EmployeeEmployeeBrief" />
+        <EntityTypeShape EntityType="NorthwindModel.TptBase" Width="1.5" PointX="17.375" PointY="2.125" />
+        <EntityTypeShape EntityType="NorthwindModel.TptOne" Width="1.5" PointX="19.625" PointY="3.375" />
+        <EntityTypeShape EntityType="NorthwindModel.TptTwo" Width="1.5" PointX="19.625" PointY="1" />
+        <InheritanceConnector EntityType="NorthwindModel.TptTwo" />
+        <InheritanceConnector EntityType="NorthwindModel.TptOne" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

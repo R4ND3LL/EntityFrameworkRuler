@@ -61,7 +61,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
         Debug.Assert(Builder == null, "Builder was previously set");
         Debug.Assert(Rule.ShouldMap(), "Entity should not be scaffolded");
         Debug.Assert(scaffoldedTable == null || !scaffoldedTable.IsFakeTable);
-        if (ScaffoldedTable == null) {
+        if (ScaffoldedTable == null && scaffoldedTable != null) {
             if (scaffoldedTable != null) MapTo(scaffoldedTable);
             if (ScaffoldedTable == null) throw new("Cannot set entity builder without ScaffoldedTable");
         } else {
@@ -88,7 +88,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
         Rule.Name = ScaffoldedTable.Name;
         if (Builder == null) return;
         Debug.Assert(!ScaffoldedTable.IsFakeTable);
-        
+
         // can only update expected name if it wasn't already influenced by dynamic naming or NewName
         if (Rule.NewName.IsNullOrWhiteSpace() && !Parent.IsDynamicNamingTables &&
             (Rule.EntityName.HasNonWhiteSpace() || Builder.Metadata.Name != (ScaffoldedTable?.Name ?? Rule.Name)))
@@ -133,6 +133,12 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
         return false;
     }
+
+    /// <summary> Gets the mapping strategy for the derived types. </summary>
+    public string GetMappingStrategy() => Rule.GetMappingStrategy()?.ToUpper();
+
+    /// <summary> True if the mapping strategy for this entity rule is TPT </summary>
+    public bool IsTptMappingStrategy() => GetMappingStrategy() == "TPT";
 
     /// <summary> Get the property rule for the given target column. Used during scaffolding phase. </summary>
     public PropertyRuleNode TryResolveRuleFor(string column) {

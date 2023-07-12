@@ -93,6 +93,15 @@
     <Compile Include="Customer_and_Suppliers_by_City.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="CustOrderHist_Result.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="CustOrdersDetail_Result.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="CustOrdersOrders_Result.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="Dog.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
@@ -102,7 +111,13 @@
     <Compile Include="EmployeeBrief.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="Employee_Sales_by_Country_Result.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="Invoice.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="MultiResultSetExample_Result.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="NorthwindEntities.Context.cs">
@@ -135,6 +150,9 @@
     <Compile Include="Order_Subtotal.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="OutputParamExample_Result.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="Product.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
@@ -154,13 +172,25 @@
     <Compile Include="RegionCustom.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="SalesByCategory_Result.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="Sales_by_Category.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Sales_by_Year_Result.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="Sales_Totals_by_Amount.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="Shipper.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="sp_helpdiagramdefinition_Result.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="sp_helpdiagrams_Result.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="Summary_of_Sales_by_Quarter.cs">
@@ -172,7 +202,19 @@
     <Compile Include="Supplier.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="TenMostExpensiveProductsResult.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="Territory.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="TptBase.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="TptOne.cs">
+      <DependentUpon>NorthwindEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="TptTwo.cs">
       <DependentUpon>NorthwindEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="UnitsInStockEnum.cs">

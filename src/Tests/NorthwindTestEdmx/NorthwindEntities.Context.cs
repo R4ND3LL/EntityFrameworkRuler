@@ -55,6 +55,7 @@ namespace NorthwindTestProject
         public virtual DbSet<Summary_of_Sales_by_Year> Summary_of_Sales_by_Years { get; set; }
         public virtual DbSet<Animal> Animals { get; set; }
         public virtual DbSet<EmployeeBrief> EmployeeBriefs { get; set; }
+        public virtual DbSet<TptBase> TptBases { get; set; }
     
         public virtual ObjectResult<CustOrderHist_Result> CustOrderHist(string customerID)
         {

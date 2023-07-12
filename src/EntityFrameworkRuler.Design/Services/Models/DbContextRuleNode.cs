@@ -58,7 +58,8 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
     internal void Map(EntityTypeBuilder entityTypeBuilder, EntityRuleNode entityRule) {
         if (entityTypeBuilder == null) throw new ArgumentNullException(nameof(entityTypeBuilder));
         entityRulesByFinalName.Add(entityTypeBuilder.Metadata.Name, entityRule);
-        Debug.Assert(entityRule?.ScaffoldedTable != null && entityRule.ScaffoldedTable.EntityRules.Contains(entityRule));
+        Debug.Assert((entityRule?.ScaffoldedTable != null && entityRule.ScaffoldedTable.EntityRules.Contains(entityRule)) ||
+                     entityRule?.Rule.BaseTypeName.HasNonWhiteSpace() == true);
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>

@@ -173,6 +173,27 @@
           <Property Name="TerritoryDescription" Type="nchar" MaxLength="50" Nullable="false" />
           <Property Name="RegionID" Type="int" Nullable="false" />
         </EntityType>
+        <EntityType Name="TptBase">
+          <Key>
+            <PropertyRef Name="Pkey" />
+          </Key>
+          <Property Name="Pkey" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="BaseProp" Type="nchar" MaxLength="10" />
+        </EntityType>
+        <EntityType Name="TptOne">
+          <Key>
+            <PropertyRef Name="Pkey" />
+          </Key>
+          <Property Name="Pkey" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="OneProp" Type="nchar" MaxLength="10" />
+        </EntityType>
+        <EntityType Name="TptTwo">
+          <Key>
+            <PropertyRef Name="Pkey" />
+          </Key>
+          <Property Name="Pkey" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="TwoProp" Type="nchar" MaxLength="10" />
+        </EntityType>
         <!--Errors Found During Generation:
 warning 6002: The table/view 'Northwind.dbo.Alphabetical list of products' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
         <EntityType Name="Alphabetical list of products">
@@ -557,6 +578,30 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_TptOne_TptBase">
+          <End Role="TptBase" Type="Self.TptBase" Multiplicity="1" />
+          <End Role="TptOne" Type="Self.TptOne" Multiplicity="0..1" />
+          <ReferentialConstraint>
+            <Principal Role="TptBase">
+              <PropertyRef Name="Pkey" />
+            </Principal>
+            <Dependent Role="TptOne">
+              <PropertyRef Name="Pkey" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_TptTwo_TptBase">
+          <End Role="TptBase" Type="Self.TptBase" Multiplicity="1" />
+          <End Role="TptTwo" Type="Self.TptTwo" Multiplicity="0..1" />
+          <ReferentialConstraint>
+            <Principal Role="TptBase">
+              <PropertyRef Name="Pkey" />
+            </Principal>
+            <Dependent Role="TptTwo">
+              <PropertyRef Name="Pkey" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Function Name="CustOrderHist" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="CustomerID" Type="nchar" Mode="In" />
         </Function>
@@ -624,6 +669,9 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <EntitySet Name="Shippers" EntityType="Self.Shippers" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Suppliers" EntityType="Self.Suppliers" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Territories" EntityType="Self.Territories" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="TptBase" EntityType="Self.TptBase" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="TptOne" EntityType="Self.TptOne" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="TptTwo" EntityType="Self.TptTwo" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Alphabetical list of products" EntityType="Self.Alphabetical list of products" store:Type="Views" store:Schema="dbo">
             <DefiningQuery>SELECT 
     [Alphabetical list of products].[ProductID] AS [ProductID], 
@@ -833,6 +881,14 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <AssociationSet Name="FK_Territories_Region" Association="Self.FK_Territories_Region">
             <End Role="Region" EntitySet="Region" />
             <End Role="Territories" EntitySet="Territories" />
+          </AssociationSet>
+          <AssociationSet Name="FK_TptOne_TptBase" Association="Self.FK_TptOne_TptBase">
+            <End Role="TptBase" EntitySet="TptBase" />
+            <End Role="TptOne" EntitySet="TptOne" />
+          </AssociationSet>
+          <AssociationSet Name="FK_TptTwo_TptBase" Association="Self.FK_TptTwo_TptBase">
+            <End Role="TptBase" EntitySet="TptBase" />
+            <End Role="TptTwo" EntitySet="TptTwo" />
           </AssociationSet>
         </EntityContainer>
       </Schema></edmx:StorageModels>
@@ -1249,6 +1305,7 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <FunctionImport Name="ReturnNumberOneNamed" ReturnType="Collection(Int32)">
           <Parameter Name="price" Mode="In" Type="Int32" />
           </FunctionImport>
+          <EntitySet Name="TptBases" EntityType="NorthwindModel.TptBase" />
         </EntityContainer>
         <EntityType Name="Alphabetical_list_of_product">
           <Key>
@@ -1580,6 +1637,21 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
           <Property Type="String" Name="ProductName" Nullable="false" MaxLength="40" />
           <Property Type="Decimal" Name="UnitPrice" Nullable="true" Precision="19" />
         </ComplexType>
+        <EntityType Name="TptBase">
+          <Key>
+            <PropertyRef Name="Pkey" />
+          </Key>
+          <Property Name="Pkey" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="BaseProp" Type="String" MaxLength="10" FixedLength="true" Unicode="true" />
+        </EntityType>
+        <EntityType Name="TptOne" BaseType="NorthwindModel.TptBase">
+          <Property Name="Pkey1" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="OneProp" Type="String" MaxLength="10" FixedLength="true" Unicode="true" />
+        </EntityType>
+        <EntityType Name="TptTwo" BaseType="NorthwindModel.TptBase">
+          <Property Name="Pkey2" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="TwoProp" Type="String" MaxLength="10" FixedLength="true" Unicode="true" />
+        </EntityType>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -2106,6 +2178,26 @@ warning 6002: The table/view 'Northwind.dbo.Summary of Sales by Year' does not h
             </ResultMapping>
           </FunctionImportMapping>
           <FunctionImportMapping FunctionImportName="ReturnNumberOneNamed" FunctionName="NorthwindModel.Store.ReturnNumberOneNamed" />
+          <EntitySetMapping Name="TptBases">
+            <EntityTypeMapping TypeName="IsTypeOf(NorthwindModel.TptBase)">
+              <MappingFragment StoreEntitySet="TptBase">
+                <ScalarProperty Name="Pkey" ColumnName="Pkey" />
+                <ScalarProperty Name="BaseProp" ColumnName="BaseProp" />
+              </MappingFragment>
+            </EntityTypeMapping>
+            <EntityTypeMapping TypeName="IsTypeOf(NorthwindModel.TptTwo)">
+              <MappingFragment StoreEntitySet="TptTwo">
+                <ScalarProperty Name="Pkey" ColumnName="Pkey" />
+                <ScalarProperty Name="TwoProp" ColumnName="TwoProp" />
+              </MappingFragment>
+            </EntityTypeMapping>
+            <EntityTypeMapping TypeName="IsTypeOf(NorthwindModel.TptOne)" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+              <MappingFragment StoreEntitySet="TptOne">
+                <ScalarProperty Name="Pkey" ColumnName="Pkey" />
+                <ScalarProperty Name="OneProp" ColumnName="OneProp" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>
