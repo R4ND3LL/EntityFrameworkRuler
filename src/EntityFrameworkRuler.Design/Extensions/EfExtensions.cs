@@ -533,24 +533,45 @@ internal static class EfExtensions {
             .FirstOrDefault(o => string.Equals(o.dbName, column, stringComparison));
         return prop.prop;
     }
-
+    
+    public static bool ColumnsAreEqual(this DatabaseForeignKey a, DatabaseForeignKey b, StringComparison stringComparison = StringComparison.Ordinal) {
+        return a.Columns.ColumnsAreEqual(b.Columns, false, stringComparison) && a.PrincipalColumns.ColumnsAreEqual(b.PrincipalColumns, false, stringComparison);
+    }
+    
     /// <summary> return true if both column lists represent the same columns (schema details not checked) </summary>
     public static bool ColumnsAreEqual(this IList<DatabaseColumn> a, IList<DatabaseColumn> b, bool compareTable = true,
         StringComparison stringComparison = StringComparison.Ordinal) {
         if (a.Count != b.Count) return false;
-        for (var i = 0; i < a.Count; i++) {
-            if (compareTable) {
-                if (!string.Equals(b[i].Table.Schema, a[i].Table.Schema, stringComparison)) return false;
-                if (!string.Equals(b[i].Table.Name, a[i].Table.Name, stringComparison)) return false;
-            }
-
-            if (!string.Equals(b[i].Name, a[i].Name, stringComparison)) return false;
-        }
+        for (var i = 0; i < a.Count; i++)
+            if (!ColumnsAreEqual(a[i], b[i], compareTable, stringComparison)) return false;
 
         return true;
     }
 
-    public static bool ColumnsAreEqual(this DatabaseForeignKey a, DatabaseForeignKey b, StringComparison stringComparison = StringComparison.Ordinal) {
-        return a.Columns.ColumnsAreEqual(b.Columns, false, stringComparison) && a.PrincipalColumns.ColumnsAreEqual(b.PrincipalColumns, false, stringComparison);
+    /// <summary> return true if both columns are the same (schema details not checked) </summary>
+    public static bool ColumnsAreEqual(this DatabaseColumn a, DatabaseColumn b, bool compareTable, StringComparison stringComparison) {
+        if (compareTable) {
+            if (!string.Equals(b.Table.Schema, a.Table.Schema, stringComparison)) return false;
+            if (!string.Equals(b.Table.Name, a.Table.Name, stringComparison)) return false;
+        }
+
+        return string.Equals(b.Name, a.Name, stringComparison);
+    }
+
+    /// <summary> return true if the given column is a member of the foreign key </summary>
+    public static bool HasColumn(this DatabaseForeignKey a, DatabaseColumn c, StringComparison stringComparison = StringComparison.Ordinal) {
+        if (string.Equals(a.Table.Schema, c.Table.Schema, stringComparison) && string.Equals(a.Table.Name, c.Table.Name, stringComparison))
+            foreach (var column in a.Columns) {
+                if (string.Equals(column.Name, c.Name, stringComparison)) 
+                    return true;
+            }
+
+        if (string.Equals(a.PrincipalTable.Schema, c.Table.Schema, stringComparison) && string.Equals(a.PrincipalTable.Name, c.Table.Name, stringComparison))
+            foreach (var column in a.PrincipalColumns) {
+                if (string.Equals(column.Name, c.Name, stringComparison)) 
+                    return true;
+            }
+
+        return false;
     }
 }

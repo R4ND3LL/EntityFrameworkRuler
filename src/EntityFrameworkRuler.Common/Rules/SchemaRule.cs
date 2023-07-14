@@ -31,7 +31,7 @@ public sealed class SchemaRule : RuleBase, ISchemaRule {
 
     /// <summary> If true, generate entities  for tables that are not identified in this schema rule.  Default is false. </summary>
     [DataMember(EmitDefaultValue = true, IsRequired = false, Order = 3)]
-    [DisplayName("Include Unknown Views"), Category("Mapping"),
+    [DisplayName("Include Unknown Tables"), Category("Mapping"),
      Description("If true, generate entities for views that are not identified in this schema rule.  Default is false.")]
     public bool IncludeUnknownTables { get; set; }
 

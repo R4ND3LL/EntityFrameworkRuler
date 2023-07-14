@@ -58,7 +58,10 @@ public partial class <#= Options.ContextName #> : DbContext
     public <#= Options.ContextName #>()
     {
     }
-
+    public <#= Options.ContextName #>(string a_connectionString)
+    {
+        this.Database.SetConnectionString(a_connectionString);
+    }
 <#
             }
 #>

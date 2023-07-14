@@ -1,5 +1,6 @@
 ﻿using EntityFrameworkRuler.Common.Annotations;
 using EntityFrameworkRuler.Design.Metadata;
+using EntityFrameworkRuler.Design.Services.Models;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 
@@ -51,42 +52,37 @@ public class DatabaseFunctionResultTable : FakeDatabaseTable {
     public int Count => Columns?.Count ?? 0;
     public DatabaseFunctionResultColumn this[int i] { get => (DatabaseFunctionResultColumn)Columns[i]; set => Columns[i] = value; }
 
-    public virtual int Ordinal {
-        get => (int?)base.GetAnnotation(RulerAnnotations.Ordinal).Value ?? 0;
-        set => base.SetAnnotation(RulerAnnotations.Ordinal, value);
-    }
-
     public DatabaseFunction Function { get; set; }
     public override bool ShouldScaffoldEntityFromTable => Count > 0 && Function?.UnnamedColumnCount <= 1;
 }
 
-public class DatabaseFunctionResultColumn : DatabaseColumn {
+public class DatabaseFunctionResultColumn : FakeDatabaseColumn {
     public DatabaseFunctionResultColumn() { }
-
-    public virtual bool HasName => Name.HasNonWhiteSpace();
-
-    // public virtual string Name { get; set; }
-    // public virtual string StoreType { get; set; }
-    public virtual int Ordinal {
-        get => (int?)base.GetAnnotation(RulerAnnotations.Ordinal).Value ?? 0;
-        set => base.SetAnnotation(RulerAnnotations.Ordinal, value);
-    }
 
     public virtual bool Nullable {
         get => (bool?)base.GetAnnotation(RulerAnnotations.Nullable).Value ?? false;
         set => base.SetAnnotation(RulerAnnotations.Nullable, value);
     }
 
-    public virtual int? Precision {
-        get => (int?)base.GetAnnotation(EfCoreAnnotationNames.Precision).Value;
-        set => base.SetAnnotation(EfCoreAnnotationNames.Precision, value);
-    }
+}
 
-    public virtual int? Scale {
-        get => (int?)base.GetAnnotation(EfCoreAnnotationNames.Scale).Value;
-        set => base.SetAnnotation(EfCoreAnnotationNames.Scale, value);
-    }
+public class TphDatabaseTable : FakeDatabaseTable {
+    public TphDatabaseTable() { }
 
-    /// <inheritdoc />
-    public override string ToString() => $"{Name ?? "<UNKNOWN>"}: {StoreType}";
+    public IEnumerable<TphDatabaseColumn> TphColumns =>
+        base.Columns.Cast<TphDatabaseColumn>();
+
+    public int Count => Columns?.Count ?? 0;
+    public TphDatabaseColumn this[int i] { get => (TphDatabaseColumn)Columns[i]; set => Columns[i] = value; }
+
+  
+
+    public EntityRuleNode EntityRuleNode { get; set; }
+    public override bool ShouldScaffoldEntityFromTable => EntityRuleNode != null;
+}
+
+public class TphDatabaseColumn : FakeDatabaseColumn {
+    public TphDatabaseColumn() { }
+
+    public PropertyRuleNode PropertyRuleNode { get; set; }
 }

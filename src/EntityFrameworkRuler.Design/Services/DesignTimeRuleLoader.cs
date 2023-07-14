@@ -238,7 +238,7 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
 
         foreach (var (src, template) in templates) {
             if (template?.Directory == null) return;
-#if !DEBUG
+#if !DEBUG || true
             if (template.Exists) return;
 #endif
 

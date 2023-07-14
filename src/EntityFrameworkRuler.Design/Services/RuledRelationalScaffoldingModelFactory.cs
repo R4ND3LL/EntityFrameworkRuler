@@ -268,38 +268,18 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             modelBuilder = VisitFunctions(modelBuilder, databaseModelEx.Functions);
         }
 
+        // Model post processing
         foreach (var action in PostCreationActions) action(modelBuilder);
-        // Model post processing.
-#if DEBUG2
-        var employee = modelBuilder.Model.FindEntityType("Employee");
-        if (employee != null) {
-            var navs = employee.GetNavigations().ToList();
-            var orders = navs.FirstOrDefault(o => o.Name == "Orders");
-            Debug.Assert(orders != null);
-        }
 
-        var BaseParasolidDefinition = modelBuilder.Model.FindEntityType("BaseParasolidDefinition");
-        if (BaseParasolidDefinition != null) {
-            var navs = BaseParasolidDefinition.GetNavigations().ToList();
-            var orders = navs.FirstOrDefault(o => o.Name == "Orders");
-            //Debug.Assert(orders != null);
-        }
-
-        var BaseParasolidLatheDefinition = modelBuilder.Model.FindEntityType("BaseParasolidLatheDefinition");
-        if (BaseParasolidLatheDefinition != null) {
-            var navs = BaseParasolidLatheDefinition.GetNavigations().ToList();
-            var orders = navs.FirstOrDefault(o => o.Name == "Orders");
-            //Debug.Assert(orders != null);
-        }
-#endif
         return modelBuilder;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual ModelBuilder VisitTables(ModelBuilder modelBuilder, ICollection<DatabaseTable> tables) {
         dbContextRule ??= GetDbContextRules();
-        ScaffoldTracker.InitializeScope(tables, dbContextRule);
+        ScaffoldTracker.InitializeScope(tables, dbContextRule, stringComparer);
 
+        // first pass to wire entities to tables, and create any missing tables or modify TPH base tables.
         foreach (var entityRule in dbContextRule.Entities) {
             var schemaName = entityRule.Parent.Rule.SchemaName.EmptyIfNullOrWhitespace();
             var tableName = entityRule.DbName ?? string.Empty;
@@ -311,6 +291,45 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 entityRule.MapTo(table);
                 Debug.Assert(table.EntityRules.Contains(entityRule));
             }
+
+            if (!includeSchema) {
+                ScaffoldTracker.OmitSchema(schemaName.CoalesceWhiteSpace(table?.Schema));
+                continue;
+            }
+
+            if (!includeEntity) {
+                ScaffoldTracker.Omit(entityRule);
+                continue;
+            }
+
+            if (table == null) {
+                // table not found
+                if (entityRule.BaseEntityRuleNode == null) {
+                    // invalid entry
+                    continue;
+                }
+
+                // attempt to create a table representing the TPH derived entity, including columns that are exclusive to the entity
+                table = TryGenerateTphTable(entityRule);
+                // other fake table generation needs can be appended here
+
+                if (table != null) {
+                    entityRule.MapTo(table);
+                    Debug.Assert(table.EntityRules.Contains(entityRule));
+                    tables.Add(table.Table); // important to include table in the database model's table collection! otherwise FKs wont be found
+                }
+            }
+        }
+
+        // second pass to actually visit the tables, and apply custom rules
+        foreach (var entityRule in dbContextRule.Entities) {
+            var schemaName = entityRule.Parent.Rule.SchemaName.EmptyIfNullOrWhitespace();
+            var tableName = entityRule.DbName ?? string.Empty;
+            var table = entityRule.ScaffoldedTable ?? ScaffoldTracker.FindTableNode(schemaName, tableName);
+            var includeSchema = entityRule.Parent.ShouldMap();
+            var includeEntity = entityRule.ShouldMap() && includeSchema;
+
+            Debug.Assert(table == null || table.EntityRules.Contains(entityRule), "Table was not previously linked to the entity rule");
 
             if (!includeSchema) {
                 ScaffoldTracker.OmitSchema(schemaName.CoalesceWhiteSpace(table?.Schema));
@@ -340,9 +359,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
                     continue;
                 }
-                // else {
-                //     var baseTable = entityRule.GetBaseTypes().Select(o => o.ScaffoldedTable).FirstOrDefault(o => o != null);
-                // }
+                // the time for table generation was in the first pass above.  cannot be done here. 
             }
 
             if (table != null)
@@ -446,6 +463,92 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
     }
 
+    /// <summary> attempt to generate a table representing the TPH derived entity, including columns that are exclusive to the entity </summary>
+    private ScaffoldedTableTrackerItem TryGenerateTphTable(EntityRuleNode entityRule) {
+        var baseEntityRuleNode = entityRule.GetBaseTypes().FirstOrDefault(o => o.GetMappingStrategy().HasNonWhiteSpace());
+        if (baseEntityRuleNode?.IsTphMappingStrategy() != true || baseEntityRuleNode.ScaffoldedTable?.Table == null)
+            return null;
+
+        // create a table representing the TPH derived entity, including columns that are exclusive to the entity
+        var baseTable = baseEntityRuleNode.ScaffoldedTable?.Table; // TPH hierarchy table
+        if (baseTable == null) return null;
+        var databaseTable = new TphDatabaseTable {
+            Schema = baseTable.Schema,
+            Name = entityRule.DbName,
+            EntityRuleNode = entityRule
+        };
+        Debug.Assert(databaseTable.ShouldScaffoldEntityFromTable);
+        var foreignKeysToMove = new HashSet<DatabaseForeignKey>();
+        foreach (var property in entityRule.GetProperties().Where(o => o.Parent == entityRule)) {
+            if (!property.ShouldMap()) continue;
+            // this property should be added to the fake TPH derived table, and removed from the base table.
+            var columnName = property.ColumnName ?? property.Rule.Name;
+            //var basePropertyRule = baseEntityRuleNode.TryResolveRuleFor(columnName);
+            var baseColumn =
+                baseTable?.Columns.FirstOrDefault(o => string.Equals(o.Name, columnName, stringComparison));
+            if (baseColumn == null) continue;
+            var column = new TphDatabaseColumn() {
+                Name = columnName,
+                IsNullable = baseColumn.IsNullable,
+                StoreType = baseColumn.StoreType,
+                Collation = baseColumn.Collation,
+                Comment = baseColumn.Comment,
+                ComputedColumnSql = baseColumn.ComputedColumnSql,
+                IsStored = baseColumn.IsStored,
+                ValueGenerated = baseColumn.ValueGenerated,
+                DefaultValueSql = baseColumn.DefaultValueSql,
+                Table = databaseTable,
+                PropertyRuleNode = property
+            };
+            foreach (var annotation in baseColumn.GetAnnotations())
+                column.SetAnnotation(annotation.Name, annotation.Value);
+
+            foreignKeysToMove.AddRange(baseTable.ForeignKeys.Where(o => o.HasColumn(baseColumn)));
+            baseTable.Columns.Remove(baseColumn);
+            databaseTable.Columns.Add(column);
+        }
+
+        if (databaseTable.Columns.Count <= 0) return null; // didnt work
+
+        foreach (var fk in foreignKeysToMove) {
+            var redirectedDependant = 0;
+            var redirectedPrincipal = 0;
+            if (fk.Table == baseTable) {
+                redirectedDependant = RedirectedColumns(fk.Columns, databaseTable, stringComparison);
+                if (redirectedDependant > 0)
+                    fk.Table = databaseTable;
+            }
+
+            if (fk.PrincipalTable == baseTable) {
+                redirectedPrincipal = RedirectedColumns(fk.PrincipalColumns, databaseTable, stringComparison);
+                if (redirectedPrincipal > 0)
+                    fk.PrincipalTable = databaseTable;
+            }
+
+            if (redirectedDependant == 0 && redirectedPrincipal == 0) throw new Exception("FK move failed: " + fk.Name);
+            baseTable.ForeignKeys.Remove(fk);
+            databaseTable.ForeignKeys.Add(fk);
+
+            static int RedirectedColumns(IList<DatabaseColumn> fkColumns, TphDatabaseTable databaseTable,
+                StringComparison stringComparison) {
+                var redirected = 0;
+                for (var i = 0; i < fkColumns.Count; i++) {
+                    var column = fkColumns[i];
+                    foreach (var newCol in databaseTable.Columns) {
+                        if (!column.ColumnsAreEqual(newCol, false, stringComparison)) continue;
+                        fkColumns[i] = newCol;
+                        redirected++;
+                    }
+                }
+
+                return redirected;
+            }
+        }
+
+        var table = ScaffoldTracker.AddFakeTable(databaseTable, entityRule, stringComparer);
+        return table;
+    }
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     private EntityTypeBuilder InvokeVisitTable(ModelBuilder modelBuilder, DatabaseTable table) {
         return visitTableMethod?.Invoke(proxy, new object[] { modelBuilder, table }) as EntityTypeBuilder;
@@ -471,7 +574,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     protected virtual EntityTypeBuilder ApplyEntityRules(ModelBuilder modelBuilder, EntityTypeBuilder entityTypeBuilder, DatabaseTable table, EntityRuleNode entityRuleNode) {
-        if (table is FakeDatabaseTable fakeDatabaseTable) {
+        if (table is DatabaseFunctionResultTable functionResultTable) {
             Debug.Assert(entityRuleNode == null);
             entityTypeBuilder.ToTable((string)null).ToView(null);
             entityTypeBuilder.Metadata.RemoveAnnotation(EfScaffoldingAnnotationNames.DbSetName);
@@ -479,8 +582,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             entityTypeBuilder.Metadata.RemoveAnnotation(EfRelationalAnnotationNames.TableName);
             entityTypeBuilder.Metadata.SetAnnotation(RulerAnnotations.Function, true);
 
-            if (fakeDatabaseTable.ShouldScaffoldEntityFromTable) {
-                this.ScaffoldTracker.MapFunction(fakeDatabaseTable, entityTypeBuilder);
+            if (functionResultTable.ShouldScaffoldEntityFromTable) {
+                ScaffoldTracker.MapFunction(functionResultTable, entityTypeBuilder);
             }
 
             return entityTypeBuilder;
@@ -497,7 +600,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         Debug.Assert(table == null || tableNode != null);
 
         entityRuleNode.MapTo(entityTypeBuilder, tableNode);
-        bool isTphLeaf = false;
+        var isTphLeaf = false;
         var strategy = entityRule.GetMappingStrategy()?.ToUpper();
         var entity = entityTypeBuilder.Metadata;
 
@@ -578,21 +681,22 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         // process properties
         var excludedProperties = new HashSet<(IMutableProperty Property, PropertyRuleNode Rule)>();
-        foreach (var property in entity.GetProperties().Where(o => o.DeclaringEntityType == entity)) {
+        foreach (var property in entity.GetProperties()) {
+            var isOwnedProperty = property.DeclaringEntityType == entity;
+
             var column = property.GetColumnNameNoDefault() ?? property.Name;
             var propertyRule = entityRuleNode.TryResolveRuleFor(column);
-            if (propertyRule == null && entityRule.IncludeUnknownColumns) propertyRule = entityRuleNode.AddProperty(property, column);
+            if (propertyRule == null && entityRule.IncludeUnknownColumns && isOwnedProperty) propertyRule = entityRuleNode.AddProperty(property, column);
 
-            var shouldMapProperty = propertyRule?.Rule != null && propertyRule.ShouldMap();
+            var shouldMapProperty = propertyRule?.Parent == entityRuleNode && propertyRule.ShouldMap();
             if (!shouldMapProperty) {
                 // some property mappings are required by EF.  Check if the property is needed now and override any omission rule.
-
                 if (table != null) {
-                    var columnName = property.GetColumnNameNoDefault();
-                    if (columnName.HasNonWhiteSpace()) {
-                        var pks = table.PrimaryKey?.Columns.Where(o => o.Name == columnName).ToArray() ?? Array.Empty<DatabaseColumn>();
+                    //var columnName = property.GetColumnNameNoDefault();
+                    if (column.HasNonWhiteSpace()) {
+                        var pks = table.PrimaryKey?.Columns.Where(o => o.Name == column).ToArray() ?? Array.Empty<DatabaseColumn>();
                         // Should not remove primary key properties.  The entity will not work. UNLESS the pkey is in the base type
-                        if (pks.Length > 0 && !BaseHasColumn(columnName)) {
+                        if (pks.Length > 0 && !BaseHasColumn(entityRuleNode, column)) {
                             propertyRule?.Rule?.SetShouldMap(true);
                             shouldMapProperty = true;
                         }
@@ -600,6 +704,20 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
             }
 
+            if (!isOwnedProperty && isTphLeaf && shouldMapProperty && entityRuleNode.BaseEntityRuleNode?.IsAlreadyScaffolded == true) {
+                // if this is a derived type in a TPH hierarchy, where all columns are defined in the base table, we should check the
+                // rule assignment to ensure properties are aligned to the correct tables.
+                // if it appears there is a property rule on this entity that is attempting to own the property, then it should have been
+                // handled previously in VisitTables where TPH tables are added and setup.
+                var ownerNode = entityRuleNode.GetBaseTypes().FirstOrDefault(o => property.DeclaringEntityType == o.Builder.Metadata);
+                if (ownerNode != null) {
+#if DEBUG
+                    throw new($"Entity {entity.Name} property {property.Name} should have been configured on a TPH table previously");
+#endif
+                }
+            }
+
+            if (!isOwnedProperty) continue;
             if (!shouldMapProperty) excludedProperties.Add((property, propertyRule));
 
             propertyRule?.MapTo(property, column);
@@ -610,7 +728,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
         }
 
-        foreach (var property in excludedProperties) RemovePropertyAndReferences(property);
+        foreach (var property in excludedProperties) RemovePropertyAndReferences(entityRuleNode, entity, table, property.Property, property.Rule);
 
         // Note, there are no Navigations yet because FKs are processed after visiting tables
 
@@ -640,7 +758,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         return entityTypeBuilder;
 
-        bool BaseHasColumn(string checkColumn) {
+        static bool BaseHasColumn(EntityRuleNode entityRuleNode, string checkColumn) {
             // return true if the column is in the base type
             if (entityRuleNode?.BaseEntityRuleNode?.Builder != null) {
                 var baseEntity = entityRuleNode.BaseEntityRuleNode.Builder;
@@ -655,19 +773,19 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
         }
 
-        void RemovePropertyAndReferences((IMutableProperty Property, PropertyRuleNode Rule) tuple) {
-            var p = tuple.Property;
+        void RemovePropertyAndReferences(EntityRuleNode entityRuleNode, IMutableEntityType entity, DatabaseTable table,
+            IMutableProperty p, PropertyRuleNode rule) {
 #if DEBUG
             if (table != null) {
                 var columnName = p.GetColumnNameNoDefault();
                 var pks = table.PrimaryKey?.Columns.Where(o => o.Name == columnName).ToArray() ?? Array.Empty<DatabaseColumn>();
-                Debug.Assert(pks.Length == 0 || BaseHasColumn(columnName),
+                Debug.Assert(pks.Length == 0 || BaseHasColumn(entityRuleNode, columnName),
                     "Should not remove primary key properties.  The entity will not work.");
             }
 #endif
 
-            RemoveIndexesWith(p);
-            RemoveKeysWith(p);
+            RemoveIndexesWith(entity, p);
+            RemoveKeysWith(entity, p);
             // if (!BaseHasColumn(columnName)) {
             //     // FKs should be able to work if the key is in the base type
             //     RemoveFKsWith(p, columnName);
@@ -675,10 +793,10 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             var removed = entity.RemoveProperty(p);
             Debug.Assert(removed != null);
-            ScaffoldTracker.Omit(tuple.Rule);
+            ScaffoldTracker.Omit(rule);
         }
 
-        void RemoveIndexesWith(IMutableProperty p) {
+        static void RemoveIndexesWith(IMutableEntityType entity, IMutableProperty p) {
             foreach (var item in entity.GetIndexes()
                          .Where(o => o.Properties.Any(ip => ip == p)).ToArray()) {
                 var removed = entity.RemoveIndex(item);
@@ -687,7 +805,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
 
 
-        void RemoveKeysWith(IMutableProperty p) {
+        static void RemoveKeysWith(IMutableEntityType entity, IMutableProperty p) {
             foreach (var item in entity.GetKeys()
                          .Where(o => o.Properties.Any(ip => ip == p)).ToArray()) {
                 var removed = entity.RemoveKey(item);
@@ -928,9 +1046,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             }
 
             if (schemas.IsNullOrEmpty()) {
-                var fks = baseCall(foreignKeys);
-
-                return fks;
+                modelBuilder = baseCall(foreignKeys);
+                return modelBuilder;
             }
 
             foreach (var grp in foreignKeys.GroupBy(o => o.Table.Schema.EmptyIfNullOrWhitespace())) {
@@ -1923,7 +2040,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelEx GetModel() {
-        return this.modelBuilderEx?.ModelEx;
+        return modelBuilderEx?.ModelEx;
     }
 }
 
