@@ -124,7 +124,7 @@ public static class DbContextExtensions
     public static async Task<T> SqlQueryRawScalarAsync<T>(this DbContext db, string sql, object[] parameters = null, CancellationToken cancellationToken = default) {
         var databaseFacade = db.Database;
         var conn = databaseFacade.GetDbConnection(); // not in using clause
-        await conn.OpenAsync(cancellationToken);
+        if (conn.State == ConnectionState.Closed) await conn.OpenAsync(cancellationToken);
         await using var command = conn.CreateCommand();
         command.CommandText = sql;
 
@@ -153,7 +153,7 @@ public static class DbContextExtensions
     {
         var databaseFacade = db.Database;
         var conn = databaseFacade.GetDbConnection(); // not in using clause
-        await conn.OpenAsync(cancellationToken);
+        if (conn.State == ConnectionState.Closed) await conn.OpenAsync(cancellationToken);
         await using var command = conn.CreateCommand();
         command.CommandText = sql;
 

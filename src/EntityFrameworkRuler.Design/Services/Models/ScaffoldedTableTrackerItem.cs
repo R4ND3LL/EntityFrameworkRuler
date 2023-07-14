@@ -9,7 +9,7 @@ namespace EntityFrameworkRuler.Design.Services.Models;
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 public sealed class ScaffoldedTableTrackerItem {
     private readonly ScaffoldedTableTracker tracker;
-    
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ScaffoldedTableTrackerItem(ScaffoldedTableTracker tracker, DatabaseTable table) {
         this.tracker = tracker;
@@ -39,7 +39,7 @@ public sealed class ScaffoldedTableTrackerItem {
 
     /// <summary> Associate this table to the entity rule, and thus the scaffolded entity type </summary>
     public void MapTo(EntityRuleNode entityRule) {
-        Debug.Assert(!IsFakeTable);
+        Debug.Assert(!IsFakeTable || Table is TphDatabaseTable);
         EntityRules.Add(entityRule);
     }
 
@@ -53,6 +53,7 @@ public sealed class ScaffoldedTableTrackerItem {
     public void MapFunctionTo(IMutableEntityType entityType) {
         FunctionEntityType = entityType;
     }
+
     /// <inheritdoc />
     public override string ToString() => $"{Schema}.{Name}";
 }

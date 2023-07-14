@@ -42,10 +42,19 @@ public sealed class ScaffoldedTableTracker {
     public bool HasTptHierarchies => tptEntities.Count > 0;
 
     /// <summary> Initialize data for tracking </summary>
-    public void InitializeScope(IEnumerable<DatabaseTable> tables, DbContextRuleNode dbContextRuleNode) {
+    public void InitializeScope(IEnumerable<DatabaseTable> tables, DbContextRuleNode dbContextRuleNode, StringComparer stringComparer) {
         tablesBySchema = tables.GroupBy(o => o.Schema.EmptyIfNullOrWhitespace())
-            .ToDictionary(o => o.Key, o => o.ToDictionary(t => t.Name, t => new ScaffoldedTableTrackerItem(this, t)));
+            .ToDictionary(o => o.Key, o => o.ToDictionary(t => t.Name, t => new ScaffoldedTableTrackerItem(this, t), stringComparer));
         dbContextRule = dbContextRuleNode ?? throw new ArgumentNullException(nameof(dbContextRuleNode));
+    }
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public ScaffoldedTableTrackerItem AddFakeTable(FakeDatabaseTable table, EntityRuleNode entityRuleNode, StringComparer stringComparer) {
+        if (table == null || table.Name.IsNullOrWhiteSpace()) throw new Exception("New table name is empty");
+        var tableDict = tablesBySchema.GetOrAddNew(table.Schema.EmptyIfNullOrWhitespace(), k => new Dictionary<string, ScaffoldedTableTrackerItem>(stringComparer));
+        var scaffoldedTableTrackerItem = new ScaffoldedTableTrackerItem(this, table);
+        tableDict.Add(table.Name, scaffoldedTableTrackerItem);
+        return scaffoldedTableTrackerItem;
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>

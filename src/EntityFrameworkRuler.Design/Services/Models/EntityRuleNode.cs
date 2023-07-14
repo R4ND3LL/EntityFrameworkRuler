@@ -1,4 +1,5 @@
-﻿using EntityFrameworkRuler.Rules;
+﻿using EntityFrameworkRuler.Design.Scaffolding.Metadata;
+using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -60,7 +61,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
     public void MapTo(EntityTypeBuilder builder, ScaffoldedTableTrackerItem scaffoldedTable) {
         Debug.Assert(Builder == null, "Builder was previously set");
         Debug.Assert(Rule.ShouldMap(), "Entity should not be scaffolded");
-        Debug.Assert(scaffoldedTable == null || !scaffoldedTable.IsFakeTable);
+        Debug.Assert(scaffoldedTable == null || !scaffoldedTable.IsFakeTable || scaffoldedTable.Table is TphDatabaseTable);
         if (ScaffoldedTable == null && scaffoldedTable != null) {
             if (scaffoldedTable != null) MapTo(scaffoldedTable);
             if (ScaffoldedTable == null) throw new("Cannot set entity builder without ScaffoldedTable");
@@ -77,7 +78,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
     /// <summary> Link this entity rule to the underlying database table.  This will be linked whether the entity is omitted or not. </summary>
     public void MapTo(ScaffoldedTableTrackerItem table) {
         Debug.Assert(ScaffoldedTable == null);
-        Debug.Assert(!table.IsFakeTable);
+        Debug.Assert(!table.IsFakeTable || table.Table is TphDatabaseTable);
         ScaffoldedTable = table;
         table.MapTo(this);
         UpdateRuleMetadata();
@@ -87,7 +88,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
         if (ScaffoldedTable == null) return;
         Rule.Name = ScaffoldedTable.Name;
         if (Builder == null) return;
-        Debug.Assert(!ScaffoldedTable.IsFakeTable);
+        Debug.Assert(!ScaffoldedTable.IsFakeTable || ScaffoldedTable.Table is TphDatabaseTable);
 
         // can only update expected name if it wasn't already influenced by dynamic naming or NewName
         if (Rule.NewName.IsNullOrWhiteSpace() && !Parent.IsDynamicNamingTables &&
@@ -139,6 +140,9 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
     /// <summary> True if the mapping strategy for this entity rule is TPT </summary>
     public bool IsTptMappingStrategy() => GetMappingStrategy() == "TPT";
+    
+    /// <summary> True if the mapping strategy for this entity rule is TPH </summary>
+    public bool IsTphMappingStrategy() => GetMappingStrategy() == "TPH";
 
     /// <summary> Get the property rule for the given target column. Used during scaffolding phase. </summary>
     public PropertyRuleNode TryResolveRuleFor(string column) {

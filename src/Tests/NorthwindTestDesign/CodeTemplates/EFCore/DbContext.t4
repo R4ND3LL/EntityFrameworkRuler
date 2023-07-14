@@ -58,7 +58,10 @@ public partial class <#= Options.ContextName #> : DbContext
     public <#= Options.ContextName #>()
     {
     }
-
+    public <#= Options.ContextName #>(string a_connectionString)
+    {
+        this.Database.SetConnectionString(a_connectionString);
+    }
 <#
             }
 #>
@@ -240,7 +243,7 @@ public partial class <#= Options.ContextName #> : DbContext
             entity.HasOne(d => d.<#=
                                 foreignKey.DependentToPrincipal.Name #>).<#=
                                 foreignKey.IsUnique ? "WithOne" : "WithMany" #>(<#=
-                                foreignKey.PrincipalToDependent != null
+                                foreignKey.PrincipalToDependent != null && foreignKey.PrincipalToDependent.TargetEntityType == entityType
                                     ? $"p => p.{foreignKey.PrincipalToDependent.Name}"
                                     : "" #>)<#=
                                 code.Fragment(foreignKeyFluentApiCalls, indent: 4) #>;
@@ -367,7 +370,7 @@ public partial class <#= Options.ContextName #> : DbContext
         OnModelCreatingPartial(modelBuilder);
     }
 
-    //partial void OnModelCreatingGeneratedFunctions(ModelBuilder modelBuilder);
+    partial void OnModelCreatingGeneratedFunctions(ModelBuilder modelBuilder);
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
 <#
