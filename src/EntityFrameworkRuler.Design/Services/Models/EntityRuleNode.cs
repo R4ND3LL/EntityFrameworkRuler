@@ -134,7 +134,9 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
         return false;
     }
-
+    /// <summary> Gets the mapping strategy associated to this type or any base type in the hierarchy. </summary>
+    public string GetMappingStrategyRecursive() => GetBaseTypes(true).Select(o => o.GetMappingStrategy()).FirstOrDefault(o => o.HasNonWhiteSpace());
+    
     /// <summary> Gets the mapping strategy for the derived types. </summary>
     public string GetMappingStrategy() => Rule.GetMappingStrategy()?.ToUpper();
 

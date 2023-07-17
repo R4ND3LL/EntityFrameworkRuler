@@ -101,6 +101,14 @@ public sealed class ScaffoldedTableTracker {
         static ForeignKeyUsage AddFactory(IMutableForeignKey arg) => new(arg);
     }
 
+    /// <summary> Get the usage count of a FK according to current scaffolding progress </summary>
+    public int GetForeignKeyUsage(IMutableForeignKey foreignKey) {
+        var usage = foreignKeyUsage.GetOrAddNew(foreignKey, AddFactory);
+        return usage.Usage;
+
+        static ForeignKeyUsage AddFactory(IMutableForeignKey arg) => new(arg);
+    }
+
     private void OnSchemaOmitted(string schema) {
         reporter.WriteInformation($"RULED: Schema {schema} omitted.");
         var schemaRuleNode = dbContextRule?.TryResolveRuleFor(schema);

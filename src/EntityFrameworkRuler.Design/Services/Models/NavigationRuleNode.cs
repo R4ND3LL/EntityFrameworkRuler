@@ -17,7 +17,7 @@ public sealed class NavigationRuleNode : RuleNode<NavigationRule, EntityRuleNode
 
     /// <summary> True if, this is the principal end of the navigation.  False if this is the dependent end. </summary>
     public bool IsPrincipal => Rule.IsPrincipal;
-    
+
     /// <summary> True if this navigation has been mapped to an entity builder </summary>
     public bool IsAlreadyMapped => Navigation != null;
 
@@ -30,6 +30,7 @@ public sealed class NavigationRuleNode : RuleNode<NavigationRule, EntityRuleNode
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public void MapTo(IMutableNavigation navigation, string fkName, bool thisIsPrincipal, bool isManyToMany) {
+        Debug.Assert(this.Navigation == null);
         Navigation = navigation;
 
         Rule.FkName = fkName;

@@ -1546,9 +1546,41 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     protected virtual void AddNavigationProperties(IMutableForeignKey foreignKey, Action<IMutableForeignKey> baseCall) {
         dbContextRule ??= designTimeRuleLoader?.GetDbContextRules() ?? new DbContextRuleNode(DbContextRule.DefaultNoRulesFoundBehavior);
 
-        baseCall(foreignKey);
         var fkName = foreignKey.GetConstraintNameForTableOrView();
         var isManyToMany = foreignKey.IsManyToMany();
+#if DEBUG
+        var dependentFks = foreignKey.DeclaringEntityType.GetForeignKeys().OrderBy(o => o.GetConstraintNameForTableOrView()).ToArray();
+        var principalFks = foreignKey.PrincipalEntityType.GetForeignKeys().OrderBy(o => o.GetConstraintNameForTableOrView()).ToArray();
+
+        Debug.Assert(dependentFks.Length == dependentFks.GroupBy(o => o.GetConstraintNameForTableOrView()).Count());
+        Debug.Assert(principalFks.Length == principalFks.GroupBy(o => o.GetConstraintNameForTableOrView()).Count());
+#endif
+
+        var dependentRule = GetNavRule(foreignKey.DeclaringEntityType, false);
+        var principalRule = GetNavRule(foreignKey.PrincipalEntityType, true);
+
+        if (dependentRule?.Navigation != null && principalRule?.Navigation != null) {
+            // previously mapped!  must be due to inheritance structure.  
+            // EF Core iterates all FKs recursively for each entity, meaning that for hierarchies, it will iterate the same FK more than once.
+            // therefore, when we encounter that a rule has been previously mapped, we must skip the processing of it again.
+            var currentUsage = ScaffoldTracker.GetForeignKeyUsage(foreignKey);
+            var mappingStrategy = dependentRule.Parent.GetMappingStrategyRecursive();
+            var mappedFkName = dependentRule.Navigation.ForeignKey.GetConstraintNameForTableOrView();
+            Debug.Assert(currentUsage > 0);
+            Debug.Assert(mappingStrategy.HasNonWhiteSpace());
+            Debug.Assert(mappedFkName == fkName);
+            if (mappingStrategy.HasNonWhiteSpace() && mappedFkName == fkName) {
+                Debug.Assert(dependentRule.Navigation.ForeignKey.GetConstraintNameForTableOrView() == fkName);
+                Debug.Assert(principalRule.Navigation.ForeignKey.GetConstraintNameForTableOrView() == fkName);
+                // just skip it silently as if it was never encountered.
+                // we don't want to omit and FK because it WAS mapped previously.  
+                return;
+            }
+        }
+
+        baseCall(foreignKey);
+        Debug.Assert(fkName == foreignKey.GetConstraintNameForTableOrView());
+        Debug.Assert(isManyToMany == foreignKey.IsManyToMany());
 
         if (foreignKey.DependentToPrincipal == null || foreignKey.PrincipalToDependent == null) {
             // technically, EF supports a single ended navigation (no inverse) but the T4s are built to iterate FKs
@@ -1561,8 +1593,8 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             return;
         }
 
-        var dependentExcluded = ApplyNavRule(foreignKey.DependentToPrincipal, foreignKey.DeclaringEntityType, false);
-        var principalExcluded = ApplyNavRule(foreignKey.PrincipalToDependent, foreignKey.PrincipalEntityType, true);
+        var dependentExcluded = ApplyNavRule(foreignKey.DependentToPrincipal, foreignKey.DeclaringEntityType, false, dependentRule);
+        var principalExcluded = ApplyNavRule(foreignKey.PrincipalToDependent, foreignKey.PrincipalEntityType, true, principalRule);
 
         if (dependentExcluded && principalExcluded) {
             // we will only exclude a navigation if BOTH ends are excluded, thus, removing the FK altogether.
@@ -1579,15 +1611,27 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var pNav = pNavs.FirstOrDefault(o => o.ForeignKey == foreignKey);
         Debug.Assert(dNav != null && pNav != null);
 #endif
+        NavigationRuleNode GetNavRule(IMutableEntityType entityType, bool thisIsPrincipal) {
+            var thisEntity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
+            var inverseEntity = thisIsPrincipal ? foreignKey.DeclaringEntityType : foreignKey.PrincipalEntityType;
+            Debug.Assert(thisEntity == entityType);
 
-        bool ApplyNavRule(IMutableNavigation navigation, IMutableEntityType entityType, bool thisIsPrincipal) {
+            var entityRule = dbContextRule.TryResolveRuleForEntityName(entityType.Name);
+            var navigationRule = entityRule?.TryResolveNavigationRuleFor(fkName,
+                null,
+                thisIsPrincipal,
+                isManyToMany, inverseEntity?.Name);
+            return navigationRule;
+        }
+
+        bool ApplyNavRule(IMutableNavigation navigation, IMutableEntityType entityType, bool thisIsPrincipal, NavigationRuleNode ruleNode) {
             var thisEntity = thisIsPrincipal ? foreignKey.PrincipalEntityType : foreignKey.DeclaringEntityType;
             var inverseEntity = thisIsPrincipal ? foreignKey.DeclaringEntityType : foreignKey.PrincipalEntityType;
             Debug.Assert(thisEntity == entityType);
             Debug.Assert(thisEntity == navigation.DeclaringEntityType);
 
             var entityRule = dbContextRule.TryResolveRuleForEntityName(entityType.Name);
-            var navigationRule = entityRule?.TryResolveNavigationRuleFor(fkName,
+            var navigationRule = ruleNode ?? entityRule?.TryResolveNavigationRuleFor(fkName,
                 () => navigation.Name,
                 thisIsPrincipal,
                 isManyToMany, inverseEntity?.Name);
