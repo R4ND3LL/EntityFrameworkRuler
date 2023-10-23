@@ -45,6 +45,7 @@ namespace EntityFrameworkRuler.Design {
                 .TryAddSingletonEnumerable<IRuledModelCodeGenerator, FunctionsInterfaceModelGenerator>()
                 .TryAddSingletonEnumerable<IRuledModelCodeGenerator, DbContextFunctionsModelGenerator>()
                 .TryAddSingletonEnumerable<IRuledModelCodeGenerator, DbContextExtensionsModelGenerator>()
+                .TryAddSingletonEnumerable<IRuledModelCodeGenerator, UserDefinedTemplateModelGenerator>()
                 //.TryAddSingletonEnumerable<IModelCodeGenerator, RuledTemplatedModelGenerator>()
                 .AddRuler()
                 .AddSingleton<IMessageLogger, EfConsoleMessageLogger>();
