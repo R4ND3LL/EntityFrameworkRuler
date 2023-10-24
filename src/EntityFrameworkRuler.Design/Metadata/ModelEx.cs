@@ -23,8 +23,90 @@ public class ModelEx {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelBuilder Builder => BuilderEx.Builder;
 
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    /// <summary> Get all functions defined in the model. </summary>
     public IEnumerable<Function> GetFunctions() => functions.Values;
+
+    /// <summary>
+    ///     Gets all entity types defined in the model.
+    /// </summary>
+    /// <returns>All entity types defined in the model.</returns>
+    public IEnumerable<IMutableEntityType> GetEntityTypes() => Model.GetEntityTypes();
+
+    /// <summary>
+    ///     Gets the entity types matching the given type.
+    /// </summary>
+    /// <param name="type">The type of the entity type to find.</param>
+    /// <returns>The entity types found.</returns>
+    public IEnumerable<IMutableEntityType> FindEntityTypes(Type type) => Model.FindEntityTypes(type);
+
+    /// <summary>
+    ///     Gets the entity with the given name. Returns <see langword="null" /> if no entity type with the given name is found
+    ///     or the given CLR type is being used by shared type entity type
+    ///     or the entity type has a defining navigation.
+    /// </summary>
+    /// <param name="name">The name of the entity type to find.</param>
+    /// <returns>The entity type, or <see langword="null" /> if none is found.</returns>
+    public IMutableEntityType FindEntityType(string name) => Model.FindEntityType(name);
+
+    /// <summary>
+    ///     Gets the entity type for the given name, defining navigation name
+    ///     and the defining entity type. Returns <see langword="null" /> if no matching entity type is found.
+    /// </summary>
+    /// <param name="name">The name of the entity type to find.</param>
+    /// <param name="definingNavigationName">The defining navigation of the entity type to find.</param>
+    /// <param name="definingEntityType">The defining entity type of the entity type to find.</param>
+    /// <returns>The entity type, or <see langword="null" /> if none is found.</returns>
+    public IMutableEntityType FindEntityType(
+        string name,
+        string definingNavigationName,
+        IMutableEntityType definingEntityType) => Model.FindEntityType(name, definingNavigationName, definingEntityType);
+
+    /// <summary>
+    ///     Gets the entity that maps the given entity class. Returns <see langword="null" /> if no entity type with
+    ///     the given CLR type is found or the given CLR type is being used by shared type entity type
+    ///     or the entity type has a defining navigation.
+    /// </summary>
+    /// <param name="type">The type to find the corresponding entity type for.</param>
+    /// <returns>The entity type, or <see langword="null" /> if none is found.</returns>
+    public IMutableEntityType FindEntityType(Type type) => Model.FindEntityType(type);
+
+    /// <summary>
+    ///     Gets the entity type for the given name, defining navigation name
+    ///     and the defining entity type. Returns <see langword="null" /> if no matching entity type is found.
+    /// </summary>
+    /// <param name="type">The type of the entity type to find.</param>
+    /// <param name="definingNavigationName">The defining navigation of the entity type to find.</param>
+    /// <param name="definingEntityType">The defining entity type of the entity type to find.</param>
+    /// <returns>The entity type, or <see langword="null" /> if none is found.</returns>
+    public IMutableEntityType FindEntityType(
+        Type type,
+        string definingNavigationName,
+        IMutableEntityType definingEntityType) => Model.FindEntityType(type, definingNavigationName, definingEntityType);
+
+    /// <summary>
+    ///     Returns a value indicating whether the entity types using the given type should be configured
+    ///     as owned types when discovered by conventions.
+    /// </summary>
+    /// <param name="type">The type of the entity type that might be owned.</param>
+    /// <returns>
+    ///     <see langword="true" /> if a matching entity type should be configured as owned when discovered,
+    ///     <see langword="false" /> otherwise.
+    /// </returns>
+    public bool IsOwned(Type type) => Model.IsOwned(type);
+
+    /// <summary>
+    ///     Indicates whether the given entity type name is ignored.
+    /// </summary>
+    /// <param name="typeName">The name of the entity type that might be ignored.</param>
+    /// <returns><see langword="true" /> if the given entity type name is ignored.</returns>
+    public bool IsIgnored(string typeName) => Model.IsIgnored(typeName);
+
+    /// <summary>
+    ///     Indicates whether the given entity type name is ignored.
+    /// </summary>
+    /// <param name="type">The entity type that might be ignored.</param>
+    /// <returns><see langword="true" /> if the given entity type name is ignored.</returns>
+    public bool IsIgnored(Type type) => Model.IsIgnored(type);
 
     /// <summary>
     ///     Returns an object that can be used to configure a given entity type in the model.

@@ -38,4 +38,13 @@ public class UserTemplateContext {
 
     /// <summary> The file path where the generated code will be saved.  This must be set by the template itself at runtime. </summary>
     public string OutputFileName { get; set; }
+
+    /// <summary> Get all functions defined in the model. </summary>
+    public IEnumerable<Function> GetFunctions() => modelEx.GetFunctions();
+
+    /// <summary>
+    ///     Gets all entity types defined in the model.
+    /// </summary>
+    /// <returns>All entity types defined in the model.</returns>
+    public IEnumerable<IMutableEntityType> GetEntityTypes() => Model.GetEntityTypes();
 }
