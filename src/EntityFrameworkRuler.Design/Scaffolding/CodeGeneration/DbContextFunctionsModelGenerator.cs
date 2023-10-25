@@ -44,7 +44,7 @@ public class DbContextFunctionsModelGenerator : RuledModelGeneratorBase, IRuledM
         if (contextTemplate.Exists) {
             if (modelEx?.GetFunctions() == null) return resultingFiles;
 
-            reporter.WriteInformation($"RULED: Running {contextTemplate.Name} template...");
+            reporter.WriteInformation($"RULED: Running template '{contextTemplate.Name}'...");
             var host = new TextTemplatingEngineHost(serviceProvider) {
                 TemplateFile = contextTemplate.FullName
             };
@@ -55,7 +55,7 @@ public class DbContextFunctionsModelGenerator : RuledModelGeneratorBase, IRuledM
             host.Session.Add("ProjectDefaultNamespace", options.RootNamespace);
 
             var generatedCode = GeneratedCode(contextTemplate, host);
-            
+
             if (string.IsNullOrWhiteSpace(generatedCode)) return resultingFiles;
 
             var functionFileName = options.ContextName + "." + "Functions" + host.Extension;

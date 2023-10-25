@@ -57,7 +57,7 @@ WHERE NULLIF(ROUTINE_NAME, '') IS NOT NULL
          and minor_id = 0
          and class = 1
          and name = N'microsoft_database_tools_support') IS NULL
-ORDER BY ROUTINE_NAME         
+ORDER BY ROUTINE_NAME
 """;
 
         RoutineFactory procedureFactory = null;
@@ -182,15 +182,15 @@ ORDER BY ROUTINE_NAME
         using var command = connection.CreateCommand();
         command.CommandText =
             """
-                SELECT  
-                    'Parameter' = p.name,  
-                    'Type'   = COALESCE(type_name(p.system_type_id), type_name(p.user_type_id)),  
-                    'Length'   = CAST(p.max_length AS INT),  
-                    'Precision'   = CAST(case when type_name(p.system_type_id) = 'uniqueidentifier' 
-                                then p.precision  
-                                else OdbcPrec(p.system_type_id, p.max_length, p.precision) end AS INT),  
-                    'Scale'   = CAST(OdbcScale(p.system_type_id, p.scale) AS INT),  
-                    'Order'  = CAST(parameter_id AS INT),  
+                SELECT
+                    'Parameter' = p.name,
+                    'Type'   = COALESCE(type_name(p.system_type_id), type_name(p.user_type_id)),
+                    'Length'   = CAST(p.max_length AS INT),
+                    'Precision'   = CAST(case when type_name(p.system_type_id) = 'uniqueidentifier'
+                                then p.precision
+                                else OdbcPrec(p.system_type_id, p.max_length, p.precision) end AS INT),
+                    'Scale'   = CAST(OdbcScale(p.system_type_id, p.scale) AS INT),
+                    'Order'  = CAST(parameter_id AS INT),
                     'output' = p.is_output,
                     'TypeName' = QUOTENAME(SCHEMA_NAME(t.schema_id)) + '.' + QUOTENAME(TYPE_NAME(p.user_type_id)),
                 	'TypeSchema' = t.schema_id,
@@ -273,7 +273,7 @@ internal class SqlServerFunctionFactory : RoutineFactory {
 
         using var command = connection.CreateCommand();
         command.CommandText = $@"
-SELECT 
+SELECT
     c.name,
     COALESCE(type_name(c.system_type_id), type_name(c.user_type_id)) AS type_name,
     c.column_id AS column_ordinal,
@@ -317,7 +317,11 @@ internal class SqlServerProcedureFactory : RoutineFactory {
 
         if (dbFunction is null) throw new ArgumentNullException(nameof(dbFunction));
 
-        return GetAllResultSets(connection, dbFunction, !multipleResults);
+        var list = GetAllResultSets(connection, dbFunction, !multipleResults);
+        if (list.IsNullOrEmpty() && connection is SqlConnection sc) {
+            list = GetFirstResultSet(sc, dbFunction);
+        }
+        return list;
     }
 
     private static List<DatabaseFunctionResultTable> GetAllResultSets(DbConnection connection, DatabaseFunction dbFunction, bool singleResult) {
@@ -395,6 +399,56 @@ internal class SqlServerProcedureFactory : RoutineFactory {
         return result;
     }
 
+    private static List<DatabaseFunctionResultTable> GetFirstResultSet(SqlConnection connection, DatabaseFunction dbFunction) {
+        var result = new List<DatabaseFunctionResultTable>();
+        using var dtResult = new DataTable();
+
+        var sql = $"exec dbo.sp_describe_first_result_set N'[{dbFunction.Schema}].[{dbFunction.Name}]';";
+
+#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
+        using var adapter = new SqlDataAdapter {
+            SelectCommand = new SqlCommand(sql, connection),
+        };
+#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+
+        adapter.Fill(dtResult);
+        int unnamedColumnCount = 0;
+        var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema };
+        result.Add(table);
+
+        foreach (DataRow row in dtResult.Rows) {
+            if (row != null) {
+                var name = row["name"].ToString();
+                if (string.IsNullOrEmpty(name)) {
+                    unnamedColumnCount++;
+                    continue;
+                }
+
+                table.Columns.Add(new DatabaseFunctionResultColumn() {
+                    Name = name,
+                    Nullable = (bool)row["is_nullable"],
+                    Ordinal = int.Parse(row["column_ordinal"].ToString()!, CultureInfo.InvariantCulture),
+                    StoreType = string.IsNullOrEmpty(row["system_type_name"].ToString()) ? row["user_type_name"].ToString() : row["system_type_name"].ToString(),
+                    //Precision = (short?)row["NumericPrecision"],
+                    //Scale = (short?)row["NumericScale"],
+                    Table = table
+                });
+            }
+        }
+
+        // If the result set only contains un-named columns
+        if (dtResult.Rows.Count == unnamedColumnCount) {
+            throw new InvalidOperationException($"Only un-named result columns in procedure");
+        }
+
+        if (unnamedColumnCount > 0) {
+            dbFunction.UnnamedColumnCount += unnamedColumnCount;
+        }
+
+        return result;
+    }
+
+
     private static DataTable GetDataTableFromSchema(DatabaseFunctionParameter parameter, DbConnection connection) {
         var userType = new SqlParameter {
             Value = parameter.TypeId,
@@ -409,8 +463,8 @@ internal class SqlServerProcedureFactory : RoutineFactory {
         using var command = connection.CreateCommand();
         command.CommandText =
             """
-            SELECT SC.name, ST.name AS datatype FROM sys.columns SC INNER JOIN sys.types ST ON ST.system_type_id = SC.system_type_id AND ST.is_user_defined = 0 
-            WHERE ST.name <> 'sysname' AND SC.object_id = 
+            SELECT SC.name, ST.name AS datatype FROM sys.columns SC INNER JOIN sys.types ST ON ST.system_type_id = SC.system_type_id AND ST.is_user_defined = 0
+            WHERE ST.name <> 'sysname' AND SC.object_id =
             (SELECT type_table_object_id FROM sys.table_types WHERE schema_id = @schemaId AND user_type_id =  @userTypeId);
             """;
 

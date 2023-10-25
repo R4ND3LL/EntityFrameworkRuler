@@ -44,7 +44,7 @@ public class FunctionsInterfaceModelGenerator : RuledModelGeneratorBase, IRuledM
         if (contextTemplate.Exists) {
             if (modelEx?.GetFunctions() == null) return resultingFiles;
 
-            reporter.WriteInformation($"RULED: Running {contextTemplate.Name} template...");
+            reporter.WriteInformation($"RULED: Running template '{contextTemplate.Name}'...");
             var host = new TextTemplatingEngineHost(serviceProvider) {
                 TemplateFile = contextTemplate.FullName
             };
