@@ -277,7 +277,7 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
             }
             else if (retValueParam != null && retValueName != null) {
 #>
-        <#= retValueName #>?.SetValue(p<#= retValueParam.Name #>.Value);//c
+        <#= retValueName #>?.SetValue(p<#= retValueParam.Name #>.Value);
 <#
             }
 #>
