@@ -65,6 +65,13 @@ namespace <#= NamespaceHint #>;
         }
     }
     var abstractStr = EntityType["Ruler:Abstract"] != null ? " abstract" : "";
+    var isFunctionEntity = EntityType["Ruler:Function"] != null ;
+    if (isFunctionEntity)
+    {
+#>
+[Microsoft.EntityFrameworkCore.Keyless]
+<#
+    }
 #>
 public<#= abstractStr #> partial class <#= EntityType.Name #> <# if (EntityType.BaseType?.Name!=null) { #>: <#= EntityType.BaseType.Name #><# } #> 
 {

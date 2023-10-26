@@ -130,7 +130,7 @@ public partial class <#= Options.ContextName #> : DbContext
 
     if (anyConfiguration) {
 #>
-    protected void OnModelCreatingGeneratedFunctions(ModelBuilder modelBuilder)
+    partial void OnModelCreatingGeneratedFunctions(ModelBuilder modelBuilder)
     {
 <#
         foreach (var f in Model.GetFunctions()) {
