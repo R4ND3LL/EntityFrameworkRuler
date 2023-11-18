@@ -76,8 +76,8 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
 
     /// <inheritdoc />
     public GenerateRulesResponse GenerateRules(string edmxFilePath, bool useDatabaseNames = false, bool noPluralize = false,
-        bool includeUnknowns = false, bool compactRules = false) {
-        return GenerateRules(new(edmxFilePath, useDatabaseNames, noPluralize, includeUnknowns));
+        bool includeUnknowns = false, bool includeUnknownColumns = true) {
+        return GenerateRules(new(edmxFilePath, useDatabaseNames, noPluralize, includeUnknowns, includeUnknownColumns));
     }
 
     /// <inheritdoc />
@@ -123,7 +123,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
 
         var root = new DbContextRule {
             Name = edmx.ContextName,
-            IncludeUnknownSchemas = request.IncludeUnknowns
+            IncludeUnknownSchemas = request.IncludeUnknownSchemasAndTables
         };
         var namingService = NamingService ??= new RulerNamingService(null, request);
 
@@ -134,8 +134,8 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
             root.Schemas.Add(schemaRule);
             schemaRule.SchemaName = grp.Key;
             schemaRule.UseSchemaName = false; // will append schema name to entity name
-            schemaRule.IncludeUnknownTables = request.IncludeUnknowns;
-            schemaRule.IncludeUnknownViews = request.IncludeUnknowns;
+            schemaRule.IncludeUnknownTables = request.IncludeUnknownSchemasAndTables;
+            schemaRule.IncludeUnknownViews = request.IncludeUnknownSchemasAndTables;
             foreach (var entity in grp.OrderBy(o => o.Name)) {
                 // if entity name is different than db, it has to go into output
                 //var altered = false;
@@ -145,7 +145,7 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                     Name = entity.StorageName,
                     EntityName = entity.StorageName == expectedClassName ? null : expectedClassName,
                     NewName = entity.Name.CoalesceWhiteSpace(expectedClassName, entity.StorageName),
-                    IncludeUnknownColumns = request.IncludeUnknowns,
+                    IncludeUnknownColumns = request.IncludeUnknownColumns,
                     BaseTypeName = entity.BaseType?.Name,
                 };
 
@@ -296,8 +296,8 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                 schemaRule.SchemaName = function.Schema;
                 schemaRule.UseSchemaName = false; // will append schema name to entity name
                 root.Schemas.Add(schemaRule);
-                schemaRule.IncludeUnknownTables = request.IncludeUnknowns;
-                schemaRule.IncludeUnknownViews = request.IncludeUnknowns;
+                schemaRule.IncludeUnknownTables = request.IncludeUnknownSchemasAndTables;
+                schemaRule.IncludeUnknownViews = request.IncludeUnknownSchemasAndTables;
             }
 
             var functionRule = new FunctionRule() {

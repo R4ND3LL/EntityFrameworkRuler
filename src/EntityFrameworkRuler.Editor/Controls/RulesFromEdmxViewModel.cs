@@ -138,7 +138,8 @@ public sealed partial class RulesFromEdmxViewModel : ObservableObject {
             var hasError = false;
             var generatorOptions = new GeneratorOptions() {
                 EdmxFilePath = SelectedEdmxFilePath,
-                IncludeUnknowns = IncludeUnknowns,
+                IncludeUnknownSchemasAndTables = IncludeUnknowns,
+                IncludeUnknownColumns = true,
                 NoPluralize = NoPluralize,
                 UseDatabaseNames = UseDatabaseNames
             };

@@ -34,7 +34,7 @@ internal static class GeneratorArgHelper {
                     case "includeunknowns":
                     case "include-unknowns":
                     case "allowunknowns":
-                        op.GeneratorOptions.IncludeUnknowns = true;
+                        op.GeneratorOptions.IncludeUnknownSchemasAndTables = true;
                         break;
                     default:
                         return false; // invalid arg
