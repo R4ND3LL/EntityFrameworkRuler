@@ -1,20 +1,24 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <PropertyGroup>
-        <Title>Entity Framework Ruler</Title>
-        <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
-        <Product>Entity Framework Ruler</Product>
-        <Copyright>© 2022 Mark Randell (R4ND3LL). All rights reserved.</Copyright>
-        <Authors>Mark Randell</Authors>
-        <PackageProjectUrl>https://github.com/R4ND3LL/EntityFrameworkRuler</PackageProjectUrl>
-        <PackageTags>Entity Framework Core;entity-framework-core;EF;Data;O/RM;EntityFramework;EntityFrameworkCore;EFCore;EDMX;efruler</PackageTags>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <RepositoryUrl>https://github.com/R4ND3LL/EntityFrameworkRuler.git</RepositoryUrl>
-        <RepositoryType>git</RepositoryType>
-        <Product>Entity Framework Ruler</Product>
-        <NeutralLanguage>en-US</NeutralLanguage>
-        <Nullable>disable</Nullable>
-        <LangVersion>latest</LangVersion>
-    </PropertyGroup>
-    <ItemGroup>
-    </ItemGroup>
+  <PropertyGroup>
+    <Title>Entity Framework Ruler</Title>
+    <Description>EDMX support for EF Core: Generate customization rules from EF6 EDMX file and apply to EF Core model</Description>
+    <Product>Entity Framework Ruler</Product>
+    <Copyright>© 2022 Mark Randell (R4ND3LL). All rights reserved.</Copyright>
+    <Authors>Mark Randell</Authors>
+    <PackageProjectUrl>https://github.com/R4ND3LL/EntityFrameworkRuler</PackageProjectUrl>
+    <PackageTags>Entity Framework Core;entity-framework-core;EF;Data;O/RM;EntityFramework;EntityFrameworkCore;EFCore;EDMX;efruler</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/R4ND3LL/EntityFrameworkRuler.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Product>Entity Framework Ruler</Product>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--Workaround for hot reload issue-->
+    <EnableSourceControlManagerQueries>true</EnableSourceControlManagerQueries>
+  </PropertyGroup>
+
 </Project>
