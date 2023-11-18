@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
 namespace EntityFrameworkRuler.Design.Metadata.Builders;
@@ -20,10 +21,10 @@ public class ModelBuilderEx : IConventionModelBuilder {
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelEx ModelEx { get; }
-    
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public IMutableModel Model => Builder.Model;
-    
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public ModelBuilder Builder { get; }
 
@@ -47,6 +48,7 @@ public class ModelBuilderEx : IConventionModelBuilder {
     IConventionAnnotatableBuilder IConventionAnnotatableBuilder.HasAnnotation(string name, object value, bool fromDataAnnotation) {
         return conventionModelBuilder.HasAnnotation(name, value, fromDataAnnotation);
     }
+
 
     IConventionAnnotatableBuilder IConventionAnnotatableBuilder.HasNonNullAnnotation(string name, object value, bool fromDataAnnotation) {
         return conventionModelBuilder.HasNonNullAnnotation(name, value, fromDataAnnotation);
@@ -90,6 +92,7 @@ public class ModelBuilderEx : IConventionModelBuilder {
         return conventionModelBuilder.Owned(type, fromDataAnnotation);
     }
 
+
     bool IConventionModelBuilder.IsIgnored(Type type, bool fromDataAnnotation) {
         return conventionModelBuilder.IsIgnored(type, fromDataAnnotation);
     }
@@ -105,6 +108,7 @@ public class ModelBuilderEx : IConventionModelBuilder {
     IConventionModelBuilder IConventionModelBuilder.Ignore(string typeName, bool fromDataAnnotation) {
         return conventionModelBuilder.Ignore(typeName, fromDataAnnotation);
     }
+
 
     IConventionModelBuilder IConventionModelBuilder.HasNoEntityType(IConventionEntityType entityType, bool fromDataAnnotation) {
         return conventionModelBuilder.HasNoEntityType(entityType, fromDataAnnotation);
@@ -139,4 +143,38 @@ public class ModelBuilderEx : IConventionModelBuilder {
     IConventionModelBuilder IConventionAnnotatableBuilder.ModelBuilder => conventionModelBuilder.ModelBuilder;
 
     #endregion
+
+#if NET8
+    public IConventionModelBuilder ComplexType(Type type, bool fromDataAnnotation = false) {
+        return conventionModelBuilder.ComplexType(type, fromDataAnnotation);
+    }
+
+    public IConventionModelBuilder HasNonNullAnnotation(string name, object value, bool fromDataAnnotation = false) {
+        return conventionModelBuilder.HasNonNullAnnotation(name, value, fromDataAnnotation);
+    }
+
+    public IConventionModelBuilder HasNoAnnotation(string name, bool fromDataAnnotation = false) {
+        return conventionModelBuilder.HasNoAnnotation(name, fromDataAnnotation);
+    }
+
+    public IConventionModelBuilder HasAnnotation(string name, object value, bool fromDataAnnotation = false) {
+        return conventionModelBuilder.HasAnnotation(name, value, fromDataAnnotation);
+    }
+
+    public bool CanHaveEntity(string name, bool fromDataAnnotation = false) {
+        return conventionModelBuilder.CanHaveEntity(name, fromDataAnnotation);
+    }
+
+    public bool CanHaveEntity(Type type, bool fromDataAnnotation = false) {
+        return conventionModelBuilder.CanHaveEntity(type, fromDataAnnotation);
+    }
+
+    public bool CanHaveSharedTypeEntity(string name, Type type, bool fromDataAnnotation = false) {
+        return conventionModelBuilder.CanHaveSharedTypeEntity(name, type, fromDataAnnotation);
+    }
+
+    public bool CanRemoveEntity(IConventionEntityType entityType, bool fromDataAnnotation = false) {
+        return conventionModelBuilder.CanRemoveEntity(entityType, fromDataAnnotation);
+    }
+#endif
 }

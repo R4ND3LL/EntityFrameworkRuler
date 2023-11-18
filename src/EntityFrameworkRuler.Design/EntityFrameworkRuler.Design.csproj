@@ -1,96 +1,122 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Description>Automatically applies customization of the EF Core Reverse Engineered model during the scaffold process.</Description>
-        <PackageProjectUrl>https://github.com/R4ND3LL/EntityFrameworkRuler</PackageProjectUrl>
-        <PackageOutputPath>./nupkg</PackageOutputPath>
-        <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-        <DevelopmentDependency>true</DevelopmentDependency>
-        <RootNamespace>EntityFrameworkRuler.Design</RootNamespace>
-        <PackageId>EntityFrameworkRuler.Design</PackageId>
-        <PackageIcon>crown128.png</PackageIcon>
-        <PackageReadmeFile>Design.md</PackageReadmeFile>
-        <SignAssembly>False</SignAssembly>
-        <AssemblyOriginatorKeyFile>..\key.snk</AssemblyOriginatorKeyFile>
-        <Configurations>Debug;Release</Configurations>
-        <Platforms>AnyCPU</Platforms>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Description>Automatically applies customization of the EF Core Reverse Engineered model during the scaffold process.</Description>
+    <PackageProjectUrl>https://github.com/R4ND3LL/EntityFrameworkRuler</PackageProjectUrl>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <RootNamespace>EntityFrameworkRuler.Design</RootNamespace>
+    <PackageId>EntityFrameworkRuler.Design</PackageId>
+    <PackageIcon>crown128.png</PackageIcon>
+    <PackageReadmeFile>Design.md</PackageReadmeFile>
+    <SignAssembly>False</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\key.snk</AssemblyOriginatorKeyFile>
+    <Configurations>Debug;Release</Configurations>
+    <Platforms>AnyCPU</Platforms>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <None Include="..\Resources\crown128.png">
-            <Pack>True</Pack>
-            <PackagePath></PackagePath>
-            <Link>crown128.png</Link>
-        </None>
-        <None Include="build\**\*">
-            <Pack>True</Pack>
-            <PackagePath>build</PackagePath>
-        </None>
-        <None Include="..\..\docs\Design.md" Pack="true" PackagePath="\" />
-        <None Remove="nupkg\**" />
+  <ItemGroup>
+    <None Include="..\Resources\crown128.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+      <Link>crown128.png</Link>
+    </None>
+    <None Include="build\**\*">
+      <Pack>True</Pack>
+      <PackagePath>build</PackagePath>
+    </None>
+    <None Include="..\..\docs\Design.md" Pack="true" PackagePath="\" />
+    <None Remove="nupkg\**" />
 
-    </ItemGroup>
+  </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Castle.Core" Version="5.1.0" />
-        <PackageReference Include="MinVer" Version="4.2.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>  
-        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Castle.Core" Version="5.1.0" />
+    <PackageReference Include="MinVer" Version="4.2.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
+  </ItemGroup>
 
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
-        <DefineConstants>NET6</DefineConstants>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
-        <DefineConstants>NET7</DefineConstants>
-    </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <DefineConstants>NET6</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
+    <DefineConstants>NET7</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <DefineConstants>NET8</DefineConstants>
+  </PropertyGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' And '$(Configuration)'=='Debug'">
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0" />
-    </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' And '$(Configuration)'=='Debug'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="7.0.0" />
+  </ItemGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)' == 'net7.0' And '$(Configuration)'=='Debug'">
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0" />
-    </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0' And '$(Configuration)'=='Debug'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="7.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' And '$(Configuration)'=='Debug'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.5.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.5.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.5.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
+  </ItemGroup>
 
-    <ItemGroup Condition="'$(Configuration)'=='Release'">
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0" />
-    </ItemGroup>
-    
-    <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
-        <PackageReference Include="Mono.TextTemplating" Version="2.2.1" />
-        <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="7.0.0" /> 
-    </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net8.0' And '$(Configuration)'=='Release'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="7.0.0" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <Compile Remove="nupkg\**" />
-    </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' And '$(Configuration)'=='Release'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0"/>
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.5.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.5.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.5.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.0" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <EmbeddedResource Remove="nupkg\**" />
-        <EmbeddedResource Include="Resources\DbContextFunctions.t4" />
-        <EmbeddedResource Include="Resources\DbContextExtensions.t4" />
-        <EmbeddedResource Include="Resources\Functions.t4" />
-        <EmbeddedResource Include="Resources\FunctionsInterface.t4" />
-        <None Remove="Resources\EntityTypeConfiguration.t4" />
-        <EmbeddedResource Include="Resources\EntityTypeConfiguration.t4" />
-        <None Remove="Resources\DbContext.t4" />
-        <EmbeddedResource Include="Resources\DbContext.t4" />
-        <None Remove="Resources\EntityType.t4" />
-        <EmbeddedResource Include="Resources\EntityType.t4" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Mono.TextTemplating" Version="2.2.1" />
+  </ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="nupkg\**" />
+  </ItemGroup>
 
-    <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
-<!--        <T4ReferencePath Include="$(ProjectDir)$(OutputPath)" />-->
-        <T4ReferencePath Include="$(TargetDir)" />
-    </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Remove="nupkg\**" />
+    <EmbeddedResource Include="Resources\DbContextFunctions.t4" />
+    <EmbeddedResource Include="Resources\DbContextExtensions.t4" />
+    <EmbeddedResource Include="Resources\Functions.t4" />
+    <EmbeddedResource Include="Resources\FunctionsInterface.t4" />
+    <None Remove="Resources\EntityTypeConfiguration.t4" />
+    <EmbeddedResource Include="Resources\EntityTypeConfiguration.t4" />
+    <None Remove="Resources\DbContext.t4" />
+    <EmbeddedResource Include="Resources\DbContext.t4" />
+    <None Remove="Resources\EntityType.t4" />
+    <EmbeddedResource Include="Resources\EntityType.t4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <!--        <T4ReferencePath Include="$(ProjectDir)$(OutputPath)" />-->
+    <T4ReferencePath Include="$(TargetDir)" />
+  </ItemGroup>
 </Project>

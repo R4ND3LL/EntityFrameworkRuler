@@ -359,7 +359,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
                     continue;
                 }
-                // the time for table generation was in the first pass above.  cannot be done here. 
+                // the time for table generation was in the first pass above.  cannot be done here.
             }
 
             if (table != null)
@@ -574,6 +574,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
     protected virtual EntityTypeBuilder ApplyEntityRules(ModelBuilder modelBuilder, EntityTypeBuilder entityTypeBuilder, DatabaseTable table, EntityRuleNode entityRuleNode) {
+        reporter.WriteVerbose(
+            $"RULED: ApplyEntityRules() processing for entity {entityTypeBuilder.Metadata.Name} (table = {table.GetFullName()}, has rule = {entityRuleNode != null})");
+
         if (table is DatabaseFunctionResultTable functionResultTable) {
             Debug.Assert(entityRuleNode == null);
             entityTypeBuilder.ToTable((string)null).ToView(null);
@@ -1560,7 +1563,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         var principalRule = GetNavRule(foreignKey.PrincipalEntityType, true);
 
         if (dependentRule?.Navigation != null && principalRule?.Navigation != null) {
-            // previously mapped!  must be due to inheritance structure.  
+            // previously mapped!  must be due to inheritance structure.
             // EF Core iterates all FKs recursively for each entity, meaning that for hierarchies, it will iterate the same FK more than once.
             // therefore, when we encounter that a rule has been previously mapped, we must skip the processing of it again.
             var currentUsage = ScaffoldTracker.GetForeignKeyUsage(foreignKey);
@@ -1573,7 +1576,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 Debug.Assert(dependentRule.Navigation.ForeignKey.GetConstraintNameForTableOrView() == fkName);
                 Debug.Assert(principalRule.Navigation.ForeignKey.GetConstraintNameForTableOrView() == fkName);
                 // just skip it silently as if it was never encountered.
-                // we don't want to omit and FK because it WAS mapped previously.  
+                // we don't want to omit and FK because it WAS mapped previously.
                 return;
             }
         }
@@ -1825,7 +1828,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         //     var databaseColumn = databaseTable.Columns[i];
         //
         //     var propertyName = candidateNamingService.GenerateCandidateIdentifier(databaseColumn);
-        //     
+        //
         //     //this.tableNamer.GetName()GetEntityTypeName() property.Name
         // }
         return null;
@@ -2101,4 +2104,9 @@ public sealed class MockTypeMappingSource : ITypeMappingSource {
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public CoreTypeMapping FindMapping(Type type, IModel model) => throw new NotSupportedException();
+
+#if NET8
+    public CoreTypeMapping FindMapping(IElementType elementType) => throw new NotSupportedException();
+    public CoreTypeMapping FindMapping(Type type, IModel model, CoreTypeMapping elementMapping = null) => throw new NotSupportedException();
+#endif
 }
