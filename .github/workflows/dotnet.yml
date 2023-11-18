@@ -24,7 +24,7 @@ jobs:
         fetch-depth: 0 # required by MinVer to determine the version correctly
         
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3.0.3
+      uses: actions/setup-dotnet@v3.2.0
       with:
         global_json_file: global.json
         
