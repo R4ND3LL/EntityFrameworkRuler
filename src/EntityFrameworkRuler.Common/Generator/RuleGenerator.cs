@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Reflection.Metadata;
 using EntityFrameworkRuler.Common;
+using EntityFrameworkRuler.Common.Annotations;
 using EntityFrameworkRuler.Generator.EdmxModel;
 using EntityFrameworkRuler.Generator.Services;
 using EntityFrameworkRuler.Rules;
@@ -189,6 +190,21 @@ public sealed class RuleGenerator : RuleHandler, IRuleGenerator {
                         // EF Core scaffolding does not infer primary keys on views, meaning navigations are not possible.
                         // Identify the key here so that it can be applied to the reverse engineered model later.
                         propertyRule.IsKey = property.IsStorageKey || property.IsConceptualKey;
+                    }
+
+                    var storeGenPattern = property.ConceptualProperty?.GetStoreGeneratedPattern() ?? EfrStoreGeneratedPattern.None;
+                    if (storeGenPattern == EfrStoreGeneratedPattern.None)
+                        storeGenPattern = property.StorageProperty?.GetStoreGeneratedPattern() ?? EfrStoreGeneratedPattern.None;
+
+                    if (storeGenPattern != EfrStoreGeneratedPattern.None && !property.IsStorageKey) {
+                        // if its a storage key, EF Core scaffolding will detect it anyway. otherwise, the store gen pattern should be noted.
+                        if (storeGenPattern == EfrStoreGeneratedPattern.Computed) {
+                            // A value is generated on both insert and update.
+                            propertyRule.SetOrRemoveAnnotation(RulerAnnotations.ComputedGenerationPattern, true);
+                        } else if (storeGenPattern == EfrStoreGeneratedPattern.Identity) {
+                            // A value is generated on insert and remains unchanged on update.
+                            propertyRule.SetOrRemoveAnnotation(RulerAnnotations.IdentityGenerationPattern, true);
+                        }
                     }
 
                     comment = property.ConceptualProperty?.Documentation?.GetComment();

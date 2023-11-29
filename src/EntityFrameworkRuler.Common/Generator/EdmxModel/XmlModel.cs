@@ -22,6 +22,18 @@ namespace EntityFrameworkRuler.Generator.EdmxModel;
 #pragma warning disable CA1002
 #pragma warning disable SA1649
 
+/// <summary> Represents an enumeration that specifies three options indicating whether the column in the store schema definition language </summary>
+public enum EfrStoreGeneratedPattern {
+    /// <summary> A value indicating that it is not a server generated property. This is the default value. </summary>
+    None = 0,
+
+    /// <summary> A value is generated on insert and remains unchanged on update. </summary>
+    Identity = 1,
+
+    /// <summary> A value is generated on both insert and update. </summary>
+    Computed = 2
+}
+
 public interface IPropertyRef {
     string Name { get; set; }
 }
@@ -138,8 +150,28 @@ public class StorageProperty {
     [XmlAttribute(AttributeName = "Type")]
     public string Type { get; set; }
 
+    /// <summary>
+    /// enum based on System.Data.Metadata.Edm.StoreGeneratedPattern with values:
+    ///   None = 0,     // A value indicating that it is not a server generated property. This is the default value.
+    ///   Identity = 1, // A value is generated on insert and remains unchanged on update.
+    ///   Computed = 2  // A value is generated on both insert and update.
+    /// </summary>
     [XmlAttribute(AttributeName = "StoreGeneratedPattern")]
     public string StoreGeneratedPattern { get; set; }
+
+    public EfrStoreGeneratedPattern GetStoreGeneratedPattern() {
+        return StoreGeneratedPattern switch {
+            "Computed" => EfrStoreGeneratedPattern.Computed,
+            "Identity" => EfrStoreGeneratedPattern.Identity,
+            "None" => EfrStoreGeneratedPattern.None,
+            null => EfrStoreGeneratedPattern.None,
+#if DEBUG
+            _ => throw new ArgumentOutOfRangeException($"Unknown StoreGeneratedPattern value: {StoreGeneratedPattern}")
+#else
+            _ => EfrStoreGeneratedPattern.None
+#endif
+        };
+    }
 
     [XmlAttribute(AttributeName = "Nullable")]
     public string Nullable { get; set; }
@@ -200,7 +232,6 @@ public class StorageConstraintEnd : ConstraintEnd {
     [XmlIgnore]
     public override IEnumerable<IPropertyRef> Properties => PropertyRefs;
 }
-
 
 [DebuggerDisplay("Storage FK Principal {Principal} Dependent {Dependent}")]
 [XmlRoot(ElementName = "ReferentialConstraint", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm/ssdl")]
@@ -283,8 +314,8 @@ public class StorageFunction {
 
     [XmlAttribute(AttributeName = "Schema")]
     public string Schema { get; set; }
-    
-    [XmlAttribute(AttributeName="StoreFunctionName")]
+
+    [XmlAttribute(AttributeName = "StoreFunctionName")]
     public string StoreFunctionName { get; set; }
 }
 
@@ -497,10 +528,30 @@ public class ConceptualProperty : IPropertyRef {
     [XmlAttribute(AttributeName = "Scale")]
     public string Scale { get; set; }
 
+    /// <summary>
+    /// enum based on System.Data.Metadata.Edm.StoreGeneratedPattern with values:
+    ///   None = 0,     // A value indicating that it is not a server generated property. This is the default value.
+    ///   Identity = 1, // A value is generated on insert and remains unchanged on update.
+    ///   Computed = 2  // A value is generated on both insert and update.
+    /// </summary>
     [XmlAttribute(
         AttributeName = "StoreGeneratedPattern",
         Namespace = "http://schemas.microsoft.com/ado/2009/02/edm/annotation")]
     public string StoreGeneratedPattern { get; set; }
+
+    public EfrStoreGeneratedPattern GetStoreGeneratedPattern() {
+        return StoreGeneratedPattern switch {
+            "Computed" => EfrStoreGeneratedPattern.Computed,
+            "Identity" => EfrStoreGeneratedPattern.Identity,
+            "None" => EfrStoreGeneratedPattern.None,
+            null => EfrStoreGeneratedPattern.None,
+#if DEBUG
+            _ => throw new ArgumentOutOfRangeException($"Unknown StoreGeneratedPattern value: {StoreGeneratedPattern}")
+#else
+            _ => EfrStoreGeneratedPattern.None
+#endif
+        };
+    }
 
     [XmlAttribute(AttributeName = "FixedLength")]
     public string FixedLength { get; set; }
@@ -648,7 +699,6 @@ public class ConceptualConstraintEnd : ConstraintEnd {
     [XmlIgnore]
     public override IEnumerable<IPropertyRef> Properties => PropertyRefs;
 }
-
 
 [DebuggerDisplay("{Principal} {Dependent}")]
 [XmlRoot(ElementName = "ReferentialConstraint", Namespace = "http://schemas.microsoft.com/ado/2009/11/edm")]

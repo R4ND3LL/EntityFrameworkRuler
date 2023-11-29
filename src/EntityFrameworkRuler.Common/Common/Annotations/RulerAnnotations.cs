@@ -24,4 +24,10 @@ public static class RulerAnnotations {
 
     /// <summary> Function </summary>
     public const string Function = Prefix + nameof(Function);
+
+    /// <summary>The database generates a value when a row is inserted or updated.</summary>
+    public const string ComputedGenerationPattern = Prefix + "ComputedGenerationPattern";
+
+    /// <summary>The database generates a value when a row is inserted.</summary>
+    public const string IdentityGenerationPattern = Prefix + "IdentityGenerationPattern";
 }

@@ -10,8 +10,11 @@ namespace EntityFrameworkRuler.Common.Annotations;
 ///     doing so can result in application failures when updating to a new Entity Framework Core release.
 /// </summary>
 public static class EfCoreAnnotationNames {
-    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+      /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public const string MaxLength = "MaxLength";
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public const string Sentinel = "Sentinel";
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public const string Precision = "Precision";
@@ -81,6 +84,9 @@ public static class EfCoreAnnotationNames {
     public const string EagerLoaded = "EagerLoaded";
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public const string LazyLoadingEnabled = "LazyLoadingEnabled";
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public const string ProviderClrType = "ProviderClrType";
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -96,10 +102,16 @@ public static class EfCoreAnnotationNames {
     public const string InverseNavigations = "InversePropertyAttributeConvention:InverseNavigations";
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public const string InverseNavigationCandidates = "RelationshipDiscoveryConvention:InverseNavigationCandidates";
+    public const string InverseNavigationsNoAttribute = "RelationshipDiscoveryConvention:InverseNavigationsNoAttribute";
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public const string NavigationCandidates = "RelationshipDiscoveryConvention:NavigationCandidates";
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public const string NavigationCandidatesNoAttribute = "RelationshipDiscoveryConvention:NavigationCandidatesNoAttribute";
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public const string ComplexCandidates = "ComplexPropertyDiscoveryConvention:ComplexCandidates";
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public const string DerivedTypes = "BaseTypeDiscoveryConvention:DerivedTypes";
@@ -117,8 +129,19 @@ public static class EfCoreAnnotationNames {
     public const string FullChangeTrackingNotificationsRequired = "ModelValidator.FullChangeTrackingNotificationsRequired";
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public static readonly ISet<string> AllNames = new HashSet<string> {
+    public const string AdHocModel = "AdHocModel";
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public const string JsonValueReaderWriterType = "JsonValueReaderWriterType";
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public const string ElementType = "ElementType";
+
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    public static readonly ISet<string> AllNames = new HashSet<string>
+    {
         MaxLength,
+        Sentinel,
         Precision,
         Scale,
         Unicode,
@@ -143,17 +166,23 @@ public static class EfCoreAnnotationNames {
         DefiningQuery,
 #pragma warning restore CS0612 // Type or member is obsolete
         EagerLoaded,
+        LazyLoadingEnabled,
         ProviderClrType,
         ModelDependencies,
         ReadOnlyModel,
         PreUniquificationName,
-        InverseNavigations,
         DerivedTypes,
-        InverseNavigationCandidates,
+        InverseNavigations,
+        InverseNavigationsNoAttribute,
         NavigationCandidates,
+        NavigationCandidatesNoAttribute,
+        ComplexCandidates,
         AmbiguousNavigations,
         AmbiguousField,
         DuplicateServiceProperties,
-        FullChangeTrackingNotificationsRequired
+        FullChangeTrackingNotificationsRequired,
+        AdHocModel,
+        JsonValueReaderWriterType,
+        ElementType
     };
 }

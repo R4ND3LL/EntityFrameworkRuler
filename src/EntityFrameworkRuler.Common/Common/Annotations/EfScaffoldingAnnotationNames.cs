@@ -15,8 +15,8 @@ public static class EfScaffoldingAnnotationNames {
     public const string ConcurrencyToken = nameof(ConcurrencyToken);
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public const string ConnectionString = Prefix + nameof(ConnectionString);
+    public const string ClrType = nameof(ClrType);
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    public const string ClrType = nameof(ClrType);
+    public const string ConnectionString = Prefix + nameof(ConnectionString);
 }
