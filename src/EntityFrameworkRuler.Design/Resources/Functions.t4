@@ -244,7 +244,7 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
 <#
                 }
                 else {
-                    var genericArg = function.IsTableValuedFunction ? "" : function.ReturnType;
+                    var genericArg = function.IsTableValuedFunction ? "" : (function.ReturnType ?? "int");
                     if (genericArg?.StartsWith("List<") == true) {
                         genericArg = genericArg.Substring(5, genericArg.Length - 6);
                     }
@@ -258,12 +258,21 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
                         method = "SqlQueryRawTableAsync";
                     else
                         method = "SqlQueryRawAsync";
+
+                    if (genericArg?.Length>0)
+                    {
 #>
-        var response = await _context.<#= method #><#= genericArg #>(<#=
-                            code.Literal(function.CommandText) #>, sqlParameters, cancellationToken);
+        var response = (await _context.<#= method #><#= genericArg #>(<#=code.Literal(function.CommandText) #>, sqlParameters, cancellationToken)).FirstOrDefault();
 <#
+                    } else
+                    {
+#>
+        var response = await _context.<#= method #>(<#=code.Literal(function.CommandText) #>, sqlParameters, cancellationToken);
+<#
+                    }
                 }
             }
+
             foreach (var parameter in outParams) {
 #>
         <#=
