@@ -262,7 +262,7 @@ public partial class <#= Options.ContextName #>Functions : I<#= Options.ContextN
                     if (genericArg?.Length>0)
                     {
 #>
-        var response = (await _context.<#= method #><#= genericArg #>(<#=code.Literal(function.CommandText) #>, sqlParameters, cancellationToken)).FirstOrDefault();
+        var response = await _context.<#= method #><#= genericArg #>(<#=code.Literal(function.CommandText) #>, sqlParameters, cancellationToken);
 <#
                     } else
                     {
