@@ -19,12 +19,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # required by MinVer to determine the version correctly
         
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3.2.0
+    - name: Setup .NET # https://github.com/marketplace/actions/setup-net-core-sdk
+      uses: actions/setup-dotnet@v4
       with:
         global_json_file: global.json
         
