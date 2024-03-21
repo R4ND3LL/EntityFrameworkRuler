@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -533,11 +534,11 @@ internal static class EfExtensions {
             .FirstOrDefault(o => string.Equals(o.dbName, column, stringComparison));
         return prop.prop;
     }
-    
+
     public static bool ColumnsAreEqual(this DatabaseForeignKey a, DatabaseForeignKey b, StringComparison stringComparison = StringComparison.Ordinal) {
         return a.Columns.ColumnsAreEqual(b.Columns, false, stringComparison) && a.PrincipalColumns.ColumnsAreEqual(b.PrincipalColumns, false, stringComparison);
     }
-    
+
     /// <summary> return true if both column lists represent the same columns (schema details not checked) </summary>
     public static bool ColumnsAreEqual(this IList<DatabaseColumn> a, IList<DatabaseColumn> b, bool compareTable = true,
         StringComparison stringComparison = StringComparison.Ordinal) {
@@ -562,16 +563,47 @@ internal static class EfExtensions {
     public static bool HasColumn(this DatabaseForeignKey a, DatabaseColumn c, StringComparison stringComparison = StringComparison.Ordinal) {
         if (string.Equals(a.Table.Schema, c.Table.Schema, stringComparison) && string.Equals(a.Table.Name, c.Table.Name, stringComparison))
             foreach (var column in a.Columns) {
-                if (string.Equals(column.Name, c.Name, stringComparison)) 
+                if (string.Equals(column.Name, c.Name, stringComparison))
                     return true;
             }
 
         if (string.Equals(a.PrincipalTable.Schema, c.Table.Schema, stringComparison) && string.Equals(a.PrincipalTable.Name, c.Table.Name, stringComparison))
             foreach (var column in a.PrincipalColumns) {
-                if (string.Equals(column.Name, c.Name, stringComparison)) 
+                if (string.Equals(column.Name, c.Name, stringComparison))
                     return true;
             }
 
         return false;
+    }
+
+    public static bool TryConvertDefaultValue(this IReadOnlyProperty property, object value, out object newValue) {
+        if (value == null || value == DBNull.Value) {
+            newValue = value;
+            return true;
+        }
+
+        var type = value.GetType();
+        if (!property.ClrType.UnwrapNullableType().IsAssignableFrom(type)) {
+            try {
+                if (property.ClrType.IsEnum) {
+                    if (type.IsNumericType()) {
+                        // value is a number. ensure that it is the correct underlying type for the enum and then convert it.
+                        var number = Convert.ChangeType(value, property.ClrType.GetEnumUnderlyingType(), CultureInfo.InvariantCulture);
+                        newValue = Enum.ToObject(property.ClrType, number);
+                        return true;
+                    }
+                    if (value is string s) {
+                        newValue = Enum.Parse(property.ClrType, s, true);
+                        return true;
+                    }
+                }
+                newValue = Convert.ChangeType(value, property.ClrType, CultureInfo.InvariantCulture);
+            } catch (Exception) {
+                newValue = null;
+                return false;
+            }
+        } else newValue = value;
+
+        return true;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Reflection;
 using EntityFrameworkRuler.Design.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +23,7 @@ using EntityFrameworkRuler.Design.Scaffolding.Internal;
 using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using Humanizer;
 using Microsoft.EntityFrameworkCore.Design.Internal;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -56,6 +58,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
     private readonly MethodInfo visitTableMethod;
     private readonly MethodInfo getEntityTypeNameMethod;
     private readonly MethodInfo assignOnDeleteActionMethod;
+    private readonly PropertyInfo databaseColumnDefaultValueProperty;
 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -135,10 +138,23 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         assignOnDeleteActionMethod =
             GetMethodOrLog("AssignOnDeleteAction", o => t.GetStaticMethod<DatabaseForeignKey, IMutableForeignKey>(o));
 
+        if (designTimeRuleLoader.EfVersion.Major >= 8) {
+            databaseColumnDefaultValueProperty = GetPropertyOrLog<DatabaseColumn>("DefaultValue");
+        }
+
+        return;
+
         MethodInfo GetMethodOrLog(string name, Func<string, MethodInfo> getter) {
             var m = getter(name);
             if (m == null)
                 reporter.WriteWarning($"Method not found: RelationalScaffoldingModelFactory.{name}()");
+            return m;
+        }
+
+        PropertyInfo GetPropertyOrLog<T>(string name) {
+            var m = typeof(T).GetProperty("DefaultValue", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (m == null)
+                reporter.WriteWarning($"Property not found: {typeof(T).Name}.{name}()");
             return m;
         }
     }
@@ -1885,6 +1901,43 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         return parameter;
     }
 
+    private PropertyBuilder VisitColumn(EntityTypeBuilder builder, DatabaseColumn column, Func<PropertyBuilder> baseCall) {
+        // if (column.DefaultValueSql != null) {
+        //     propertyBuilder.HasDefaultValueSql(column.DefaultValueSql);
+        // }
+
+        PropertyBuilder propertyBuilder;
+        try {
+            propertyBuilder = baseCall();
+        } catch (InvalidOperationException ex) when (databaseColumnDefaultValueProperty is not null && column.DefaultValueSql is not null &&
+                                                     ex.Message.Contains("Cannot set default value")) {
+            // Breaking change in EF 8.
+            // System.InvalidOperationException: Cannot set default value '0' of type 'System.Int16' on property 'ColumnName' of type 'EnumType' in entity type 'EntityName (Dictionary<string, object>)'.
+            // The default value must be of the same type as the property or capable of passing through conversion with:
+            //	return Convert.ChangeType(value, property.ClrType, CultureInfo.InvariantCulture);
+            // remove default and try again.
+
+            var oldDefault = databaseColumnDefaultValueProperty.GetValue(column);
+            databaseColumnDefaultValueProperty.SetValue(column, null);
+            propertyBuilder = baseCall();
+
+            // now fix up the property with the correct default behavior
+            databaseColumnDefaultValueProperty.SetValue(column, oldDefault);
+            if (oldDefault != null) {
+                if (propertyBuilder.Metadata.TryConvertDefaultValue(oldDefault, out var converted)) {
+                    propertyBuilder.HasDefaultValue(converted);
+                } else {
+                    // rather than killing the scaffold, we will just warn the user and continue
+                    reporter.WriteWarning(
+                        $"The default value '{oldDefault}' of type '{oldDefault.GetType().ShortDisplayName()}' on column '{column.Name}' of type '{builder.Metadata.DisplayName()}' is incompatible with the property type '{propertyBuilder.Metadata.Name}'.");
+                }
+            }
+        }
+
+        return propertyBuilder;
+    }
+
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual TypeScaffoldingInfo GetTypeScaffoldingInfo(DatabaseFunctionParameter parameter) => GetTypeScaffoldingInfo(parameter?.StoreType);
 
@@ -2077,6 +2130,17 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 }
 
                 AddNavigationProperties(fk, BaseCall);
+                break;
+            }
+            case "VisitColumn" when invocation.Arguments.Length == 2 && invocation.Arguments[0] is EntityTypeBuilder etb &&
+                                    invocation.Arguments[1] is DatabaseColumn col: {
+                PropertyBuilder BaseCall() {
+                    invocation.Proceed();
+                    return (PropertyBuilder)invocation.ReturnValue;
+                }
+
+                var response = VisitColumn(etb, col, BaseCall);
+                invocation.ReturnValue = response;
                 break;
             }
             default:

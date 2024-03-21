@@ -63,4 +63,11 @@ public static class TypeExtensions {
     public static double RangeLimit(this double value, double min, double max) {
         return Math.Max(Math.Min(value, max), min);
     }
+
+    /// <summary> Returns true if the type is a numeric type like int or long </summary>
+    public static bool IsNumericType(this Type type) {
+        if (type.IsArray) return false;
+        var tci = (int)Type.GetTypeCode(type);
+        return tci is >= 5 and <= 15; // from SByte to Decimal
+    }
 }

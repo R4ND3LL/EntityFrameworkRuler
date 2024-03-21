@@ -50,6 +50,9 @@ public class DesignTimeRuleLoader : IDesignTimeRuleLoader {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected bool IsEf7 => EfVersion?.Major == 7;
 
+    /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+    protected bool IsEf8 => EfVersion?.Major == 8;
+
     private List<DbContextRuleNode> loadedRules;
 
     /// <inheritdoc />
