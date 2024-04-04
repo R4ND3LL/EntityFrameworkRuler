@@ -1483,6 +1483,10 @@
         {
           "Name": "ufnGetContactInformation",
           "Parameters": []
+        },
+        {
+          "Name": "EmptySproc",
+          "Parameters": []
         }
       ]
     }

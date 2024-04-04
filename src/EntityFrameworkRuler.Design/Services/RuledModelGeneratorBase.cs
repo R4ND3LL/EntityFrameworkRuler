@@ -5,13 +5,14 @@ using EntityFrameworkRuler.Design.Scaffolding.Internal;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Mono.TextTemplating;
+using OperationException = Microsoft.EntityFrameworkCore.Design.OperationException;
 
 namespace EntityFrameworkRuler.Design.Services;
 
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public abstract class RuledModelGeneratorBase {
-    
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected IOperationReporter reporter;
     private TemplatingEngine engine;

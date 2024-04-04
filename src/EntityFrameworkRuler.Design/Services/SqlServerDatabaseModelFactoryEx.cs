@@ -44,21 +44,21 @@ public class SqlServerDatabaseModelFactoryEx : IDatabaseModelFactoryEx {
         using var command = connection.CreateCommand();
         command.CommandText =
             """
-SELECT ROUTINE_SCHEMA,
-       ROUTINE_NAME,
-       CAST(CASE WHEN (DATA_TYPE != 'TABLE') THEN 1 ELSE 0 END AS bit) AS IS_SCALAR,
-       ROUTINE_TYPE
-FROM INFORMATION_SCHEMA.ROUTINES
-WHERE NULLIF(ROUTINE_NAME, '') IS NOT NULL
-  AND OBJECTPROPERTY(OBJECT_ID(QUOTENAME(ROUTINE_SCHEMA) + '.' + QUOTENAME(ROUTINE_NAME)), 'IsMSShipped') = 0
-  AND (select major_id
-       from sys.extended_properties
-       where major_id = object_id(QUOTENAME(ROUTINE_SCHEMA) + '.' + QUOTENAME(ROUTINE_NAME))
-         and minor_id = 0
-         and class = 1
-         and name = N'microsoft_database_tools_support') IS NULL
-ORDER BY ROUTINE_NAME
-""";
+            SELECT ROUTINE_SCHEMA,
+                   ROUTINE_NAME,
+                   CAST(CASE WHEN (DATA_TYPE != 'TABLE') THEN 1 ELSE 0 END AS bit) AS IS_SCALAR,
+                   ROUTINE_TYPE
+            FROM INFORMATION_SCHEMA.ROUTINES
+            WHERE NULLIF(ROUTINE_NAME, '') IS NOT NULL
+              AND OBJECTPROPERTY(OBJECT_ID(QUOTENAME(ROUTINE_SCHEMA) + '.' + QUOTENAME(ROUTINE_NAME)), 'IsMSShipped') = 0
+              AND (select major_id
+                   from sys.extended_properties
+                   where major_id = object_id(QUOTENAME(ROUTINE_SCHEMA) + '.' + QUOTENAME(ROUTINE_NAME))
+                     and minor_id = 0
+                     and class = 1
+                     and name = N'microsoft_database_tools_support') IS NULL
+            ORDER BY ROUTINE_NAME
+            """;
 
         RoutineFactory procedureFactory = null;
         RoutineFactory functionFactory = null;
@@ -120,14 +120,25 @@ ORDER BY ROUTINE_NAME
 
             if (!function.IsScalar)
                 try {
-                    function.Results.AddRange(factory.GetResultElementLists(connection, function, true));
-                    function.HasAcquiredResultSchema = true;
+                    var response = factory.GetResultElementLists(connection, function, true);
+                    if (response.Succeeded && response.Result != null) {
+                        if (!response.Result.IsNullOrEmpty())
+                            function.Results.AddRange(response.Result);
+                        function.HasAcquiredResultSchema = true;
+                    } else {
+                        HandleSchemaFailure(response.Message);
+                    }
                 } catch (Exception ex) {
-                    function.HasAcquiredResultSchema = false;
-                    function.Results.Clear();
-                    function.Results.Add(new() { Function = function, Schema = function.Schema, Comment = $"{function.Name} result set stub" });
-                    reporter.WriteError($"RULED: Unable to get result schema for {function.FunctionType} '{function.Schema}.{function.Name}'. {ex.Message}.");
+                    HandleSchemaFailure(ex.Message);
                 }
+
+            void HandleSchemaFailure(string message) {
+                function.HasAcquiredResultSchema = false;
+                function.Results.Clear();
+                function.Results.Add(new() { Function = function, Schema = function.Schema, Comment = $"{function.Name} result set stub" });
+                function.IsScalar = true; // since no result set can be read, will treat as scalar
+                reporter.WriteWarning($"RULED: Unable to get result schema for {function.FunctionType} '{function.Schema}.{function.Name}'. {message}.");
+            }
 
             var failure = false;
             if (function.FunctionType == FunctionType.Function
@@ -182,26 +193,26 @@ ORDER BY ROUTINE_NAME
         using var command = connection.CreateCommand();
         command.CommandText =
             """
-                SELECT
-                    'Parameter' = p.name,
-                    'Type'   = COALESCE(type_name(p.system_type_id), type_name(p.user_type_id)),
-                    'Length'   = CAST(p.max_length AS INT),
-                    'Precision'   = CAST(case when type_name(p.system_type_id) = 'uniqueidentifier'
-                                then p.precision
-                                else OdbcPrec(p.system_type_id, p.max_length, p.precision) end AS INT),
-                    'Scale'   = CAST(OdbcScale(p.system_type_id, p.scale) AS INT),
-                    'Order'  = CAST(parameter_id AS INT),
-                    'output' = p.is_output,
-                    'TypeName' = QUOTENAME(SCHEMA_NAME(t.schema_id)) + '.' + QUOTENAME(TYPE_NAME(p.user_type_id)),
-                	'TypeSchema' = t.schema_id,
-                	'TypeId' = p.user_type_id,
-                    'FunctionName' = OBJECT_NAME(p.object_id),
-                    'FunctionSchema' = OBJECT_SCHEMA_NAME(p.object_id),
-                    'Collation'   = convert(sysname, case when p.system_type_id in (35, 99, 167, 175, 231, 239) then ServerProperty('collation') end)
-                    from sys.parameters p
-                	LEFT JOIN sys.table_types t ON t.user_type_id = p.user_type_id
-                    ORDER BY p.object_id, p.parameter_id;
-                """;
+            SELECT
+                'Parameter' = p.name,
+                'Type'   = COALESCE(type_name(p.system_type_id), type_name(p.user_type_id)),
+                'Length'   = CAST(p.max_length AS INT),
+                'Precision'   = CAST(case when type_name(p.system_type_id) = 'uniqueidentifier'
+                            then p.precision
+                            else OdbcPrec(p.system_type_id, p.max_length, p.precision) end AS INT),
+                'Scale'   = CAST(OdbcScale(p.system_type_id, p.scale) AS INT),
+                'Order'  = CAST(parameter_id AS INT),
+                'output' = p.is_output,
+                'TypeName' = QUOTENAME(SCHEMA_NAME(t.schema_id)) + '.' + QUOTENAME(TYPE_NAME(p.user_type_id)),
+            	'TypeSchema' = t.schema_id,
+            	'TypeId' = p.user_type_id,
+                'FunctionName' = OBJECT_NAME(p.object_id),
+                'FunctionSchema' = OBJECT_SCHEMA_NAME(p.object_id),
+                'Collation'   = convert(sysname, case when p.system_type_id in (35, 99, 167, 175, 231, 239) then ServerProperty('collation') end)
+                from sys.parameters p
+            	LEFT JOIN sys.table_types t ON t.user_type_id = p.user_type_id
+                ORDER BY p.object_id, p.parameter_id;
+            """;
 
         using var reader = command.ExecuteReader();
         Dictionary<string, List<DatabaseFunctionParameter>> allParameters = null;
@@ -266,13 +277,13 @@ internal class SqlServerFunctionFactory : RoutineFactory {
         return new DatabaseFunction { IsScalar = isScalar, FunctionType = FunctionType.Function };
     }
 
-    public override List<DatabaseFunctionResultTable> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
+    public override TaskResponse<List<DatabaseFunctionResultTable>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
         if (dbFunction is null) throw new ArgumentNullException(nameof(dbFunction));
+        try {
+            var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema };
 
-        var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema };
-
-        using var command = connection.CreateCommand();
-        command.CommandText = $@"
+            using var command = connection.CreateCommand();
+            command.CommandText = $@"
 SELECT
     c.name,
     COALESCE(type_name(c.system_type_id), type_name(c.user_type_id)) AS type_name,
@@ -281,22 +292,25 @@ SELECT
 FROM sys.columns c
 WHERE object_id = OBJECT_ID('{dbFunction.Schema}.{dbFunction.Name}');";
 
-        using var reader = command.ExecuteReader();
+            using var reader = command.ExecuteReader();
 
-        while (reader.Read()) {
-            var parameter = new DatabaseFunctionResultColumn() {
-                Name = reader.GetString(0) is { } s && !string.IsNullOrEmpty(s) ? s : $"Col{table.Columns.Count + 1}",
-                StoreType = reader.GetString(1),
-                Ordinal = reader.GetInt32(2),
-                Nullable = reader.GetBoolean(3),
-                Table = table
-            };
+            while (reader.Read()) {
+                var parameter = new DatabaseFunctionResultColumn() {
+                    Name = reader.GetString(0) is { } s && !string.IsNullOrEmpty(s) ? s : $"Col{table.Columns.Count + 1}",
+                    StoreType = reader.GetString(1),
+                    Ordinal = reader.GetInt32(2),
+                    Nullable = reader.GetBoolean(3),
+                    Table = table
+                };
 
-            table.Columns.Add(parameter);
-            parameter.Table = table;
+                table.Columns.Add(parameter);
+                parameter.Table = table;
+            }
+
+            return new List<DatabaseFunctionResultTable>() { table };
+        } catch (Exception ex) {
+            return $"Unable to get result schema for function {dbFunction.Schema}.{dbFunction.Name}. {ex.Message}.";
         }
-
-        return new() { table };
     }
 }
 
@@ -312,112 +326,119 @@ internal class SqlServerProcedureFactory : RoutineFactory {
         return new() { FunctionType = FunctionType.StoredProcedure };
     }
 
-    public override List<DatabaseFunctionResultTable> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
-        if (connection is null) throw new ArgumentNullException(nameof(connection));
+    public override TaskResponse<List<DatabaseFunctionResultTable>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults) {
+        if (connection is null) return new ArgumentNullException(nameof(connection));
 
-        if (dbFunction is null) throw new ArgumentNullException(nameof(dbFunction));
+        if (dbFunction is null) return new ArgumentNullException(nameof(dbFunction));
 
         var list = GetAllResultSets(connection, dbFunction, !multipleResults);
-        if (list.IsNullOrEmpty() && connection is SqlConnection sc) {
+        if (list.Result.IsNullOrEmpty() && connection is SqlConnection sc)
             list = GetFirstResultSet(sc, dbFunction);
-        }
+
         return list;
     }
 
-    private static List<DatabaseFunctionResultTable> GetAllResultSets(DbConnection connection, DatabaseFunction dbFunction, bool singleResult) {
-        var result = new List<DatabaseFunctionResultTable>();
-        using var sqlCommand = connection.CreateCommand();
+    private static TaskResponse<List<DatabaseFunctionResultTable>> GetAllResultSets(DbConnection connection, DatabaseFunction dbFunction, bool singleResult) {
+        try {
+            var result = new List<DatabaseFunctionResultTable>();
+            using var sqlCommand = connection.CreateCommand();
+            var fullName = $"[{dbFunction.Schema}].[{dbFunction.Name}]";
 
 #pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        sqlCommand.CommandText = $"[{dbFunction.Schema}].[{dbFunction.Name}]";
+            sqlCommand.CommandText = fullName;
 #pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
-        sqlCommand.CommandType = CommandType.StoredProcedure;
+            sqlCommand.CommandType = CommandType.StoredProcedure;
 
-        var parameters = dbFunction.Parameters.Take(dbFunction.Parameters.Count - 1);
+            var parameters = dbFunction.Parameters.Take(dbFunction.Parameters.Count - 1);
 
-        foreach (var parameter in parameters) {
-            var param = new SqlParameter("@" + parameter.Name, DBNull.Value);
+            foreach (var parameter in parameters) {
+                var param = new SqlParameter("@" + parameter.Name, DBNull.Value);
 
-            if (parameter.ClrType() == typeof(DataTable)) {
-                param.Value = GetDataTableFromSchema(parameter, connection);
-                param.SqlDbType = SqlDbType.Structured;
-            }
-
-            if (parameter.ClrType() == typeof(byte[])) param.SqlDbType = SqlDbType.VarBinary;
-
-            sqlCommand.Parameters.Add(param);
-        }
-
-        using var schemaReader = sqlCommand.ExecuteReader(CommandBehavior.SchemaOnly);
-        do {
-            // https://docs.microsoft.com/en-us/dotnet/api/system.data.datatablereader.getschematable
-            var schemaTable = schemaReader.GetSchemaTable();
-            var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema };
-
-            if (schemaTable == null) break;
-
-            int unnamedColumnCount = 0;
-
-            foreach (DataRow row in schemaTable.Rows)
-                if (row != null) {
-                    var name = (row[0]?.ToString()).EmptyIfNullOrWhitespace();
-                    if (name.IsNullOrWhiteSpace()) {
-                        unnamedColumnCount++;
-                        //continue;
-                    }
-
-                    var storeType = row["DataTypeName"].ToString();
-
-                    if (row["ProviderSpecificDataType"]?.ToString()?.StartsWith("Microsoft.SqlServer.Types.Sql", StringComparison.OrdinalIgnoreCase) ?? false) {
-#pragma warning disable CA1308
-                        // Normalize strings to uppercase
-                        storeType = row["ProviderSpecificDataType"].ToString()?.Replace("Microsoft.SqlServer.Types.Sql", string.Empty, StringComparison.OrdinalIgnoreCase)
-                            .ToLowerInvariant();
-#pragma warning restore CA1308
-                        // Normalize strings to uppercase
-                    }
-
-                    table.Columns.Add(new DatabaseFunctionResultColumn() {
-                        Name = name,
-                        Nullable = (bool?)row["AllowDBNull"] ?? true,
-                        Ordinal = (int)row["ColumnOrdinal"],
-                        StoreType = storeType,
-                        Precision = (short?)row["NumericPrecision"],
-                        Scale = (short?)row["NumericScale"],
-                        Table = table
-                    });
+                if (parameter.ClrType() == typeof(DataTable)) {
+                    param.Value = GetDataTableFromSchema(parameter, connection);
+                    param.SqlDbType = SqlDbType.Structured;
                 }
 
-            // Fail if the result set contains multiple un-named columns
-            if (schemaTable.Rows.Count > 1 && schemaTable.Rows.Count == unnamedColumnCount) throw new InvalidOperationException($"Only un-named result columns in procedure");
+                if (parameter.ClrType() == typeof(byte[])) param.SqlDbType = SqlDbType.VarBinary;
 
-            if (unnamedColumnCount > 0) dbFunction.UnnamedColumnCount += unnamedColumnCount;
+                sqlCommand.Parameters.Add(param);
+            }
 
-            result.Add(table);
-        } while (schemaReader.NextResult() && !singleResult);
+            using var schemaReader = sqlCommand.ExecuteReader(CommandBehavior.SchemaOnly);
+            do {
+                // https://docs.microsoft.com/en-us/dotnet/api/system.data.datatablereader.getschematable
+                var schemaTable = schemaReader.GetSchemaTable();
+                var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema };
 
-        return result;
+                if (schemaTable == null) break;
+
+                int unnamedColumnCount = 0;
+
+                foreach (DataRow row in schemaTable.Rows)
+                    if (row != null) {
+                        var name = (row[0]?.ToString()).EmptyIfNullOrWhitespace();
+                        if (name.IsNullOrWhiteSpace()) {
+                            unnamedColumnCount++;
+                            //continue;
+                        }
+
+                        var storeType = row["DataTypeName"].ToString();
+
+                        if (row["ProviderSpecificDataType"]?.ToString()?.StartsWith("Microsoft.SqlServer.Types.Sql", StringComparison.OrdinalIgnoreCase) ?? false) {
+#pragma warning disable CA1308
+                            // Normalize strings to uppercase
+                            storeType = row["ProviderSpecificDataType"].ToString()?.Replace("Microsoft.SqlServer.Types.Sql", string.Empty, StringComparison.OrdinalIgnoreCase)
+                                .ToLowerInvariant();
+#pragma warning restore CA1308
+                            // Normalize strings to uppercase
+                        }
+
+                        table.Columns.Add(new DatabaseFunctionResultColumn() {
+                            Name = name,
+                            Nullable = (bool?)row["AllowDBNull"] ?? true,
+                            Ordinal = (int)row["ColumnOrdinal"],
+                            StoreType = storeType,
+                            Precision = (short?)row["NumericPrecision"],
+                            Scale = (short?)row["NumericScale"],
+                            Table = table
+                        });
+                    }
+
+                // Fail if the result set contains multiple un-named columns
+                if (schemaTable.Rows.Count > 1 && schemaTable.Rows.Count == unnamedColumnCount)
+                    return $"Only un-named result columns in procedure {fullName}";
+
+                if (unnamedColumnCount > 0) dbFunction.UnnamedColumnCount += unnamedColumnCount;
+
+                result.Add(table);
+            } while (schemaReader.NextResult() && !singleResult);
+
+            return result;
+        } catch (Exception ex) {
+            return $"Unable to get result schema for procedure {dbFunction.Schema}.{dbFunction.Name}. {ex.Message}.";
+        }
     }
 
-    private static List<DatabaseFunctionResultTable> GetFirstResultSet(SqlConnection connection, DatabaseFunction dbFunction) {
-        var result = new List<DatabaseFunctionResultTable>();
-        using var dtResult = new DataTable();
-
-        var sql = $"exec dbo.sp_describe_first_result_set N'[{dbFunction.Schema}].[{dbFunction.Name}]';";
+    private static TaskResponse<List<DatabaseFunctionResultTable>> GetFirstResultSet(SqlConnection connection, DatabaseFunction dbFunction) {
+        try {
+            var result = new List<DatabaseFunctionResultTable>();
+            using var dtResult = new DataTable();
+            var fullName = $"[{dbFunction.Schema}].[{dbFunction.Name}]";
+            var sql = $"exec dbo.sp_describe_first_result_set N'{fullName}';";
 
 #pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-        using var adapter = new SqlDataAdapter {
-            SelectCommand = new SqlCommand(sql, connection),
-        };
+            using var adapter = new SqlDataAdapter {
+                SelectCommand = new SqlCommand(sql, connection),
+            };
 #pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
 
-        adapter.Fill(dtResult);
-        int unnamedColumnCount = 0;
-        var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema };
-        result.Add(table);
+            adapter.Fill(dtResult);
+            int unnamedColumnCount = 0;
+            var table = new DatabaseFunctionResultTable() { Function = dbFunction, Schema = dbFunction.Schema };
+            result.Add(table);
 
-        foreach (DataRow row in dtResult.Rows) {
-            if (row != null) {
+            foreach (DataRow row in dtResult.Rows) {
+                if (row == null) continue;
                 var name = row["name"].ToString();
                 if (string.IsNullOrEmpty(name)) {
                     unnamedColumnCount++;
@@ -434,18 +455,20 @@ internal class SqlServerProcedureFactory : RoutineFactory {
                     Table = table
                 });
             }
-        }
 
-        // If the result set only contains un-named columns
-        if (dtResult.Rows.Count == unnamedColumnCount) {
-            throw new InvalidOperationException($"Only un-named result columns in procedure");
-        }
+            // If the result set only contains un-named columns
+            if (dtResult.Rows.Count > 1 && dtResult.Rows.Count == unnamedColumnCount) {
+                return $"Only un-named result columns in procedure {fullName}";
+            }
 
-        if (unnamedColumnCount > 0) {
-            dbFunction.UnnamedColumnCount += unnamedColumnCount;
-        }
+            if (unnamedColumnCount > 0) {
+                dbFunction.UnnamedColumnCount += unnamedColumnCount;
+            }
 
-        return result;
+            return result;
+        } catch (Exception ex) {
+            return $"Unable to get result schema for procedure {dbFunction.Schema}.{dbFunction.Name}. {ex.Message}.";
+        }
     }
 
 
@@ -484,5 +507,5 @@ internal class SqlServerProcedureFactory : RoutineFactory {
 
 internal abstract class RoutineFactory {
     public abstract DatabaseFunction Create(bool isScalar);
-    public abstract List<DatabaseFunctionResultTable> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults);
+    public abstract TaskResponse<List<DatabaseFunctionResultTable>> GetResultElementLists(DbConnection connection, DatabaseFunction dbFunction, bool multipleResults);
 }
