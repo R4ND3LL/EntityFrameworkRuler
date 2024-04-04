@@ -9,6 +9,7 @@
 Automate the customization of the EF Core Reverse Engineered model. 
 
 Features include:
+- Generate custom code using your own T4 files in the scaffolding process 
 - Stored procedure and function support (**NEW AS OF JUNE 20, 2023 v1.2.28**)
 - Legacy EF6 (EDMX) migration support
 - Class renaming
