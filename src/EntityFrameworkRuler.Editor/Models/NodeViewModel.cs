@@ -17,7 +17,6 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
         Validator = validator ?? ((RuleNodeViewModel)parent)?.Validator ?? new RuleValidator();
         hookedCollections = new();
         HookCollectionChanges(item);
-        HookCollectionChanges(item);
     }
 
     private void HookCollectionChanges(RuleBase item) {
@@ -40,6 +39,8 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
 
         void Hook(IEnumerable list) {
             if (list is not INotifyCollectionChanged cc) return;
+            if (hookedCollections.Contains(cc)) return;
+            cc.CollectionChanged -= OnItemCollectionChanged;
             cc.CollectionChanged += OnItemCollectionChanged;
             hookedCollections.Add(cc);
         }
@@ -100,6 +101,29 @@ public sealed partial class RuleNodeViewModel : NodeViewModel<RuleBase> {
         foreach (var child in Item.GetChildren())
             collection.Add(new RuleNodeViewModel((RuleBase)child, this, expChildren, Filter));
         return collection;
+    }
+
+    public override void RemoveChild(NodeViewModel<RuleBase> node) {
+        switch (Item) {
+            case DbContextRule dr:
+                if (dr.Schemas.Contains(node.Item))
+                    dr.Schemas.Remove((SchemaRule)node.Item);
+                break;
+            case SchemaRule sr:
+                if (sr.Entities.Contains(node.Item))
+                    sr.Entities.Remove((EntityRule)node.Item);
+                break;
+            case EntityRule tr:
+                if (node.Item is NavigationRule nr) {
+                    if (tr.Navigations.Contains(nr))
+                        tr.Navigations.Remove(nr);
+                } else {
+                    if (tr.Properties.Contains(node.Item))
+                        tr.Properties.Remove((PropertyRule)node.Item);
+                }
+
+                break;
+        }
     }
 
     public override string Name {
@@ -178,6 +202,7 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     /// </summary>
     public sealed partial class TreeSelection : ObservableObject {
         [ObservableProperty] private NodeViewModel<T> node;
+
         partial void OnNodeChanging(NodeViewModel<T> value) {
             if (node != null) {
                 // ensure old selection IsSelected is changed to false otherwise reselection of same node will fail to set the node prop
@@ -325,4 +350,5 @@ public abstract partial class NodeViewModel<T> : ObservableObject {
     public virtual void OnKeyboardFocusChanged() { }
 
     public override string ToString() => Name;
+    public abstract void RemoveChild(NodeViewModel<RuleBase> node);
 }
