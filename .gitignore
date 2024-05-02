@@ -418,3 +418,4 @@ MigrationBackup/
 /src/Tests/NorthwindTestDesign/ModelsScaffold/NorthwindEntitiesFunctions.cs
 /src/Tests/NorthwindTestDesign/ModelsScaffold/INorthwindEntitiesFunctions.cs
 /src/Tests/NorthwindTestDesign/ModelsScaffold/NorthwindEntities.Functions.cs
+/.vscode/settings.json

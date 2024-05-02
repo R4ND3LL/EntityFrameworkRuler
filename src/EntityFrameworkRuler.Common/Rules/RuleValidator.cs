@@ -83,12 +83,31 @@ public class RuleValidator : IRuleValidator {
                     "Invalid namespace")
                 .For(o => o.ColumnRegexPattern).Assert(o => VerifyRegEx(o))
                 .For(o => o.TableRegexPattern).Assert(o => VerifyRegEx(o))
-                .For(o => o.Entities)
+                .For(o => o.Entities, rule => $"{rule.SchemaName} entities")
                 //.Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Entity Names should be unique")
-                .Assert(o => o.Select(r => r.EntityName).Where(r => r.HasCharacters()).IsDistinct(), "Entity EntityNames should be unique")
-                .Assert(o => o.Select(r => ((IRuleItem)r).GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
-                    "Final entity names should be unique")
-                .For(o => o.Annotations)
+                .Assert(o => {
+                    var list = o.Select(r => r.EntityName)
+                        .Where(r => r.HasCharacters())
+                        .GroupBy(r => r)
+                        .Where(r => r.Count() > 1)
+                        .Select(r => r.Key)
+                        .ToList();
+                    if (list.IsNullOrEmpty()) return EvaluatorResponse.SuccessResponse();
+                    var duplicates = list.Join();
+                    return EvaluatorResponse.FailResponse("Entity EntityNames should be unique. Duplicates are " + duplicates);
+                })
+                .Assert(o => {
+                    var list = o.Select(r => r.GetFinalName())
+                        .Where(r => r.HasCharacters())
+                        .GroupBy(r => r)
+                        .Where(r => r.Count() > 1)
+                        .Select(r => r.Key)
+                        .ToList();
+                    if (list.IsNullOrEmpty()) return EvaluatorResponse.SuccessResponse();
+                    var duplicates = list.Join();
+                    return EvaluatorResponse.FailResponse("Final entity names should be unique. Duplicates are " + duplicates);
+                })
+                .For(o => o.Annotations, rule => $"{rule.SchemaName} annotations")
                 .Assert(o => o.All(r => r.Key.HasCharacters()), "Annotation keys are required")
                 .Assert(o => o.Select(r => r.Key).IsDistinct(), "Annotation keys should be unique")
             ;
@@ -102,17 +121,35 @@ public class RuleValidator : IRuleValidator {
                 .Assert(s => s.Length < 200, tooLong)
                 .For(o => o.NewName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
                 .For(o => o.EntityName).Assert(o => o.IsNullOrWhiteSpace() || (o.IsValidSymbolName() && o.Length < 300), invalidSymbolName)
-                .For(o => o.Properties)
+                .For(o => o.Properties, rule => $"{rule.GetFinalName()} Properties")
                 .Assert(o => o.Select(r => r.Name).Where(r => r.HasCharacters()).IsDistinct(), "Column Names should be unique")
-                .Assert(o => o.Select(r => r.PropertyName).Where(r => r.HasCharacters()).IsDistinct(),
-                    "Column PropertyNames should be unique")
-                .For(o => o.Navigations)
+                .Assert(o => {
+                    var list = o.Select(r => r.PropertyName)
+                        .Where(r => r.HasCharacters())
+                        .GroupBy(r => r)
+                        .Where(r => r.Count() > 1)
+                        .Select(r => r.Key)
+                        .ToList();
+                    if (list.IsNullOrEmpty()) return EvaluatorResponse.SuccessResponse();
+                    var duplicates = list.Join();
+                    return EvaluatorResponse.FailResponse("Column PropertyNames should be unique. Duplicates are " + duplicates);
+                })
+                //.For(o => o.Navigations)
                 // .Assert(o => o.Where(r => r.FkName.HasCharacters())
                 //         .Select(r => (r.FkName, r.IsPrincipal)).IsDistinct(),
                 //     "FkNames should be unique") // removed to allow for self referencing navigation pairs
-                .For(o => ((IEntityRule)o).GetProperties())
-                .Assert(o => o.Select(r => r.GetFinalName()).Where(r => r.HasCharacters()).IsDistinct(),
-                    "Final property names should be unique")
+                .For(o => ((IEntityRule)o).GetProperties(), rule => $"{rule.GetFinalName()} properties")
+                .Assert(o => {
+                    var list = o.Select(r => r.GetFinalName())
+                        .Where(r => r.HasCharacters())
+                        .GroupBy(r => r)
+                        .Where(r => r.Count() > 1)
+                        .Select(r => r.Key)
+                        .ToList();
+                    if (list.IsNullOrEmpty()) return EvaluatorResponse.SuccessResponse();
+                    var duplicates = list.Join();
+                    return EvaluatorResponse.FailResponse("Final property names should be unique. Duplicates are " + duplicates);
+                })
                 .For(o => o.Annotations)
                 .Assert(o => o.All(r => r.Key.HasCharacters()), "Annotation keys are required")
                 .Assert(o => o.Select(r => r.Key).IsDistinct(), "Annotation keys should be unique")

@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
+
 // ReSharper disable ClassCanBeSealed.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBeInternal
@@ -13,13 +14,13 @@ public class Validator<T> : IValidator where T : class {
     private readonly List<PropertyValidatorBase> propertyValidators = new();
 
     /// <summary> Create a validation rule for the given property. </summary>
-    public PropertyValidator<TProperty> For<TProperty>(Expression<Func<T, TProperty>> propertyPath) {
+    public PropertyValidator<TProperty> For<TProperty>(Expression<Func<T, TProperty>> propertyPath, Func<T, string> label = null) {
         if (propertyPath is null) throw new ArgumentNullException(nameof(propertyPath));
 
         if (!TryGetPropertyMetadata(propertyPath.Body, out var path1))
             throw new ArgumentException("Invalid property path expression", nameof(propertyPath));
 
-        var propertyValidator = new Validator<T>.PropertyValidator<TProperty>(this, propertyPath, path1);
+        var propertyValidator = new Validator<T>.PropertyValidator<TProperty>(this, propertyPath, path1, label);
         propertyValidators.Add(propertyValidator);
         return propertyValidator;
     }
@@ -65,34 +66,42 @@ public class Validator<T> : IValidator where T : class {
         private readonly Validator<T> owner;
 
         /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-        public PropertyValidator(Validator<T> owner, Expression<Func<T, TProperty>> expression, string property) {
+        public PropertyValidator(Validator<T> owner, Expression<Func<T, TProperty>> expression, string property, Func<T, string> label = null) {
             this.owner = owner;
             Expression = expression;
             Property = property;
+            LabelGetter = label;
         }
 
         /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
         public Expression<Func<T, TProperty>> Expression { get; }
 
-        private readonly List<(Func<T, TProperty, bool>, string)> evaluators = new();
+        private readonly List<Func<T, TProperty, EvaluatorResponse>> evaluators = new();
         private Func<T, TProperty> compiled;
 
         /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
         public PropertyValidator<TProperty> Assert(Func<TProperty, bool> evaluator, string message = null) {
             if (evaluator == null) throw new ArgumentNullException(nameof(evaluator));
-            evaluators.Add(((_, property) => evaluator(property), message));
+            evaluators.Add((_, property) => new(evaluator(property), message));
+            return this;
+        }
+
+        /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+        public PropertyValidator<TProperty> Assert(Func<TProperty, EvaluatorResponse> evaluator) {
+            if (evaluator == null) throw new ArgumentNullException(nameof(evaluator));
+            evaluators.Add((_, property) => evaluator(property));
             return this;
         }
 
         /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
         public PropertyValidator<TProperty> Assert(Func<T, TProperty, bool> evaluator, string message = null) {
             if (evaluator == null) throw new ArgumentNullException(nameof(evaluator));
-            evaluators.Add((evaluator, message));
+            evaluators.Add((t, property) => new(evaluator(t, property), message));
             return this;
         }
 
         /// <summary> Create a validation rule for the given property. </summary>
-        public PropertyValidator<TP> For<TP>(Expression<Func<T, TP>> propertyPath) => owner.For(propertyPath);
+        public PropertyValidator<TP> For<TP>(Expression<Func<T, TP>> propertyPath, Func<T, string> label = null) => owner.For(propertyPath, label);
 
         internal override IEnumerable<EvaluationFailure> Evaluate(T instance) {
             compiled ??= Expression.Compile();
@@ -102,31 +111,32 @@ public class Validator<T> : IValidator where T : class {
                 value = compiled(instance);
                 readError = null;
             } catch (Exception ex) {
-                readError = $"{Property} read error: {ex.Message}";
+                readError = $"{GetPropertyLabel(instance)} read error: {ex.Message}";
                 value = default;
             }
 
             if (readError != null) {
-                yield return new EvaluationFailure(instance, Property, value, readError);
+                yield return new EvaluationFailure(instance, GetPropertyLabel(instance), value, readError);
                 yield break;
             }
 
 
-            foreach (var (evaluator, message) in evaluators) {
+            foreach (var evaluator in evaluators) {
                 string msg;
                 try {
-                    if (evaluator(instance, value)) continue;
+                    var evaluatorResponse = evaluator(instance, value);
+                    if (evaluatorResponse.Success) continue;
                     // failed!
-                    if (message.IsNullOrWhiteSpace()) {
-                        msg = $"{Property} value '{value}' is invalid";
+                    if (evaluatorResponse.Message.IsNullOrWhiteSpace()) {
+                        msg = $"{GetPropertyLabel(instance)} value '{value}' is invalid";
                     } else {
-                        msg = $"{Property} error: {message}";
+                        msg = $"{GetPropertyLabel(instance)} error: {evaluatorResponse.Message}";
                     }
                 } catch (Exception ex) {
-                    msg = $"{Property} error: {ex.Message}";
+                    msg = $"{GetPropertyLabel(instance)} error: {ex.Message}";
                 }
 
-                yield return new EvaluationFailure(instance, Property, value, msg);
+                yield return new EvaluationFailure(instance, GetPropertyLabel(instance), value, msg);
                 break; // break on first
             }
         }
@@ -139,6 +149,12 @@ public class Validator<T> : IValidator where T : class {
     public abstract class PropertyValidatorBase {
         /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
         public string Property { get; protected set; }
+
+        /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+        public Func<T, string> LabelGetter { get; protected set; }
+
+        /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
+        public string GetPropertyLabel(T instance) => instance is not null ? LabelGetter?.Invoke(instance) ?? Property : Property;
 
         internal abstract IEnumerable<EvaluationFailure> Evaluate(T instance);
     }
@@ -171,4 +187,14 @@ public sealed class EvaluationFailure {
         Value = value;
         Message = message;
     }
+}
+
+/// <summary>
+/// Represents the response from an evaluator in the validation process.
+/// </summary>
+/// <param name="Success">A boolean indicating whether the evaluation was successful.</param>
+/// <param name="Message">A string containing any relevant message from the evaluation. This could be an error message or additional information about the evaluation.</param>
+public record struct EvaluatorResponse(bool Success, string Message) {
+    public static EvaluatorResponse SuccessResponse() => new(true, null);
+    public static EvaluatorResponse FailResponse(string message) => new(false, message);
 }
