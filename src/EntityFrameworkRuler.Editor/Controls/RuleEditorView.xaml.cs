@@ -135,4 +135,18 @@ public sealed partial class RuleEditorView {
             }
         }
     }
+
+    private void Delete_Click(object sender, RoutedEventArgs e) {
+        if (DataContext is not RuleEditorViewModel vm) return;
+        var node = vm.RootModel.GetSelectedNode();
+        if (node == null) return;
+        var children = node.Parent?.ChildrenUnfiltered;
+        if (children == null) return;
+
+        // ask user to confirm deletion
+        var result = MessageBox.Show($"Are you sure you want to delete {node.Name}?", "Delete", MessageBoxButton.YesNo);
+        if (result != MessageBoxResult.Yes) return;
+
+        children.Remove(node);
+    }
 }
