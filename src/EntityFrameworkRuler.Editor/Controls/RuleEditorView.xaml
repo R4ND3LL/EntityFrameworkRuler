@@ -204,7 +204,13 @@
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate DataType="{x:Type models:RuleNodeViewModel}"
                                               ItemsSource="{Binding Children}">
-                        <ContentControl Content="{Binding }" Focusable="False" IsTabStop="False" />
+                        <ContentControl Content="{Binding }" Focusable="False" IsTabStop="False" >
+                            <ContentControl.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Delete" Click="Delete_Click"/>
+                                </ContextMenu>
+                            </ContentControl.ContextMenu>
+                        </ContentControl>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
             </TreeView>
