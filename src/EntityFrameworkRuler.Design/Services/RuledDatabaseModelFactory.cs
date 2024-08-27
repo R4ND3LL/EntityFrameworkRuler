@@ -35,7 +35,16 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
         // we can never intercept the DbConnection used to create the main model because it is scoped internally only
         if (actualFactory.GetType().Name.StartsWith("SqlServer")) {
             // attempt sproc mapping
-            using var connection = new SqlConnection(connectionString);
+
+            SqlConnection connection;
+
+            try {
+                connection = new SqlConnection(connectionString);
+            } catch (ArgumentException) {
+                // if connection string is a path to dacpac, when running together with ErikEJ.EntityFrameworkCore.SqlServer.Dacpac
+                return model;
+            }
+
             try {
                 if (connection.State != ConnectionState.Open) connection.Open();
                 var modelNew = new DatabaseModelEx(model);
@@ -43,6 +52,7 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
                 return modelNew;
             } finally {
                 connection.Close();
+                connection.Dispose();
             }
         }
 
