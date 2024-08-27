@@ -42,7 +42,9 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
                 connection = new SqlConnection(connectionString);
             } catch (ArgumentException) {
                 // if connection string is a path to dacpac, when running together with ErikEJ.EntityFrameworkCore.SqlServer.Dacpac
-                return model;
+                if (connectionString.HasNonWhiteSpace() && Path.GetExtension(connectionString).Equals(".dacpac", StringComparison.OrdinalIgnoreCase))
+                    return model;
+                throw;
             }
 
             try {
@@ -104,7 +106,7 @@ internal class RuledDatabaseModelFactory : IDatabaseModelFactory {
 
                 if (function.NoResultSet) continue;
 
-                // make a name for the table 
+                // make a name for the table
                 var separator = function.Name.Contains(" ") ? " " : (function.Name.Contains("_") ? "_" : "");
                 var tableName = function.Name + separator + "Result";
                 tableName = tableName.GetUniqueString(s => model.Tables.Any(o => string.Equals(o.Name, s, StringComparison.OrdinalIgnoreCase)));

@@ -1,6 +1,6 @@
 # Entity Framework Ruler
 
-![Build status](https://github.com/R4ND3LL/EntityFrameworkRuler/actions/workflows/dotnet.yml/badge.svg)
+[//]: # (![Build status]&#40;https://github.com/R4ND3LL/EntityFrameworkRuler/actions/workflows/dotnet.yml/badge.svg&#41;)
 [![command line](http://img.shields.io/nuget/v/EntityFrameworkRuler.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler/)
 [![Design](http://img.shields.io/nuget/v/EntityFrameworkRuler.Design.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Design/)
 [![Editor](http://img.shields.io/nuget/v/EntityFrameworkRuler.Editor.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Editor/)
