@@ -134,15 +134,16 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
 
         return false;
     }
+
     /// <summary> Gets the mapping strategy associated to this type or any base type in the hierarchy. </summary>
     public string GetMappingStrategyRecursive() => GetBaseTypes(true).Select(o => o.GetMappingStrategy()).FirstOrDefault(o => o.HasNonWhiteSpace());
-    
+
     /// <summary> Gets the mapping strategy for the derived types. </summary>
     public string GetMappingStrategy() => Rule.GetMappingStrategy()?.ToUpper();
 
     /// <summary> True if the mapping strategy for this entity rule is TPT </summary>
     public bool IsTptMappingStrategy() => GetMappingStrategy() == "TPT";
-    
+
     /// <summary> True if the mapping strategy for this entity rule is TPH </summary>
     public bool IsTphMappingStrategy() => GetMappingStrategy() == "TPH";
 
@@ -191,7 +192,7 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
         // locate by fkName first, which is most reliable.
         var navigations = fkName.HasNonWhiteSpace()
             ? GetNavigations()
-                .Where(o => o.FkName == fkName && o.Rule.IsPrincipal == thisIsPrincipal)
+                .Where(o => o.FkName.EqualsIgnoreCase(fkName) && o.Rule.IsPrincipal == thisIsPrincipal)
                 .ToArray()
             : Array.Empty<NavigationRuleNode>();
 
@@ -201,7 +202,8 @@ public sealed class EntityRuleNode : RuleNode<EntityRule, SchemaRuleNode> {
             // Maybe FkName is not defined or is inconsistent with DB.  Try to locate by expected name or inverse types
             if (inverseEntityName.HasNonWhiteSpace())
                 navigations = GetNavs()
-                    .Where(o => o.Rule.ToEntity == inverseEntityName && o.Rule.IsPrincipal == thisIsPrincipal)
+                    .Where(o => o.Rule.ToEntity == inverseEntityName && o.Rule.IsPrincipal == thisIsPrincipal
+                           && (fkName.IsNullOrWhiteSpace() || o.FkName.IsNullOrWhiteSpace() || o.FkName.EqualsIgnoreCase( fkName)))
                     .ToArray();
 
             if (navigations.Length != 1) {

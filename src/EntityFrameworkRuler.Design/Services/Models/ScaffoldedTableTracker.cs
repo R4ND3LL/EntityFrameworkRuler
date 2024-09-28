@@ -183,7 +183,7 @@ public sealed class ScaffoldedTableTracker {
             if (columns == null || columns.Count == 0) return false;
             var entityRules = dbContextRule.TryResolveRuleFor(columns[0].Table);
             Debug.Assert(entityRules.Any(o => o.ShouldMap()) == true, "Rule should exist since table/schema has not been omitted");
-            if (entityRules.Count == 0) return true; // rules are missing, has to have been omitted. 
+            if (entityRules.Count == 0) return true; // rules are missing, has to have been omitted.
             foreach (var column in columns) {
                 var propertyRuleNodes = entityRules
                     .Select(o => o.TryResolveRuleFor(column.Name))
@@ -192,7 +192,8 @@ public sealed class ScaffoldedTableTracker {
                 if (propertyRuleNodes.Length == 0 &&
                     entityRules.All(o => !o.ShouldMap() || !o.Rule.IncludeUnknownColumns)) return true;
                 if (propertyRuleNodes.Length == 0) continue; // implicit inclusion
-                if (propertyRuleNodes.All(o => !o.ShouldMap() || o.Property == null)) return true; // property omitted on all entities
+                if (propertyRuleNodes.All(o => !o.ShouldMap() )) return true; // property omitted on all entities
+                // removed "|| o.Property == null" check due to missing mapping of columns involved in TPT hierarchy keys.
             }
 
             return false;
