@@ -28,7 +28,12 @@ public class Function : ConventionAnnotatable, IFunction {
 
 
     public virtual FunctionBuilder Builder {
-        [DebuggerStepThrough] get => builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
+        [DebuggerStepThrough] get => builder ??
+#if NET9_0_OR_GREATER
+               throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel(Name));
+#else
+               throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
+#endif
     }
 
     /// <summary> Gets the name of this function. </summary>

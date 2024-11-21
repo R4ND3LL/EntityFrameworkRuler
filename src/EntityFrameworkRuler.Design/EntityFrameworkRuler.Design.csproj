@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net6.0;net7.0;net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Description>Automatically applies customization of the EF Core Reverse Engineered model during the scaffold process.</Description>
     <PackageProjectUrl>https://github.com/R4ND3LL/EntityFrameworkRuler</PackageProjectUrl>
@@ -51,6 +51,9 @@
   <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <DefineConstants>NET8</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <DefineConstants>NET9</DefineConstants>
+  </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' And '$(Configuration)'=='Debug'">
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0" />
@@ -66,15 +69,26 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' And '$(Configuration)'=='Debug'">
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.5.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.5.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.5.0" />
+
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.1" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0' And '$(Configuration)'=='Debug'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
 
-  <ItemGroup Condition="'$(TargetFramework)' != 'net8.0' And '$(Configuration)'=='Release'">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)'=='net6.0' And '$(Configuration)'=='Release'">
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="6.0.0" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)'=='net7.0' And '$(Configuration)'=='Release'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="7.0.0" />
   </ItemGroup>
@@ -82,15 +96,26 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0' And '$(Configuration)'=='Release'">
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.5.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.5.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.5.0" />
+
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.1" />
+  </ItemGroup> 
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0' And '$(Configuration)'=='Release'">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Mono.TextTemplating" Version="2.2.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.8.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.8.0" />
+    <PackageReference Include="Mono.TextTemplating" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>

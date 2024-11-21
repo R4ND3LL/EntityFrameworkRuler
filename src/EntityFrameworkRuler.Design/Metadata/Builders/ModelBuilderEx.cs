@@ -66,6 +66,7 @@ public class ModelBuilderEx : IConventionModelBuilder {
         return conventionModelBuilder.CanRemoveAnnotation(name, fromDataAnnotation);
     }
 
+
     IConventionModel IConventionModelBuilder.Metadata => conventionModelBuilder.Metadata;
 
     IConventionEntityTypeBuilder IConventionModelBuilder.Entity(string name, bool? shouldBeOwned, bool fromDataAnnotation) {
@@ -138,13 +139,14 @@ public class ModelBuilderEx : IConventionModelBuilder {
         return conventionModelBuilder.CanSetPropertyAccessMode(propertyAccessMode, fromDataAnnotation);
     }
 
+
     IConventionAnnotatable IConventionAnnotatableBuilder.Metadata => ((IConventionAnnotatableBuilder)conventionModelBuilder).Metadata;
 
     IConventionModelBuilder IConventionAnnotatableBuilder.ModelBuilder => conventionModelBuilder.ModelBuilder;
 
     #endregion
 
-#if NET8
+#if NET8_0_OR_GREATER
     public IConventionModelBuilder ComplexType(Type type, bool fromDataAnnotation = false) {
         return conventionModelBuilder.ComplexType(type, fromDataAnnotation);
     }
@@ -175,6 +177,15 @@ public class ModelBuilderEx : IConventionModelBuilder {
 
     public bool CanRemoveEntity(IConventionEntityType entityType, bool fromDataAnnotation = false) {
         return conventionModelBuilder.CanRemoveEntity(entityType, fromDataAnnotation);
+    }
+#endif
+#if NET9_0_OR_GREATER
+    public bool CanSetEmbeddedDiscriminatorName(string name, bool fromDataAnnotation = false) {
+        return conventionModelBuilder.CanSetEmbeddedDiscriminatorName(name, fromDataAnnotation);
+    }
+
+    public IConventionModelBuilder HasEmbeddedDiscriminatorName(string name, bool fromDataAnnotation = false) {
+        return conventionModelBuilder.HasEmbeddedDiscriminatorName(name, fromDataAnnotation);
     }
 #endif
 }

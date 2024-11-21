@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
 using EntityFrameworkRuler.Design.Metadata;
+using EntityFrameworkRuler.Design.Scaffolding.Internal;
 using EntityFrameworkRuler.Design.Services;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -158,6 +159,6 @@ public class UserDefinedTemplateModelGenerator : RuledModelGeneratorBase, IRuled
         if (designTimeRuleLoader.CodeGenOptions?.ContextDir != null)
             outputFileName = Path.Combine(designTimeRuleLoader.CodeGenOptions.ContextDir, outputFileName);
 
-        resultingFiles.Add(new() { Path = outputFileName, Code = generatedCode });
+        resultingFiles.AddFile(outputFileName, generatedCode);
     }
 }

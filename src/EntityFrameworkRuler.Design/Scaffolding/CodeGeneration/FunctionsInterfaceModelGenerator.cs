@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using EntityFrameworkRuler.Design.Metadata;
+using EntityFrameworkRuler.Design.Scaffolding.Internal;
 using EntityFrameworkRuler.Design.Services;
 using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -61,7 +62,7 @@ public class FunctionsInterfaceModelGenerator : RuledModelGeneratorBase, IRuledM
             var functionFileName = "I" + options.ContextName + "Functions" + host.Extension;
             if (designTimeRuleLoader.CodeGenOptions?.ContextDir != null)
                 functionFileName = Path.Combine(designTimeRuleLoader.CodeGenOptions.ContextDir, functionFileName);
-            resultingFiles.Add(new() { Path = functionFileName, Code = generatedCode });
+            resultingFiles.AddFile(functionFileName, generatedCode);
         } else reporter.WriteWarning($"{contextTemplate.Name} missing");
 
         return resultingFiles;

@@ -21,10 +21,20 @@ public class Parameter : ConventionAnnotatable, IParameter {
     public Function Function { [DebuggerStepThrough] get; }
     public virtual ModelEx Model => Function.Model;
     IModel IReadOnlyParameter.Model => (IModel)Model.Model;
-    public virtual ParameterBuilder Builder { [DebuggerStepThrough] get => builder ?? throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel); }
+
+    public virtual ParameterBuilder Builder {
+        [DebuggerStepThrough]
+        get => builder ??
+#if NET9_0_OR_GREATER
+               throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel(Name));
+#else
+               throw new InvalidOperationException(CoreStrings.ObjectRemovedFromModel);
+#endif
+    }
 
     /// <summary> Gets the name of this parameter. </summary>
     public virtual string Name { [DebuggerStepThrough] get; }
+
     public virtual string StoreType { [DebuggerStepThrough] get; set; }
     public virtual SqlDbType SqlDbType { [DebuggerStepThrough] get; set; }
     public virtual string TypeName { [DebuggerStepThrough] get; set; }

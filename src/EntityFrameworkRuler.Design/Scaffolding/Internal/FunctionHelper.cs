@@ -2,6 +2,7 @@
 using EntityFrameworkRuler.Design.Metadata.Builders;
 using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Scaffolding;
 
 namespace EntityFrameworkRuler.Design.Scaffolding.Internal;
 
@@ -42,5 +43,12 @@ internal static class FunctionHelper {
             var selectList = function.Results[0].ResultColumns.Select(o => $"[{o.Name}]").Join();
             return $"SELECT {selectList} FROM [{function.Schema}].[{function.Name}] ({string.Join(", ", paramList)})";
         }
+    }
+    internal static void AddFile(this List<ScaffoldedFile> resultingFiles, string name, string content) {
+#if NET9_0_OR_GREATER
+        resultingFiles.Add(new(name, content));
+#else
+        resultingFiles.Add(new() { Path = name, Code = content });
+#endif
     }
 }

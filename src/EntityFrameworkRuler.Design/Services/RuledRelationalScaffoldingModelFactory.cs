@@ -1982,30 +1982,48 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected virtual string GetFunctionParameterName(IFunction dbFunction, DatabaseFunctionParameter dbParameter, string ruleNewName) {
-        var usedNames = new List<string>();
-        usedNames.Add(dbFunction.Name);
+        var usedNames = new List<string> { dbFunction.Name };
 
+        // note, EF default for caseSensitive is false for tables, true for DBSets
         if (!parameterNamers.ContainsKey(dbFunction)) {
             if (options.UseDatabaseNames) {
                 parameterNamers.Add(
                     dbFunction,
-                    new(
+                    CreateNamer(
                         c => c.Name,
                         usedNames,
-                        cSharpUtilities,
-                        singularizePluralizer: null));
+                        singularizePluralizer: null,
+                        caseSensitive: false));
             } else {
                 parameterNamers.Add(
                     dbFunction,
-                    new(
+                    CreateNamer(
                         c => ruleNewName.HasNonWhiteSpace() ? ruleNewName : candidateNamingService.GenerateCandidateIdentifier(new DatabaseTable() { Name = c.Name }),
                         usedNames,
-                        cSharpUtilities,
-                        singularizePluralizer: null));
+                        singularizePluralizer: null,
+                        caseSensitive: false));
             }
         }
 
         return parameterNamers[dbFunction].GetName(dbParameter);
+    }
+
+    private CSharpUniqueNamer<DatabaseFunctionParameter> CreateNamer(Func<DatabaseFunctionParameter, string> nameGetter, IEnumerable<string> usedNames,
+        Func<string, string> singularizePluralizer, bool caseSensitive) {
+#if NET9_0_OR_GREATER
+        return new CSharpUniqueNamer<DatabaseFunctionParameter>(
+            nameGetter,
+            usedNames,
+            cSharpUtilities,
+            singularizePluralizer: singularizePluralizer,
+            caseSensitive: caseSensitive);
+#else
+        return new CSharpUniqueNamer<DatabaseFunctionParameter>(
+            nameGetter,
+            usedNames,
+            cSharpUtilities,
+            singularizePluralizer: singularizePluralizer);
+#endif
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -2163,14 +2181,19 @@ public sealed class MockTypeMappingSource : ITypeMappingSource {
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public CoreTypeMapping FindMapping(MemberInfo member) => throw new NotSupportedException();
 
+
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public CoreTypeMapping FindMapping(Type type) => throw new NotSupportedException();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     public CoreTypeMapping FindMapping(Type type, IModel model) => throw new NotSupportedException();
 
-#if NET8
+#if NET8_0_OR_GREATER
     public CoreTypeMapping FindMapping(IElementType elementType) => throw new NotSupportedException();
     public CoreTypeMapping FindMapping(Type type, IModel model, CoreTypeMapping elementMapping = null) => throw new NotSupportedException();
+#endif
+
+#if NET9
+    public CoreTypeMapping FindMapping(MemberInfo member, IModel model, bool useAttributes) => throw new NotSupportedException();
 #endif
 }
