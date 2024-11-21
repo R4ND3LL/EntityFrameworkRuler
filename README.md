@@ -6,9 +6,15 @@
 [![Editor](http://img.shields.io/nuget/v/EntityFrameworkRuler.Editor.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Editor/)
 [![Common](http://img.shields.io/nuget/v/EntityFrameworkRuler.Common.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Common/)
 
-Automate the customization of the EF Core Reverse Engineered model. 
+Provides a reasonable way to do DB-first development with EF Core by allowing the customization of the reverse engineered model (i.e. scaffolding).  All customizations are stored in a JSON file that can be edited by hand, or with the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) installed.
+
+Primary Use Cases:
+- Upgrade from EF6 to EF Core and keep all customizations that were applied by the EDMX.
+- Using the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler), customize the model in a GUI editor.  All customizations are applied by the scaffold operation.
+- Use custom T4 templates to generate extra code during the scaffolding process, such as DTOs or data services.
 
 Features include:
+- Support for EF Core 6 through 9.
 - Generate custom code using your own T4 files in the scaffolding process 
 - Stored procedure and function support (**NEW AS OF JUNE 20, 2023 v1.2.28**)
 - Legacy EF6 (EDMX) migration support

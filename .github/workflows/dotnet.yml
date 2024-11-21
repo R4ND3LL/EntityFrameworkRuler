@@ -19,7 +19,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4 # https://github.com/marketplace/actions/checkout
       with:
         fetch-depth: 0 # required by MinVer to determine the version correctly
         
@@ -47,7 +47,7 @@ jobs:
     - name: Test CLI
       run: dotnet test ./src/Tests/EntityFrameworkRuler.Tests --no-build --v:m
         
-    - name: Remove nupkg folder
+    - name: Remove nupkg folder # https://github.com/marketplace/actions/remove-file
       uses: JesseTG/rm@v1.0.3
       with:
         path: ./nupkg
