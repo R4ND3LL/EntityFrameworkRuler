@@ -1,11 +1,7 @@
 {
-  "tools": {
-    "dotnet": "9.0.0"
-  },
-  "sdk": {
-    "version": "9.0.0",
-    "allowPrerelease": false,
-    "rollForward": "latestMajor"
-  }
- 
+	"sdk": {
+		"version": "9.0.0",
+		"rollForward": "major",
+		"allowPrerelease": false
+	}
 }
