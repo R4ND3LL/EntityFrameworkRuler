@@ -26,8 +26,8 @@ public abstract class RuledModelGeneratorBase {
     protected virtual TemplatingEngine Engine => engine ??= new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    protected virtual string GeneratedCode(FileInfo contextTemplate, TextTemplatingEngineHost host) {
-        var generatedCode = Engine.ProcessTemplate(File.ReadAllText(contextTemplate.FullName), host);
+    protected virtual string GeneratedCode(FileInfo contextTemplate, TextTemplatingEngineHost host, string text=null) {
+        var generatedCode = Engine.ProcessTemplate(text??File.ReadAllText(contextTemplate.FullName), host);
         CheckEncoding(host.OutputEncoding);
         HandleErrors(host);
         return generatedCode;

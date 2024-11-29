@@ -93,18 +93,32 @@ public class UserDefinedTemplateModelGenerator : RuledModelGeneratorBase, IRuled
 
                 reporter.WriteInformation($"RULED: Running template '{contextTemplate.Name}'...");
 
+                var sw = new Stopwatch();
+                sw.Start();
                 if (hasEntityTypeParam) {
                     // execute per entity
+                    var templateText = File.ReadAllText(contextTemplate.FullName);
                     foreach (var entityType in modelEx.Model.GetEntityTypes()) {
+                        var entityStopwatch = new Stopwatch();
+                        entityStopwatch.Start();
                         host.Initialize();
+                        var initTime = entityStopwatch.ElapsedMilliseconds;
                         SetParameters(host, parameters, contextTemplate, context, entityType);
-                        RunGenerateCode(contextTemplate, host, resultingFiles, context);
+                        var setTime = entityStopwatch.ElapsedMilliseconds - initTime;
+                        RunGenerateCode(contextTemplate, host, resultingFiles, context, templateText);
+                        var runTime = entityStopwatch.ElapsedMilliseconds - setTime - initTime;
+                        if (entityStopwatch.ElapsedMilliseconds > 50)
+                            reporter.WriteVerbose(
+                                $"   Template '{contextTemplate.Name}' for entity '{entityType.Name}' took {entityStopwatch.ElapsedMilliseconds}ms (init: {initTime}ms, set params: {setTime}ms, run: {runTime}ms)");
                     }
                 } else {
                     // execute once
                     SetParameters(host, parameters, contextTemplate, context, null);
                     RunGenerateCode(contextTemplate, host, resultingFiles, context);
                 }
+
+                if (sw.ElapsedMilliseconds > 100)
+                    reporter.WriteInformation($"RULED: Template '{contextTemplate.Name}' took {sw.ElapsedMilliseconds}ms");
             } catch (Exception ex) {
                 reporter.WriteError($"User defined template code gen failed: " + ex.Message);
             }
@@ -148,16 +162,27 @@ public class UserDefinedTemplateModelGenerator : RuledModelGeneratorBase, IRuled
         }
     }
 
-    private void RunGenerateCode(FileInfo contextTemplate, TextTemplatingEngineHost host, List<ScaffoldedFile> resultingFiles, UserTemplateContext userTemplateContext) {
+    private void RunGenerateCode(FileInfo contextTemplate, TextTemplatingEngineHost host, List<ScaffoldedFile> resultingFiles, UserTemplateContext userTemplateContext,
+        string templateText = null) {
         userTemplateContext.OutputFileName = null;
-        var generatedCode = GeneratedCode(contextTemplate, host);
+        var generatedCode = GeneratedCode(contextTemplate, host, templateText);
         if (generatedCode.IsNullOrWhiteSpace()) return;
 
         var outputFileName = userTemplateContext.OutputFileName.CoalesceWhiteSpace(contextTemplate.Name[..^3]);
         if (!Path.HasExtension(outputFileName)) outputFileName += host.Extension;
 
-        if (designTimeRuleLoader.CodeGenOptions?.ContextDir != null)
-            outputFileName = Path.Combine(designTimeRuleLoader.CodeGenOptions.ContextDir, outputFileName);
+        if (!Path.IsPathRooted(outputFileName)) {
+            if (designTimeRuleLoader.CodeGenOptions?.ContextDir != null)
+                outputFileName = Path.Combine(designTimeRuleLoader.CodeGenOptions.ContextDir, outputFileName);
+        }
+
+        try {
+            var directoryName = Path.GetDirectoryName(outputFileName);
+            if (directoryName.HasNonWhiteSpace())
+                Directory.CreateDirectory(directoryName!);
+        } catch {
+            // ignored
+        }
 
         resultingFiles.AddFile(outputFileName, generatedCode);
     }
