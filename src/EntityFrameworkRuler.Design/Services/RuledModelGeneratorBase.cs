@@ -12,9 +12,9 @@ namespace EntityFrameworkRuler.Design.Services;
 /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
 [SuppressMessage("Usage", "EF1001:Internal EF Core API usage.")]
 public abstract class RuledModelGeneratorBase {
-
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
     protected IOperationReporter reporter;
+
     private TemplatingEngine engine;
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
@@ -26,8 +26,13 @@ public abstract class RuledModelGeneratorBase {
     protected virtual TemplatingEngine Engine => engine ??= new();
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>
-    protected virtual string GeneratedCode(FileInfo contextTemplate, TextTemplatingEngineHost host, string text=null) {
-        var generatedCode = Engine.ProcessTemplate(text??File.ReadAllText(contextTemplate.FullName), host);
+    protected virtual string GenerateCode(FileInfo contextTemplate, TextTemplatingEngineHost host, string text = null) {
+        text ??= File.ReadAllText(contextTemplate.FullName);
+#if NET8_0_OR_GREATER
+        var generatedCode = Engine.ProcessTemplateAsync(text, host).GetAwaiter().GetResult();
+#else
+        var generatedCode = Engine.ProcessTemplate(text, host);
+#endif
         CheckEncoding(host.OutputEncoding);
         HandleErrors(host);
         return generatedCode;

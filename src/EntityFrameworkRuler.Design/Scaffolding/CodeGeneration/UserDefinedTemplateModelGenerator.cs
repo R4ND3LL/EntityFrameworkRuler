@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore.Design.Internal;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Scaffolding;
+using Mono.TextTemplating;
 using TextTemplatingEngineHost = EntityFrameworkRuler.Design.Scaffolding.Internal.TextTemplatingEngineHost;
 
 namespace EntityFrameworkRuler.Design.Scaffolding.CodeGeneration;
@@ -93,11 +94,14 @@ public class UserDefinedTemplateModelGenerator : RuledModelGeneratorBase, IRuled
 
                 reporter.WriteInformation($"RULED: Running template '{contextTemplate.Name}'...");
 
+                CompiledTemplate compiledEntityTypeTemplate = null;
+                var typeExtension = ".cs";
+
                 var sw = new Stopwatch();
                 sw.Start();
+                var countBefore = resultingFiles.Count;
                 if (hasEntityTypeParam) {
                     // execute per entity
-                    var templateText = File.ReadAllText(contextTemplate.FullName);
                     foreach (var entityType in modelEx.Model.GetEntityTypes()) {
                         var entityStopwatch = new Stopwatch();
                         entityStopwatch.Start();
@@ -105,20 +109,35 @@ public class UserDefinedTemplateModelGenerator : RuledModelGeneratorBase, IRuled
                         var initTime = entityStopwatch.ElapsedMilliseconds;
                         SetParameters(host, parameters, contextTemplate, context, entityType);
                         var setTime = entityStopwatch.ElapsedMilliseconds - initTime;
-                        RunGenerateCode(contextTemplate, host, resultingFiles, context, templateText);
+
+                        if (compiledEntityTypeTemplate is null)
+                            compiledEntityTypeTemplate = CompileTemplate(compiledEntityTypeTemplate, contextTemplate, host, ref typeExtension);
+
+                        RunGenerateCode(compiledEntityTypeTemplate, host, resultingFiles, context, defaultOutputFileName: entityType.Name + typeExtension);
+
                         var runTime = entityStopwatch.ElapsedMilliseconds - setTime - initTime;
                         if (entityStopwatch.ElapsedMilliseconds > 50)
                             reporter.WriteVerbose(
                                 $"   Template '{contextTemplate.Name}' for entity '{entityType.Name}' took {entityStopwatch.ElapsedMilliseconds}ms (init: {initTime}ms, set params: {setTime}ms, run: {runTime}ms)");
+#if DEBUG2
+                        if (entityStopwatch.ElapsedMilliseconds > 300) {
+                            reporter.WriteWarning(
+                                $"RULED: Template '{contextTemplate.Name}' exiting early due to slow performance");
+                            break; // too slow
+                        }
+#endif
                     }
                 } else {
                     // execute once
                     SetParameters(host, parameters, contextTemplate, context, null);
-                    RunGenerateCode(contextTemplate, host, resultingFiles, context);
+                    compiledEntityTypeTemplate = CompileTemplate(compiledEntityTypeTemplate, contextTemplate, host, ref typeExtension);
+                    RunGenerateCode(compiledEntityTypeTemplate, host, resultingFiles, context, contextTemplate.Name[..^3] + typeExtension);
                 }
 
-                if (sw.ElapsedMilliseconds > 100)
-                    reporter.WriteInformation($"RULED: Template '{contextTemplate.Name}' took {sw.ElapsedMilliseconds}ms");
+                if (sw.ElapsedMilliseconds > 100) {
+                    var created = resultingFiles.Count - countBefore;
+                    reporter.WriteInformation($"RULED: Template '{contextTemplate.Name}' took {sw.ElapsedMilliseconds}ms to create {created} files");
+                }
             } catch (Exception ex) {
                 reporter.WriteError($"User defined template code gen failed: " + ex.Message);
             }
@@ -160,29 +179,59 @@ public class UserDefinedTemplateModelGenerator : RuledModelGeneratorBase, IRuled
                 }
             }
         }
+
+        CompiledTemplate CompileTemplate(CompiledTemplate compiledEntityTypeTemplate, FileInfo contextTemplate,
+            TextTemplatingEngineHost host, ref string entityTypeExtension) {
+            if (compiledEntityTypeTemplate is null) {
+                var templateText = File.ReadAllText(contextTemplate.FullName);
+                compiledEntityTypeTemplate = Engine.CompileTemplateAsync(templateText, host, default)
+                    .GetAwaiter().GetResult();
+                if (host.Extension.HasNonWhiteSpace())
+                    entityTypeExtension = host.Extension;
+                CheckEncoding(host.OutputEncoding);
+            }
+
+            return compiledEntityTypeTemplate;
+        }
     }
 
-    private void RunGenerateCode(FileInfo contextTemplate, TextTemplatingEngineHost host, List<ScaffoldedFile> resultingFiles, UserTemplateContext userTemplateContext,
-        string templateText = null) {
-        userTemplateContext.OutputFileName = null;
-        var generatedCode = GeneratedCode(contextTemplate, host, templateText);
+    /// <summary>
+    /// Directories that have already been checked for existence.  This is to avoid the overhead of checking the same directory multiple times.
+    /// </summary>
+    private readonly HashSet<string> checkedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+    private void RunGenerateCode(CompiledTemplate contextTemplate, TextTemplatingEngineHost host, List<ScaffoldedFile> resultingFiles, UserTemplateContext userTemplateContext,
+        string defaultOutputFileName = null) {
+        userTemplateContext.OutputFileName = defaultOutputFileName;
+        //var generatedCode = GenerateCode(contextTemplate, host, templateText);
+        var generatedCode = contextTemplate.Process();
         if (generatedCode.IsNullOrWhiteSpace()) return;
 
-        var outputFileName = userTemplateContext.OutputFileName.CoalesceWhiteSpace(contextTemplate.Name[..^3]);
+        var outputFileName = userTemplateContext.OutputFileName.CoalesceWhiteSpace(defaultOutputFileName);
         if (!Path.HasExtension(outputFileName)) outputFileName += host.Extension;
 
-        if (!Path.IsPathRooted(outputFileName)) {
-            if (designTimeRuleLoader.CodeGenOptions?.ContextDir != null)
-                outputFileName = Path.Combine(designTimeRuleLoader.CodeGenOptions.ContextDir, outputFileName);
-        }
+        // ensure relative paths are relative to the context directory
+        if (!Path.IsPathRooted(outputFileName) && designTimeRuleLoader.CodeGenOptions?.ContextDir != null)
+            outputFileName = Path.Combine(designTimeRuleLoader.CodeGenOptions.ContextDir, outputFileName);
 
-        try {
-            var directoryName = Path.GetDirectoryName(outputFileName);
-            if (directoryName.HasNonWhiteSpace())
-                Directory.CreateDirectory(directoryName!);
-        } catch {
-            // ignored
-        }
+        // ensure path is absolute
+        //if (!Path.IsPathRooted(outputFileName) && designTimeRuleLoader.CodeGenOptions?.ProjectDir != null) {
+        //    // path is relative to the project directory
+        //    if (Directory.Exists(designTimeRuleLoader.CodeGenOptions.ProjectDir)) {
+        //        var temp = Path.Combine(designTimeRuleLoader.CodeGenOptions.ProjectDir, outputFileName);
+        //        outputFileName = Path.GetFullPath(temp);
+        //    }
+        //}
+
+        if (Path.IsPathRooted(outputFileName))
+            try {
+                // ensure the directory exists
+                var directoryName = Path.GetDirectoryName(outputFileName);
+                if (directoryName.HasNonWhiteSpace() && checkedDirectories.Add(directoryName))
+                    Directory.CreateDirectory(directoryName!);
+            } catch {
+                // ignored
+            }
 
         resultingFiles.AddFile(outputFileName, generatedCode);
     }
