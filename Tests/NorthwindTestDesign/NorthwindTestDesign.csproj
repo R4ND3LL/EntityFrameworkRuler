@@ -36,7 +36,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />    
+        <ProjectReference Include="..\..\src\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj" />
     </ItemGroup>
 
     <ItemGroup>

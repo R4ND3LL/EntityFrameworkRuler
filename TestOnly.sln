@@ -1,9 +1,9 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NorthwindTestProject", "Tests\NorthwindTestProject\NorthwindTestProject.csproj", "{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NorthwindTestRoslyn", "Tests\NorthwindTestRoslyn\NorthwindTestRoslyn.csproj", "{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwindTestEdmx", "Tests\NorthwindTestEdmx\NorthwindTestEdmx.csproj", "{DD988CF1-D41C-4A9B-9224-8F3CB087CC1F}"
 EndProject
@@ -18,11 +18,13 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Debug|arm64.ActiveCfg = Debug|Any CPU
 		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Debug|arm64.Build.0 = Debug|Any CPU
 		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Debug|x86.Build.0 = Debug|Any CPU
 		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Release|arm64.ActiveCfg = Release|Any CPU
 		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Release|arm64.Build.0 = Release|Any CPU
 		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}.Release|x86.ActiveCfg = Release|Any CPU
@@ -40,12 +42,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{BD7CCF04-B1A6-4498-AB94-4F7D38B632A0} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
-		{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
-		{EA2CB34B-80D9-4038-8904-4D65F7F56936} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
-		{DD988CF1-D41C-4A9B-9224-8F3CB087CC1F} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BF67A700-F2D5-477C-8624-76B67F78896A}

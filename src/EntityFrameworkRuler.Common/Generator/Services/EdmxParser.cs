@@ -105,8 +105,7 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
                     .FirstOrDefault(o => entity.StoreEntitySetNames.Contains(o.Name));
                 if (entity.StorageEntitySet?.Name != null)
                     entity.StorageEntity =
-                        edmx.StorageModels.Schema.EntityTypes.FirstOrDefault(
-                            o => o.Name == entity.StorageEntitySet.Name);
+                        edmx.StorageModels.Schema.EntityTypes.FirstOrDefault(o => o.Name == entity.StorageEntitySet.Name);
 
 
                 // track entities-table mapping, so that we can easily capture TPH and table splitting behavior
@@ -326,7 +325,7 @@ public class EdmxParser : NotifyPropertyChanged, IEdmxParser {
             var fnNam = nameParts.LastOrDefault();
             var functions = Functions.Where(o => o.StorageFunction.Name == fnNam && o.ImportMapping == null).ToArray();
             if (functions.Length > 1) {
-                var possibleSchema = nameParts.Reverse().Skip(1).FirstOrDefault();
+                var possibleSchema = Enumerable.Reverse(nameParts).Skip(1).FirstOrDefault();
                 if (functions.Any(o => o.StorageFunction.Schema == possibleSchema)) functions.FirstOrDefault(o => o.StorageFunction.Schema == possibleSchema);
             }
 

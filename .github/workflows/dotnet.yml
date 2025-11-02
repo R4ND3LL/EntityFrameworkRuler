@@ -34,18 +34,17 @@ jobs:
 #        vs-version: '[17.4,17.5)'
         
     - name: Restore dependencies
-      run: dotnet restore src/EntityFrameworkRuler.sln --v:m
+      run: dotnet restore EntityFrameworkRuler.sln --v:m
       
       
     - name: Test Build
       run: dotnet build EntityFrameworkRuler.sln --configuration Debug --no-restore --v:q
-      # run: msbuild EntityFrameworkRuler.sln /property:Configuration=Debug /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
-      working-directory: src      
+      # run: msbuild EntityFrameworkRuler.sln /property:Configuration=Debug /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m      
       
     - name: Test Design
-      run: dotnet test ./src/Tests/EntityFrameworkRuler.Design.Tests --no-build --v:m
+      run: dotnet test ./Tests/EntityFrameworkRuler.Design.Tests --no-build --v:m
     - name: Test CLI
-      run: dotnet test ./src/Tests/EntityFrameworkRuler.Tests --no-build --v:m
+      run: dotnet test ./Tests/EntityFrameworkRuler.Tests --no-build --v:m
         
     - name: Remove nupkg folder # https://github.com/marketplace/actions/remove-file
       uses: JesseTG/rm@v1.0.3
@@ -53,12 +52,12 @@ jobs:
         path: ./nupkg
         
     - name: Release Build
-      run: dotnet build .\src\EntityFrameworkRuler.sln --configuration Release --no-restore --v:q
+      run: dotnet build .\EntityFrameworkRuler.sln --configuration Release --no-restore --v:q
       # run: msbuild EntityFrameworkRuler.sln /property:Configuration=Release /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
  
     
     - name: Create NuGet packages
-      run: dotnet pack --configuration Release --no-build --no-restore .\src\EntityFrameworkRuler.sln --property:PackageOutputPath=..\..\nupkg
+      run: dotnet pack --configuration Release --no-build --no-restore .\EntityFrameworkRuler.sln --property:PackageOutputPath=.\nupkg
       # note, output no longer supported as of 7.0.200. but reduced to warning in 7.0.201
       
     - name: Publish Packages to NuGet 
@@ -69,18 +68,17 @@ jobs:
       uses: cezarypiatek/VsixVersionAction@1.0
       with:
         version: ${{ env.VSIXVERSION }}
-        vsix-manifest-file: 'src\EntityFrameworkRuler.Vsix\source.extension.vsixmanifest'
+        vsix-manifest-file: 'EntityFrameworkRuler.Vsix\source.extension.vsixmanifest'
 
     - name: Restore VSIX Project
       run: msbuild /t:restore EntityFrameworkRuler.Vsix.csproj /verbosity:minimal
-      working-directory: src/EntityFrameworkRuler.Vsix
+      working-directory: EntityFrameworkRuler.Vsix
       
     - name: Build VSIX
       run: msbuild EntityFrameworkRuler.sln /property:Configuration=ReleaseVsix /p:RestorePackages=True /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
-      working-directory: src
  
     - name: Move VSIX
-      run: mv src/EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix
+      run: mv EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix
         
     - name: Publish VSIX artifacts
       uses: actions/upload-artifact@v4
@@ -91,9 +89,9 @@ jobs:
           docs/Vsix.md
           
       # https://github.com/marketplace/actions/vsix-publisher
-    - name: Publish VSIX to Marketplace 
+    - name: Publish VSIX to Marketplace
       uses: cezarypiatek/VsixPublisherAction@0.2
       with:
         extension-file: 'EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix'
-        publish-manifest-file: 'src\EntityFrameworkRuler.Vsix\PublishManifest.json'
+        publish-manifest-file: 'EntityFrameworkRuler.Vsix\PublishManifest.json'
         personal-access-code: ${{ secrets.VSIX_TOKEN }}      

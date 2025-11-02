@@ -35,7 +35,7 @@ EF Ruler applies customizations from a rule document stored in the project folde
 
 -------
 ### Upgrading from EF6 with EDMX:
-1) Use the [command line tool](https://www.nuget.org/packages/EntityFrameworkRuler/) or the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) to generated DB Context rules from an EDMX file. ![VS Extension Preview](/src/Resources/EdmxConverterPreview.png)
+1) Use the [command line tool](https://www.nuget.org/packages/EntityFrameworkRuler/) or the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) to generated DB Context rules from an EDMX file. ![VS Extension Preview](/Resources/EdmxConverterPreview.png)
 2) Reference [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.
 3) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will do the rest.
 
@@ -48,8 +48,8 @@ EF Ruler applies customizations from a rule document stored in the project folde
 ### DB Context Customization and Ongoing DB Maintenance
 
 1) Edit the rules json by hand, or with the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) installed, right click on the rules file and go to _Edit DB Context Rules_.
-2) Adjust the model as necessary using the editor:  
-   ![RuleEditorPreview.png](src/Resources/RuleEditorPreview.png)
+2) Adjust the model as necessary using the editor:
+   ![RuleEditorPreview.png](Resources/RuleEditorPreview.png)
 3) Apply the customizations (see below).
 
 -------

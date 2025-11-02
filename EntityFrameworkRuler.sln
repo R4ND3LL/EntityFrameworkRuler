@@ -3,16 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler", "EntityFrameworkRuler\EntityFrameworkRuler.csproj", "{6CBE2220-E5D7-45C8-AD88-12E19E86DA23}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler", "src\EntityFrameworkRuler\EntityFrameworkRuler.csproj", "{6CBE2220-E5D7-45C8-AD88-12E19E86DA23}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{7606EBB2-02F1-44C7-97EE-C80BFE02957D}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		..\.gitignore = ..\.gitignore
-		Directory.Build.props = Directory.Build.props
-		..\.github\workflows\dotnet.yml = ..\.github\workflows\dotnet.yml
-		..\global.json = ..\global.json
-		..\README.md = ..\README.md
+		.gitignore = .gitignore
+		src\Directory.Build.props = src\Directory.Build.props
+		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+		global.json = global.json
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{6ECD160C-8259-42EB-9A24-CA07AA56CB25}"
@@ -21,17 +21,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Tests"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NorthwindTestRoslyn", "Tests\NorthwindTestRoslyn\NorthwindTestRoslyn.csproj", "{C3BC8E21-B026-41B9-B0EC-DCD7FCEA5B71}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Design", "EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj", "{513C1B89-ADDA-4829-AFAF-1E9C3AD8833F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Design", "src\EntityFrameworkRuler.Design\EntityFrameworkRuler.Design.csproj", "{513C1B89-ADDA-4829-AFAF-1E9C3AD8833F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Design.Tests", "Tests\EntityFrameworkRuler.Design.Tests\EntityFrameworkRuler.Design.Tests.csproj", "{EA2CB34B-80D9-4038-8904-4D65F7F56936}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwindTestEdmx", "Tests\NorthwindTestEdmx\NorthwindTestEdmx.csproj", "{DD988CF1-D41C-4A9B-9224-8F3CB087CC1F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Common", "EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj", "{A4BA3A4A-AB05-4E92-9B40-E7BD5B7247E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Common", "src\EntityFrameworkRuler.Common\EntityFrameworkRuler.Common.csproj", "{A4BA3A4A-AB05-4E92-9B40-E7BD5B7247E0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Editor", "EntityFrameworkRuler.Editor\EntityFrameworkRuler.Editor.csproj", "{D79D6EF9-E5A2-4B00-B7B0-DA3049C6AA56}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler.Editor", "src\EntityFrameworkRuler.Editor\EntityFrameworkRuler.Editor.csproj", "{D79D6EF9-E5A2-4B00-B7B0-DA3049C6AA56}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFrameworkRuler.Vsix", "EntityFrameworkRuler.Vsix\EntityFrameworkRuler.Vsix.csproj", "{3E4ACF52-C319-4367-9A65-AFCC2C88D9F9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EntityFrameworkRuler.Vsix", "src\EntityFrameworkRuler.Vsix\EntityFrameworkRuler.Vsix.csproj", "{3E4ACF52-C319-4367-9A65-AFCC2C88D9F9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NorthwindTestDesign", "Tests\NorthwindTestDesign\NorthwindTestDesign.csproj", "{07097483-166E-4126-9EB9-FE22B695F3E7}"
 EndProject
@@ -312,6 +312,30 @@ Global
 		{D913B388-3981-45DD-9CE4-625195F9BE2A}.ReleaseVsix|arm64.Build.0 = Release|Any CPU
 		{D913B388-3981-45DD-9CE4-625195F9BE2A}.ReleaseVsix|x86.ActiveCfg = Release|Any CPU
 		{D913B388-3981-45DD-9CE4-625195F9BE2A}.ReleaseVsix|x86.Build.0 = Release|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|arm64.Build.0 = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|x86.Build.0 = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|Any CPU.ActiveCfg = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|Any CPU.Build.0 = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|arm64.ActiveCfg = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|arm64.Build.0 = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|x86.ActiveCfg = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|x86.Build.0 = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Release|arm64.ActiveCfg = Release|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Release|arm64.Build.0 = Release|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Release|x86.ActiveCfg = Release|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.Release|x86.Build.0 = Release|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|Any CPU.ActiveCfg = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|Any CPU.Build.0 = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|arm64.ActiveCfg = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|arm64.Build.0 = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|x86.ActiveCfg = Debug|Any CPU
+		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -324,6 +348,7 @@ Global
 		{07097483-166E-4126-9EB9-FE22B695F3E7} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 		{1384BA4C-04D2-4545-A161-EEC6447A7D26} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 		{D913B388-3981-45DD-9CE4-625195F9BE2A} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
+		{7041196D-46DB-4188-894E-886A90AA2075} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BF67A700-F2D5-477C-8624-76B67F78896A}
