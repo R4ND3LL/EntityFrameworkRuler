@@ -68,17 +68,17 @@ jobs:
       uses: cezarypiatek/VsixVersionAction@1.0
       with:
         version: ${{ env.VSIXVERSION }}
-        vsix-manifest-file: 'EntityFrameworkRuler.Vsix\source.extension.vsixmanifest'
+        vsix-manifest-file: 'src/EntityFrameworkRuler.Vsix/source.extension.vsixmanifest'
 
     - name: Restore VSIX Project
       run: msbuild /t:restore EntityFrameworkRuler.Vsix.csproj /verbosity:minimal
-      working-directory: EntityFrameworkRuler.Vsix
+      working-directory: src/EntityFrameworkRuler.Vsix
       
     - name: Build VSIX
       run: msbuild EntityFrameworkRuler.sln /property:Configuration=ReleaseVsix /p:RestorePackages=True /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
  
     - name: Move VSIX
-      run: mv EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix
+      run: mv src/EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix
         
     - name: Publish VSIX artifacts
       uses: actions/upload-artifact@v4
@@ -93,5 +93,5 @@ jobs:
       uses: cezarypiatek/VsixPublisherAction@0.2
       with:
         extension-file: 'EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix'
-        publish-manifest-file: 'EntityFrameworkRuler.Vsix\PublishManifest.json'
+        publish-manifest-file: 'src/EntityFrameworkRuler.Vsix/PublishManifest.json'
         personal-access-code: ${{ secrets.VSIX_TOKEN }}      
