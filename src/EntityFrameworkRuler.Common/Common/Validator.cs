@@ -195,6 +195,16 @@ public sealed class EvaluationFailure {
 /// <param name="Success">A boolean indicating whether the evaluation was successful.</param>
 /// <param name="Message">A string containing any relevant message from the evaluation. This could be an error message or additional information about the evaluation.</param>
 public record struct EvaluatorResponse(bool Success, string Message) {
+    /// <summary>
+    /// Creates a successful evaluation response with no diagnostic message.
+    /// </summary>
+    /// <returns>An <see cref="EvaluatorResponse"/> flagged as successful.</returns>
     public static EvaluatorResponse SuccessResponse() => new(true, null);
+
+    /// <summary>
+    /// Creates a failed evaluation response with the provided diagnostic message.
+    /// </summary>
+    /// <param name="message">Details about why the evaluation failed.</param>
+    /// <returns>An <see cref="EvaluatorResponse"/> flagged as failed.</returns>
     public static EvaluatorResponse FailResponse(string message) => new(false, message);
 }
