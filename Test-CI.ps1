@@ -93,7 +93,7 @@ Test-LastExitCode "dotnet build (Release)"
 # Step 7: Create NuGet packages
 if (-not $SkipPack) {
     Write-Step "Creating NuGet packages"
-    dotnet pack --configuration Release --no-build --no-restore ./EntityFrameworkRuler.sln --property:PackageOutputPath=./nupkg
+    dotnet pack --configuration Release --no-build --no-restore ./EntityFrameworkRuler.sln --property:PackageOutputPath="$PWD\nupkg"
     Test-LastExitCode "dotnet pack"
 
     if (Test-Path "./nupkg") {

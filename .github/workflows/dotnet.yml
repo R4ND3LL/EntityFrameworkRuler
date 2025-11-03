@@ -57,7 +57,7 @@ jobs:
  
     
     - name: Create NuGet packages
-      run: dotnet pack --configuration Release --no-build --no-restore .\EntityFrameworkRuler.sln --property:PackageOutputPath=.\nupkg
+      run: dotnet pack --configuration Release --no-build --no-restore .\EntityFrameworkRuler.sln --property:PackageOutputPath="${{ github.workspace }}\nupkg"
       # note, output no longer supported as of 7.0.200. but reduced to warning in 7.0.201
       
     - name: Publish Packages to NuGet 
