@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.3.32929.385
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11123.170 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EntityFrameworkRuler", "src\EntityFrameworkRuler\EntityFrameworkRuler.csproj", "{6CBE2220-E5D7-45C8-AD88-12E19E86DA23}"
 EndProject
@@ -312,30 +312,6 @@ Global
 		{D913B388-3981-45DD-9CE4-625195F9BE2A}.ReleaseVsix|arm64.Build.0 = Release|Any CPU
 		{D913B388-3981-45DD-9CE4-625195F9BE2A}.ReleaseVsix|x86.ActiveCfg = Release|Any CPU
 		{D913B388-3981-45DD-9CE4-625195F9BE2A}.ReleaseVsix|x86.Build.0 = Release|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|arm64.ActiveCfg = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|arm64.Build.0 = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Debug|x86.Build.0 = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|Any CPU.ActiveCfg = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|Any CPU.Build.0 = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|arm64.ActiveCfg = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|arm64.Build.0 = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|x86.ActiveCfg = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.DebugVsix|x86.Build.0 = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Release|arm64.ActiveCfg = Release|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Release|arm64.Build.0 = Release|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Release|x86.ActiveCfg = Release|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.Release|x86.Build.0 = Release|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|Any CPU.ActiveCfg = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|Any CPU.Build.0 = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|arm64.ActiveCfg = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|arm64.Build.0 = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|x86.ActiveCfg = Debug|Any CPU
-		{7041196D-46DB-4188-894E-886A90AA2075}.ReleaseVsix|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -348,7 +324,6 @@ Global
 		{07097483-166E-4126-9EB9-FE22B695F3E7} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 		{1384BA4C-04D2-4545-A161-EEC6447A7D26} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 		{D913B388-3981-45DD-9CE4-625195F9BE2A} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
-		{7041196D-46DB-4188-894E-886A90AA2075} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BF67A700-F2D5-477C-8624-76B67F78896A}
