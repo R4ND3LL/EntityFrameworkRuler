@@ -56,30 +56,13 @@ public partial class <#= Options.ContextName #>DataService : DataServiceBase
 <#
             if (!Options.SuppressOnConfiguring) {
 #>
-    public <#= Options.ContextName #>()
+    public <#= Options.ContextName #>DataService()
     {
-    }
-    public <#= Options.ContextName #>(string a_connectionString)
-    {
-        this.Database.SetConnectionString(a_connectionString);
     }
 <#
             }
 #>
-    public <#= Options.ContextName #>DataService() { }
-
-    public virtual I<#= Options.ContextName #>Functions Functions
-    {
-        [DebuggerStepThrough] get
-        {
-            _functions ??= new <#= Options.ContextName #>Functions(this);
-            return _functions;
-        }
-        [DebuggerStepThrough] set
-        {
-            _functions = value;
-        }
-    }
+    
 
 <#
             foreach (var entityType in Model.GetEntityTypes().Where(e => !e.IsSimpleManyToManyJoinEntityType() && e["Ruler:Function"] == null)) {

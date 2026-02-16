@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FirebirdTestEdmx", "Tests\F
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FirebirdTestDesign", "Tests\FirebirdTestDesign\FirebirdTestDesign.csproj", "{D913B388-3981-45DD-9CE4-625195F9BE2A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NorthwindTestDesign.Tests", "Tests\NorthwindTestDesign.Tests\NorthwindTestDesign.Tests.csproj", "{BE3724D5-62F8-4F53-8AA2-1045294DB007}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -312,6 +314,30 @@ Global
 		{D913B388-3981-45DD-9CE4-625195F9BE2A}.ReleaseVsix|arm64.Build.0 = Release|Any CPU
 		{D913B388-3981-45DD-9CE4-625195F9BE2A}.ReleaseVsix|x86.ActiveCfg = Release|Any CPU
 		{D913B388-3981-45DD-9CE4-625195F9BE2A}.ReleaseVsix|x86.Build.0 = Release|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Debug|arm64.Build.0 = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Debug|x86.Build.0 = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.DebugVsix|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.DebugVsix|Any CPU.Build.0 = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.DebugVsix|arm64.ActiveCfg = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.DebugVsix|arm64.Build.0 = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.DebugVsix|x86.ActiveCfg = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.DebugVsix|x86.Build.0 = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Release|arm64.ActiveCfg = Release|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Release|arm64.Build.0 = Release|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Release|x86.ActiveCfg = Release|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.Release|x86.Build.0 = Release|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.ReleaseVsix|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.ReleaseVsix|Any CPU.Build.0 = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.ReleaseVsix|arm64.ActiveCfg = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.ReleaseVsix|arm64.Build.0 = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.ReleaseVsix|x86.ActiveCfg = Debug|Any CPU
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007}.ReleaseVsix|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -324,6 +350,7 @@ Global
 		{07097483-166E-4126-9EB9-FE22B695F3E7} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 		{1384BA4C-04D2-4545-A161-EEC6447A7D26} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 		{D913B388-3981-45DD-9CE4-625195F9BE2A} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
+		{BE3724D5-62F8-4F53-8AA2-1045294DB007} = {6ECD160C-8259-42EB-9A24-CA07AA56CB25}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BF67A700-F2D5-477C-8624-76B67F78896A}
