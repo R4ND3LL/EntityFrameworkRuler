@@ -75,7 +75,7 @@ jobs:
       working-directory: src/EntityFrameworkRuler.Vsix
       
     - name: Build VSIX
-      run: msbuild src/EntityFrameworkRuler.Vsix/EntityFrameworkRuler.Vsix.csproj /property:Configuration=ReleaseVsix /p:RestorePackages=True /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
+      run: msbuild src/EntityFrameworkRuler.Vsix/EntityFrameworkRuler.Vsix.csproj /property:Configuration=Release /p:RestorePackages=True /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
  
     - name: Move VSIX
       run: mv src/EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix

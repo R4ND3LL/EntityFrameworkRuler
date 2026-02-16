@@ -1933,8 +1933,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         PropertyBuilder propertyBuilder;
         try {
             propertyBuilder = baseCall();
-        } catch (InvalidOperationException ex) when (databaseColumnDefaultValueProperty is not null && column.DefaultValueSql is not null &&
-                                                     ex.Message.Contains("Cannot set default value")) {
+        } catch (InvalidOperationException ex) when (databaseColumnDefaultValueProperty is not null &&
+                                                     ex.Message.Contains("default value", StringComparison.OrdinalIgnoreCase) &&
+                                                     ex.Message.Contains("cannot", StringComparison.OrdinalIgnoreCase)) {
             // Breaking change in EF 8.
             // System.InvalidOperationException: Cannot set default value '0' of type 'System.Int16' on property 'ColumnName' of type 'EnumType' in entity type 'EntityName (Dictionary<string, object>)'.
             // The default value must be of the same type as the property or capable of passing through conversion with:
@@ -2217,7 +2218,7 @@ public sealed class MockTypeMappingSource : ITypeMappingSource {
     public CoreTypeMapping FindMapping(Type type, IModel model, CoreTypeMapping elementMapping = null) => throw new NotSupportedException();
 #endif
 
-#if NET9
+#if NET9_0_OR_GREATER
     public CoreTypeMapping FindMapping(MemberInfo member, IModel model, bool useAttributes) => throw new NotSupportedException();
 #endif
 }
