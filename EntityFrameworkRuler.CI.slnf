@@ -1,0 +1,13 @@
+{
+  "solution": {
+    "path": "EntityFrameworkRuler.sln",
+    "projects": [
+      "src\\EntityFrameworkRuler.Common\\EntityFrameworkRuler.Common.csproj",
+      "src\\EntityFrameworkRuler.Design\\EntityFrameworkRuler.Design.csproj",
+      "src\\EntityFrameworkRuler.Editor\\EntityFrameworkRuler.Editor.csproj",
+      "src\\EntityFrameworkRuler\\EntityFrameworkRuler.csproj",
+      "Tests\\EntityFrameworkRuler.Design.Tests\\EntityFrameworkRuler.Design.Tests.csproj",
+      "Tests\\EntityFrameworkRuler.Tests\\EntityFrameworkRuler.Tests.csproj"
+    ]
+  }
+}

@@ -26,7 +26,7 @@ jobs:
     - name: Setup .NET # https://github.com/marketplace/actions/setup-net-core-sdk
       uses: actions/setup-dotnet@v4
       with:
-        global_json_file: global.json
+        global-json-file: global.json
         
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1        
@@ -34,11 +34,11 @@ jobs:
 #        vs-version: '[17.4,17.5)'
         
     - name: Restore dependencies
-      run: dotnet restore EntityFrameworkRuler.sln --v:m
+      run: dotnet restore EntityFrameworkRuler.CI.slnf --v:m
       
       
     - name: Test Build
-      run: dotnet build EntityFrameworkRuler.sln --configuration Debug --no-restore --v:q
+      run: dotnet build EntityFrameworkRuler.CI.slnf --configuration Debug --no-restore --v:q
       # run: msbuild EntityFrameworkRuler.sln /property:Configuration=Debug /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m      
       
     - name: Test Design
@@ -52,12 +52,12 @@ jobs:
         path: ./nupkg
         
     - name: Release Build
-      run: dotnet build .\EntityFrameworkRuler.sln --configuration Release --no-restore --v:q
+      run: dotnet build .\EntityFrameworkRuler.CI.slnf --configuration Release --no-restore --v:q
       # run: msbuild EntityFrameworkRuler.sln /property:Configuration=Release /t:Rebuild /p:RestorePackages=false /consoleloggerparameters:ErrorsOnly -m
  
     
     - name: Create NuGet packages
-      run: dotnet pack --configuration Release --no-build --no-restore .\EntityFrameworkRuler.sln --property:PackageOutputPath="${{ github.workspace }}\nupkg"
+      run: dotnet pack --configuration Release --no-build --no-restore .\EntityFrameworkRuler.CI.slnf --property:PackageOutputPath="${{ github.workspace }}\nupkg"
       # note, output no longer supported as of 7.0.200. but reduced to warning in 7.0.201
       
     - name: Publish Packages to NuGet 
@@ -75,7 +75,7 @@ jobs:
       working-directory: src/EntityFrameworkRuler.Vsix
       
     - name: Build VSIX
-      run: msbuild EntityFrameworkRuler.sln /property:Configuration=ReleaseVsix /p:RestorePackages=True /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
+      run: msbuild EntityFrameworkRuler.Vsix.csproj /property:Configuration=ReleaseVsix /p:RestorePackages=True /p:DeployExtension=False /verbosity:minimal /consoleloggerparameters:ErrorsOnly -m
  
     - name: Move VSIX
       run: mv src/EntityFrameworkRuler.Vsix/bin/Release/EntityFrameworkRuler.Vsix.vsix EntityFrameworkRuler${{ env.VSIXVERSION }}.vsix
