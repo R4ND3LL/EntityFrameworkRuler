@@ -697,6 +697,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             AnnotationFilter);
 
         EnsurePrimaryKey();
+        var isTableSplitEntity = IsTrueTableSplitEntity(entityRuleNode);
 
         // process properties
         var excludedProperties = new HashSet<(IMutableProperty Property, PropertyRuleNode Rule)>();
@@ -738,6 +739,9 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
             if (!isOwnedProperty) continue;
             if (!shouldMapProperty) excludedProperties.Add((property, propertyRule));
+
+            if (isTableSplitEntity && shouldMapProperty && column.HasNonWhiteSpace())
+                property.SetOrRemoveAnnotation(RulerAnnotations.ForceColumnName, column);
 
             propertyRule?.MapTo(property, column);
 
@@ -790,6 +794,26 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
                 var baseProperty = entityRuleNode?.BaseEntityRuleNode?.FindPropertyByColumn(checkColumn);
                 return baseProperty != null && baseProperty.ShouldMap();
             }
+        }
+
+        // Determines if this entity is a true table-split (multiple independent entities sharing one table).
+        // Conservatively returns false if any peer has a base type or if any inheritance relationship exists
+        // between peers, which may produce false negatives for complex hierarchies but avoids incorrect splits.
+        static bool IsTrueTableSplitEntity(EntityRuleNode entityRuleNode) {
+            var tableNode = entityRuleNode?.ScaffoldedTable;
+            if (tableNode == null) return false;
+
+            var mappedRules = tableNode.EntityRules.Where(o => o?.ShouldMap() == true).ToArray();
+            if (mappedRules.Length < 2) return false;
+            if (entityRuleNode.BaseEntityRuleNode != null) return false;
+
+            foreach (var peer in mappedRules) {
+                if (peer == null || ReferenceEquals(peer, entityRuleNode)) continue;
+                if (peer.BaseEntityRuleNode != null) return false;
+                if (peer.HasBaseType(entityRuleNode) || entityRuleNode.HasBaseType(peer)) return false;
+            }
+
+            return true;
         }
 
         void RemovePropertyAndReferences(EntityRuleNode entityRuleNode, IMutableEntityType entity, DatabaseTable table,

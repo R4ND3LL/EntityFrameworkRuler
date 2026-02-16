@@ -27,9 +27,11 @@ public class NorthwindContextSmokeTests(ITestOutputHelper output) {
             employeeBrief = await CreateEmployeeBriefForEmployeeAsync(context, newEmployee);
         }
 
-        var suffix = RandomSuffix();
         var originalFirstName = employeeBrief.FirstName;
-        employeeBrief.FirstName = $"{employeeBrief.FirstName}-Updated-{suffix}";
+        var firstNameMaxLength = context.Model.FindEntityType(typeof(EmployeeBrief))
+            ?.FindProperty(nameof(EmployeeBrief.FirstName))
+            ?.GetMaxLength() ?? int.MaxValue;
+        employeeBrief.FirstName = MutateWithinMax(originalFirstName, firstNameMaxLength);
         await SaveChangesWithStringTruncationAsync(context);
 
         var reloadedBrief = await context.EmployeeBriefs
@@ -48,9 +50,11 @@ public class NorthwindContextSmokeTests(ITestOutputHelper output) {
             employee = await CreateAndSaveEmployeeAsync(context);
         }
 
-        var suffix = RandomSuffix();
         var originalLastName = employee.LastName;
-        employee.LastName = $"{employee.LastName}-Updated-{suffix}";
+        var lastNameMaxLength = context.Model.FindEntityType(typeof(Employee))
+            ?.FindProperty(nameof(Employee.LastName))
+            ?.GetMaxLength() ?? int.MaxValue;
+        employee.LastName = MutateWithinMax(originalLastName, lastNameMaxLength);
         await SaveChangesWithStringTruncationAsync(context);
 
         var reloadedEmployee = await context.Employees
@@ -61,6 +65,17 @@ public class NorthwindContextSmokeTests(ITestOutputHelper output) {
     }
 
     private static string RandomSuffix() => Guid.NewGuid().ToString("N")[..8];
+
+    private static string MutateWithinMax(string? current, int maxLength) {
+        current ??= string.Empty;
+
+        if (maxLength <= 0) return current;
+        if (current.Length == 0) return "X";
+        if (current.Length < maxLength) return current + "X";
+
+        var replacement = current[^1] == 'X' ? 'Y' : 'X';
+        return current[..^1] + replacement;
+    }
 
     private static async Task<Employee> CreateAndSaveEmployeeAsync(NorthwindEntities context) {
         var suffix = RandomSuffix();

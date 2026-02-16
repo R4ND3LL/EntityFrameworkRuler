@@ -25,6 +25,9 @@ public static class RulerAnnotations {
     /// <summary> Function </summary>
     public const string Function = Prefix + nameof(Function);
 
+    /// <summary> Forces explicit column name emission in generated fluent mapping. </summary>
+    public const string ForceColumnName = Prefix + nameof(ForceColumnName);
+
     /// <summary>The database generates a value when a row is inserted or updated.</summary>
     public const string ComputedGenerationPattern = Prefix + "ComputedGenerationPattern";
 

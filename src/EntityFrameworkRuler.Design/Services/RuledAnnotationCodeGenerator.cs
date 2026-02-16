@@ -40,6 +40,21 @@ public sealed class RuledAnnotationCodeGenerator : AnnotationCodeGenerator {
     }
 
     /// <inheritdoc />
+    protected override MethodCallCodeFragment GenerateFluentApi(IProperty property, IAnnotation annotation) {
+        switch (annotation.Name) {
+            case RulerAnnotations.ForceColumnName: {
+                var columnName = annotation.Value as string;
+                if (!columnName.HasNonWhiteSpace()) return null;
+#pragma warning disable CS0618
+                return new MethodCallCodeFragment("HasColumnName", columnName);
+#pragma warning restore CS0618
+            }
+            default:
+                return base.GenerateFluentApi(property, annotation);
+        }
+    }
+
+    /// <inheritdoc />
     public override IEnumerable<IAnnotation> FilterIgnoredAnnotations(IEnumerable<IAnnotation> annotations) {
         foreach (var annotation in base.FilterIgnoredAnnotations(annotations)) {
             if (annotation.Name == RulerAnnotations.Abstract) continue;
