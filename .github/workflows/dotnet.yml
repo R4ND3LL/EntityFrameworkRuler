@@ -7,8 +7,14 @@ name: .NET
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - "README.md"
+      - ".docs/**"
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - "README.md"
+      - ".docs/**"
 
 env:
   VSIXVERSION: 1.0.${{ github.run_number }}

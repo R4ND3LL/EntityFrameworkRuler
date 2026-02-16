@@ -1,10 +1,10 @@
 # Entity Framework Ruler
 
 [//]: # (![Build status]&#40;https://github.com/R4ND3LL/EntityFrameworkRuler/actions/workflows/dotnet.yml/badge.svg&#41;)
-[![command line](http://img.shields.io/nuget/v/EntityFrameworkRuler.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler/)
-[![Design](http://img.shields.io/nuget/v/EntityFrameworkRuler.Design.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Design/)
-[![Editor](http://img.shields.io/nuget/v/EntityFrameworkRuler.Editor.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Editor/)
-[![Common](http://img.shields.io/nuget/v/EntityFrameworkRuler.Common.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Common/)
+[![command line](https://img.shields.io/nuget/v/EntityFrameworkRuler.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler/)
+[![Design](https://img.shields.io/nuget/v/EntityFrameworkRuler.Design.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Design/)
+[![Editor](https://img.shields.io/nuget/v/EntityFrameworkRuler.Editor.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Editor/)
+[![Common](https://img.shields.io/nuget/v/EntityFrameworkRuler.Common.svg?style=flat)](https://www.nuget.org/packages/EntityFrameworkRuler.Common/)
 
 Provides a reasonable way to do DB-first development with EF Core by allowing the customization of the reverse engineered model (i.e. scaffolding).  All customizations are stored in a JSON file that can be edited by hand, or with the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) installed.
 
@@ -14,8 +14,8 @@ Primary Use Cases:
 - Use custom T4 templates to generate extra code during the scaffolding process, such as DTOs or data services.
 
 Features include:
-- Support for EF Core 6 through 9.
-- Generate custom code using your own T4 files in the scaffolding process 
+- Support for EF Core 6 through 10.
+- Generate custom code using your own T4 files in the scaffolding process.
 - Stored procedure and function support (**NEW AS OF JUNE 20, 2023 v1.2.28**)
 - Legacy EF6 (EDMX) migration support
 - Class renaming
@@ -31,11 +31,11 @@ Features include:
 
 EF Ruler applies customizations from a rule document stored in the project folder.  Rules can be initialized with a call to [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli), or they can be fully generated from an EDMX such that the scaffolding output will align with the old EF6 EDMX-based model.
 
->"EF Ruler provides a smooth upgrade path from EF6 to EF Core by ensuring that the Reverse Engineered model maps perfectly from the old EDMX structure."
+> "EF Ruler provides a smooth upgrade path from EF6 to EF Core by ensuring that the reverse engineered model maps from the old EDMX structure."
 
 -------
 ### Upgrading from EF6 with EDMX:
-1) Use the [command line tool](https://www.nuget.org/packages/EntityFrameworkRuler/) or the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) to generated DB Context rules from an EDMX file. ![VS Extension Preview](src/Resources/EdmxConverterPreview.png)
+1) Use the [command line tool](https://www.nuget.org/packages/EntityFrameworkRuler/) or the [VS Extension](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler) to generate DB Context rules from an EDMX file. ![VS Extension Preview](src/Resources/EdmxConverterPreview.png)
 2) Reference [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.
 3) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will do the rest.
 
@@ -54,7 +54,7 @@ EF Ruler applies customizations from a rule document stored in the project folde
 
 -------
 ### Applying Model Customizations:
-1) Reference NuGet package [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.  This is a design-time reference, meaning it will _not_ appear in the project build output, but will interact with EF Core's reverse engineer process.
+1) Reference NuGet package [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.  This is a design-time reference, meaning it will _not_ appear in the project build output, but will interact with EF Core's reverse engineering process.
 2) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will apply all changes as per the json rule file.  The rule file itself will also sync up with the reverse engineered model. 
 
 -------
@@ -63,7 +63,7 @@ By default, a rule file generated from EDMX limits tables and columns to just wh
 
 If it's time to add a table or column to the model, adjust the IncludeUnknownTables or IncludeUnknownColumns flags at the relevant level.
 
-If the database schema contains a lot of tables that you don't want to generate entities for, then enabling IncludeUnknownTables is not a good idea.  Instead, manually create the table entry in the rule file (using the [Editor]((https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler))) and set IncludeUnknownColumns to true.  On the next scaffold, the new entity will be generated fully.
+If the database schema contains a lot of tables that you don't want to generate entities for, then enabling IncludeUnknownTables is not a good idea.  Instead, manually create the table entry in the rule file (using the [Editor](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler)) and set IncludeUnknownColumns to true.  On the next scaffold, the new entity will be generated fully.
 
 You can remove entities from the model by marking the corresponding table (or column) as _Not Mapped_.
 
@@ -72,7 +72,7 @@ You can remove entities from the model by marking the corresponding table (or co
 ### Entity Configuration Splitting:
 The [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command does not natively support splitting entity type configurations into separate files.  Instead, all type configurations are stored in the same file as the context.
 
-With EF7, [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) can split configurations for you.
+With EF Core 7 and later, [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) can split configurations for you.
 
 Just enable "SplitEntityTypeConfigurations" in the rule file (at the root level).
 

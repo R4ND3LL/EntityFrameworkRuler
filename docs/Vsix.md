@@ -1,6 +1,7 @@
 # Entity Framework Ruler
 
 Automate the customization of the EF Core Reverse Engineered model. Supported changes include:
+- Support for EF Core 6 through 10.
 - Legacy EF6 (EDMX) migration support
 - Class renaming
 - Property renaming (including both primitives and navigations)
@@ -38,7 +39,7 @@ EF Ruler applies customizations from a rule document stored in the project folde
 
 -------
 ### Applying Model Customizations:
-1) Reference NuGet package [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.  This is a design-time reference, meaning it will _not_ appear in the project build output, but will interact with EF Core's reverse engineer process.
+1) Reference NuGet package [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) from the EF Core project.  This is a design-time reference, meaning it will _not_ appear in the project build output, but will interact with EF Core's reverse engineering process.
 2) Run the [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command and the design-time service will apply all changes as per the json rule file.  The rule file itself will also sync up with the reverse engineered model.
 
 -------
@@ -47,7 +48,7 @@ By default, a rule file generated from EDMX limits tables and columns to just wh
 
 If it's time to add a table or column to the model, adjust the IncludeUnknownTables/IncludeUnknownColumns flags at the relevant level.
 
-If the database schema contains a lot of tables that you don't want to generate entities for, then enabling IncludeUnknownTables is not a good idea.  Instead, manually create the table entry in the rule file (using the [Editor]((https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler))) and set IncludeUnknownColumns to true.  On the next scaffold, the new entity will be generated fully.
+If the database schema contains a lot of tables that you don't want to generate entities for, then enabling IncludeUnknownTables is not a good idea.  Instead, manually create the table entry in the rule file (using the [Editor](https://marketplace.visualstudio.com/items?itemName=Randell.EF-Ruler)) and set IncludeUnknownColumns to true.  On the next scaffold, the new entity will be generated fully.
 
 You can remove entities from the model by marking the corresponding table (or column) as _Not Mapped_.
 
@@ -56,7 +57,7 @@ You can remove entities from the model by marking the corresponding table (or co
 ### Entity Configuration Splitting:
 The [ef dbcontext scaffold](https://learn.microsoft.com/en-us/ef/core/managing-schemas/scaffolding/?tabs=dotnet-core-cli) command does not natively support splitting entity type configurations into separate files.  Instead, all type configurations are stored in the same file as the context.
 
-With EF7, [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) can split configurations for you.
+With EF Core 7 and later, [EntityFrameworkRuler.Design](https://www.nuget.org/packages/EntityFrameworkRuler.Design/) can split configurations for you.
 
 Just enable "SplitEntityTypeConfigurations" in the rule file (at the root level).
 
