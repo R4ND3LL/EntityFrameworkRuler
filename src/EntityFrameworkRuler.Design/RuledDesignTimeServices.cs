@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using EntityFrameworkRuler.Common;
 using EntityFrameworkRuler.Design.Extensions;
 using EntityFrameworkRuler.Design.Scaffolding.CodeGeneration;
@@ -14,7 +15,17 @@ namespace EntityFrameworkRuler.Design {
     /// </summary>
     public sealed class RuledDesignTimeServices : IDesignTimeServices {
         /// <summary> Creates RuledDesignTimeServices </summary>
-        public RuledDesignTimeServices() { }
+        public RuledDesignTimeServices() {
+#if DEBUG2
+            if (Debugger.IsAttached) return;
+            var entryAssembly = Assembly.GetEntryAssembly();
+            var entryName = entryAssembly?.GetName();
+            if (entryName?.Name.In("ef", "dotnet-ef") == true) {
+                EfConsoleMessageLogger.DebugLog($"EF Ruler detected EF Tools v{entryName.Version}");
+                Debugger.Launch();
+            }
+#endif
+        }
 
         /// <summary> Adds this library's design-time services to the service collection. </summary>
         /// <param name="services">The service collection.</param>

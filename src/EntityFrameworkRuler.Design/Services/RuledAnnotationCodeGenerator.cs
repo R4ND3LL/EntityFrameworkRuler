@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+using System.Reflection;
+using System.ComponentModel.DataAnnotations.Schema;
 using EntityFrameworkRuler.Common.Annotations;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -49,8 +50,36 @@ public sealed class RuledAnnotationCodeGenerator : AnnotationCodeGenerator {
                 return new MethodCallCodeFragment("HasColumnName", columnName);
 #pragma warning restore CS0618
             }
+            case RulerAnnotations.ComputedGenerationPattern: {
+                if (annotation.Value is not bool b || !b) return null;
+#pragma warning disable CS0618
+                return new MethodCallCodeFragment("ValueGeneratedOnAddOrUpdate");
+#pragma warning restore CS0618
+            }
+            case RulerAnnotations.IdentityGenerationPattern: {
+                if (annotation.Value is not bool b || !b) return null;
+#pragma warning disable CS0618
+                return new MethodCallCodeFragment("ValueGeneratedOnAdd");
+#pragma warning restore CS0618
+            }
             default:
                 return base.GenerateFluentApi(property, annotation);
+        }
+    }
+
+    /// <inheritdoc />
+    protected override AttributeCodeFragment GenerateDataAnnotation(IProperty property, IAnnotation annotation) {
+        switch (annotation.Name) {
+            case RulerAnnotations.ComputedGenerationPattern: {
+                if (annotation.Value is not bool b || !b) return null;
+                return new AttributeCodeFragment(typeof(DatabaseGeneratedAttribute), DatabaseGeneratedOption.Computed);
+            }
+            case RulerAnnotations.IdentityGenerationPattern: {
+                if (annotation.Value is not bool b || !b) return null;
+                return new AttributeCodeFragment(typeof(DatabaseGeneratedAttribute), DatabaseGeneratedOption.Identity);
+            }
+            default:
+                return base.GenerateDataAnnotation(property, annotation);
         }
     }
 

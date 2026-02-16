@@ -135,10 +135,16 @@
               }
             },
             {
-              "Name": "CategoryName"
+              "Name": "CategoryName",
+              "Annotations": {
+                "Ruler:IdentityGenerationPattern": true
+              }
             },
             {
-              "Name": "Description"
+              "Name": "Description",
+              "Annotations": {
+                "Ruler:ComputedGenerationPattern": true
+              }
             },
             {
               "Name": "Picture"
