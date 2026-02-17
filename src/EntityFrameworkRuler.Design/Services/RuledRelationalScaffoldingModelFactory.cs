@@ -701,6 +701,7 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
 
         // process properties
         var excludedProperties = new HashSet<(IMutableProperty Property, PropertyRuleNode Rule)>();
+        var splitPropertyRenames = new List<(IMutableProperty Property, string NewName)>();
         foreach (var property in entity.GetProperties()) {
             var isOwnedProperty = property.DeclaringEntityType == entity;
 
@@ -740,8 +741,15 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             if (!isOwnedProperty) continue;
             if (!shouldMapProperty) excludedProperties.Add((property, propertyRule));
 
-            if (isTableSplitEntity && shouldMapProperty && column.HasNonWhiteSpace())
+            if (isTableSplitEntity && shouldMapProperty && column.HasNonWhiteSpace()) {
                 property.SetOrRemoveAnnotation(RulerAnnotations.ForceColumnName, column);
+                // Collect properties that need renaming to their NewName.
+                // EF Core's unique namer may have suffixed the name (e.g. DateLastModified1)
+                // because multiple split entities want the same property name on the same table.
+                // ForceColumnName guarantees correct column mapping, so the rename is safe.
+                if (propertyRule?.Rule.NewName.HasNonWhiteSpace() == true && property.Name != propertyRule.Rule.NewName)
+                    splitPropertyRenames.Add((property, propertyRule.Rule.NewName));
+            }
 
             propertyRule?.MapTo(property, column);
 
@@ -752,6 +760,13 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         }
 
         foreach (var property in excludedProperties) RemovePropertyAndReferences(entityRuleNode, entity, table, property.Property, property.Rule);
+
+        // Rename split entity properties whose names were suffixed by EF Core's unique namer.
+        // ForceColumnName annotation already guarantees correct column mapping, so we can safely
+        // rename the property to the user's desired NewName without breaking column resolution.
+        foreach (var (oldProp, newName) in splitPropertyRenames) {
+            RenameSplitProperty(entity, oldProp, newName);
+        }
 
         // Note, there are no Navigations yet because FKs are processed after visiting tables
 
@@ -888,6 +903,101 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
         //         Debug.Assert(removed != null);
         //     }
         // }
+    }
+
+    /// <summary> Rename a property on a table-split entity by removing and re-adding with the desired name.
+    /// ForceColumnName annotation on the property guarantees the column mapping is preserved. </summary>
+    private void RenameSplitProperty(IMutableEntityType entity, IMutableProperty oldProp, string newName) {
+        // Check for name conflict within this entity (shouldn't happen for split entities, but guard against it)
+        if (entity.FindProperty(newName) != null) {
+            reporter.WriteWarning(
+                $"RULED: Cannot rename {entity.Name}.{oldProp.Name} to {newName} — property already exists.");
+            return;
+        }
+
+        var clrType = oldProp.ClrType;
+        var oldName = oldProp.Name;
+
+        // Capture metadata before removal
+        var isNullable = oldProp.IsNullable;
+        var maxLength = oldProp.GetMaxLength();
+        var isUnicode = oldProp.IsUnicode();
+        var precision = oldProp.GetPrecision();
+        var scale = oldProp.GetScale();
+        var valueGenerated = oldProp.ValueGenerated;
+        var isConcurrencyToken = oldProp.IsConcurrencyToken;
+        var annotations = oldProp.GetAnnotations().ToList();
+
+        // Capture all keys (PK + alternate keys) referencing this property
+        var primaryKey = entity.FindPrimaryKey();
+        var keys = entity.GetKeys()
+            .Where(k => k.Properties.Contains(oldProp))
+            .Select(k => (
+                PropertyNames: k.Properties.Select(p => p == oldProp ? newName : p.Name).ToArray(),
+                IsPrimaryKey: k == primaryKey,
+                Annotations: k.GetAnnotations().ToList()
+            )).ToList();
+
+        // Capture index membership
+        var indexes = entity.GetIndexes()
+            .Where(ix => ix.Properties.Contains(oldProp))
+            .Select(ix => (
+                PropertyNames: ix.Properties.Select(p => p == oldProp ? newName : p.Name).ToArray(),
+                ix.Name,
+                ix.IsUnique,
+                Filter: ix.GetFilter(),
+                Annotations: ix.GetAnnotations().ToList()
+            )).ToList();
+
+        // Remove indexes that reference this property (will re-add after)
+        foreach (var ix in entity.GetIndexes().Where(i => i.Properties.Contains(oldProp)).ToArray())
+            entity.RemoveIndex(ix);
+
+        // Remove all keys (PK + alternate) that reference this property
+        foreach (var k in entity.GetKeys().Where(k => k.Properties.Contains(oldProp)).ToArray())
+            entity.RemoveKey(k);
+
+        // Remove old property
+        entity.RemoveProperty(oldProp);
+
+        // Add new property with desired name
+        var newProp = entity.AddProperty(newName, clrType);
+        newProp.IsNullable = isNullable;
+        if (maxLength.HasValue) newProp.SetMaxLength(maxLength.Value);
+        if (isUnicode.HasValue) newProp.SetIsUnicode(isUnicode.Value);
+        if (precision.HasValue) newProp.SetPrecision(precision.Value);
+        if (scale.HasValue) newProp.SetScale(scale.Value);
+        newProp.ValueGenerated = valueGenerated;
+        newProp.IsConcurrencyToken = isConcurrencyToken;
+
+        // Copy all annotations (Relational:*, provider-specific like SqlServer:*, and Ruler:*).
+        // At scaffold time, every annotation on the property is meaningful — internal EF Core
+        // annotations (PropertyAccessMode, BackingField, etc.) are not set until configuration time.
+        foreach (var annotation in annotations)
+            newProp.SetOrRemoveAnnotation(annotation.Name, annotation.Value);
+
+        // Restore all keys (PK + alternate) with original metadata
+        foreach (var k in keys) {
+            var keyProps = k.PropertyNames.Select(n => entity.FindProperty(n)).Where(p => p != null).ToList();
+            if (keyProps.Count != k.PropertyNames.Length) continue;
+            var newKey = k.IsPrimaryKey ? entity.SetPrimaryKey(keyProps) : entity.AddKey(keyProps);
+            if (newKey != null)
+                foreach (var annotation in k.Annotations)
+                    newKey.SetOrRemoveAnnotation(annotation.Name, annotation.Value);
+        }
+
+        // Restore indexes
+        foreach (var ix in indexes) {
+            var ixProps = ix.PropertyNames.Select(n => entity.FindProperty(n)).Where(p => p != null).ToList();
+            if (ixProps.Count != ix.PropertyNames.Length) continue;
+            var newIx = entity.AddIndex(ixProps, ix.Name);
+            newIx.IsUnique = ix.IsUnique;
+            if (ix.Filter.HasNonWhiteSpace()) newIx.SetFilter(ix.Filter);
+            foreach (var annotation in ix.Annotations)
+                newIx.SetOrRemoveAnnotation(annotation.Name, annotation.Value);
+        }
+
+        reporter.WriteVerbose($"RULED: Renamed {entity.Name}.{oldName} to {newName} (table-split property)");
     }
 
     /// <summary> This is an internal API and is subject to change or removal without notice. </summary>

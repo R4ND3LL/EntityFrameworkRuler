@@ -68,7 +68,11 @@ public class RuledCandidateNamingService : CandidateNamingService {
         EntityRuleNode entityRule = null;
         var entityRules = dbContextRule.TryResolveRuleFor(table);
         if (entityRules.Count == 0) return InvokeBaseCall();
-        Debug.Assert(entityRules.Count == 1, "How do we reliably select the correct rule when splitting?");
+        // Table splitting: multiple entity rules may share the same physical table.
+        // Select the primary entity (largest by property count, first in sorted set).
+        // Split entities are named via GetEntityTypeName's explicitEntityRuleMapping path instead.
+        if (entityRules.Count > 1)
+            logger?.WriteVerbose($"RULED: Table {table.GetFullName()} has {entityRules.Count} entity rules (table splitting)");
         entityRule = entityRules.FirstOrDefault(o => o.ShouldMap());
         if (entityRule == null) return InvokeBaseCall();
 
