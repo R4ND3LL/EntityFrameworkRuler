@@ -64,6 +64,30 @@ public class NorthwindContextSmokeTests(ITestOutputHelper output) {
         Assert.NotEqual(originalLastName, reloadedEmployee.LastName);
     }
 
+    [Fact]
+    public async Task Updates_or_creates_employee_contact_record() {
+        await using var context = new NorthwindEntities();
+
+        var employeeContact = await context.EmployeeContacts.FirstOrDefaultAsync();
+        if (employeeContact is null) {
+            var newEmployee = await CreateAndSaveEmployeeAsync(context);
+            employeeContact = await CreateEmployeeContactForEmployeeAsync(context, newEmployee);
+        }
+
+        var originalPhone = employeeContact.HomePhone;
+        var phoneMaxLength = context.Model.FindEntityType(typeof(EmployeeContact))
+            ?.FindProperty(nameof(EmployeeContact.HomePhone))
+            ?.GetMaxLength() ?? int.MaxValue;
+        employeeContact.HomePhone = MutateWithinMax(originalPhone, phoneMaxLength);
+        await SaveChangesWithStringTruncationAsync(context);
+
+        var reloadedContact = await context.EmployeeContacts
+            .SingleAsync(x => x.EmployeeID == employeeContact.EmployeeID);
+
+        output.WriteLine($"EmployeeContact updated: {originalPhone} -> {reloadedContact.HomePhone}");
+        Assert.NotEqual(originalPhone, reloadedContact.HomePhone);
+    }
+
     private static string RandomSuffix() => Guid.NewGuid().ToString("N")[..8];
 
     private static string MutateWithinMax(string? current, int maxLength) {
@@ -84,13 +108,9 @@ public class NorthwindContextSmokeTests(ITestOutputHelper output) {
             FirstName = $"TestFirst{suffix}",
             Title = "Mr.",
             TitleOfCourtesy = "Mr.",
-            Address = "123 Test Street",
-            City = "Test City",
             Region = "NA",
             PostalCode = "12345",
             Country = "USA",
-            HomePhone = "000-000-0000",
-            Extension = "000",
             BirthDate = DateTime.UtcNow.AddYears(-30),
             HireDate = DateTime.UtcNow,
             Photo = [],
@@ -115,6 +135,20 @@ public class NorthwindContextSmokeTests(ITestOutputHelper output) {
         context.EmployeeBriefs.Add(employeeBrief);
         await SaveChangesWithStringTruncationAsync(context);
         return employeeBrief;
+    }
+
+    private static async Task<EmployeeContact> CreateEmployeeContactForEmployeeAsync(NorthwindEntities context, Employee employee) {
+        var employeeContact = new EmployeeContact {
+            Address = "123 Test Street",
+            City = "Test City",
+            HomePhone = "000-000-0000",
+            Extension = "000"
+        };
+        employeeContact.Employee = employee;
+
+        context.EmployeeContacts.Add(employeeContact);
+        await SaveChangesWithStringTruncationAsync(context);
+        return employeeContact;
     }
 
     private static async Task SaveChangesWithStringTruncationAsync(NorthwindEntities context) {

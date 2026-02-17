@@ -395,10 +395,12 @@
               "Name": "HireDate"
             },
             {
-              "Name": "Address"
+              "Name": "Address",
+              "NotMapped": true
             },
             {
-              "Name": "City"
+              "Name": "City",
+              "NotMapped": true
             },
             {
               "Name": "Region"
@@ -410,10 +412,12 @@
               "Name": "Country"
             },
             {
-              "Name": "HomePhone"
+              "Name": "HomePhone",
+              "NotMapped": true
             },
             {
-              "Name": "Extension"
+              "Name": "Extension",
+              "NotMapped": true
             },
             {
               "Name": "Photo"
@@ -466,6 +470,14 @@
               "NewName": "EmployeeBrief",
               "FkName": "EmployeeEmployeeBrief",
               "ToEntity": "EmployeeBrief",
+              "IsPrincipal": true,
+              "Multiplicity": "1"
+            },
+            {
+              "Name": "EmployeeContact",
+              "NewName": null,
+              "FkName": "EmployeeEmployeeContact",
+              "ToEntity": "EmployeeContact",
               "IsPrincipal": true,
               "Multiplicity": "1"
             }
@@ -554,6 +566,93 @@
               "Name": "EmployeeNavigation",
               "NewName": "Employee",
               "FkName": "EmployeeEmployeeBrief",
+              "ToEntity": "Employee",
+              "Multiplicity": "1"
+            }
+          ]
+        },
+        {
+          "Name": "Employees",
+          "EntityName": "Employee2",
+          "NewName": "EmployeeContact",
+          "IncludeUnknownColumns": false,
+          "Properties": [
+            {
+              "Name": "EmployeeID",
+              "PropertyName": "EmployeeId",
+              "NewName": "EmployeeID"
+            },
+            {
+              "Name": "LastName",
+              "NotMapped": true
+            },
+            {
+              "Name": "FirstName",
+              "NotMapped": true
+            },
+            {
+              "Name": "Title",
+              "NotMapped": true
+            },
+            {
+              "Name": "TitleOfCourtesy",
+              "NotMapped": true
+            },
+            {
+              "Name": "BirthDate",
+              "NotMapped": true
+            },
+            {
+              "Name": "HireDate",
+              "NotMapped": true
+            },
+            {
+              "Name": "Address"
+            },
+            {
+              "Name": "City"
+            },
+            {
+              "Name": "Region",
+              "NotMapped": true
+            },
+            {
+              "Name": "PostalCode",
+              "NotMapped": true
+            },
+            {
+              "Name": "Country",
+              "NotMapped": true
+            },
+            {
+              "Name": "HomePhone"
+            },
+            {
+              "Name": "Extension"
+            },
+            {
+              "Name": "Photo",
+              "NotMapped": true
+            },
+            {
+              "Name": "Notes",
+              "NotMapped": true
+            },
+            {
+              "Name": "ReportsTo",
+              "PropertyName": "ReportsToCustom",
+              "NotMapped": true
+            },
+            {
+              "Name": "PhotoPath",
+              "NotMapped": true
+            }
+          ],
+          "Navigations": [
+            {
+              "Name": "EmployeeNavigation",
+              "NewName": "Employee",
+              "FkName": "EmployeeEmployeeContact",
               "ToEntity": "Employee",
               "Multiplicity": "1"
             }
@@ -1505,6 +1604,17 @@
         "EmployeeID"
       ],
       "DependentEntity": "EmployeeBrief",
+      "DependentProperties": [
+        "EmployeeID"
+      ]
+    },
+    {
+      "Name": "EmployeeEmployeeContact",
+      "PrincipalEntity": "Employee",
+      "PrincipalProperties": [
+        "EmployeeID"
+      ],
+      "DependentEntity": "EmployeeContact",
       "DependentProperties": [
         "EmployeeID"
       ]

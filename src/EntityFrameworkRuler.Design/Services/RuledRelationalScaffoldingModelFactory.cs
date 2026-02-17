@@ -1487,8 +1487,11 @@ public class RuledRelationalScaffoldingModelFactory : IScaffoldingModelFactory, 
             var fksByTbl = knownFksByTable.TryGetValue(dbForeignKey.Table);
             if (!(fksByTbl?.Count > 0)) return true;
             foreach (var foreignKey in fksByTbl) {
-                // check for matching columns
-                if (foreignKey.ColumnsAreEqual(dbForeignKey, stringComparison)) return false;
+                // Check for matching columns. Table-split entities share the same physical
+                // table and columns, so also compare FK name to distinguish distinct synthetic
+                // relationships (e.g. two split entities each with a shared-PK FK).
+                if (foreignKey.ColumnsAreEqual(dbForeignKey, stringComparison) &&
+                    string.Equals(foreignKey.Name, dbForeignKey.Name, stringComparison)) return false;
             }
 
             return true;
