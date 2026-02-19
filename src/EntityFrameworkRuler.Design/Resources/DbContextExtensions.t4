@@ -115,7 +115,7 @@ public static class DbContextExtensions
         if (parameters is null)
             parameters = Array.Empty<object>();
 
-        return await db.Database.SqlQueryRaw<T>(sql, parameters, cancellationToken).ToListAsync(cancellationToken);
+        return await db.Database.SqlQueryRaw<T>(sql, parameters).ToListAsync(cancellationToken);
     }
 
     /// <summary>
