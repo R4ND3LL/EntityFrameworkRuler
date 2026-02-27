@@ -368,7 +368,6 @@
         {
           "Name": "Employees",
           "EntityName": "Employee",
-          "NewName": "Employee",
           "IncludeUnknownColumns": false,
           "Properties": [
             {
@@ -383,7 +382,8 @@
               "Name": "FirstName"
             },
             {
-              "Name": "Title"
+              "Name": "Title",
+              "PropertyName": "JobTitle"
             },
             {
               "Name": "TitleOfCourtesy"
@@ -396,10 +396,12 @@
             },
             {
               "Name": "Address",
+              "PropertyName": "StreetAddress",
               "NotMapped": true
             },
             {
               "Name": "City",
+              "PropertyName": "CityName",
               "NotMapped": true
             },
             {
@@ -413,10 +415,12 @@
             },
             {
               "Name": "HomePhone",
+              "PropertyName": "Phone",
               "NotMapped": true
             },
             {
               "Name": "Extension",
+              "PropertyName": "PhoneExtension",
               "NotMapped": true
             },
             {
@@ -501,7 +505,8 @@
               "Name": "FirstName"
             },
             {
-              "Name": "Title"
+              "Name": "Title",
+              "NewName": "JobTitle"
             },
             {
               "Name": "TitleOfCourtesy",
@@ -517,10 +522,12 @@
             },
             {
               "Name": "Address",
+              "PropertyName": "StreetAddress",
               "NotMapped": true
             },
             {
               "Name": "City",
+              "PropertyName": "CityName",
               "NotMapped": true
             },
             {
@@ -537,10 +544,12 @@
             },
             {
               "Name": "HomePhone",
+              "PropertyName": "Phone",
               "NotMapped": true
             },
             {
               "Name": "Extension",
+              "PropertyName": "PhoneExtension",
               "NotMapped": true
             },
             {
@@ -592,6 +601,7 @@
             },
             {
               "Name": "Title",
+              "PropertyName": "JobTitle",
               "NotMapped": true
             },
             {
@@ -607,10 +617,12 @@
               "NotMapped": true
             },
             {
-              "Name": "Address"
+              "Name": "Address",
+              "NewName": "StreetAddress"
             },
             {
-              "Name": "City"
+              "Name": "City",
+              "NewName": "CityName"
             },
             {
               "Name": "Region",
@@ -625,10 +637,12 @@
               "NotMapped": true
             },
             {
-              "Name": "HomePhone"
+              "Name": "HomePhone",
+              "NewName": "Phone"
             },
             {
-              "Name": "Extension"
+              "Name": "Extension",
+              "NewName": "PhoneExtension"
             },
             {
               "Name": "Photo",

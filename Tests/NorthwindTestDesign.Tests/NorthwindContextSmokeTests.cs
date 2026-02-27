@@ -74,18 +74,18 @@ public class NorthwindContextSmokeTests(ITestOutputHelper output) {
             employeeContact = await CreateEmployeeContactForEmployeeAsync(context, newEmployee);
         }
 
-        var originalPhone = employeeContact.HomePhone;
+        var originalPhone = employeeContact.Phone;
         var phoneMaxLength = context.Model.FindEntityType(typeof(EmployeeContact))
-            ?.FindProperty(nameof(EmployeeContact.HomePhone))
+            ?.FindProperty(nameof(EmployeeContact.Phone))
             ?.GetMaxLength() ?? int.MaxValue;
-        employeeContact.HomePhone = MutateWithinMax(originalPhone, phoneMaxLength);
+        employeeContact.Phone = MutateWithinMax(originalPhone, phoneMaxLength);
         await SaveChangesWithStringTruncationAsync(context);
 
         var reloadedContact = await context.EmployeeContacts
             .SingleAsync(x => x.EmployeeID == employeeContact.EmployeeID);
 
-        output.WriteLine($"EmployeeContact updated: {originalPhone} -> {reloadedContact.HomePhone}");
-        Assert.NotEqual(originalPhone, reloadedContact.HomePhone);
+        output.WriteLine($"EmployeeContact updated: {originalPhone} -> {reloadedContact.Phone}");
+        Assert.NotEqual(originalPhone, reloadedContact.Phone);
     }
 
     private static string RandomSuffix() => Guid.NewGuid().ToString("N")[..8];
@@ -106,7 +106,7 @@ public class NorthwindContextSmokeTests(ITestOutputHelper output) {
         var employee = new Employee {
             LastName = $"TestLast{suffix}",
             FirstName = $"TestFirst{suffix}",
-            Title = "Mr.",
+            JobTitle = "Mr.",
             TitleOfCourtesy = "Mr.",
             Region = "NA",
             PostalCode = "12345",
@@ -128,7 +128,7 @@ public class NorthwindContextSmokeTests(ITestOutputHelper output) {
         var employeeBrief = new EmployeeBrief {
             FirstName = $"{employee.FirstName}-Brief-{suffix}",
             LastName = $"{employee.LastName}-Brief-{suffix}",
-            Title = "Brief Title"
+            JobTitle = "Brief Title"
         };
         employeeBrief.Employee = employee;
 
@@ -139,10 +139,10 @@ public class NorthwindContextSmokeTests(ITestOutputHelper output) {
 
     private static async Task<EmployeeContact> CreateEmployeeContactForEmployeeAsync(NorthwindEntities context, Employee employee) {
         var employeeContact = new EmployeeContact {
-            Address = "123 Test Street",
-            City = "Test City",
-            HomePhone = "000-000-0000",
-            Extension = "000"
+            StreetAddress = "123 Test Street",
+            CityName = "Test City",
+            Phone = "000-000-0000",
+            PhoneExtension = "000"
         };
         employeeContact.Employee = employee;
 
