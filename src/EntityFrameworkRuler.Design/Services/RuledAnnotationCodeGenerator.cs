@@ -86,7 +86,7 @@ public sealed class RuledAnnotationCodeGenerator : AnnotationCodeGenerator {
     /// <inheritdoc />
     public override IEnumerable<IAnnotation> FilterIgnoredAnnotations(IEnumerable<IAnnotation> annotations) {
         foreach (var annotation in base.FilterIgnoredAnnotations(annotations)) {
-            if (annotation.Name == RulerAnnotations.Abstract) continue;
+            if (annotation.Name is RulerAnnotations.Abstract or RulerAnnotations.HasFunctions) continue;
             yield return annotation;
         }
     }

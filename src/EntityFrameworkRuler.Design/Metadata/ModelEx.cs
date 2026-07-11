@@ -122,6 +122,7 @@ public class ModelEx {
         if (functions.ContainsKey(name)) throw new Exception($"Function {name} already exists");
         var function = new Function(this, name);
         functions.Add(name, function);
+        Model.SetAnnotation(RulerAnnotations.HasFunctions, true);
         return function.Builder;
     }
 }

@@ -25,6 +25,9 @@ public static class RulerAnnotations {
     /// <summary> Function </summary>
     public const string Function = Prefix + nameof(Function);
 
+    /// <summary> The model contains at least one generated function. </summary>
+    public const string HasFunctions = Prefix + nameof(HasFunctions);
+
     /// <summary> Forces explicit column name emission in generated fluent mapping. </summary>
     public const string ForceColumnName = Prefix + nameof(ForceColumnName);
 

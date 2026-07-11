@@ -29,6 +29,7 @@
             var code = services.GetRequiredService<ICSharpHelper>();
             var optionsEx = Options as EntityFrameworkRuler.Design.Scaffolding.ModelCodeGenerationOptionsEx;
             var splitEntityTypeConfigurations = optionsEx?.SplitEntityTypeConfigurations ?? false;
+            var hasFunctions = Model["Ruler:HasFunctions"] != null;
 
             var usings = new List<string> {
                 "System",
@@ -51,8 +52,12 @@ namespace <#= NamespaceHint #>;
 #>
 public partial class <#= Options.ContextName #> : DbContext
 {
+<#
+            if (hasFunctions) {
+#>
     private I<#= Options.ContextName #>Functions _functions;
 <#
+            }
             if (!Options.SuppressOnConfiguring) {
 #>
     public <#= Options.ContextName #>()
@@ -70,6 +75,9 @@ public partial class <#= Options.ContextName #> : DbContext
     {
     }
 
+<#
+            if (hasFunctions) {
+#>
     public virtual I<#= Options.ContextName #>Functions Functions
     {
         [DebuggerStepThrough] get
@@ -84,6 +92,7 @@ public partial class <#= Options.ContextName #> : DbContext
     }
 
 <#
+            }
             foreach (var entityType in Model.GetEntityTypes().Where(e => !e.IsSimpleManyToManyJoinEntityType() && e["Ruler:Function"] == null)) {
                 var mappingRoot =
                     entityType.GetAllBaseTypesAscending().FirstOrDefault(o => o.GetMappingStrategy()?.Length > 0);
