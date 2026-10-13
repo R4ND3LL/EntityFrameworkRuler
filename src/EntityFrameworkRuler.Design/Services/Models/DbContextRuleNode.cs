@@ -1,4 +1,4 @@
-﻿using EntityFrameworkRuler.Design.Scaffolding.Metadata;
+using EntityFrameworkRuler.Design.Scaffolding.Metadata;
 using EntityFrameworkRuler.Rules;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
@@ -20,10 +20,14 @@ public sealed class DbContextRuleNode : RuleNode<DbContextRule, DbContextRuleNod
     public SortedSet<EntityRuleNode> Entities => entities ??= InitializeEntitiesOrdered();
 
     private SortedSet<EntityRuleNode> InitializeEntitiesOrdered() {
+        var allEntities = Schemas.SelectMany(o => o.Entities).ToArray();
+        // Resolve the whole dependency graph before inserting nodes whose sort key uses its depth.
+        foreach (var e in allEntities)
+            if (e.Rule.BaseTypeName.HasNonWhiteSpace()) ResolveBaseEntity(e);
+
         var es = new SortedSet<EntityRuleNode>(EntityDependencyComparer.Instance);
         var added = 0;
-        foreach (var e in Schemas.SelectMany(o => o.Entities)) {
-            if (e.Rule.BaseTypeName.HasNonWhiteSpace()) ResolveBaseEntity(e);
+        foreach (var e in allEntities) {
             es.Add(e);
             added++;
             Debug.Assert(es.Count == added);

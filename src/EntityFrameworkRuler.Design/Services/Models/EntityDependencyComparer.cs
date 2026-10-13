@@ -14,13 +14,9 @@ public sealed class EntityDependencyComparer : IComparer<EntityRuleNode>, IEqual
         if (x == null) return -1;
         if (y == null) return 1;
 
-        if (!ReferenceEquals(x.BaseEntityRuleNode, y.BaseEntityRuleNode)) {
-            if (x.BaseEntityRuleNode == null) return -1;
-            if (y.BaseEntityRuleNode == null) return 1;
-
-            if (x.HasBaseType(y)) return 1;
-            if (y.HasBaseType(x)) return -1;
-        }
+        // Mixing ancestry with alphabetical comparisons creates cycles among unrelated branches.
+        var depthCompare = x.GetBaseTypes().Count().CompareTo(y.GetBaseTypes().Count());
+        if (depthCompare != 0) return depthCompare;
 
         var schemaCompare = StringComparer.Ordinal.Compare(x.Parent.Rule.SchemaName, y.Parent.Rule.SchemaName);
         if (schemaCompare != 0) return schemaCompare;
@@ -33,6 +29,8 @@ public sealed class EntityDependencyComparer : IComparer<EntityRuleNode>, IEqual
         // in case of split tables, we want the largest to be default if possible
         var c = x.LocalPropertyCount.CompareTo(y.LocalPropertyCount);
         if (c != 0) return -c;
+        c = StringComparer.Ordinal.Compare(x.GetFinalName(), y.GetFinalName());
+        if (c != 0) return c;
         c = x.GetHashCode().CompareTo(y.GetHashCode());
         if (c != 0) return c;
         return 1;
